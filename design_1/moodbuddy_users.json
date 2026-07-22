@@ -1,0 +1,161 @@
+{
+    "users": {
+        "amit": {
+            "name": "Amit",
+            "age": 6,
+            "negative_counters": {
+                "Sad": 3,
+                "Angry": 0,
+                "Anxious": 0
+            }
+        },
+        "sabi": {
+            "name": "Sabi",
+            "age": 38,
+            "negative_counters": {
+                "Sad": 4,
+                "Angry": 0,
+                "Anxious": 0
+            }
+        },
+        "mostafa": {
+            "name": "Mostafa",
+            "age": 16,
+            "negative_counters": {
+                "Sad": 0,
+                "Angry": 0,
+                "Anxious": 0
+            }
+        },
+        "shyam": {
+            "name": "Shyam",
+            "age": 66,
+            "negative_counters": {
+                "Sad": 0,
+                "Angry": 0,
+                "Anxious": 0
+            }
+        },
+        "sam": {
+            "name": "Sam",
+            "age": 21,
+            "negative_counters": {
+                "Sad": 3,
+                "Angry": 0,
+                "Anxious": 0
+            },
+            "emotion_counters": {
+                "Happy": 0,
+                "Sad": 3,
+                "Angry": 0,
+                "Lazy": 0,
+                "Anxious": 0,
+                "Excited": 0
+            },
+            "check_in_history": [
+                {
+                    "checked_in_at": "2026-07-15T15:32:59+00:00",
+                    "mood": "Sad",
+                    "age_group": "Young Adult"
+                },
+                {
+                    "checked_in_at": "2026-07-15T15:33:18+00:00",
+                    "mood": "Sad",
+                    "age_group": "Young Adult"
+                },
+                {
+                    "checked_in_at": "2026-07-15T15:33:24+00:00",
+                    "mood": "Sad",
+                    "age_group": "Young Adult"
+                }
+            ],
+            "total_check_ins": 3,
+            "last_mood": "Sad",
+            "last_check_in": "2026-07-15T15:33:24+00:00"
+        },
+        "anjali": {
+            "name": "Anjali",
+            "age": 10,
+            "emotion_counters": {
+                "Happy": 1,
+                "Sad": 0,
+                "Angry": 1,
+                "Lazy": 0,
+                "Anxious": 0,
+                "Excited": 0
+            },
+            "negative_counters": {
+                "Sad": 0,
+                "Angry": 1,
+                "Anxious": 0
+            },
+            "check_in_history": [
+                {
+                    "checked_in_at": "2026-07-15T15:33:55+00:00",
+                    "mood": "Happy",
+                    "age_group": "Preteen"
+                },
+                {
+                    "checked_in_at": "2026-07-15T15:37:04+00:00",
+                    "mood": "Angry",
+                    "age_group": "Preteen"
+                }
+            ],
+            "total_check_ins": 2,
+            "last_mood": "Angry",
+            "last_check_in": "2026-07-15T15:37:04+00:00"
+        },
+        "sita": {
+            "name": "Sita",
+            "age": 22,
+            "emotion_counters": {
+                "Happy": 0,
+                "Sad": 4,
+                "Angry": 1,
+                "Lazy": 1,
+                "Anxious": 0,
+                "Excited": 0
+            },
+            "negative_counters": {
+                "Sad": 4,
+                "Angry": 1,
+                "Anxious": 0
+            },
+            "check_in_history": [
+                {
+                    "checked_in_at": "2026-07-16T15:47:26+00:00",
+                    "mood": "Lazy",
+                    "age_group": "Young Adult"
+                },
+                {
+                    "checked_in_at": "2026-07-16T15:47:42+00:00",
+                    "mood": "Sad",
+                    "age_group": "Young Adult"
+                },
+                {
+                    "checked_in_at": "2026-07-16T15:47:53+00:00",
+                    "mood": "Angry",
+                    "age_group": "Young Adult"
+                },
+                {
+                    "checked_in_at": "2026-07-16T15:48:39+00:00",
+                    "mood": "Sad",
+                    "age_group": "Young Adult"
+                },
+                {
+                    "checked_in_at": "2026-07-16T15:48:47+00:00",
+                    "mood": "Sad",
+                    "age_group": "Young Adult"
+                },
+                {
+                    "checked_in_at": "2026-07-16T17:09:46+00:00",
+                    "mood": "Sad",
+                    "age_group": "Young Adult"
+                }
+            ],
+            "total_check_ins": 6,
+            "last_mood": "Sad",
+            "last_check_in": "2026-07-16T17:09:46+00:00"
+        }
+    }
+}
