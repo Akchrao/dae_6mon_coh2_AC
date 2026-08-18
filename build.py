@@ -331,4 +331,4 @@ for col in ['C','D','E','F','H','I','J','K']:
     ws2.column_dimensions[col].width = 16
 
 wb.save("/mnt/user-data/outputs/Akhila_Project_Board_Restructured.xlsx")
-print("Saved. Total days:", sum(len(w['days']) for w in weeks))
+print("Saveddddddddddddd. Total days:", sum(len(w['days']) for w in weeks))
