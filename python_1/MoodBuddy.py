@@ -1,6 +1,6 @@
 """
 MoodBuddy — Complete Emotion Tracking
---------------------------------------------
+-------------------------------------------------
 A persistent beginner Python mood tracker.
 
 The program saves one record per user name in moodbuddy_users.json.
