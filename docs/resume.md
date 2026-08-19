@@ -16,7 +16,7 @@ layout: single
 </div>
 
 <div style="text-align:center; margin:2rem 0;">
-  <a href="{{ '/assets/files/Akhila_Ch.docx' | relative_url }}" 
+  <a href="{{ '/assets/files/Akhila_Chennamaneni_Resume.pdf' | relative_url }}" 
      download="Akhila_Chennamaneni_Resume.docx"
      style="background:#0070f3; color:white; padding:0.75rem 1.5rem; 
             border-radius:99px; text-decoration:none; font-weight:bold; 
