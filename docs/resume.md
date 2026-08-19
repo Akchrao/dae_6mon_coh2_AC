@@ -33,7 +33,6 @@ Experienced Salesforce Administrator with 3+ years of hands-on experience managi
 
 ### Salesforce Consultant
 **Salesforce Consultant — Waste Management at Sakesh solutions LLC, Remote | April 2024 – May 2026**
-** Waste Management
 - Worked with business stakeholders to gather and analyze requirements and translate them into scalable Salesforce solutions aligned with business processes.
 -Participated in **migration** of business data and processes from legacy and on-premise systems to Salesforce, including data mapping, cleansing, validation, and reconciliation.
 - Designed and configured Salesforce solutions using custom objects, fields, page layouts, record types, validation rules, Flow automation, approval processes, and other declarative tools.
