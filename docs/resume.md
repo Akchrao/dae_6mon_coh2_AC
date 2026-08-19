@@ -17,19 +17,32 @@ layout: single
 
 <div style="text-align:center; margin:2rem 0;">
   <a href="{{ '/assets/files/Akhila_Chennamaneni_Resume.pdf' | relative_url }}" 
-     download="Akhila_Chennamaneni_Resume.docx"
+     download="Akhila_Chennamaneni_Resume.pdf"
      style="background:#0070f3; color:white; padding:0.75rem 1.5rem; 
             border-radius:99px; text-decoration:none; font-weight:bold; 
             box-shadow:0 4px 12px rgba(0,112,243,0.3);">
-    Download Resume (DOCX)
+    Download Resume (PDF)
   </a>
 </div>
 
 ## Professional Summary
 
-Experienced Junior Salesforce Administrator with 3+ years of hands-on experience managing Salesforce CRM systems, supporting end-users, and maintaining data integrity. Transitioning into Identity and Access Management (IAM) and GRC, with a focus on securing healthcare enterprise environments through RBAC and identity governance.
+Experienced Salesforce Administrator with 3+ years of hands-on experience managing Salesforce CRM systems, supporting end-users, and maintaining data integrity. Transitioning into Identity and Access Management (IAM) and GRC, with a focus on securing healthcare enterprise environments through RBAC and identity governance.
 
 ## Professional Experience
+
+### Salesforce Consultant
+**Salesforce Consultant — Waste Management at Sakesh solutions LLC, Remote | April 2024 – May 2026**
+** Waste Management
+- Worked with business stakeholders to gather and analyze requirements and translate them into scalable Salesforce solutions aligned with business processes.
+-Participated in **migration** of business data and processes from legacy and on-premise systems to Salesforce, including data mapping, cleansing, validation, and reconciliation.
+- Designed and configured Salesforce solutions using custom objects, fields, page layouts, record types, validation rules, Flow automation, approval processes, and other declarative tools.
+Recommended Salesforce best practices and process improvements to enhance system usability, automation, data quality, and overall business efficiency.
+- Supported Salesforce data migration activities using Data Loader, **Data Import Wizard**, and ETL processes to extract, transform, and load data from multiple source systems.
+- Designed and implemented Salesforce security models using profiles, permission sets, roles, sharing rules, and field-level security based on business and compliance requirements.
+- Coordinated Salesforce deployments across development, QA, UAT, and production environments using change sets and **CI/CD processes** through Azure DevOps.
+- Created reports and dashboards to provide stakeholders with actionable insights into business operations, performance metrics, and Salesforce adoption.
+- Conducted functional testing, supported **UAT activities**, resolved defects, and validated Salesforce enhancements before production deployment.
 
 ### Salesforce Administrator
 **Solar Youth — New Haven, CT | Jan 2022 – Dec 2023**
