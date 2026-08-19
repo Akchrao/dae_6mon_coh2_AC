@@ -5,7 +5,7 @@ permalink: /
 ---
 
 <div class="hero-premium">
-  <h1 class="text-gradient">IAM Analyst & <br>Salesforce Specialist</h1>
+  <h1 class="text-gradient">IAM GRC Analyst & <br>Salesforce Consultant</h1>
   <p style="font-size: 1.4rem; color: #555; margin-bottom: 2rem; max-width: 600px;">
     Bridging the gap between Identity & Access Management (IAM), Governance, Risk & Compliance (GRC), and Salesforce CRM operations.
   </p>
