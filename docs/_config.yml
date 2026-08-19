@@ -9,18 +9,17 @@ author:
   avatar: /assets/img/Linkedin_image.png # Generic avatar placeholder
   bio: "IAM GRC Analyst"
   location: "Stamford, CT"
-  email: akchrao@gmail.com
+  email: "ch.akhilarao@gmail.com"
   links:
-  - label: LinkedIn
-    icon: fab fa-fw fa-linkedin
-    url: https://www.linkedin.com/in/akhila-chennamaneni-228651236
-  - label: GitHub
-    icon: fab fa-fw fa-github
-    url: https://github.com/Akchrao/dae_6mon_coh2_AC
-  - label: Resume
-    icon: fas fa-fw fa-file-pdf
-    url: /assets/files/Akhila_Ch.docx # Updated link to her docx
-
+    - label: LinkedIn
+      icon: fab fa-fw fa-linkedin
+      url: https://www.linkedin.com/in/akhila-chennamaneni-228651236
+    - label: GitHub
+      icon: fab fa-fw fa-github
+      url: https://github.com/Akchrao/dae_6mon_coh2_AC
+    - label: Resume
+      icon: fas fa-fw fa-file-pdf
+      url: /assets/files/Akhila_Chennamaneni_Resume.pdf
 logo: /assets/img/dae-logo.png
 title_separator: "|"
 subtitle: "IAM | GRC | Salesforce CRM | Cybersecurity Capstone"
