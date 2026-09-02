@@ -41,4 +41,15 @@ Markdown lets me write readable plain text and preview it has a formatted docume
 
 <!-- Comment-->
 
-<marquee>
+<marquee>Colorful</marquee>
+
+<!--Using Color Names-->
+<span style="color:red">This text is red.</span>
+
+<!--Using Hex Codes-->
+<span style="color:#28a745">This text is green.</span>
+
+<!--Using RGB/RGBA Codes-->
+<span style="color:rgb(255, 0, 0)"> This text is blue.</span>
+
+<span style="color:rgb(168, 100, 4)"> Hello Colorful World!<span>
