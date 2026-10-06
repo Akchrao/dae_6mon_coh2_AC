@@ -1,0 +1,27 @@
+# Hardened runtime settings for the CAN EHR simulator.
+services:
+  ehr-simulator:
+    image: can-ehr-simulator:2.0
+    build: .
+    container_name: can-ehr-simulator
+    user: "65532:65532"
+    read_only: true                 # immutable root filesystem
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev,size=16m
+    cap_drop: [ALL]                 # no Linux capabilities needed (port 8080 > 1024)
+    security_opt:
+      - no-new-privileges:true      # block setuid/privilege escalation
+    pids_limit: 100                 # fork-bomb protection
+    mem_limit: 256m
+    cpus: 0.5
+    ports:
+      - "127.0.0.1:8081:8080"       # bind to localhost only, not all interfaces
+    networks: [ehr-net]
+    restart: on-failure:3
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+networks:
+  ehr-net:
+    driver: bridge
