@@ -1,0 +1,58 @@
+Authorized access only. Care Access Navigator system - activity is logged and monitored.
+== AFTER hardening ==
+-- sshd effective settings
+logingracetime 30
+maxauthtries 3
+permitrootlogin no
+passwordauthentication no
+kbdinteractiveauthentication no
+x11forwarding no
+permitemptypasswords no
+allowtcpforwarding no
+allowagentforwarding no
+ciphers chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com
+macs hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com
+kexalgorithms sntrup761x25519-sha512@openssh.com,curve25519-sha256,curve25519-sha256@libssh.org
+allowusers canadmin
+authenticationmethods publickey
+
+-- ufw
+Status: active
+Logging: on (medium)
+Default: deny (incoming), allow (outgoing), disabled (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     LIMIT IN    24.189.77.111              # SSH from admin IP (rate-limited)
+
+-- unattended-upgrades
+enabled
+active
+APT::Periodic::Update-Package-Lists "1";
+APT::Periodic::Download-Upgradeable-Packages "1";
+APT::Periodic::Unattended-Upgrade "1";
+APT::Periodic::AutocleanInterval "7";
+-- unattended-upgrades dry run
+Allowed origins are: o=Ubuntu,a=noble, o=Ubuntu,a=noble-security, o=UbuntuESMApps,a=noble-apps-security, o=UbuntuESM,a=noble-infra-security, o=Ubuntu,a=noble-security, o=UbuntuESMApps,a=noble-apps-security, o=UbuntuESM,a=noble-infra-security
+Initial blacklist: 
+Packages that will be upgraded: linux-azure linux-cloud-tools-azure linux-headers-azure linux-image-azure linux-tools-azure
+-- apt timers
+NEXT                        LEFT LAST PASSED UNIT                    ACTIVATES
+Wed 2026-10-07 22:36:29 UTC   6h -         - apt-daily.timer         apt-daily.service
+Thu 2026-10-08 06:51:22 UTC  14h -         - apt-daily-upgrade.timer apt-daily-upgrade.service
+
+-- fail2ban
+Status for the jail: sshd
+|- Filter
+|  |- Currently failed:	0
+|  |- Total failed:	0
+|  `- Journal matches:	_SYSTEMD_UNIT=sshd.service + _COMM=sshd
+`- Actions
+   |- Currently banned:	0
+   |- Total banned:	0
+   `- Banned IP list:	
+-- pending upgrades now
+5
+-- reboot required?
+yes

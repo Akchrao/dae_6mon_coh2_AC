@@ -1,0 +1,19 @@
+== BEFORE hardening ==
+-- sshd effective settings
+maxauthtries 6
+permitrootlogin without-password
+passwordauthentication no
+kbdinteractiveauthentication no
+x11forwarding yes
+allowtcpforwarding yes
+-- ufw
+Status: inactive
+-- pending upgrades
+0
+-- fail2ban
+inactive
+-- listening ports
+0.0.0.0:22 users:(("sshd",pid=1250,fd=3),("systemd",pid=1,fd=153))
+127.0.0.54:53 users:(("systemd-resolve",pid=356,fd=17))
+127.0.0.53%lo:53 users:(("systemd-resolve",pid=356,fd=15))
+[::]:22 users:(("sshd",pid=1250,fd=4),("systemd",pid=1,fd=155))

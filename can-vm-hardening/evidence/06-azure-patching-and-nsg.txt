@@ -1,0 +1,21 @@
+== Azure platform patching configuration ==
+{
+  "assessmentMode": "ImageDefault",
+  "passwordAuthDisabled": true,
+  "patchMode": "AutomaticByPlatform",
+  "secureBoot": true,
+  "securityType": "TrustedLaunch",
+  "vTPM": true
+}
+== Azure patch assessment ==
+{
+  "critical_security": 0,
+  "other": 5,
+  "reboot": false,
+  "started": "2026-10-07T15:55:35.6466542+00:00",
+  "status": "Succeeded"
+}
+== NSG IP flow verify (Network Watcher) ==
+SSH from 24.189.77.111 -> Allow securityRules/allow-ssh-admin-ip 
+SSH from 203.0.113.50 -> Deny securityRules/deny-all-inbound 
+HTTP 80 from 24.189.77.111 -> Deny securityRules/deny-all-inbound 

@@ -1,0 +1,12 @@
+User=65532:65532 ReadOnly=true CapDrop=[ALL] SecOpt=[no-new-privileges:true] Pids=100 Mem=268435456 NanoCPUs=500000000 Privileged=false Ports=map[8080/tcp:[map[HostIp:127.0.0.1 HostPort:8081]]]
+shell available?  executable file not found in $PATH
+pip available?    /usr/bin/python3: No module named pip
+uid/gid:          65532 65532
+write /app:       OSError: [Errno 30] Read-only file system: '/app/x'
+modify app.py:    PermissionError: [Errno 13] Permission denied: '/app/app.py'
+write /tmp:       allowed (tmpfs, noexec,nosuid,nodev)
+caps / nnp:       CapEff:	0000000000000000 NoNewPrivs:	1
+fork bomb limit:  blocked after 96 processes: Resource temporarily unavailable
+still healthy?    {"service":"ehr-simulator-healthcheck","status":"ok"}
+
+reachable from LAN IP? no (bound to 127.0.0.1 only)

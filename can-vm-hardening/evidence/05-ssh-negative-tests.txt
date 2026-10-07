@@ -1,0 +1,15 @@
+== Negative SSH tests (from admin IP 24.189.77.111) ==
+-- 1. password login attempt (key auth disabled for this test):
+canadmin@64.236.131.161: Permission denied (publickey).
+-- 2. root login attempt using the valid key:
+root@64.236.131.161: Permission denied (publickey).
+-- 3. offered ssh auth methods:
+Permission denied (publickey)
+-- server-side log + fail2ban counters:
+Oct 07 15:54:44 can-vm-hardened sshd[1489]: Connection closed by authenticating user canadmin 24.189.77.111 port 51488 [preauth]
+Oct 07 15:54:57 can-vm-hardened sshd[1499]: User root from 24.189.77.111 not allowed because not listed in AllowUsers
+Oct 07 15:55:09 can-vm-hardened sshd[1504]: User nobody from 24.189.77.111 not allowed because not listed in AllowUsers
+|  |- Currently failed:	1
+|  |- Total failed:	2
+   |- Currently banned:	0
+   |- Total banned:	0

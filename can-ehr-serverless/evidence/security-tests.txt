@@ -1,0 +1,16 @@
+== Function inbound (from allowed IP 24.189.77.111) ==
+no key:            401
+with key:          {"service": "CAN EHR status", "status": "ok", "auth": "managed-identity", "referrals_container": "referrals", "referral_count": 3}  [200]
+plain HTTP:        301 -> https://func-can-ehr-9a8c96.azurewebsites.net/api/ehr-status
+TLS 1.1 forced:    handshake refused (min TLS 1.2)
+== Storage firewall ==
+anonymous read:    409 (public blob access disabled)
+shared key access: not permitted
+== Negative test: only 203.0.113.10 allowed; calling from 24.189.77.111 ==
+with valid key:    <h1 id="unavailable">Error 403 - Forbidden</h1>
+            <p id="tryAgain">The web app you have attempted to reach has blocked your access.</p>
+        </div>
+    </div>
+</body>
+</html>
+  [403]

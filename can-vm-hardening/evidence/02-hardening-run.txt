@@ -1,0 +1,93 @@
+[1/5] Patching now + installing security tooling
+Calculating upgrade...
+62 upgraded, 0 newly installed, 0 to remove and 5 not upgraded.
+Preconfiguring packages ...
+Installing new version of config file /etc/issue ...
+Installing new version of config file /etc/issue.net ...
+Installing new version of config file /etc/lsb-release ...
+motd-news.service is a disabled or a static unit not running, not starting it.
+Adding 'diversion of /lib/systemd/system-generators/netplan to /lib/systemd/system-generators/netplan.usr-is-merged by netplan-generator'
+info: The user `syslog' is already a member of `adm'.
+Generating locales (this might take a while)...
+Generation complete.
+Reloading AppArmor profiles 
+No schema files found: doing nothing.
+update-initramfs: deferring update (trigger activated)
+Removing 'diversion of /lib/systemd/system-generators/netplan to /lib/systemd/system-generators/netplan.usr-is-merged by netplan-generator'
+update-initramfs: Generating /boot/initrd.img-6.17.0-1022-azure
+update-initramfs: deferring update (trigger activated)
+update-initramfs: Generating /boot/initrd.img-6.17.0-1022-azure
+
+
+ /etc/needrestart/restart.d/systemd-manager
+ systemctl restart chrony.service cron.service multipathd.service packagekit.service ssh.service systemd-journald.service systemd-networkd.service systemd-resolved.service systemd-udevd.service udisks2.service walinuxagent.service
+
+ /etc/needrestart/restart.d/dbus.service
+ systemctl restart getty@tty1.service
+ systemctl restart networkd-dispatcher.service
+ systemctl restart serial-getty@ttyS0.service
+ systemctl restart systemd-logind.service
+ systemctl restart unattended-upgrades.service
+
+
+User sessions running outdated binaries:
+ canadmin @ session #5: sshd[1537]
+ canadmin @ user manager service: systemd[1258]
+
+unattended-upgrades is already the newest version (2.9.1+nmu4ubuntu1).
+unattended-upgrades set to manually installed.
+ufw is already the newest version (0.36.2-6).
+ufw set to manually installed.
+Suggested packages:
+0 upgraded, 5 newly installed, 0 to remove and 5 not upgraded.
+Preconfiguring packages ...
+
+Creating config file /etc/apt/listchanges.conf with new version
+/usr/lib/python3/dist-packages/fail2ban/tests/fail2banregextestcase.py:224: SyntaxWarning: invalid escape sequence '\s'
+/usr/lib/python3/dist-packages/fail2ban/tests/fail2banregextestcase.py:435: SyntaxWarning: invalid escape sequence '\S'
+/usr/lib/python3/dist-packages/fail2ban/tests/fail2banregextestcase.py:443: SyntaxWarning: invalid escape sequence '\S'
+/usr/lib/python3/dist-packages/fail2ban/tests/fail2banregextestcase.py:444: SyntaxWarning: invalid escape sequence '\d'
+/usr/lib/python3/dist-packages/fail2ban/tests/fail2banregextestcase.py:451: SyntaxWarning: invalid escape sequence '\s'
+/usr/lib/python3/dist-packages/fail2ban/tests/fail2banregextestcase.py:537: SyntaxWarning: invalid escape sequence '\['
+/usr/lib/python3/dist-packages/fail2ban/tests/servertestcase.py:1375: SyntaxWarning: invalid escape sequence '\s'
+/usr/lib/python3/dist-packages/fail2ban/tests/servertestcase.py:1378: SyntaxWarning: invalid escape sequence '\s'
+/usr/lib/python3/dist-packages/fail2ban/tests/servertestcase.py:1421: SyntaxWarning: invalid escape sequence '\s'
+/usr/lib/python3/dist-packages/fail2ban/tests/servertestcase.py:1424: SyntaxWarning: invalid escape sequence '\s'
+
+
+
+ /etc/needrestart/restart.d/dbus.service
+ systemctl restart getty@tty1.service
+ systemctl restart networkd-dispatcher.service
+ systemctl restart serial-getty@ttyS0.service
+ systemctl restart systemd-logind.service
+ systemctl restart unattended-upgrades.service
+
+
+User sessions running outdated binaries:
+ canadmin @ session #5: sshd[1537]
+ canadmin @ user manager service: systemd[1258]
+
+[2/5] Automated security patching (unattended-upgrades)
+Synchronizing state of unattended-upgrades.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install enable unattended-upgrades
+[3/5] Host firewall (ufw): deny all inbound except SSH from 24.189.77.111
+Backing up 'user.rules' to '/etc/ufw/user.rules.20261007_155209'
+Backing up 'before.rules' to '/etc/ufw/before.rules.20261007_155209'
+Backing up 'after.rules' to '/etc/ufw/after.rules.20261007_155209'
+Backing up 'user6.rules' to '/etc/ufw/user6.rules.20261007_155209'
+Backing up 'before6.rules' to '/etc/ufw/before6.rules.20261007_155209'
+Backing up 'after6.rules' to '/etc/ufw/after6.rules.20261007_155209'
+
+Default incoming policy changed to 'deny'
+(be sure to update your rules accordingly)
+Default outgoing policy changed to 'allow'
+(be sure to update your rules accordingly)
+Rules updated
+Logging enabled
+Firewall is active and enabled on system startup
+[4/5] SSH hardening
+[5/5] fail2ban: ban IPs after repeated SSH failures
+Synchronizing state of fail2ban.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install enable fail2ban
+Hardening complete.

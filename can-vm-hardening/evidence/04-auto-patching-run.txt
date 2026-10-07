@@ -1,0 +1,19 @@
+Authorized access only. Care Access Navigator system - activity is logged and monitored.
+== unattended-upgrade run ==
+Packages that will be upgraded: linux-azure linux-cloud-tools-azure linux-headers-azure linux-image-azure linux-tools-azure
+Writing dpkg log to /var/log/unattended-upgrades/unattended-upgrades-dpkg.log
+All upgrades installed
+-- log
+2026-10-07 15:52:49,250 INFO Writing dpkg log to /var/log/unattended-upgrades/unattended-upgrades-dpkg.log
+2026-10-07 15:53:55,021 INFO All upgrades installed
+2026-10-07 15:53:55,306 WARNING Found /var/run/reboot-required, rebooting
+2026-10-07 15:53:55,311 WARNING Shutdown msg: b"Reboot scheduled for Thu 2026-10-08 03:00:00 UTC, use 'shutdown -c' to cancel."
+-- pending now: 5
+-- kernel before reboot: 6.17.0-1022-azure
+== after reboot ==
+kernel: 7.0.0-1014-azure
+pending upgrades: 5
+reboot required: no
+ufw: Status: active
+fail2ban: active
+unattended-upgrades: active
