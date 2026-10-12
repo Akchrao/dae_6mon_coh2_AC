@@ -1,0 +1,7 @@
+{"location":"eastus","kind":"Linux",
+ "tags":{"Owner":"akhila.chennamaneni","Environment":"Lab","DataClassification":"Internal"},
+ "properties":{
+  "dataSources":{"syslog":[{"name":"auth-and-security","streams":["Microsoft-Syslog"],
+     "facilityNames":["auth","authpriv","kern"],"logLevels":["Info","Notice","Warning","Error","Critical","Alert","Emergency"]}]},
+  "destinations":{"logAnalytics":[{"name":"law","workspaceResourceId":"/subscriptions/9a8c964b-cf59-4657-bff2-5f84fb7b0709/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-9a8c964b-cf59-4657-bff2-5f84fb7b0709-EUS"}]},
+  "dataFlows":[{"streams":["Microsoft-Syslog"],"destinations":["law"]}]}}

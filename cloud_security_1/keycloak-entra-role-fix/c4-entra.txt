@@ -1,0 +1,5 @@
+== Entra ID: app role assignments on care-access-navigator-keycloak-broker ==
+Akhila Chennamaneni    -> Default Access
+Test Nurse             -> Nurse
+Test Billing           -> Billing
+assignment required: true

@@ -1,0 +1,5 @@
+{
+  "approvedSources": { "type": "Array", "metadata": { "displayName": "Approved admin source prefixes" },
+                       "defaultValue": ["24.189.77.111/32"] },
+  "effect": { "type": "String", "allowedValues": ["Audit", "Deny", "Disabled"], "defaultValue": "Deny" }
+}

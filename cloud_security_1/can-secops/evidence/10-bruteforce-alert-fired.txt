@@ -1,0 +1,1 @@
+[2026-10-12 16:24:28 UTC] ALERT FIRED: sqr-ssh-bruteforce  Sev2  state=Fired  target=Log Analytics workspace (first evaluation after the fix; failed attempts at 15:54 and 16:10)

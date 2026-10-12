@@ -1,0 +1,7 @@
+== Brute-force detection re-test (2026-10-12) — alert window widened to 30 min to absorb ~4 min ingestion latency
+[2026-10-12 15:54:18 UTC] SSH attempt as 'root' -> root@64.236.131.161: Permission denied (publickey).
+[2026-10-12 15:54:25 UTC] SSH attempt as 'admin' -> admin@64.236.131.161: Permission denied (publickey).
+[2026-10-12 15:54:31 UTC] admin SSH still works (below fail2ban threshold): yes
+[2026-10-12 16:10:20 UTC] Rule condition corrected: was 'count of result rows > 1' (query returns 1 row per host, so it could never fire); now 'total FailedAttempts > 1'
+[2026-10-12 16:10:21 UTC] SSH attempt as 'root' -> root@64.236.131.161: Permission denied (publickey).
+[2026-10-12 16:10:27 UTC] SSH attempt as 'admin' -> admin@64.236.131.161: Permission denied (publickey).

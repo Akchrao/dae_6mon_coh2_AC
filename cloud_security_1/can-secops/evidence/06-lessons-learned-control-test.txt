@@ -1,0 +1,7 @@
+== Lessons-learned control re-test (2026-10-12)
+   Policy 'CAN - Management ports only from approved admin IPs' assigned at mg-can 15:55:19 UTC
+[2026-10-12 15:55:39 UTC] Replay INC-20261008-01 step A1: add SSH rule from 203.0.113.66 to vm-sg
+   DENIED  | assignment: CAN - Management ports only from approved admin IPs
+   message : INC-20261008-01 control: inbound SSH/RDP may only be opened to approved admin IP prefixes. Request an exception from Cloud Security.
+[2026-10-12 15:55:41 UTC] Control: same rule from the APPROVED admin IP (validate only)
+   validate: Succeeded

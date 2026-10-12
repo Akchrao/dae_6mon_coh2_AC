@@ -1,0 +1,7 @@
+{"$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#","contentVersion":"1.0.0.0","resources":[
+ {"type":"Microsoft.Compute/virtualMachines","apiVersion":"2024-03-01","name":"test-oversized-vm","location":"eastus",
+  "tags":{"Owner":"akhila.chennamaneni","Environment":"Lab","DataClassification":"Internal"},
+  "properties":{"hardwareProfile":{"vmSize":"Standard_D16s_v5"},
+   "storageProfile":{"imageReference":{"publisher":"Canonical","offer":"ubuntu-24_04-lts","sku":"server","version":"latest"}},
+   "osProfile":{"computerName":"test","adminUsername":"canadmin","linuxConfiguration":{"disablePasswordAuthentication":true,"ssh":{"publicKeys":[{"path":"/home/canadmin/.ssh/authorized_keys","keyData":"ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPlaceholderKeyForValidationOnly000000000000 test"}]}}},
+   "networkProfile":{"networkInterfaces":[{"id":"[resourceId('Microsoft.Network/networkInterfaces','does-not-exist')]"}]}}}]}

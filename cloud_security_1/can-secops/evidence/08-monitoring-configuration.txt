@@ -1,0 +1,31 @@
+== CAN security operations configuration (2026-10-12 16:11 UTC)
+
+-- Centralized logging (CloudTrail equivalent): subscription Activity Log export
+   can-activitylog-to-law	Administrative, Security, Policy, Alert, Recommendation, ServiceHealth, ResourceHealth, Autoscale
+   destination: Log Analytics DefaultWorkspace-9a8c964b-...-EUS (retention 30 d, daily cap 0.15 GB)
+
+-- VNet flow logs (VPC Flow Logs equivalent)
+   fl-can-vnet-cloudsec1    vnet=can-vnet-cloudsec1   enabled=True retention=7d trafficAnalytics=True every 10 min
+   fl-can-vnet-vmlab        vnet=can-vnet-vmlab       enabled=True retention=7d trafficAnalytics=True every 10 min
+
+-- Host log collection
+   Azure Monitor Agent on can-vm-hardened; DCR dcr-can-vm-security-syslog: syslog auth, authpriv, kern -> Log Analytics
+
+-- Threat detection (GuardDuty equivalent): Microsoft Defender for Cloud
+   VirtualMachines	P2	26 days, 3:48:00
+   StorageAccounts	DefenderForStorageV2	26 days, 3:48:00
+   Arm	PerSubscription	26 days, 3:48:00
+   Defender for Storage extensions: on-upload malware scanning (cap 1 GB/account/month), sensitive data discovery
+   Email notifications: alerts >= Medium to subscription owner; continuous export of alerts to Log Analytics
+
+-- Alerting (action group ag-can-secops -> email)
+   al-nsg-rule-change         enabled=True  Firewall (NSG) rule created or modified
+   al-nsg-rule-delete         enabled=True  Firewall (NSG) rule deleted
+   al-role-assignment         enabled=True  New Azure RBAC role assignment (privilege change)
+   al-policy-assignment-del   enabled=True  Governance policy assignment removed
+   al-policy-exemption        enabled=True  Policy exemption created or changed
+   al-storage-listkeys        enabled=True  Storage account keys retrieved
+   al-defender-alert          enabled=True  Microsoft Defender for Cloud raised a security alert
+   sqr-ssh-bruteforce         enabled=True  log query every 0:15:00 over 0:30:00 window, Sev2: total FailedAttempts > 1
+
+-- Dashboard: Azure Workbook 'CAN Security Operations Dashboard' (rg-cloudsec1-can)

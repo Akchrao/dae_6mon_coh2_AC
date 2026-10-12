@@ -1,0 +1,4 @@
+{"$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#","contentVersion":"1.0.0.0","resources":[
+ {"type":"Microsoft.Network/bastionHosts","apiVersion":"2024-01-01","name":"test-bastion","location":"eastus",
+  "tags":{"Owner":"akhila.chennamaneni","Environment":"Lab","DataClassification":"Internal"},"sku":{"name":"Basic"},
+  "properties":{"ipConfigurations":[{"name":"ip","properties":{"subnet":{"id":"[resourceId('Microsoft.Network/virtualNetworks/subnets','can-vnet-cloudsec1','AzureBastionSubnet')]"},"publicIPAddress":{"id":"[resourceId('Microsoft.Network/publicIPAddresses','does-not-exist')]"}}}]}}]}

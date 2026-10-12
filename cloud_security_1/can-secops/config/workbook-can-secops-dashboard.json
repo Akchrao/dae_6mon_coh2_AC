@@ -1,0 +1,164 @@
+{
+ "version": "Notebook/1.0",
+ "items": [
+  {
+   "type": 1,
+   "content": {
+    "json": "# CAN Security Operations Dashboard\nCare Access Navigator \u2014 Azure subscription 1. Sources: Microsoft Defender for Cloud (threat detection), Azure Activity Log (control plane, *CloudTrail equivalent*), VM auth logs via Azure Monitor Agent, VNet flow logs via Traffic Analytics, Azure Policy."
+   }
+  },
+  {
+   "type": 3,
+   "content": {
+    "version": "KqlItem/1.0",
+    "query": "union\n (AzureActivity | where TimeGenerated > ago(7d) and OperationNameValue has 'securityRules' and ActivityStatusValue == 'Success' | summarize Value=count() | extend Metric='NSG rule changes (7d)'),\n (AzureActivity | where TimeGenerated > ago(7d) and OperationNameValue has 'listKeys' and ActivityStatusValue == 'Success' | summarize Value=count() | extend Metric='Storage key retrievals (7d)'),\n (AzureActivity | where TimeGenerated > ago(7d) and OperationNameValue =~ 'Microsoft.Authorization/policies/deny/action' | summarize Value=count() | extend Metric='Requests denied by policy (7d)'),\n (AzureActivity | where TimeGenerated > ago(7d) and OperationNameValue has 'roleAssignments/write' and ActivityStatusValue == 'Success' | summarize Value=count() | extend Metric='RBAC role grants (7d)'),\n (Syslog | where TimeGenerated > ago(7d) and Facility in ('auth','authpriv') and SyslogMessage has_any (\"not allowed because\",\"Invalid user\",\"Connection closed by authenticating user\",\"Failed password\",\"authentication failure\",\"maximum authentication attempts\") | summarize Value=count() | extend Metric='Failed SSH auth events (7d)')\n| project Metric, Value\n",
+    "size": 4,
+    "title": "Key security metrics",
+    "queryType": 0,
+    "resourceType": "microsoft.operationalinsights/workspaces",
+    "crossComponentResources": [
+     "/subscriptions/9a8c964b-cf59-4657-bff2-5f84fb7b0709/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-9a8c964b-cf59-4657-bff2-5f84fb7b0709-EUS"
+    ],
+    "visualization": "tiles",
+    "tileSettings": {
+     "titleContent": {
+      "columnMatch": "Metric",
+      "formatter": 1
+     },
+     "leftContent": {
+      "columnMatch": "Value",
+      "formatter": 12,
+      "formatOptions": {
+       "palette": "auto"
+      }
+     },
+     "showBorder": true
+    }
+   }
+  },
+  {
+   "type": 3,
+   "content": {
+    "version": "KqlItem/1.0",
+    "query": "securityresources | where type == 'microsoft.security/locations/alerts' | extend Severity=tostring(properties.Severity) | summarize Alerts=count() by Severity",
+    "size": 1,
+    "title": "Defender for Cloud alerts by severity",
+    "queryType": 1,
+    "resourceType": "microsoft.resourcegraph/resources",
+    "crossComponentResources": [
+     "/subscriptions/9a8c964b-cf59-4657-bff2-5f84fb7b0709"
+    ],
+    "visualization": "piechart"
+   }
+  },
+  {
+   "type": 3,
+   "content": {
+    "version": "KqlItem/1.0",
+    "query": "securityresources | where type == 'microsoft.security/locations/alerts' | extend Time=todatetime(properties.TimeGeneratedUtc), Alert=tostring(properties.AlertDisplayName), Severity=tostring(properties.Severity), Entity=tostring(properties.CompromisedEntity), Status=tostring(properties.Status) | project Time, Severity, Alert, Entity, Status | order by Time desc | take 25",
+    "size": 0,
+    "title": "Defender for Cloud alerts (latest 25)",
+    "queryType": 1,
+    "resourceType": "microsoft.resourcegraph/resources",
+    "crossComponentResources": [
+     "/subscriptions/9a8c964b-cf59-4657-bff2-5f84fb7b0709"
+    ],
+    "visualization": "table"
+   }
+  },
+  {
+   "type": 3,
+   "content": {
+    "version": "KqlItem/1.0",
+    "query": "Syslog | where TimeGenerated > ago(7d) and Facility in ('auth','authpriv') and SyslogMessage has_any (\"not allowed because\",\"Invalid user\",\"Connection closed by authenticating user\",\"Failed password\",\"authentication failure\",\"maximum authentication attempts\") | summarize Attempts=count() by bin(TimeGenerated, 1h), HostName",
+    "size": 0,
+    "title": "Failed / blocked SSH authentications (VM auth log)",
+    "queryType": 0,
+    "resourceType": "microsoft.operationalinsights/workspaces",
+    "crossComponentResources": [
+     "/subscriptions/9a8c964b-cf59-4657-bff2-5f84fb7b0709/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-9a8c964b-cf59-4657-bff2-5f84fb7b0709-EUS"
+    ],
+    "visualization": "timechart"
+   }
+  },
+  {
+   "type": 3,
+   "content": {
+    "version": "KqlItem/1.0",
+    "query": "AzureActivity | where TimeGenerated > ago(7d) and ActivityStatusValue == 'Success' | where OperationNameValue has_any ('securityRules','roleAssignments','listKeys','policyAssignments','policyExemptions','regenerateKey') | project TimeGenerated, Operation=OperationNameValue, Resource=tostring(split(_ResourceId,'/')[-1]), Caller, CallerIpAddress | order by TimeGenerated desc",
+    "size": 0,
+    "title": "Security-relevant control-plane changes (Activity Log)",
+    "queryType": 0,
+    "resourceType": "microsoft.operationalinsights/workspaces",
+    "crossComponentResources": [
+     "/subscriptions/9a8c964b-cf59-4657-bff2-5f84fb7b0709/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-9a8c964b-cf59-4657-bff2-5f84fb7b0709-EUS"
+    ],
+    "visualization": "table"
+   }
+  },
+  {
+   "type": 3,
+   "content": {
+    "version": "KqlItem/1.0",
+    "query": "AzureActivity | where TimeGenerated > ago(7d) and OperationNameValue =~ 'Microsoft.Authorization/policies/deny/action' | extend a=parse_json(tostring(Properties_d.policies)) | mv-expand a | summarize Denials=count() by Assignment=tostring(a.policyAssignmentName)",
+    "size": 1,
+    "title": "Requests blocked by Azure Policy",
+    "queryType": 0,
+    "resourceType": "microsoft.operationalinsights/workspaces",
+    "crossComponentResources": [
+     "/subscriptions/9a8c964b-cf59-4657-bff2-5f84fb7b0709/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-9a8c964b-cf59-4657-bff2-5f84fb7b0709-EUS"
+    ],
+    "visualization": "barchart"
+   }
+  },
+  {
+   "type": 3,
+   "content": {
+    "version": "KqlItem/1.0",
+    "query": "NTANetAnalytics | where TimeGenerated > ago(7d) and SubType == 'FlowLog' | summarize Flows=sum(AllowedInFlows+DeniedInFlows+AllowedOutFlows+DeniedOutFlows) by FlowStatus, FlowDirection",
+    "size": 1,
+    "title": "Network flows by status (VNet flow logs / Traffic Analytics)",
+    "queryType": 0,
+    "resourceType": "microsoft.operationalinsights/workspaces",
+    "crossComponentResources": [
+     "/subscriptions/9a8c964b-cf59-4657-bff2-5f84fb7b0709/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-9a8c964b-cf59-4657-bff2-5f84fb7b0709-EUS"
+    ],
+    "visualization": "barchart"
+   }
+  },
+  {
+   "type": 3,
+   "content": {
+    "version": "KqlItem/1.0",
+    "query": "NTANetAnalytics | where TimeGenerated > ago(7d) and SubType == 'FlowLog' and DestPort == 22 and FlowDirection == 'Inbound' | summarize Flows=sum(AllowedInFlows+DeniedInFlows) by SrcIp=coalesce(SrcIp, tostring(SrcPublicIps)), FlowStatus | top 10 by Flows",
+    "size": 1,
+    "title": "Top inbound sources to management port 22",
+    "queryType": 0,
+    "resourceType": "microsoft.operationalinsights/workspaces",
+    "crossComponentResources": [
+     "/subscriptions/9a8c964b-cf59-4657-bff2-5f84fb7b0709/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-9a8c964b-cf59-4657-bff2-5f84fb7b0709-EUS"
+    ],
+    "visualization": "table"
+   }
+  },
+  {
+   "type": 3,
+   "content": {
+    "version": "KqlItem/1.0",
+    "query": "policyresources | where type =~ 'microsoft.policyinsights/policystates' | extend a=tostring(properties.policyAssignmentName), s=tostring(properties.complianceState) | summarize NonCompliant=dcountif(tostring(properties.resourceId), s=='NonCompliant'), Compliant=dcountif(tostring(properties.resourceId), s=='Compliant') by Assignment=a",
+    "size": 1,
+    "title": "Azure Policy compliance (non-compliant resources per assignment)",
+    "queryType": 1,
+    "resourceType": "microsoft.resourcegraph/resources",
+    "crossComponentResources": [
+     "/subscriptions/9a8c964b-cf59-4657-bff2-5f84fb7b0709"
+    ],
+    "visualization": "table"
+   }
+  }
+ ],
+ "isLocked": false,
+ "fallbackResourceIds": [
+  "/subscriptions/9a8c964b-cf59-4657-bff2-5f84fb7b0709/resourceGroups/DefaultResourceGroup-EUS/providers/Microsoft.OperationalInsights/workspaces/DefaultWorkspace-9a8c964b-cf59-4657-bff2-5f84fb7b0709-EUS"
+ ]
+}

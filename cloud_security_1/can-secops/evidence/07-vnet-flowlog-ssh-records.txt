@@ -1,0 +1,28 @@
+== VNet flow log (fl-can-vnet-vmlab) - SSH (dst port 22) flows to can-vm-hardened, decoded from raw blobs
+   total flow tuples in captured blobs: 877; port-22 tuples: 24
+   time (UTC)           source           dest        port  dir  state     NSG rule
+   2026-10-08 20:07:03  24.189.77.111    10.30.1.4   22    in   Begin     UserRule_allow-ssh-admin-ip
+   2026-10-08 20:07:11  24.189.77.111    10.30.1.4   22    in   End       UserRule_allow-ssh-admin-ip
+   2026-10-08 20:11:31  103.1.92.138     10.30.1.4   22    in   Denied    UserRule_deny-all-inbound
+   2026-10-08 20:11:32  103.1.92.138     10.30.1.4   22    in   Denied    UserRule_deny-all-inbound
+   2026-10-08 20:13:39  24.189.77.111    10.30.1.4   22    in   Begin     UserRule_allow-ssh-admin-ip
+   2026-10-08 20:13:46  24.189.77.111    10.30.1.4   22    in   End       UserRule_allow-ssh-admin-ip
+   2026-10-08 20:14:31  24.189.77.111    10.30.1.4   22    in   Begin     UserRule_allow-ssh-admin-ip
+   2026-10-08 20:14:37  24.189.77.111    10.30.1.4   22    in   End       UserRule_allow-ssh-admin-ip
+   2026-10-08 20:14:39  24.189.77.111    10.30.1.4   22    in   Begin     UserRule_allow-ssh-admin-ip
+   2026-10-08 20:14:46  24.189.77.111    10.30.1.4   22    in   End       UserRule_allow-ssh-admin-ip
+   2026-10-08 20:14:48  24.189.77.111    10.30.1.4   22    in   Begin     UserRule_allow-ssh-admin-ip
+   2026-10-08 20:14:54  24.189.77.111    10.30.1.4   22    in   End       UserRule_allow-ssh-admin-ip
+   2026-10-08 20:14:56  24.189.77.111    10.30.1.4   22    in   Begin     UserRule_allow-ssh-admin-ip
+   2026-10-08 20:15:09  24.189.77.111    10.30.1.4   22    in   End       UserRule_allow-ssh-admin-ip
+   2026-10-08 20:21:11  142.93.136.140   10.30.1.4   22    in   Denied    UserRule_deny-all-inbound
+   2026-10-08 20:28:03  62.60.130.219    10.30.1.4   22    in   Denied    UserRule_deny-all-inbound
+   2026-10-08 20:28:26  24.189.77.111    10.30.1.4   22    in   Begin     UserRule_allow-ssh-admin-ip
+   2026-10-08 20:28:33  24.189.77.111    10.30.1.4   22    in   End       UserRule_allow-ssh-admin-ip
+   2026-10-12 15:54:18  24.189.77.111    10.30.1.4   22    in   Begin     UserRule_allow-ssh-admin-ip
+   2026-10-12 15:54:24  24.189.77.111    10.30.1.4   22    in   End       UserRule_allow-ssh-admin-ip
+   2026-10-12 15:54:24  24.189.77.111    10.30.1.4   22    in   Begin     UserRule_allow-ssh-admin-ip
+   2026-10-12 15:54:30  24.189.77.111    10.30.1.4   22    in   End       UserRule_allow-ssh-admin-ip
+   2026-10-12 15:54:31  24.189.77.111    10.30.1.4   22    in   Begin     UserRule_allow-ssh-admin-ip
+   2026-10-12 15:54:38  24.189.77.111    10.30.1.4   22    in   End       UserRule_allow-ssh-admin-ip
+   summary by source/state/rule: {('24.189.77.111', 'Begin', 'UserRule_allow-ssh-admin-ip'): 10, ('24.189.77.111', 'End', 'UserRule_allow-ssh-admin-ip'): 10, ('103.1.92.138', 'Denied', 'UserRule_deny-all-inbound'): 2, ('142.93.136.140', 'Denied', 'UserRule_deny-all-inbound'): 1, ('62.60.130.219', 'Denied', 'UserRule_deny-all-inbound'): 1}

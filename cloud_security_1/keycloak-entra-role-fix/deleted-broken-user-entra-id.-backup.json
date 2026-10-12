@@ -1,0 +1,26 @@
+{
+  "id" : "aefcc8ca-4fd6-4db3-a264-7a68b7f3a33e",
+  "username" : "entra-id.",
+  "firstName" : "Akhila",
+  "lastName" : "Chennamaneni",
+  "email" : "ch.akhilarao@gmail.com",
+  "emailVerified" : false,
+  "createdTimestamp" : 1790020663869,
+  "enabled" : true,
+  "totp" : false,
+  "disableableCredentialTypes" : [ ],
+  "requiredActions" : [ ],
+  "federatedIdentities" : [ {
+    "identityProvider" : "entra-id",
+    "userId" : "DmrX1yhNnBbQ8khHb5ZHewZ6Dx5Vtk_iPkGrP-TMUcU",
+    "userName" : "dmrx1yhnnbbq8khhb5zhewz6dx5vtk_ipkgrp-tmucu"
+  } ],
+  "notBefore" : 0,
+  "access" : {
+    "manageGroupMembership" : true,
+    "view" : true,
+    "mapRoles" : true,
+    "impersonate" : true,
+    "manage" : true
+  }
+}

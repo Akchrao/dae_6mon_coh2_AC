@@ -1,0 +1,33 @@
+== INC-20261008-01 response log (blue team)
+[2026-10-08 20:22:00 UTC] I1 IDENTIFIED: al-nsg-rule-change + al-storage-listkeys fired (email to secops-owner). Severity SEV-2 assigned.
+[2026-10-08 20:26:08 UTC] C1 CONTAIN: NSG vm-sg rules before containment:
+      100	allow-ssh-admin-ip	24.189.77.111/32	22	Allow
+      4000	deny-all-inbound	*	*	Deny
+      110	allow-ssh-backdoor	203.0.113.66/32	22	Allow
+[2026-10-08 20:26:12 UTC] C2 CONTAIN: rogue rule allow-ssh-backdoor deleted
+[2026-10-08 20:26:14 UTC] C3 ERADICATE: both access keys of stcanflowncu9a8c rotated (listed keys now invalid)
+[2026-10-08 20:26:14 UTC] C4 CONTAIN (automatic, host): fail2ban ban of brute-force source remains active
+[2026-10-08 20:28:08 UTC] R1 RECOVER: admin IP released from fail2ban via Azure Run Command (out-of-band, no SSH needed)
+      --- fail2ban log
+      2026-10-07 15:54:57,086 fail2ban.filter         [648]: INFO    [sshd] Found 24.189.77.111 - 2026-10-07 15:54:57
+      2026-10-07 15:55:09,794 fail2ban.filter         [648]: INFO    [sshd] Found 24.189.77.111 - 2026-10-07 15:55:09
+      2026-10-08 20:14:31,937 fail2ban.filter         [641]: INFO    [sshd] Found 24.189.77.111 - 2026-10-08 20:14:31
+      2026-10-08 20:14:40,088 fail2ban.filter         [641]: INFO    [sshd] Found 24.189.77.111 - 2026-10-08 20:14:40
+      2026-10-08 20:14:48,556 fail2ban.filter         [641]: INFO    [sshd] Found 24.189.77.111 - 2026-10-08 20:14:48
+      2026-10-08 20:14:49,284 fail2ban.actions        [641]: NOTICE  [sshd] Ban 24.189.77.111
+      --- jail before
+         |- Currently banned:	1
+         |- Total banned:	1
+         `- Banned IP list:	24.189.77.111
+      1
+      --- jail after
+         |- Currently banned:	0
+         `- Banned IP list:	
+      
+[2026-10-08 20:28:25 UTC] R2 VERIFY baseline - vm-sg rules now:
+      100	allow-ssh-admin-ip	24.189.77.111/32	22	Allow
+      4000	deny-all-inbound	*	*	Deny
+[2026-10-08 20:28:26 UTC] R3 VERIFY admin SSH: ok from can-vm-hardened
+[2026-10-08 20:28:27 UTC] R4 VERIFY function ehr-status: HTTP 200
+[2026-10-08 20:28:32 UTC] R5 VERIFY flow logs enabled: fl-can-vnet-vmlab=True 
+[2026-10-08 20:28:33 UTC] R6 VERIFY alert rules enabled: 7 activity-log alerts + sqr-ssh-bruteforce=true

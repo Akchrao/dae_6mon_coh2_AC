@@ -1,0 +1,10 @@
+== INC-20261008-01 attack simulation (red team actions)
+   Note: the 'attacker' source is 203.0.113.66 (RFC 5737 documentation range, unroutable) so the
+   simulated backdoor rule creates no real exposure.
+[2026-10-08 20:14:27 UTC] T0 START
+[2026-10-08 20:14:29 UTC] A1 rogue NSG rule 'allow-ssh-backdoor' (22/tcp from 203.0.113.66) added to vm-sg
+[2026-10-08 20:14:31 UTC] A2 storage account keys listed for stcanflowncu9a8c
+[2026-10-08 20:14:31 UTC] A3 SSH attempt as 'root' -> root@64.236.131.161: Permission denied (publickey).
+[2026-10-08 20:14:40 UTC] A3 SSH attempt as 'admin' -> admin@64.236.131.161: Permission denied (publickey).
+[2026-10-08 20:14:48 UTC] A3 SSH attempt as 'oracle' -> oracle@64.236.131.161: Permission denied (publickey).
+[2026-10-08 20:14:56 UTC] A4 legitimate admin SSH after brute force -> refused/timed out (fail2ban ban in effect)

@@ -1,0 +1,20 @@
+== INVESTIGATION  (Log Analytics queries run 20:26 UTC)
+
+-- Q1 Control-plane changes in the incident window (AzureActivity)
+  Time      Operation            Resource            Caller                  CallerIpAddress
+  20:14:29  SECURITYRULES/WRITE  allow-ssh-backdoor  ch.akhilarao@gmail.com  24.189.77.111  
+  20:14:30  LISTKEYS/ACTION      stcanflowncu9a8c    ch.akhilarao@gmail.com  24.189.77.111  
+
+-- Q2 Host authentication events on can-vm-hardened (Syslog)
+  Time      Process  Message                                                                    
+  20:14:31  sshd     User root from 24.189.77.111 not allowed because not listed in AllowUsers  
+  20:14:31  sshd     Connection closed by invalid user root 24.189.77.111 port 57750 [preauth]  
+  20:14:40  sshd     Invalid user admin from 24.189.77.111 port 57752                           
+  20:14:40  sshd     Connection closed by invalid user admin 24.189.77.111 port 57752 [preauth] 
+  20:14:48  sshd     Connection closed by invalid user oracle 24.189.77.111 port 57753 [preauth]
+  20:14:48  sshd     Invalid user oracle from 24.189.77.111 port 57753                          
+
+-- Q3 Persistence check: all successful operations from the source IP in the window
+  Operation                                                    Count
+  MICROSOFT.STORAGE/STORAGEACCOUNTS/LISTKEYS/ACTION            1    
+  MICROSOFT.NETWORK/NETWORKSECURITYGROUPS/SECURITYRULES/WRITE  1    

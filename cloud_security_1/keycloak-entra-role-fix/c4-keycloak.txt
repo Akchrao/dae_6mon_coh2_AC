@@ -1,0 +1,21 @@
+== Keycloak: entra-id identity provider mappers (all sync mode FORCE) ==
+email-mapper                 claim email -> email
+entra-role-billing           roles claim = Billing -> realm role billing
+entra-role-clinician         roles claim = Clinician -> realm role clinician
+entra-role-hr                roles claim = HR -> realm role hr
+entra-role-it-support        roles claim = IT-Support -> realm role it-support
+entra-role-nurse             roles claim = Nurse -> realm role nurse
+entra-role-security-analyst  roles claim = Security-Analyst -> realm role security-analyst
+entra-role-vendor            roles claim = Vendor -> realm role vendor
+firstname-mapper             claim given_name -> firstName
+lastname-mapper              claim family_name -> lastName
+username-template-mapper     template ${ALIAS}.${CLAIM.preferred_username}
+
+== Keycloak: entra-id provider settings ==
+defaultScope = openid profile email
+prompt       = select_account
+
+== Keycloak: federated (entra-id) users and realm roles ==
+entra-id.ch.akhilarao@gmail.com                         (none)
+entra-id.test.billing@chakhilaraogmail.onmicrosoft.com  billing
+entra-id.test.nurse@chakhilaraogmail.onmicrosoft.com    nurse

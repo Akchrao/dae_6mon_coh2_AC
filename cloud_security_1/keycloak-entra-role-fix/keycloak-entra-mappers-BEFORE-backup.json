@@ -1,0 +1,59 @@
+[ {
+  "id" : "561faa60-948e-465a-a889-960b1177c087",
+  "name" : "username-template-mapper",
+  "identityProviderAlias" : "entra-id",
+  "identityProviderMapper" : "oidc-username-idp-mapper",
+  "config" : {
+    "syncMode" : "FORCE",
+    "template" : "${ALIAS}.${CLAIM.preferred_username}",
+    "target" : "LOCAL"
+  }
+}, {
+  "id" : "a81d4a3c-8063-4a2c-8aed-8c4489472e4f",
+  "name" : "role-mapper",
+  "identityProviderAlias" : "entra-id",
+  "identityProviderMapper" : "oidc-hardcoded-role-idp-mapper",
+  "config" : {
+    "syncMode" : "FORCE",
+    "role" : "security-analyst"
+  }
+}, {
+  "id" : "bbdddc8f-54eb-4725-9ae6-4a82ab22b0c2",
+  "name" : "security-analyst",
+  "identityProviderAlias" : "entra-id",
+  "identityProviderMapper" : "oidc-hardcoded-role-idp-mapper",
+  "config" : {
+    "syncMode" : "FORCE",
+    "role" : "security-analyst"
+  }
+}, {
+  "id" : "bd4cdafc-842f-4fdb-b240-d770f983f044",
+  "name" : "email-mapper",
+  "identityProviderAlias" : "entra-id",
+  "identityProviderMapper" : "oidc-user-attribute-idp-mapper",
+  "config" : {
+    "syncMode" : "FORCE",
+    "claim" : "email",
+    "user.attribute" : "email"
+  }
+}, {
+  "id" : "bde0d491-5b01-43c1-afc6-4d85845b1b40",
+  "name" : "firstname-mapper",
+  "identityProviderAlias" : "entra-id",
+  "identityProviderMapper" : "oidc-user-attribute-idp-mapper",
+  "config" : {
+    "syncMode" : "FORCE",
+    "claim" : "given_name",
+    "user.attribute" : "firstName"
+  }
+}, {
+  "id" : "e5ba148b-aa7b-4312-b143-b0a35ec459d6",
+  "name" : "lastname-mapper",
+  "identityProviderAlias" : "entra-id",
+  "identityProviderMapper" : "oidc-user-attribute-idp-mapper",
+  "config" : {
+    "syncMode" : "FORCE",
+    "claim" : "family_name",
+    "user.attribute" : "lastName"
+  }
+} ]

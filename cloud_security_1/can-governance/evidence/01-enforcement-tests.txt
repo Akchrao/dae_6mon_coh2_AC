@@ -1,0 +1,32 @@
+== CAN governance enforcement tests  (2026-10-08 19:22 UTC, subscription under mg-can-workloads)
+-- T1 resource with no tags
+   $ az network nsg create -g rg-cloudsec1-can -n t1-untagged-nsg -l eastus
+   DENIED  | assignment: CAN - Mandatory resource tags | rule: require-dataclassification-tag-resources, require-environment-tag-resources, require-owner-tag-resources
+-- T2 resource group with no tags
+   $ az group create -n rg-t2-untagged -l eastus
+   DENIED  | assignment: CAN - Mandatory resource tags | rule: require-dataclassification-tag-rg, require-environment-tag-rg, require-owner-tag-rg
+-- T3 tagged resource, region centralus
+   $ az network nsg create -g rg-cloudsec1-can -n t3-centralus-nsg -l centralus --tags Owner=akhila.chennamaneni Environment=Lab DataClassification=Internal
+   19:23 UTC  ALLOWED | created  <- inside the policy propagation window; NSG deleted immediately
+   19:24 UTC  DENIED  | assignment: CAN - Organization guardrails (SCP equivalent) | rule: allowed-locations   (re-test after propagation)
+-- T4 tagged RG, region westus
+   $ az group create -n rg-t4-westus -l westus --tags Owner=akhila.chennamaneni Environment=Lab DataClassification=Internal
+   DENIED  | assignment: CAN - Organization guardrails (SCP equivalent) | rule: allowed-rg-locations
+-- T5 storage with public blob access
+   $ az storage account create -g rg-cloudsec1-can -n stcant5pub$RANDOM -l eastus --sku Standard_LRS --allow-blob-public-access true --min-tls-version TLS1_2 --https-only true --tags Owner=akhila.chennamaneni Environment=Lab DataClassification=Internal
+   DENIED  | assignment: CAN - Organization guardrails (SCP equivalent) | rule: storage-no-public-access
+-- T6 storage allowing plain HTTP
+   $ az storage account create -g rg-cloudsec1-can -n stcant6http$RANDOM -l eastus --sku Standard_LRS --allow-blob-public-access false --min-tls-version TLS1_2 --https-only false --tags Owner=akhila.chennamaneni Environment=Lab DataClassification=Internal
+   DENIED  | assignment: CAN - Organization guardrails (SCP equivalent) | rule: storage-secure-transfer
+-- T7 storage with TLS 1.0
+   $ az storage account create -g rg-cloudsec1-can -n stcant7tls$RANDOM -l eastus --sku Standard_LRS --allow-blob-public-access false --min-tls-version TLS1_0 --https-only true --tags Owner=akhila.chennamaneni Environment=Lab DataClassification=Internal
+   DENIED  | assignment: CAN - Organization guardrails (SCP equivalent) | rule: storage-min-tls12
+-- T8 oversized VM (validate only)
+   $ az deployment group validate -g rg-cloudsec1-can --template-file /Users/Adult/Desktop/dae_6mon_coh2_AC/can-governance/evidence/vm-oversize.json
+   DENIED  | assignment: CAN - Organization guardrails (SCP equivalent) | rule: allowed-vm-skus
+-- T9 Bastion host (validate only)
+   $ az deployment group validate -g rg-cloudsec1-can --template-file /Users/Adult/Desktop/dae_6mon_coh2_AC/can-governance/evidence/bastion.json
+   DENIED  | assignment: CAN - Organization guardrails (SCP equivalent) | rule: denied-resource-types
+-- T10 CONTROL: compliant tagged NSG in eastus
+   $ az network nsg create -g rg-cloudsec1-can -n t10-compliant-nsg -l eastus --tags Owner=akhila.chennamaneni Environment=Lab DataClassification=Internal
+   ALLOWED | created

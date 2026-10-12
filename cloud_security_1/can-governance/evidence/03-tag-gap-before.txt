@@ -1,0 +1,25 @@
+== Resources and resource groups missing mandatory tags (before remediation)
+RG       defaultresourcegroup-eus
+resource defaultworkspace-9a8c964b-cf59-4657-bff2-5f84fb7b0709-eus
+RG       networkwatcherrg
+resource networkwatcher_eastus
+resource networkwatcher_northcentralus
+RG       rg-cloudsec1-can
+resource can-vm-hardened_osdisk_1_ed979d1137ec42c192dbb8a13a2a26bf
+resource can-vm-hardened
+resource aci-app-test
+resource acrcloudseccan
+resource id-can-func
+resource can-vm-hardenedvmnic
+resource app-sg
+resource data-sg
+resource func-sg
+resource public-sg
+resource vm-sg
+resource can-vm-pip
+resource can-vnet-cloudsec1
+resource can-vnet-vmlab
+resource cloudsecevidencecan
+resource stcanfunc9a8c964b
+resource asp-rgcloudsec1can-cc4f
+resource func-can-ehr-9a8c96

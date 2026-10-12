@@ -1,0 +1,3 @@
+{"$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#","contentVersion":"1.0.0.0","resources":[
+ {"type":"Microsoft.Network/networkSecurityGroups","apiVersion":"2024-01-01","name":"t3-centralus-nsg","location":"centralus",
+  "tags":{"Owner":"akhila.chennamaneni","Environment":"Lab","DataClassification":"Internal"},"properties":{}}]}

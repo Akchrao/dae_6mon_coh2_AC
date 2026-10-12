@@ -1,0 +1,6 @@
+== Every Azure role held by id-can-func (all scopes, incl. inherited) ==
+Storage Blob Data Owner    storageAccounts/stcanfunc9a8c964b
+
+== Role assignments on storage account stcanfunc9a8c964b ==
+id-can-func  (ServicePrincipal 913070b7-7fe2-...)   Storage Blob Data Owner
+admin user   (ch.akhilarao, User)                   Storage Blob Data Contributor  [for uploading test data]

@@ -1,0 +1,29 @@
+{
+  "if": {
+    "anyOf": [
+      { "allOf": [
+          { "field": "type", "equals": "Microsoft.Network/networkSecurityGroups/securityRules" },
+          { "field": "Microsoft.Network/networkSecurityGroups/securityRules/direction", "equals": "Inbound" },
+          { "field": "Microsoft.Network/networkSecurityGroups/securityRules/access", "equals": "Allow" },
+          { "anyOf": [
+              { "field": "Microsoft.Network/networkSecurityGroups/securityRules/destinationPortRange", "in": ["22", "3389", "*"] },
+              { "count": { "field": "Microsoft.Network/networkSecurityGroups/securityRules/destinationPortRanges[*]",
+                           "where": { "field": "Microsoft.Network/networkSecurityGroups/securityRules/destinationPortRanges[*]", "in": ["22", "3389"] } }, "greater": 0 } ] },
+          { "anyOf": [
+              { "allOf": [ { "field": "Microsoft.Network/networkSecurityGroups/securityRules/sourceAddressPrefix", "exists": "true" },
+                           { "field": "Microsoft.Network/networkSecurityGroups/securityRules/sourceAddressPrefix", "notIn": "[parameters('approvedSources')]" } ] },
+              { "count": { "field": "Microsoft.Network/networkSecurityGroups/securityRules/sourceAddressPrefixes[*]",
+                           "where": { "field": "Microsoft.Network/networkSecurityGroups/securityRules/sourceAddressPrefixes[*]", "notIn": "[parameters('approvedSources')]" } }, "greater": 0 } ] } ] },
+      { "allOf": [
+          { "field": "type", "equals": "Microsoft.Network/networkSecurityGroups" },
+          { "count": { "field": "Microsoft.Network/networkSecurityGroups/securityRules[*]",
+                       "where": { "allOf": [
+                          { "field": "Microsoft.Network/networkSecurityGroups/securityRules[*].direction", "equals": "Inbound" },
+                          { "field": "Microsoft.Network/networkSecurityGroups/securityRules[*].access", "equals": "Allow" },
+                          { "field": "Microsoft.Network/networkSecurityGroups/securityRules[*].destinationPortRange", "in": ["22", "3389", "*"] },
+                          { "field": "Microsoft.Network/networkSecurityGroups/securityRules[*].sourceAddressPrefix", "notIn": "[parameters('approvedSources')]" } ] } },
+            "greater": 0 } ] }
+    ]
+  },
+  "then": { "effect": "[parameters('effect')]" }
+}

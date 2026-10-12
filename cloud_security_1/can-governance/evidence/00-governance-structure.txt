@@ -1,0 +1,28 @@
+== Management group hierarchy (AWS Organizations equivalent)
+Tenant Root Group
++-- mg-can               Care Access Navigator            <- guardrails (Deny)
+    +-- mg-can-workloads CAN Workloads (HIPAA)            <- mandatory tags (Deny) + HITRUST/HIPAA audit
+    |   +-- subscription: Azure subscription 1 (9a8c964b-cf59-4657-bff2-5f84fb7b0709)
+    +-- mg-can-sandbox   CAN Sandbox                      <- guardrails only (inherited)
+
+== Policy assignments
+mg-can             CAN - Organization guardrails (SCP equivalent)       enforcement=Default
+mg-can-workloads   CAN - Mandatory resource tags                        enforcement=Default
+mg-can-workloads   CAN - HITRUST/HIPAA compliance audit                 enforcement=DoNotEnforce
+
+== Rules in 'CAN - Organization guardrails (SCP equivalent)'  [scope mg-can, effect Deny]
+  - allowed-locations
+  - allowed-rg-locations
+  - denied-resource-types
+  - allowed-vm-skus
+  - storage-no-public-access
+  - storage-secure-transfer
+  - storage-min-tls12
+
+== Rules in 'CAN - Mandatory resource tags'  [scope mg-can-workloads, effect Deny]
+  - require-owner-tag-resources
+  - require-owner-tag-rg
+  - require-environment-tag-resources
+  - require-environment-tag-rg
+  - require-dataclassification-tag-resources
+  - require-dataclassification-tag-rg

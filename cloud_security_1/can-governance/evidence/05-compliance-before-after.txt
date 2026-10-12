@@ -1,0 +1,8 @@
+== Azure Policy compliance, before vs after remediation
+   (latest evaluation per resource/rule; C = compliant, NC = non-compliant, M = manual)
+
+assignment              BEFORE (19:23 UTC)         AFTER (19:33 UTC)
+can-guardrails          C 31   NC   0              C 31   NC   0
+can-mandatory-tags      C  0   NC  72  (24 res.)   C 72   NC   0  (0 res.)
+can-hipaa-hitrust       C 16   NC  35  (20 res.)   C 16   NC  35  (20 res.)   M 496
+SecurityCenterBuiltIn   C 20   NC  48  (7 res.)    C 20   NC  48  (7 res.)
