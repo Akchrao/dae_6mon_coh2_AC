@@ -1,0 +1,4 @@
+{"$schema":"https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#","contentVersion":"1.0.0.0","resources":[
+ {"type":"Microsoft.Storage/storageAccounts","apiVersion":"2023-05-01","name":"stcanauditok01","location":"eastus","kind":"StorageV2","sku":{"name":"Standard_LRS"},
+  "tags":{"Owner":"akhila.chennamaneni","Environment":"Lab","DataClassification":"Confidential"},
+  "properties":{"supportsHttpsTrafficOnly":true,"minimumTlsVersion":"TLS1_2","allowBlobPublicAccess":false}}]}

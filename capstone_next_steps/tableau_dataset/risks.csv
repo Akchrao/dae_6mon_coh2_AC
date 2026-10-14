@@ -1,0 +1,6 @@
+risk_id,risk,framework_ref,inherent_likelihood,inherent_impact,inherent_score,treatment,residual_score,residual_rating,owner,source
+R01,Excessive RBAC privileges,NIST CSF PR.AA; ISO 27001 A.5.15/5.18,4,5,20,Least privilege + quarterly access review,10,High,IAM Analyst,RiskMgmt1 C2-C4
+R02,Terminated account remains active,NIST CSF PR.AA; ISO 27001 A.5.18,3,5,15,JML leaver disablement + verification,5,Moderate,IAM Analyst + HR/Workforce,RiskMgmt1 C2-C4
+R03,Credential compromise,NIST CSF PR.AA/DE.CM; ISO 27001 A.8.5,4,5,20,MFA + lockout + failed-login monitoring,10,High,IAM Analyst + Security Analyst,RiskMgmt1 C2-C4
+R04,Privileged account misuse,NIST CSF PR.AA/DE.CM; ISO 27001 A.8.2,3,5,15,Restricted admin roles + monitoring,10,High,IAM Analyst + Security Analyst,RiskMgmt1 C2-C4
+R05,Expired vendor access,NIST CSF GV.SC/PR.AA; ISO 27001 A.5.19/5.20,3,4,12,Expiration date + periodic review,4,Low,IAM Analyst (vendor expiry detection: Security Analyst),RiskMgmt1 C2-C4

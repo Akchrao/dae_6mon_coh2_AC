@@ -1,0 +1,7 @@
+alert_rule,description,times_fired,first_fired_utc
+al-defender-alert,Defender for Cloud security alert,31,2026-10-08 20:07
+al-nsg-rule-change,NSG rule created/modified,5,2026-10-08 20:22
+al-nsg-rule-delete,NSG rule deleted,3,2026-10-08 20:32
+al-role-assignment,New Azure RBAC role assignment,6,2026-10-12 15:57
+al-storage-listkeys,Storage account keys retrieved,4,2026-10-08 20:22
+sqr-ssh-bruteforce,SSH brute force (log query),1,2026-10-12 16:24

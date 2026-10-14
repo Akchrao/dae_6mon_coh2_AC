@@ -1,0 +1,28 @@
+EVIDENCE E-AC-01  Keycloak realm 'care-access-navigator' — users and assigned realm roles (inspection)
+Collected: 2026-10-13 17:47:42 UTC by GRC analyst (Akhila Chennamaneni) via kcadm.sh get (read-only)
+
+  entra-id.ch.akhilarao@gmail.com                          (none)
+  entra-id.test.billing@chakhilaraogmail.onmicrosoft.com   billing
+  entra-id.test.nurse@chakhilaraogmail.onmicrosoft.com     nurse
+  test.billing1                                            billing
+  test.clinician1                                          clinician
+  test.hr1                                                 hr
+  test.itsupport1                                          it-support
+  test.nurse1                                              nurse
+  test.secanalyst1                                         security-analyst
+  test.vendor1                                             vendor
+
+Client role scopes (fullScopeAllowed=false limits which roles each app receives):
+  billing-app      fullScope=False roles: billing
+  ehr-simulator    fullScope=False roles: nurse, clinician
+  patient-portal   fullScope=False roles: nurse, clinician
+  hr-app           fullScope=False roles: hr, it-support
+
+Identity-provider role mappers (Entra ID app role -> realm role):
+  entra-role-billing           roles claim = Billing          -> billing  [sync FORCE]
+  entra-role-clinician         roles claim = Clinician        -> clinician  [sync FORCE]
+  entra-role-hr                roles claim = HR               -> hr  [sync FORCE]
+  entra-role-it-support        roles claim = IT-Support       -> it-support  [sync FORCE]
+  entra-role-nurse             roles claim = Nurse            -> nurse  [sync FORCE]
+  entra-role-security-analyst  roles claim = Security-Analyst -> security-analyst  [sync FORCE]
+  entra-role-vendor            roles claim = Vendor           -> vendor  [sync FORCE]

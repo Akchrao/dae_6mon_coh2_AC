@@ -1,0 +1,8 @@
+review_id,username,enabled,source,groups,effective_roles,direct_roles,department,manager,access_end_date,mfa_enrolled,created,last_login,flags,risk,reviewer_decision,reviewer,decision_date
+AR-BASELINE-before-harden,test.billing1,True,local,,billing,billing,,,,False,2026-10-13,,DIRECT_ROLE_NOT_VIA_GROUP;PRIVILEGED_NO_MFA_ENROLLED,High,,,
+AR-BASELINE-before-harden,test.clinician1,True,local,,clinician,clinician,,,,False,2026-10-13,,DIRECT_ROLE_NOT_VIA_GROUP,Medium,,,
+AR-BASELINE-before-harden,test.hr1,True,local,,hr,hr,,,,False,2026-10-13,,DIRECT_ROLE_NOT_VIA_GROUP,Medium,,,
+AR-BASELINE-before-harden,test.itsupport1,True,local,,it-support,it-support,,,,False,2026-10-13,,DIRECT_ROLE_NOT_VIA_GROUP;PRIVILEGED_NO_MFA_ENROLLED,High,,,
+AR-BASELINE-before-harden,test.nurse1,True,local,,nurse,nurse,,,,False,2026-10-13,,DIRECT_ROLE_NOT_VIA_GROUP,Medium,,,
+AR-BASELINE-before-harden,test.secanalyst1,True,local,,security-analyst,security-analyst,,,,False,2026-10-13,,DIRECT_ROLE_NOT_VIA_GROUP;PRIVILEGED_NO_MFA_ENROLLED,High,,,
+AR-BASELINE-before-harden,test.vendor1,True,local,,vendor,vendor,,,,False,2026-10-13,,DIRECT_ROLE_NOT_VIA_GROUP;VENDOR_NO_END_DATE,Medium,,,

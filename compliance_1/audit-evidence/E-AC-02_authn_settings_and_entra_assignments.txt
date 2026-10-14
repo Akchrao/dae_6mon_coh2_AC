@@ -1,0 +1,28 @@
+EVIDENCE E-AC-02  Keycloak authentication settings + Entra ID application assignments (inspection)
+Collected: 2026-10-13 17:48:11 UTC (read-only)
+
+  bruteForceProtected      False
+  failureFactor            30
+  maxFailureWaitSeconds    900
+  permanentLockout         False
+  passwordPolicy           length(10) and upperCase(1) and lowerCase(1) and digits(1) and specialChars(1) and passwordHistory(3)
+  otpPolicyType            totp
+  browserFlow              browser
+  sslRequired              external
+  accessTokenLifespan      300
+  ssoSessionIdleTimeout    1800
+  eventsEnabled            True
+  adminEventsEnabled       True
+
+Authentication flows (custom):
+  - browser (built-in)
+  - browser-mfa-privileged (custom)
+
+Clients bound to a non-default browser flow:
+  (none)
+
+Entra ID enterprise app 'care-access-navigator-keycloak-broker':
+  appRoleAssignmentRequired = true
+  Akhila Chennamaneni    -> Default Access
+  Test Nurse             -> Nurse
+  Test Billing           -> Billing

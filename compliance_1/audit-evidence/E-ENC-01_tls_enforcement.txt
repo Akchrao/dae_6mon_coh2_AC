@@ -1,0 +1,12 @@
+EVIDENCE E-ENC-01  Encryption-in-transit enforcement (re-performance, validate-only — no resources created)
+Collected: 2026-10-13 17:49:01 UTC
+
+Policy assignment: CAN - Organization guardrails (SCP equivalent)	Default
+
+Test 1  storage account allowing plain HTTP         -> DENIED by policy | rule: storage-secure-transfer
+Test 2  storage account allowing TLS 1.0             -> DENIED by policy | rule: storage-min-tls12
+Test 3  CONTROL: HTTPS-only, TLS 1.2 storage account -> ALLOWED (validation passed; nothing deployed)
+
+Identity provider transport (Keycloak, lab host):
+  sslRequired = external  (TLS required for non-local clients; localhost exempt)
+  http://localhost:8080 -> HTTP 200 over plain HTTP (lab only)

@@ -1,0 +1,5 @@
+incident_id,title,environment,severity,detected_utc,status,course
+INC-20261008-01,Rogue NSG backdoor rule + storage key listing + SSH brute force,Azure,SEV-2 High,2026-10-08 20:22,Closed (recovery verified 20:28),Cloud Security 1
+IR1-2026-001,SSH brute force leading to account compromise (nurse_jsmith),IR lab (Parrot-equivalent),High,2026-10-12,Resolved (see IR1 Sec 5-6),Incident Response 1
+IR1-2026-002,Privilege escalation attempt,IR lab (Parrot-equivalent),Critical,2026-10-12,Resolved (see IR1 Sec 5-6),Incident Response 1
+IR1-2026-003,Unverified new account svc_backup_tmp,IR lab (Parrot-equivalent),High,2026-10-12,Resolved (account removed),Incident Response 1

@@ -1,0 +1,8 @@
+EVIDENCE INDEX — Care Access Navigator compliance audit (SHA-256, computed 2026-10-13 17:49 UTC)
+2c94fabfceacd3d058be40bc48ef244f72e9cc218c5826a955f596de522722c1    1870 bytes  E-AC-01_keycloak_users_roles.txt
+eec9ece839fcd29226eef5c7f07343d0873457cdd726aefb5bff71036eb3488f     993 bytes  E-AC-02_authn_settings_and_entra_assignments.txt
+2dda385fbcbb32909e5224ccefa8505c617bb346a64f92f45561a0fee09cf668     721 bytes  E-ENC-01_tls_enforcement.txt
+0063a1a5ac8512a10f02f2a3ff109a8f1341adec43d75db22b5fe9d6ea103dc3    1665 bytes  E-LOG-01_alerting_and_log_retention.txt
+8b114dea7f87a51f1ef7ff76d8e0b95bf8a72a165648b7bdc1cc5ae2ce356c70     511 bytes  tpl-http.json
+a613a68c745029d5cc7cabbc7cff2a18e3b812e62efa748aca987abc1eb35480     508 bytes  tpl-ok.json
+6b7d76b0692fef6fd3ffeef9e62ac058cc9d57ccb7463ac386bc6427de021643     509 bytes  tpl-tls10.json

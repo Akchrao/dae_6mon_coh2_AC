@@ -1,0 +1,15 @@
+control_id,test_no,test,result,test_date,audit_id
+AC-01,1,Users hold only job role,PASS,2026-10-13,CAN-IA-2026-01
+AC-01,2,App client role scopes limited,PASS,2026-10-13,CAN-IA-2026-01
+AC-01,3,Entra assignment required,PASS,2026-10-13,CAN-IA-2026-01
+AC-01,4,MFA enforcement,FAIL,2026-10-13,CAN-IA-2026-01
+AC-01,5,Lockout and password policy,FAIL,2026-10-13,CAN-IA-2026-01
+AC-01,6,Completed access review,FAIL,2026-10-13,CAN-IA-2026-01
+LOG-01,1,Alert rules routed to security,PASS,2026-10-13,CAN-IA-2026-01
+LOG-01,2,Alerts fire on events (30 d),PASS,2026-10-13,CAN-IA-2026-01
+LOG-01,3,Central log retention 12 months,FAIL,2026-10-13,CAN-IA-2026-01
+LOG-01,4,Daily log review records,FAIL,2026-10-13,CAN-IA-2026-01
+ENC-01,1,Deny storage over HTTP,PASS,2026-10-13,CAN-IA-2026-01
+ENC-01,2,Deny TLS 1.0 storage,PASS,2026-10-13,CAN-IA-2026-01
+ENC-01,3,Allow compliant HTTPS/TLS1.2,PASS,2026-10-13,CAN-IA-2026-01
+ENC-01,4,IdP transport TLS,EXCEPTION,2026-10-13,CAN-IA-2026-01

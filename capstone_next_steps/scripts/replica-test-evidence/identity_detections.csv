@@ -1,0 +1,34 @@
+rule_id,severity,time_utc,subject,detail
+CAN-ID-005 privilege change,Medium,2026-10-13T19:59:14.396000+00:00,test.billing1,CREATE role-mappings:  (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T19:59:18.622000+00:00,test.clinician1,CREATE role-mappings:  (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T19:59:22.247000+00:00,test.hr1,CREATE role-mappings:  (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T19:59:25.914000+00:00,test.itsupport1,CREATE role-mappings:  (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T19:59:29.470000+00:00,test.nurse1,CREATE role-mappings:  (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T19:59:33.232000+00:00,test.secanalyst1,CREATE role-mappings:  (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T19:59:36.806000+00:00,test.vendor1,CREATE role-mappings:  (by admin event)
+CAN-ID-001 brute force,High,2026-10-13T19:59:40.179000+00:00,test.vendor1,22 failed logins in 10 min
+CAN-ID-005 privilege change,High,2026-10-13T20:00:01.657000+00:00,test.billing1,CREATE groups: HRMC-Billing (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:01.663000+00:00,test.billing1,DELETE role-mappings: billing (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:01.670000+00:00,test.clinician1,CREATE groups: HRMC-Clinicians (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:01.677000+00:00,test.clinician1,DELETE role-mappings: clinician (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:01.685000+00:00,test.hr1,CREATE groups: HRMC-HR (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:01.690000+00:00,test.hr1,DELETE role-mappings: hr (by admin event)
+CAN-ID-005 privilege change,High,2026-10-13T20:00:01.702000+00:00,test.itsupport1,CREATE groups: HRMC-IT-Support (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:01.707000+00:00,test.itsupport1,DELETE role-mappings: it-support (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:01.719000+00:00,test.nurse1,CREATE groups: HRMC-Nurses (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:01.728000+00:00,test.nurse1,DELETE role-mappings: nurse (by admin event)
+CAN-ID-005 privilege change,High,2026-10-13T20:00:01.736000+00:00,test.secanalyst1,CREATE groups: HRMC-Security-Analysts (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:01.742000+00:00,test.secanalyst1,DELETE role-mappings: security-analyst (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:01.750000+00:00,test.vendor1,CREATE groups: HRMC-Vendors (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:01.755000+00:00,test.vendor1,DELETE role-mappings: vendor (by admin event)
+CAN-ID-004 unauthorized app access,Medium,2026-10-13T20:00:05.892000+00:00,test.billing1,client=ehr-simulator
+CAN-ID-004 unauthorized app access,Medium,2026-10-13T20:00:10.850000+00:00,test.clinician1,client=billing-app
+CAN-ID-004 unauthorized app access,Medium,2026-10-13T20:00:12.443000+00:00,test.clinician1,client=hr-app
+CAN-ID-004 unauthorized app access,Medium,2026-10-13T20:00:15.810000+00:00,test.hr1,client=ehr-simulator
+CAN-ID-003 login while locked out,Medium,2026-10-13T20:00:31.893000+00:00,test.vendor1,client=hr-app
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:33.641000+00:00,test.nurse2,CREATE groups: HRMC-Nurses (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:33.888000+00:00,test.vendor2,CREATE groups: HRMC-Vendors (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:34.076000+00:00,test.nurse2,DELETE groups: HRMC-Nurses (by admin event)
+CAN-ID-005 privilege change,High,2026-10-13T20:00:34.085000+00:00,test.nurse2,CREATE groups: HRMC-Billing (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-13T20:00:34.309000+00:00,test.nurse1,DELETE groups: HRMC-Nurses (by admin event)
+CAN-ID-002 disabled-account login,High,2026-10-13T20:00:34.422000+00:00,test.nurse1,client=ehr-simulator

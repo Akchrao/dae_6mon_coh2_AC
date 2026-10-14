@@ -1,0 +1,9 @@
+kpi,formula,target,source_file
+Privileged MFA coverage,privileged users with OTP enrolled / privileged users,100%,access_review_*.csv (mfa_enrolled)
+Access review completion,accounts with reviewer_decision / accounts,100% per quarter,access_review_*.csv
+Leaver deprovisioning on time,LEAVER events with verification=PASS within 24h / leavers,100%,can_iam_audit_log.jsonl
+Flagged accounts (High),count risk=High,0,access_review_*.csv
+Open High audit findings,count rating=High and status=Open,0 by Dec 2026,audit_findings.csv
+Control test pass rate,PASS / tests,>= 90%,control_tests.csv
+Identity detections by rule,count by rule_id,trend down,identity_detections.csv
+Residual High risks,count residual_rating=High,<= 1,risks.csv

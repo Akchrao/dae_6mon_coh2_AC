@@ -1,0 +1,8 @@
+EVIDENCE INDEX — can_iam.py (SHA-256, computed 2026-10-13T20:04:15Z)
+cbada96cffc8ce135d635ea9d1a8ce6e6975e822ac58bdb6063997259aa681cf      1233 bytes  access_review_AR-2026-Q4.csv
+98dac04b828f903b067f30a203d12f620d2d70466821eec127f66cc55a2b39b4      1177 bytes  access_review_AR-BASELINE-before-harden.csv
+6e47952af66bb7f6c8dd88028d83e202bb7a803930abfc460c53a990e41e5f79     11187 bytes  can_iam_audit_log.jsonl
+1eceb9051d6cf9e7352553d6f49dd83fd51eb3d8ac9d063fe939a8460c62cd76      3602 bytes  hrmc_saml_idp_metadata.xml
+5d27bce79a4dcd7d23de92b7e70b9dafa1a2d49b569d29d3784f0b647d211ab5      4086 bytes  identity_detections.csv
+b9487f38b4dc8a25d6b3b431537c20ee7f3f0400222f894472e0d10962fae567      3454 bytes  keycloak_login_events.csv
+7a98ae205919de8d1cf3f78028f9bd6581350402264dae0a4e57aee33831d4c4      5839 bytes  saml_response_captured.xml

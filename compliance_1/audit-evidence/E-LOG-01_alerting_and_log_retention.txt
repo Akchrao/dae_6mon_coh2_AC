@@ -1,0 +1,26 @@
+EVIDENCE E-LOG-01  Security event alerting configuration and alert history (inspection)
+Collected: 2026-10-13 17:48:33 UTC (read-only, Azure Monitor + Alerts Management API)
+
+Alert rules (Azure Monitor activity-log alerts) and notification target:
+  al-nsg-rule-change         enabled=True  Firewall (NSG) rule created or modified
+  al-nsg-rule-delete         enabled=True  Firewall (NSG) rule deleted
+  al-role-assignment         enabled=True  New Azure RBAC role assignment (privilege change)
+  al-policy-assignment-del   enabled=True  Governance policy assignment removed
+  al-policy-exemption        enabled=True  Policy exemption created or changed
+  al-storage-listkeys        enabled=True  Storage account keys retrieved
+  al-defender-alert          enabled=True  Microsoft Defender for Cloud raised a security alert
+  action group ag-can-secops -> secops-owner (email)
+
+Alerts fired in the last 30 days (sample of control operation):
+  al-defender-alert          fired  31 times  (first 2026-10-08 20:07 UTC)
+  al-nsg-rule-change         fired   5 times  (first 2026-10-08 20:22 UTC)
+  al-nsg-rule-delete         fired   3 times  (first 2026-10-08 20:32 UTC)
+  al-role-assignment         fired   6 times  (first 2026-10-12 15:57 UTC)
+  al-storage-listkeys        fired   4 times  (first 2026-10-08 20:22 UTC)
+  sqr-ssh-bruteforce         fired   1 times  (first 2026-10-12 16:24 UTC)
+  TOTAL alerts: 50
+
+Central log repository status:
+  Subscription Activity Log export to Log Analytics: 0 setting(s) (export removed 2026-10-13 during lab teardown)
+  Log Analytics workspaces: 0
+  Native Activity Log retention: 90 days (platform default, not configurable)
