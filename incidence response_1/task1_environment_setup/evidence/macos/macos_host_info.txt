@@ -1,0 +1,5 @@
+ProductName:		macOS
+ProductVersion:		26.3.1
+BuildVersion:		25D2128
+arch: arm64
+note: the Parrot-sim host runs under Docker Desktop on this macOS host; both feed the simulated SIEM

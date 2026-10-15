@@ -1,0 +1,17 @@
+# capture SSH traffic to prove the filter works end to end. tshark runs with capture
+# filter 'tcp port 22'; we then generate one ordinary SSH handshake to parrot-sim.
+$ tshark -i any -f 'tcp port 22' -a duration:12 -w /evidence/pcap/ssh_capture.pcapng &
+$ ssh nurse_jsmith@10.66.0.10  x3  (three handshakes over eth0 -> real port-22 packets)
+Warning: Permanently added '10.66.0.10' (ED25519) to the list of known hosts.
+nurse_jsmith@10.66.0.10: Permission denied (publickey,password).
+nurse_jsmith@10.66.0.10: Permission denied (publickey,password).
+$ capinfos / tshark -r ssh_capture.pcapng  (packet count + first/last)
+
+===================================
+| IO Statistics                   |
+|                                 |
+| Duration: 2.370 secs            |
+| Interval: 2.370 secs            |
+|                                 |
+| Col 1: Frames and bytes         |
+packets captured: 63

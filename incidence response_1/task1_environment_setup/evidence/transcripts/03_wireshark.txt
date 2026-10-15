@@ -1,0 +1,29 @@
+$ tshark --version
+Running as user "root" and group "root". This could be dangerous.
+TShark (Wireshark) 4.0.17 (Git v4.0.17 packaged as 4.0.17-0+deb12u3).
+
+$ tshark -D   (capture interfaces)
+Running as user "root" and group "root". This could be dangerous.
+1. ciscodump (Cisco remote capture)
+2. dpauxmon (DisplayPort AUX channel monitor capture)
+3. randpkt (Random packet generator)
+4. sdjournal (systemd Journal Export)
+5. sshdump (SSH remote capture)
+6. udpdump (UDP Listener remote capture)
+7. wifidump (Wi-Fi remote capture)
+
+# install the saved Wireshark capture filters (used by both Wireshark GUI and tshark)
+$ cp cfilters ~/.config/wireshark/cfilters
+"IR - SSH only" tcp port 22
+"IR - attacker host" host 10.66.0.66
+"IR - TCP SYN (scan / new sessions)" tcp[tcpflags] & tcp-syn != 0
+"IR - exclude lab mgmt" not port 2375 and not port 2376
+"IR - DNS" udp port 53
+
+# verify each capture filter compiles (dumpcap/tshark -f). Non-zero exit = bad filter.
+$ tshark -i eth0 -f "tcp port 22" -c 0 -a duration:1   (compile check)
+filter OK: tcp port 22
+$ tshark -i eth0 -f "host 10.66.0.66" -c 0 -a duration:1   (compile check)
+filter OK: host 10.66.0.66
+$ tshark -i eth0 -f "tcp[tcpflags] & tcp-syn != 0" -c 0 -a duration:1   (compile check)
+filter OK: tcp[tcpflags] & tcp-syn != 0

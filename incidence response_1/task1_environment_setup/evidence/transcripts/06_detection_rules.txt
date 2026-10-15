@@ -1,0 +1,26 @@
+# 3 custom Wazuh-format rules validated by injecting a sample auth.log (wazuh-logtest method).
+$ xmllint --noout local_rules.xml  (well-formed check)
+local_rules.xml: well-formed XML
+
+$ grep '<rule id' local_rules.xml
+<rule id="100100" level="5">
+<rule id="100101" level="10" frequency="6" timeframe="120">
+<rule id="100102" level="12" frequency="1" timeframe="300">
+<rule id="100110" level="12">
+
+$ python3 detect_engine.py --rules local_rules.xml --log sample_auth.log --out ../evidence
+rules loaded : 4  (100100, 100101, 100102, 100110)
+events decoded: 12 from sample_auth.log
+alerts        : 12
+  [Low     ] rule 100100 L5    10.66.0.66  SSH authentication failure for user nurse_jsmith from 10.66.0.66
+  [Low     ] rule 100100 L5    10.66.0.66  SSH authentication failure for user nurse_jsmith from 10.66.0.66
+  [Low     ] rule 100100 L5    10.66.0.66  SSH authentication failure for user nurse_jsmith from 10.66.0.66
+  [Low     ] rule 100100 L5    10.66.0.66  SSH authentication failure for user nurse_jsmith from 10.66.0.66
+  [Low     ] rule 100100 L5    10.66.0.66  SSH authentication failure for user nurse_jsmith from 10.66.0.66
+  [Low     ] rule 100100 L5    10.66.0.66  SSH authentication failure for user nurse_jsmith from 10.66.0.66
+  [High    ] rule 100101 L10   10.66.0.66  SSH brute-force attack: >=6 failed logins from 10.66.0.66 in 120s
+  [Low     ] rule 100100 L5    10.66.0.66  SSH authentication failure for user nurse_jsmith from 10.66.0.66
+  [Low     ] rule 100100 L5    10.66.0.66  SSH authentication failure for user nurse_jsmith from 10.66.0.66
+  [Critical] rule 100102 L12   10.66.0.66  Successful SSH login from 10.66.0.66 right after a brute-force burst - possible account compromise
+  [Critical] rule 100110 L12        local  Privilege-escalation attempt: clinical account used sudo to reach root
+  [Critical] rule 100110 L12        local  Privilege-escalation attempt: clinical account used sudo to reach root

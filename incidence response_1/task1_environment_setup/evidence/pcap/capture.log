@@ -1,0 +1,10 @@
+Running as user "root" and group "root". This could be dangerous.
+Capturing on 'any'
+tshark: cap_set_proc() fail return: Operation not permitted
+
+tshark: cap_set_proc() fail return: Operation not permitted
+
+ ** (tshark:235) 17:18:55.019085 [Main MESSAGE] -- Capture started.
+ ** (tshark:235) 17:18:55.019199 [Main MESSAGE] -- File: "/evidence/pcap/ssh_capture.pcapng"
+tshark: 
+63 packets captured

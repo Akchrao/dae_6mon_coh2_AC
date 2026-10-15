@@ -1,0 +1,64 @@
+<!--
+  Care Access Navigator - Incident Response 1, Task 1
+  Custom detection rules (Wazuh local rules syntax, /var/ossec/etc/rules/local_rules.xml)
+
+  These extend Wazuh's bundled sshd rules (group 5700-5763) and sudo rules.
+  They are evaluated here by the project's rule engine (detect_engine.py), which reads
+  this same XML. A full Wazuh manager would load this file unchanged; see ADR-SIEM-choice.
+
+  Scenario they cover: an off-hours SSH password-guessing burst against a clinical
+  workstation account (nurse_jsmith), a successful login once the password is guessed,
+  and a privilege-escalation attempt by that account.
+-->
+<group name="care_access_navigator,authentication,ir1,">
+
+  <!-- Base: a single sshd authentication failure. Decoded fields: srcip, user.
+       Wazuh ships rule 5710 for this; we define a local base so the lab is self-contained. -->
+  <rule id="100100" level="5">
+    <decoded_as>sshd</decoded_as>
+    <match>Failed password for</match>
+    <description>SSH authentication failure for user $(user) from $(srcip)</description>
+    <group>authentication_failed,gdpr_IV_35.7.d,hipaa_164.312.b,</group>
+  </rule>
+
+  <!-- CUSTOM RULE 1 - SSH brute force.
+       Fires when rule 100100 matches >=6 times from the same source IP within 120 s. -->
+  <rule id="100101" level="10" frequency="6" timeframe="120">
+    <if_matched_sid>100100</if_matched_sid>
+    <same_source_ip />
+    <description>SSH brute-force attack: >=6 failed logins from $(srcip) in 120s</description>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+    <group>authentication_failures,attack,hipaa_164.308.a.5.ii.c,</group>
+  </rule>
+
+  <!-- CUSTOM RULE 2 - successful login immediately after a brute force (likely compromise).
+       Fires on a successful sshd login from a source that just tripped rule 100101. -->
+  <rule id="100102" level="12" frequency="1" timeframe="300">
+    <if_matched_sid>100101</if_matched_sid>
+    <same_source_ip />
+    <decoded_as>sshd</decoded_as>
+    <match>Accepted password for</match>
+    <description>Successful SSH login from $(srcip) right after a brute-force burst - possible account compromise</description>
+    <mitre>
+      <id>T1110</id>
+      <id>T1078</id>
+    </mitre>
+    <group>authentication_success,attack,hipaa_164.312.b,</group>
+  </rule>
+
+  <!-- CUSTOM RULE 3 - privilege escalation attempt by a non-admin clinical account.
+       Fires when nurse_* (a workforce clinical role, not IT) invokes sudo. -->
+  <rule id="100110" level="12">
+    <decoded_as>sudo</decoded_as>
+    <match>sudo: </match>
+    <regex>user=nurse_\w+|USER=root ; COMMAND=</regex>
+    <description>Privilege-escalation attempt: clinical account used sudo to reach root</description>
+    <mitre>
+      <id>T1548.003</id>
+    </mitre>
+    <group>privilege_escalation,attack,hipaa_164.312.a.1,</group>
+  </rule>
+
+</group>

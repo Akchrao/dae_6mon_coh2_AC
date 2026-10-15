@@ -1,0 +1,134 @@
+[
+  {
+    "time_utc": "2026-10-15T02:11:03+00:00",
+    "rule_id": "100100",
+    "level": 5,
+    "severity": "Low",
+    "srcip": "10.66.0.66",
+    "user": "nurse_jsmith",
+    "mitre": "",
+    "description": "SSH authentication failure for user nurse_jsmith from 10.66.0.66",
+    "raw": "Oct 15 02:11:03 parrot-sim sshd[20431]: Failed password for nurse_jsmith from 10.66.0.66 port 51002 ssh2"
+  },
+  {
+    "time_utc": "2026-10-15T02:11:05+00:00",
+    "rule_id": "100100",
+    "level": 5,
+    "severity": "Low",
+    "srcip": "10.66.0.66",
+    "user": "nurse_jsmith",
+    "mitre": "",
+    "description": "SSH authentication failure for user nurse_jsmith from 10.66.0.66",
+    "raw": "Oct 15 02:11:05 parrot-sim sshd[20431]: Failed password for nurse_jsmith from 10.66.0.66 port 51004 ssh2"
+  },
+  {
+    "time_utc": "2026-10-15T02:11:07+00:00",
+    "rule_id": "100100",
+    "level": 5,
+    "severity": "Low",
+    "srcip": "10.66.0.66",
+    "user": "nurse_jsmith",
+    "mitre": "",
+    "description": "SSH authentication failure for user nurse_jsmith from 10.66.0.66",
+    "raw": "Oct 15 02:11:07 parrot-sim sshd[20433]: Failed password for nurse_jsmith from 10.66.0.66 port 51006 ssh2"
+  },
+  {
+    "time_utc": "2026-10-15T02:11:09+00:00",
+    "rule_id": "100100",
+    "level": 5,
+    "severity": "Low",
+    "srcip": "10.66.0.66",
+    "user": "nurse_jsmith",
+    "mitre": "",
+    "description": "SSH authentication failure for user nurse_jsmith from 10.66.0.66",
+    "raw": "Oct 15 02:11:09 parrot-sim sshd[20433]: Failed password for invalid user nurse_jsmith from 10.66.0.66 port 51008 ssh2"
+  },
+  {
+    "time_utc": "2026-10-15T02:11:12+00:00",
+    "rule_id": "100100",
+    "level": 5,
+    "severity": "Low",
+    "srcip": "10.66.0.66",
+    "user": "nurse_jsmith",
+    "mitre": "",
+    "description": "SSH authentication failure for user nurse_jsmith from 10.66.0.66",
+    "raw": "Oct 15 02:11:12 parrot-sim sshd[20435]: Failed password for nurse_jsmith from 10.66.0.66 port 51010 ssh2"
+  },
+  {
+    "time_utc": "2026-10-15T02:11:14+00:00",
+    "rule_id": "100100",
+    "level": 5,
+    "severity": "Low",
+    "srcip": "10.66.0.66",
+    "user": "nurse_jsmith",
+    "mitre": "",
+    "description": "SSH authentication failure for user nurse_jsmith from 10.66.0.66",
+    "raw": "Oct 15 02:11:14 parrot-sim sshd[20435]: Failed password for nurse_jsmith from 10.66.0.66 port 51012 ssh2"
+  },
+  {
+    "time_utc": "2026-10-15T02:11:14+00:00",
+    "rule_id": "100101",
+    "level": 10,
+    "severity": "High",
+    "srcip": "10.66.0.66",
+    "user": "nurse_jsmith",
+    "mitre": "T1110",
+    "description": "SSH brute-force attack: >=6 failed logins from 10.66.0.66 in 120s",
+    "raw": "Oct 15 02:11:14 parrot-sim sshd[20435]: Failed password for nurse_jsmith from 10.66.0.66 port 51012 ssh2"
+  },
+  {
+    "time_utc": "2026-10-15T02:11:16+00:00",
+    "rule_id": "100100",
+    "level": 5,
+    "severity": "Low",
+    "srcip": "10.66.0.66",
+    "user": "nurse_jsmith",
+    "mitre": "",
+    "description": "SSH authentication failure for user nurse_jsmith from 10.66.0.66",
+    "raw": "Oct 15 02:11:16 parrot-sim sshd[20437]: Failed password for nurse_jsmith from 10.66.0.66 port 51014 ssh2"
+  },
+  {
+    "time_utc": "2026-10-15T02:11:19+00:00",
+    "rule_id": "100100",
+    "level": 5,
+    "severity": "Low",
+    "srcip": "10.66.0.66",
+    "user": "nurse_jsmith",
+    "mitre": "",
+    "description": "SSH authentication failure for user nurse_jsmith from 10.66.0.66",
+    "raw": "Oct 15 02:11:19 parrot-sim sshd[20437]: Failed password for nurse_jsmith from 10.66.0.66 port 51016 ssh2"
+  },
+  {
+    "time_utc": "2026-10-15T02:11:24+00:00",
+    "rule_id": "100102",
+    "level": 12,
+    "severity": "Critical",
+    "srcip": "10.66.0.66",
+    "user": "nurse_jsmith",
+    "mitre": "T1110,T1078",
+    "description": "Successful SSH login from 10.66.0.66 right after a brute-force burst - possible account compromise",
+    "raw": "Oct 15 02:11:24 parrot-sim sshd[20440]: Accepted password for nurse_jsmith from 10.66.0.66 port 51020 ssh2"
+  },
+  {
+    "time_utc": "2026-10-15T02:12:48+00:00",
+    "rule_id": "100110",
+    "level": 12,
+    "severity": "Critical",
+    "srcip": "local",
+    "user": "nurse_jsmith",
+    "mitre": "T1548.003",
+    "description": "Privilege-escalation attempt: clinical account used sudo to reach root",
+    "raw": "Oct 15 02:12:48 parrot-sim sudo:  nurse_jsmith : TTY=pts/1 ; PWD=/home/nurse_jsmith ; USER=root ; COMMAND=/usr/bin/cat /etc/shadow"
+  },
+  {
+    "time_utc": "2026-10-15T02:12:48+00:00",
+    "rule_id": "100110",
+    "level": 12,
+    "severity": "Critical",
+    "srcip": "local",
+    "user": "nurse_jsmith",
+    "mitre": "T1548.003",
+    "description": "Privilege-escalation attempt: clinical account used sudo to reach root",
+    "raw": "Oct 15 02:12:48 parrot-sim sudo:  nurse_jsmith : user NOT in sudoers ; TTY=pts/1 ; PWD=/home/nurse_jsmith ; USER=root ; COMMAND=/usr/bin/cat /etc/shadow"
+  }
+]

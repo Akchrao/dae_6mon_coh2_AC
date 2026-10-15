@@ -1,0 +1,12 @@
+# "parrot-sim": Debian 12 (bookworm) stand-in for Parrot OS Security (Parrot is Debian-based;
+# no ARM64 Parrot container/VirtualBox image runs on this Apple M4 host without admin rights).
+FROM python:3.11-slim-bookworm
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -qq && \
+    apt-get install -y -qq --no-install-recommends openssh-server rsyslog sudo tshark iproute2 procps \
+        passwd ca-certificates >/dev/null && \
+    pip install -q volatility3==2.7.0 && \
+    mkdir -p /run/sshd && rm -rf /var/lib/apt/lists/*
+# PRETTY_NAME banner so evidence shows the role this host plays in the lab
+RUN echo "parrot-sim (Debian 12 bookworm, Parrot OS stand-in) - Care Access Navigator IR lab" > /etc/motd
+CMD ["sleep", "infinity"]

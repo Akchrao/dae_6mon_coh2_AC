@@ -1,0 +1,23 @@
+$ vol --help | head -1   (framework version)
+Volatility 3 Framework 2.7.0
+
+# configure symbol/cache dirs and record the Linux memory-forensics plugins available
+$ vol -h | grep linux.   (memory plugins ready for Task 4)
+linux.bash
+linux.capabilities
+linux.check_afinfo
+linux.check_creds
+linux.check_idt
+linux.check_modules
+linux.check_syscall
+linux.elfs
+linux.envars
+linux.iomem
+linux.keyboard_notifiers
+linux.kmsg
+$ wc -l linux_plugins.txt
+linux memory plugins available: 25
+$ cat vol_config.ini
+[volatility]
+symbol_dirs=/opt/volatility/symbols
+cache=/opt/volatility/cache

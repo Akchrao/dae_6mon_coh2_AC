@@ -1,0 +1,44 @@
+# macOS host log sample - Care Access Navigator IR1 Task1
+# host: DAEDMAC1009.local  os: macOS 26.3.1 (arm64)
+# source: /var/log/install.log (readable without admin; the unified auth log store needs sudo)
+# ---
+2026-10-15 11:47:57-04 DAEDMAC1009 softwareupdated[91894]: Adding client SUUpdateServiceClient pid=93360, uid=0, installAuth=NO rights=(), transactions=0 (/usr/libexec/mdmclient)
+2026-10-15 11:47:57-04 DAEDMAC1009 softwareupdated[91894]: SoftwareUpdate: Fired early. Next check=10/16/26, 12:00 AM (interval=86280.000000, A/C=NO)
+2026-10-15 11:48:39-04 DAEDMAC1009 softwareupdated[91894]: Removing client SUUpdateServiceClient pid=93360, uid=0, installAuth=NO rights=(), transactions=0 (/usr/libexec/mdmclient)
+2026-10-15 12:23:42-04 DAEDMAC1009 softwareupdated[91894]: Removing client SUUpdateServiceClient pid=87425, uid=502, installAuth=NO rights=(), transactions=0 (/System/Library/PrivateFrameworks/SoftwareUpdate.framework/Versions/A/Resources/SoftwareUpdateNotificationManager.app/Contents/MacOS/SoftwareUpdateNotificationManager)
+2026-10-15 12:23:42-04 DAEDMAC1009 softwareupdated[91894]: Removing client SUUpdateServiceClient pid=87425, uid=502, installAuth=NO rights=(), transactions=0 (/System/Library/PrivateFrameworks/SoftwareUpdate.framework/Versions/A/Resources/SoftwareUpdateNotificationManager.app/Contents/MacOS/SoftwareUpdateNotificationManager)
+2026-10-15 12:23:42-04 DAEDMAC1009 softwareupdated[91894]: Removing client SUUpdateServiceClient pid=87425, uid=502, installAuth=NO rights=(), transactions=0 (/System/Library/PrivateFrameworks/SoftwareUpdate.framework/Versions/A/Resources/SoftwareUpdateNotificationManager.app/Contents/MacOS/SoftwareUpdateNotificationManager)
+2026-10-15 12:23:42-04 DAEDMAC1009 softwareupdated[91894]: SUOSUServiceDaemon: Client connection invalidated: SoftwareUpdateNotificationManager (type = sunm, pid = 87425, uid = 502, path = /System/Library/PrivateFrameworks/SoftwareUpdate.framework/Versions/A/Resources/SoftwareUpdateNotificationManager.app/Contents/MacOS/SoftwareUpdateNotificationManager)
+2026-10-15 12:31:13-04 DAEDMAC1009 softwareupdated[91894]: SUOSULoginCredentialPolicyManager: No update downloaded and prepared.
+2026-10-15 12:31:13-04 DAEDMAC1009 loginwindow[5697]: +[SUOSULoginCredentialPolicy currentLoginCredentialPolicy] = 0
+2026-10-15 12:32:36-04 DAEDMAC1009 softwareupdated[91894]: SUOSUPowerEventObserver: System will sleep
+2026-10-15 12:32:36-04 DAEDMAC1009 softwareupdated[91894]: SUOSULoginCredentialPolicyManager: No update downloaded and prepared.
+2026-10-15 12:32:36-04 DAEDMAC1009 loginwindow[5697]: +[SUOSULoginCredentialPolicy currentLoginCredentialPolicy] = 0
+2026-10-15 12:45:53-04 DAEDMAC1009 softwareupdated[91894]: SUOSULoginCredentialPolicyManager: No update downloaded and prepared.
+2026-10-15 12:45:53-04 DAEDMAC1009 loginwindow[5697]: +[SUOSULoginCredentialPolicy currentLoginCredentialPolicy] = 0
+2026-10-15 12:45:53-04 DAEDMAC1009 softwareupdated[91894]: SUOSUPowerEventObserver: System has powered on
+2026-10-15 12:45:53-04 DAEDMAC1009 softwareupdated[91894]: SUOSULoginCredentialPolicyManager: No update downloaded and prepared.
+2026-10-15 12:45:53-04 DAEDMAC1009 loginwindow[5697]: +[SUOSULoginCredentialPolicy currentLoginCredentialPolicy] = 0
+2026-10-15 12:45:53-04 DAEDMAC1009 softwareupdated[91894]: SUOSULoginCredentialPolicyManager: No update downloaded and prepared.
+2026-10-15 12:45:53-04 DAEDMAC1009 loginwindow[5697]: +[SUOSULoginCredentialPolicy currentLoginCredentialPolicy] = 0
+2026-10-15 12:46:00-04 DAEDMAC1009 softwareupdated[91894]: SUOSULoginCredentialPolicyManager: No update downloaded and prepared.
+2026-10-15 12:46:00-04 DAEDMAC1009 loginwindow[5697]: +[SUOSULoginCredentialPolicy currentLoginCredentialPolicy] = 0
+2026-10-15 13:02:28-04 DAEDMAC1009 softwareupdated[91894]: Adding client SUUpdateServiceClient pid=98442, uid=0, installAuth=NO rights=(), transactions=0 (/usr/libexec/mdmclient)
+2026-10-15 13:02:28-04 DAEDMAC1009 softwareupdated[91894]: SoftwareUpdate: Fired early. Next check=10/16/26, 12:00 AM (interval=86280.000000, A/C=NO)
+2026-10-15 13:03:09-04 DAEDMAC1009 softwareupdated[91894]: Removing client SUUpdateServiceClient pid=98442, uid=0, installAuth=NO rights=(), transactions=0 (/usr/libexec/mdmclient)
+2026-10-15 13:03:47-04 DAEDMAC1009 system_installd[99285]: installd: Starting
+2026-10-15 13:03:47-04 DAEDMAC1009 system_installd[99285]: installd: uid=0, euid=0
+2026-10-15 13:03:47-04 DAEDMAC1009 installd[99287]: installd: Starting
+2026-10-15 13:03:47-04 DAEDMAC1009 installd[99287]: installd: uid=0, euid=0
+2026-10-15 13:15:16-04 DAEDMAC1009 softwareupdated[91894]: SUOSUServiceDaemon: Periodic autoupdate action called
+2026-10-15 13:15:16-04 DAEDMAC1009 softwareupdated[91894]: -[SUOSUServiceDaemon doPeriodicActions]: Doing periodic auto update action
+2026-10-15 13:15:16-04 DAEDMAC1009 softwareupdated[91894]: SUOSUServiceDaemon: Posting com.apple.SoftwareUpdateNotificationManager.wakeup notification
+2026-10-15 13:15:16-04 DAEDMAC1009 softwareupdated[91894]: SUOSUServiceDaemon: Waiting 5s for clients to wake up
+2026-10-15 13:15:16-04 DAEDMAC1009 softwareupdated[91894]: SUOSUServiceClientManager: Chose on-console client: SoftwareUpdateNotificationManager (type = sunm, pid = 685, uid = 502, path = /System/Library/PrivateFrameworks/SoftwareUpdate.framework/Versions/A/Resources/SoftwareUpdateNotificationManager.app/Contents/MacOS/SoftwareUpdateNotificationManager)
+2026-10-15 13:15:16-04 DAEDMAC1009 softwareupdated[91894]: Adding client SUUpdateServiceClient pid=685, uid=502, installAuth=NO rights=(), transactions=0 (/System/Library/PrivateFrameworks/SoftwareUpdate.framework/Versions/A/Resources/SoftwareUpdateNotificationManager.app/Contents/MacOS/SoftwareUpdateNotificationManager)
+2026-10-15 13:15:21-04 DAEDMAC1009 softwareupdated[91894]: SUOSUServiceDaemon: Done waiting for clients to wake up
+2026-10-15 13:15:21-04 DAEDMAC1009 softwareupdated[91894]: SUOSUServiceClientManager: Chose on-console client: SoftwareUpdateNotificationManager (type = sunm, pid = 685, uid = 502, path = /System/Library/PrivateFrameworks/SoftwareUpdate.framework/Versions/A/Resources/SoftwareUpdateNotificationManager.app/Contents/MacOS/SoftwareUpdateNotificationManager)
+2026-10-15 13:15:21-04 DAEDMAC1009 softwareupdated[91894]: SUOSUServiceDaemon: Hello 16A53594-7535-495F-9CBB-7F8F7F34D77C
+2026-10-15 13:15:21-04 DAEDMAC1009 softwareupdated[91894]: -[SUOSUServiceDaemon _mobileKeyBagStashStateForUser:]: uid: 502, stashState: 2, result: 0
+2026-10-15 13:15:24-04 DAEDMAC1009 softwareupdated[91894]: Adding client SUUpdateServiceClient pid=685, uid=502, installAuth=NO rights=(), transactions=0 (/System/Library/PrivateFrameworks/SoftwareUpdate.framework/Versions/A/Resources/SoftwareUpdateNotificationManager.app/Contents/MacOS/SoftwareUpdateNotificationManager)
+2026-10-15 13:15:24-04 DAEDMAC1009 softwareupdated[91894]: Adding client SUUpdateServiceClient pid=685, uid=502, installAuth=NO rights=(), transactions=0 (/System/Library/PrivateFrameworks/SoftwareUpdate.framework/Versions/A/Resources/SoftwareUpdateNotificationManager.app/Contents/MacOS/SoftwareUpdateNotificationManager)

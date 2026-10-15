@@ -1,0 +1,28 @@
+$ cat /etc/os-release
+PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"
+NAME="Debian GNU/Linux"
+VERSION_ID="12"
+VERSION="12 (bookworm)"
+VERSION_CODENAME=bookworm
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+
+# start rsyslog so sshd/sudo events land in /var/log/auth.log (Wazuh agent log source)
+$ service rsyslog start ; pgrep -a rsyslogd
+20 rsyslogd
+
+$ grep -E 'auth|authpriv' /etc/rsyslog.conf  (auth.log routing = Wazuh 'localfile' source)
+55:*.*;auth,authpriv.none		-/var/log/syslog
+60:auth,authpriv.*			/var/log/auth.log
+
+# create the lab accounts used in the scenario
+$ useradd nurse_jsmith (clinical, non-sudo) ; useradd it_admin (sudo)
+uid=1000(nurse_jsmith) gid=1000(nurse_jsmith) groups=1000(nurse_jsmith)
+uid=1001(it_admin) gid=1001(it_admin) groups=1001(it_admin),27(sudo)
+
+# start sshd with verbose auth logging (so failed/accepted passwords are recorded)
+$ ssh-keygen -A ; sshd ; ss -ltn | grep :22
+LISTEN 0      128          0.0.0.0:22         0.0.0.0:*          
+LISTEN 0      128             [::]:22            [::]:*          
