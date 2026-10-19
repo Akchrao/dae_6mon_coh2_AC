@@ -1,0 +1,20 @@
+JML EVIDENCE INDEX — Care Access Navigator (SHA-256, computed 2026-10-19 18:30 UTC)
+ff6a2e294f2d7351d0bdfe049aea75daf53a1cc73c9b504cce7927fdf77eadf9  JML-01-before-users.png
+c60b660440552026a2164614bbefb78e084236de24a2de0d923cf66e05cb7c8d  JML-02-before-app-roles.png
+403f3a6bd9ebd277572b436af0ed34060ab89d4015a0e6db4e3ac9eb865d787d  JML-02b-before-app-roles.png
+ac997d504733d72ecae6f579b124a43477c709a1c0df62e50e34de1a79c26df1  JML-02b-before-app-roles.txt
+fe08279e0deff7800527f9363bc41d366fb20f1ef186632a1d106a9010eff4ca  JML-02c-prep-and-joiner-created.txt
+e9180190de79d27ee74cdd93ee9311bd78c6171172f3e6db9971c45274b49bc8  JML-03-joiner-role-assigned.png
+f691d37f8db032b270b39d5c95c4312f3efcfba01de067894c1715e3ae0a328d  JML-04-joiner-first-login.png
+5e1403b100879198056ec6f68045a30a8be48fcd76ea13242cfb4c3e6acb7d68  JML-05-after-joiner.txt
+0a635a5c5349dec16076585b85d0fde9b5ca4a32762f1b8d5fa6e90d0d8e3e0e  JML-06-mover-old-role-removed.png
+1c3acd2128405315242bc23751bd6428c221f35bb8a6283f9a64a14eae9b592b  JML-07-mover-new-role.png
+77e09f6e89cae6173e9d0a73fd280608c876f18ddfcd42bb95ccdf7fa68735d6  JML-08-mover-keycloak-role.png
+f9ae7c956696fff8ee0fb9be9b03bf9666a588b436bc80772c25ca040106092f  JML-09-after-mover.txt
+ee37794f2d426f025aadce748b8888169964f74a9930d5424c569b7a234148a2  JML-10-leaver-disabled.png
+d68096ab96b0e85c656eb5e73f361deb723a013f857aa5243fc54a85479b6655  JML-11-leaver-access-removed.png
+901e5cc965703d00033a5171dc7e76099168d751f8549cbaddc3204c60ad4a7e  JML-12-leaver-keycloak-disabled.png
+51dd7347a697b6dd5573815e683e8eafb13225cf274b1b32f52d511e85f88fe7  JML-13-leaver-login-refused.png
+36af26314d60b3a1a39539fafa849618de06b81158165daa712b9d09bd2710c2  JML-14-after-leaver.txt
+850570dcfafa3ce7c5a75c798eb092e07ae96f2c655fcb919dd572ec0b8df44a  JML-15-entra-audit-log.txt
+56edef9a44d40d45b50ded0f3983408aba86f2a294d58503c3f829b08a9c2142  JML-LOG.csv

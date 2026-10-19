@@ -1,0 +1,54 @@
+JML-15  Entra ID audit log — JML cycle 2026-10-19 (Microsoft Graph directoryAudits, read-only)
+Captured: 2026-10-19 18:29:54 UTC   (free tier retains 7 days — exported for permanence)
+
+2026-10-19 15:22:27  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 15:22:31  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 15:22:36  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 16:07:04  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 16:08:41  Update user                            success target=test.nurse@chakhilaraogmail.onmicrosoft.com  by=ch.akhilarao_gmail.com#EXT#@ch
+      DisplayName: Test Nurse -> Tara Jones
+2026-10-19 16:08:57  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 16:09:11  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 16:10:11  Update user                            success target=test.billing@chakhilaraogmail.onmicrosoft.com  by=ch.akhilarao_gmail.com#EXT#@ch
+      DisplayName: Test Billing -> Jeevan Smith
+2026-10-19 16:10:18  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 16:12:26  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 16:23:13  Add user                               success target=test.clinician@chakhilaraogmail.onmicrosoft.com  by=ch.akhilarao_gmail.com#EXT#@ch
+      AccountEnabled:  -> true
+      Department:  -> Internal Medicine
+      DisplayName:  -> Sathya Hasi
+      JobTitle:  -> Physician
+2026-10-19 16:44:23  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 16:46:23  Add app role assignment grant to user  success target=care-access-navigator-keycloak-broker, test.clinician@chakhi  by=ch.akhilarao_gmail.com#EXT#@ch
+      AppRole.Value:  -> Clinician
+2026-10-19 16:53:03  Change user password                   success target=test.clinician@chakhilaraogmail.onmicrosoft.com  by=
+2026-10-19 16:56:55  Update user                            success target=test.clinician@chakhilaraogmail.onmicrosoft.com  by=
+2026-10-19 16:56:55  Update user                            success target=test.clinician@chakhilaraogmail.onmicrosoft.com  by=
+2026-10-19 16:57:15  Update user                            success target=test.clinician@chakhilaraogmail.onmicrosoft.com  by=
+2026-10-19 16:57:15  User registered security info          success target=Sathya Hasi  by=test.clinician@chakhilaraogmai
+2026-10-19 16:57:16  User registered security info          success target=Sathya Hasi  by=test.clinician@chakhilaraogmai
+2026-10-19 16:57:25  Update user                            success target=test.clinician@chakhilaraogmail.onmicrosoft.com  by=
+2026-10-19 16:57:25  User registered security info          success target=Sathya Hasi  by=test.clinician@chakhilaraogmai
+2026-10-19 17:17:00  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 17:19:18  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 17:21:00  Remove app role assignment from user   success target=care-access-navigator-keycloak-broker, test.nurse@chakhilara  by=ch.akhilarao@gmail.com
+      AppRole.Value:  -> 
+2026-10-19 17:23:28  Add app role assignment grant to user  success target=care-access-navigator-keycloak-broker, test.nurse@chakhilara  by=ch.akhilarao_gmail.com#EXT#@ch
+      AppRole.Value:  -> Billing
+2026-10-19 17:26:02  Update user                            success target=test.nurse@chakhilaraogmail.onmicrosoft.com  by=ch.akhilarao_gmail.com#EXT#@ch
+2026-10-19 17:26:11  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 17:27:19  Update user                            success target=test.nurse@chakhilaraogmail.onmicrosoft.com  by=ch.akhilarao_gmail.com#EXT#@ch
+      Department: Med-Surg 4W -> Patient Financial Services
+      JobTitle: Registered Nurse -> Billing Specialist
+2026-10-19 17:43:05  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 17:43:58  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 18:13:27  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 18:13:55  Disable account                        success target=test.billing@chakhilaraogmail.onmicrosoft.com  by=ch.akhilarao_gmail.com#EXT#@ch
+      AccountEnabled: true -> false
+2026-10-19 18:13:55  Update user                            success target=test.billing@chakhilaraogmail.onmicrosoft.com  by=ch.akhilarao_gmail.com#EXT#@ch
+      AccountEnabled: true -> false
+2026-10-19 18:14:02  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
+2026-10-19 18:15:07  Update user                            success target=test.billing@chakhilaraogmail.onmicrosoft.com  by=ch.akhilarao_gmail.com#EXT#@ch
+2026-10-19 18:17:05  Remove app role assignment from user   success target=care-access-navigator-keycloak-broker, test.billing@chakhila  by=ch.akhilarao@gmail.com
+      AppRole.Value:  -> 
+2026-10-19 18:21:15  Validate user authentication           success target=00000000-0000-0000-0000-000000000000  by=live.com#ch.akhilarao@gmail.co
