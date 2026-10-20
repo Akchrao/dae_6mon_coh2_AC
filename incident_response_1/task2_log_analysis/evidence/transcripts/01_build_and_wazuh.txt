@@ -1,0 +1,35 @@
+# IR1 Task2 lab run - 2026-10-20T16:24:45Z - host DAEDMAC1009 (Darwin arm64)
+$ docker version --format '{{.Server.Version}} / {{.Server.Arch}}'
+29.7.2 / arm64
+
+$ docker build -t ir1-parrot-sim:1.0 -f Dockerfile.parrot-sim .
+sha256:b41a2c301635132e834198d4c8ef3ca32f05d6285c83d1e1d83d6483823a39ae
+
+# lab network. Not --internal: Docker cannot publish a port from an internal network, and
+# the macOS host must reach parrot-sim. The port is bound to 127.0.0.1 only.
+$ docker network create --subnet 10.77.0.0/24 ir2-labnet
+24160f3b57c8597595319294ea342eb496f8ebbb9be7a095405dad48393a91ce
+
+$ docker run -d --platform linux/amd64 --name wazuh-manager --network ir2-labnet --ip 10.77.0.20 wazuh/wazuh-manager:4.9.2
+b20b1e65ef3ef1bfbedb85b2c3ff72151ffc200cf069de79d10afcbfe3f362e8
+# waiting for wazuh-analysisd ...
+
+$ /var/ossec/bin/wazuh-control info
+WAZUH_VERSION="v4.9.2"
+WAZUH_REVISION="40921"
+WAZUH_TYPE="server"
+
+# install Task 2 decoders, rules, CDB lists, syslog listener and macOS inputs
+$ sh configure_manager.sh
+266:    <list>etc/lists/jml-leavers</list>
+267:    <list>etc/lists/jml-movers</list>
+268:    <list>etc/lists/rbac-no-root</list>
+wazuh-logcollector is running...
+wazuh-remoted is running...
+wazuh-analysisd is running...
+
+$ grep -c '<rule id' local_rules.xml ; grep -c '<decoder name' local_decoder.xml
+custom rules: 16   custom decoders: 10
+$ grep 'remoted' ossec.log | tail -2
+2026/10/20 16:27:28 wazuh-remoted: INFO: Started (pid: 5038). Listening on port 514/UDP (syslog).
+2026/10/20 16:27:28 wazuh-remoted: INFO: (1410): Reading authentication keys file.

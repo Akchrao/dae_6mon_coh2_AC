@@ -1,0 +1,45 @@
+# alert validation checks run against the live lab - 2026-10-20T16:32:59Z
+
+# 1) host key the Mac client saw (ssh_client.log 'Server host key') vs parrot-sim's own host key
+$ grep -m1 'Server host key' ssh_client.log
+Server host key: ssh-ed25519 SHA256:p65+KYxiMh0uXSawsGYlGJSfGcbnBJynFD1+bro8ULA
+$ docker exec parrot-sim ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
+256 SHA256:p65+KYxiMh0uXSawsGYlGJSfGcbnBJynFD1+bro8ULA root@buildkitsandbox (ED25519)
+
+# 2) key the Mac client offered vs the fingerprint sshd accepted for the other users
+$ ssh-keygen -lf lab/.keys/ir2_lab_ed25519.pub
+256 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ ir2-lab-macos-host (ED25519)
+$ grep -o 'Accepted publickey.*' auth.log | sort -u
+Accepted publickey for test.clinician ... ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
+Accepted publickey for test.nurse ... ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
+
+# 3) leaver account state at the time of the attempts
+$ id test.billing ; passwd -S test.billing ; ls -l ~test.billing/.ssh/authorized_keys
+uid=1003(test.billing) gid=1006(test.billing) groups=1006(test.billing),1001(billing),1002(disabled-users)
+test.billing L 2026-10-20 0 99999 7 -1
+-rw------- 1 test.billing test.billing 100 Oct 20 16:27 /home/test.billing/.ssh/authorized_keys
+256 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ ir2-lab-macos-host (ED25519)
+
+# 4) published port and the address the Mac's connections arrive from
+$ docker port parrot-sim ; docker network inspect ir2-labnet (gateway)
+22/tcp -> 127.0.0.1:2222
+gateway=10.77.0.1
+
+# 5) parrot-sim's own ssh client version (rules out the container as the client)
+$ docker exec parrot-sim ssh -V ; ssh -V (macOS)
+OpenSSH_9.2p1 Debian-2+deb12u10, OpenSSL 3.0.22 25 Aug 2026
+OpenSSH_10.2p1, LibreSSL 3.3.6
+
+# 6) clock agreement: macOS host vs parrot-sim vs wazuh-manager (UTC)
+mac    16:32:59
+parrot 16:32:59
+wazuh  16:32:59
+
+# 7) Tara Jones: groups on parrot-sim vs JML-LOG.csv target role (Billing only)
+uid=1002(test.nurse) gid=1005(test.nurse) groups=1005(test.nurse),1000(clinical),1001(billing)
+CHG-2026-0201,Mover,Tara Jones (Registered Nurse -> Billing Specialist),"app role Nurse; Keycloak role nurse","app role Billing; sessions revoked; Keycloak role billing only (nurse removed on next login)"
+
+# 8) Sathya Hasi: sudo membership and any change record for it
+uid=1001(test.clinician) gid=1004(test.clinician) groups=1004(test.clinician),27(sudo),1000(clinical)
+$ grep -i 'sudo\|root' JML-LOG.csv (REQ-2026-0101 row)
+matches for sudo/root in the joiner ticket: 0

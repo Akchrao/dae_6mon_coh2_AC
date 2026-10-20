@@ -1,0 +1,2 @@
+2026-10-20T16:27:46.431309+00:00 parrot-sim ehr-audit: user=test.clinician action=VIEW patient=PT-1001 decision=ALLOW basis=group:clinical
+2026-10-20T16:28:37.101376+00:00 parrot-sim ehr-audit: user=test.nurse action=VIEW patient=PT-1003 decision=ALLOW basis=group:clinical

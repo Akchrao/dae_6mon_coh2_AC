@@ -1,0 +1,8 @@
+alerts loaded        : 688  macOS DAEDMAC1009=453, Wazuh manager=188, Parrot parrot-sim=47
+alerts level >= 10   : 7
+macOS install.log    : 18914 lines, 441 alerts, updates offered {'macOS 27.0.1 26A434 (Customer)(SU)': 184, 'macOS Tahoe 26.7.1 25G241': 184}
+INC-A correlated     : 2 attempts
+  attempt 1: mac 2026-10-20T16:29:07Z pid 18458 -> pcap 10.77.0.1:60292 -> sshd[293] (+0.392s) -> Wazuh 100210 (L10) in -0.0s
+  attempt 2: mac 2026-10-20T16:29:32Z pid 18466 -> pcap 10.77.0.1:55326 -> sshd[295] (+0.517s) -> Wazuh 100211 (L11) in 0.0s
+Parrot detection latency (L>=10): max 0.4 ms (alert time = log time at ms resolution)
+outputs in evidence/analysis

@@ -1,0 +1,104 @@
+2026-10-20T16:27:36.438047+00:00 parrot-sim sshd[37]: Server listening on 0.0.0.0 port 22.
+2026-10-20T16:27:36.438073+00:00 parrot-sim sshd[37]: Server listening on :: port 22.
+2026-10-20T16:27:37.549255+00:00 parrot-sim root: ir2-collection-test 2026-10-20T16:27:37Z
+2026-10-20T16:27:42.788782+00:00 parrot-sim groupadd[54]: group added to /etc/group: name=clinical, GID=1000
+2026-10-20T16:27:42.789474+00:00 parrot-sim groupadd[54]: group added to /etc/gshadow: name=clinical
+2026-10-20T16:27:42.789972+00:00 parrot-sim groupadd[54]: new group: name=clinical, GID=1000
+2026-10-20T16:27:42.792729+00:00 parrot-sim groupadd[60]: group added to /etc/group: name=billing, GID=1001
+2026-10-20T16:27:42.793741+00:00 parrot-sim groupadd[60]: group added to /etc/gshadow: name=billing
+2026-10-20T16:27:42.794182+00:00 parrot-sim groupadd[60]: new group: name=billing, GID=1001
+2026-10-20T16:27:42.796557+00:00 parrot-sim groupadd[66]: group added to /etc/group: name=disabled-users, GID=1002
+2026-10-20T16:27:42.797351+00:00 parrot-sim groupadd[66]: group added to /etc/gshadow: name=disabled-users
+2026-10-20T16:27:42.797854+00:00 parrot-sim groupadd[66]: new group: name=disabled-users, GID=1002
+2026-10-20T16:27:42.805257+00:00 parrot-sim useradd[72]: new group: name=it_admin, GID=1003
+2026-10-20T16:27:42.805307+00:00 parrot-sim useradd[72]: new user: name=it_admin, UID=1000, GID=1003, home=/home/it_admin, shell=/bin/bash, from=none
+2026-10-20T16:27:42.805382+00:00 parrot-sim useradd[72]: add 'it_admin' to group 'sudo'
+2026-10-20T16:27:42.805396+00:00 parrot-sim useradd[72]: add 'it_admin' to shadow group 'sudo'
+2026-10-20T16:27:42.815560+00:00 parrot-sim useradd[80]: new group: name=test.clinician, GID=1004
+2026-10-20T16:27:42.815598+00:00 parrot-sim useradd[80]: new user: name=test.clinician, UID=1001, GID=1004, home=/home/test.clinician, shell=/bin/bash, from=none
+2026-10-20T16:27:42.815629+00:00 parrot-sim useradd[80]: add 'test.clinician' to group 'clinical'
+2026-10-20T16:27:42.815641+00:00 parrot-sim useradd[80]: add 'test.clinician' to shadow group 'clinical'
+2026-10-20T16:27:42.824678+00:00 parrot-sim useradd[87]: new group: name=test.nurse, GID=1005
+2026-10-20T16:27:42.824706+00:00 parrot-sim useradd[87]: new user: name=test.nurse, UID=1002, GID=1005, home=/home/test.nurse, shell=/bin/bash, from=none
+2026-10-20T16:27:42.824737+00:00 parrot-sim useradd[87]: add 'test.nurse' to group 'clinical'
+2026-10-20T16:27:42.824749+00:00 parrot-sim useradd[87]: add 'test.nurse' to shadow group 'clinical'
+2026-10-20T16:27:42.831301+00:00 parrot-sim usermod[94]: add 'test.nurse' to group 'billing'
+2026-10-20T16:27:42.831313+00:00 parrot-sim usermod[94]: add 'test.nurse' to shadow group 'billing'
+2026-10-20T16:27:42.837036+00:00 parrot-sim useradd[101]: new group: name=test.billing, GID=1006
+2026-10-20T16:27:42.837076+00:00 parrot-sim useradd[101]: new user: name=test.billing, UID=1003, GID=1006, home=/home/test.billing, shell=/bin/bash, from=none
+2026-10-20T16:27:42.837110+00:00 parrot-sim useradd[101]: add 'test.billing' to group 'billing'
+2026-10-20T16:27:42.837123+00:00 parrot-sim useradd[101]: add 'test.billing' to shadow group 'billing'
+2026-10-20T16:27:42.843034+00:00 parrot-sim usermod[108]: change user 'test.billing' expiration from 'never' to '1970-01-02'
+2026-10-20T16:27:42.843049+00:00 parrot-sim usermod[108]: add 'test.billing' to group 'disabled-users'
+2026-10-20T16:27:42.843055+00:00 parrot-sim usermod[108]: add 'test.billing' to shadow group 'disabled-users'
+2026-10-20T16:27:42.903099+00:00 parrot-sim chpasswd[132]: pam_unix(chpasswd:chauthtok): password changed for test.clinician
+2026-10-20T16:27:42.912150+00:00 parrot-sim chpasswd[136]: pam_unix(chpasswd:chauthtok): password changed for test.nurse
+2026-10-20T16:27:46.342771+00:00 parrot-sim sshd[231]: Connection from 10.77.0.1 port 64660 on 10.77.0.10 port 22 rdomain ""
+2026-10-20T16:27:46.363609+00:00 parrot-sim sshd[231]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.clinician/.ssh/authorized_keys:1
+2026-10-20T16:27:46.370253+00:00 parrot-sim sshd[231]: Postponed publickey for test.clinician from 10.77.0.1 port 64660 ssh2 [preauth]
+2026-10-20T16:27:46.370345+00:00 parrot-sim sshd[231]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.clinician/.ssh/authorized_keys:1
+2026-10-20T16:27:46.376221+00:00 parrot-sim sshd[231]: Accepted publickey for test.clinician from 10.77.0.1 port 64660 ssh2: ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
+2026-10-20T16:27:46.377054+00:00 parrot-sim sshd[231]: pam_unix(sshd:session): session opened for user test.clinician(uid=1001) by (uid=0)
+2026-10-20T16:27:46.381620+00:00 parrot-sim sshd[231]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-10-20T16:27:46.381639+00:00 parrot-sim sshd[231]: pam_env(sshd:session): Unable to open env file: /etc/default/locale: No such file or directory
+2026-10-20T16:27:46.381820+00:00 parrot-sim sshd[231]: User child is on pid 237
+2026-10-20T16:27:46.423848+00:00 parrot-sim sshd[237]: Starting session: command for test.clinician from 10.77.0.1 port 64660 id 0
+2026-10-20T16:27:46.432566+00:00 parrot-sim sshd[237]: Received disconnect from 10.77.0.1 port 64660:11: disconnected by user
+2026-10-20T16:27:46.432657+00:00 parrot-sim sshd[237]: Disconnected from user test.clinician 10.77.0.1 port 64660
+2026-10-20T16:27:46.432948+00:00 parrot-sim sshd[231]: pam_unix(sshd:session): session closed for user test.clinician
+2026-10-20T16:28:01.673486+00:00 parrot-sim sudo: it_admin : PWD=/ ; USER=root ; COMMAND=/usr/sbin/usermod -aG sudo test.clinician
+2026-10-20T16:28:01.673764+00:00 parrot-sim sudo: pam_limits(sudo:session): Could not set limit for 'core' to soft=0, hard=-1: Operation not permitted; uid=1000,euid=0
+2026-10-20T16:28:01.673800+00:00 parrot-sim sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-10-20T16:28:01.681666+00:00 parrot-sim usermod[253]: add 'test.clinician' to group 'sudo'
+2026-10-20T16:28:01.681687+00:00 parrot-sim usermod[253]: add 'test.clinician' to shadow group 'sudo'
+2026-10-20T16:28:01.686034+00:00 parrot-sim sudo: pam_unix(sudo:session): session closed for user root
+2026-10-20T16:28:16.808558+00:00 parrot-sim sshd[260]: Connection from 10.77.0.1 port 57946 on 10.77.0.10 port 22 rdomain ""
+2026-10-20T16:28:16.824852+00:00 parrot-sim sshd[260]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.clinician/.ssh/authorized_keys:1
+2026-10-20T16:28:16.830715+00:00 parrot-sim sshd[260]: Postponed publickey for test.clinician from 10.77.0.1 port 57946 ssh2 [preauth]
+2026-10-20T16:28:16.830797+00:00 parrot-sim sshd[260]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.clinician/.ssh/authorized_keys:1
+2026-10-20T16:28:16.836970+00:00 parrot-sim sshd[260]: Accepted publickey for test.clinician from 10.77.0.1 port 57946 ssh2: ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
+2026-10-20T16:28:16.838645+00:00 parrot-sim sshd[260]: pam_unix(sshd:session): session opened for user test.clinician(uid=1001) by (uid=0)
+2026-10-20T16:28:16.841969+00:00 parrot-sim sshd[260]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-10-20T16:28:16.841990+00:00 parrot-sim sshd[260]: pam_env(sshd:session): Unable to open env file: /etc/default/locale: No such file or directory
+2026-10-20T16:28:16.842247+00:00 parrot-sim sshd[260]: User child is on pid 266
+2026-10-20T16:28:16.883961+00:00 parrot-sim sshd[266]: Starting session: command for test.clinician from 10.77.0.1 port 57946 id 0
+2026-10-20T16:28:16.919679+00:00 parrot-sim sudo: test.clinician : PWD=/home/test.clinician ; USER=root ; COMMAND=/usr/bin/id
+2026-10-20T16:28:16.919783+00:00 parrot-sim sudo: pam_limits(sudo:session): Could not set limit for 'core' to soft=0, hard=-1: Operation not permitted; uid=1001,euid=0
+2026-10-20T16:28:16.919809+00:00 parrot-sim sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1001)
+2026-10-20T16:28:16.920759+00:00 parrot-sim sudo: pam_unix(sudo:session): session closed for user root
+2026-10-20T16:28:16.921423+00:00 parrot-sim sshd[266]: Received disconnect from 10.77.0.1 port 57946:11: disconnected by user
+2026-10-20T16:28:16.921488+00:00 parrot-sim sshd[266]: Disconnected from user test.clinician 10.77.0.1 port 57946
+2026-10-20T16:28:16.921763+00:00 parrot-sim sshd[260]: pam_unix(sshd:session): session closed for user test.clinician
+2026-10-20T16:28:37.013984+00:00 parrot-sim sshd[269]: Connection from 10.77.0.1 port 55994 on 10.77.0.10 port 22 rdomain ""
+2026-10-20T16:28:37.033099+00:00 parrot-sim sshd[269]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.nurse/.ssh/authorized_keys:1
+2026-10-20T16:28:37.040036+00:00 parrot-sim sshd[269]: Postponed publickey for test.nurse from 10.77.0.1 port 55994 ssh2 [preauth]
+2026-10-20T16:28:37.040141+00:00 parrot-sim sshd[269]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.nurse/.ssh/authorized_keys:1
+2026-10-20T16:28:37.046314+00:00 parrot-sim sshd[269]: Accepted publickey for test.nurse from 10.77.0.1 port 55994 ssh2: ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
+2026-10-20T16:28:37.048023+00:00 parrot-sim sshd[269]: pam_unix(sshd:session): session opened for user test.nurse(uid=1002) by (uid=0)
+2026-10-20T16:28:37.051406+00:00 parrot-sim sshd[269]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-10-20T16:28:37.051428+00:00 parrot-sim sshd[269]: pam_env(sshd:session): Unable to open env file: /etc/default/locale: No such file or directory
+2026-10-20T16:28:37.051759+00:00 parrot-sim sshd[269]: User child is on pid 275
+2026-10-20T16:28:37.094746+00:00 parrot-sim sshd[275]: Starting session: command for test.nurse from 10.77.0.1 port 55994 id 0
+2026-10-20T16:28:37.103064+00:00 parrot-sim sshd[275]: Received disconnect from 10.77.0.1 port 55994:11: disconnected by user
+2026-10-20T16:28:37.103175+00:00 parrot-sim sshd[275]: Disconnected from user test.nurse 10.77.0.1 port 55994
+2026-10-20T16:28:37.103747+00:00 parrot-sim sshd[269]: pam_unix(sshd:session): session closed for user test.nurse
+2026-10-20T16:28:47.184723+00:00 parrot-sim sshd[285]: Connection from 10.77.0.1 port 58784 on 10.77.0.10 port 22 rdomain ""
+2026-10-20T16:28:47.203931+00:00 parrot-sim sshd[285]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.nurse/.ssh/authorized_keys:1
+2026-10-20T16:28:47.210737+00:00 parrot-sim sshd[285]: Postponed publickey for test.nurse from 10.77.0.1 port 58784 ssh2 [preauth]
+2026-10-20T16:28:47.210807+00:00 parrot-sim sshd[285]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.nurse/.ssh/authorized_keys:1
+2026-10-20T16:28:47.217168+00:00 parrot-sim sshd[285]: Accepted publickey for test.nurse from 10.77.0.1 port 58784 ssh2: ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
+2026-10-20T16:28:47.218560+00:00 parrot-sim sshd[285]: pam_unix(sshd:session): session opened for user test.nurse(uid=1002) by (uid=0)
+2026-10-20T16:28:47.221645+00:00 parrot-sim sshd[285]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-10-20T16:28:47.221669+00:00 parrot-sim sshd[285]: pam_env(sshd:session): Unable to open env file: /etc/default/locale: No such file or directory
+2026-10-20T16:28:47.221957+00:00 parrot-sim sshd[285]: User child is on pid 291
+2026-10-20T16:28:47.264475+00:00 parrot-sim sshd[291]: Starting session: command for test.nurse from 10.77.0.1 port 58784 id 0
+2026-10-20T16:28:47.295550+00:00 parrot-sim sudo: test.nurse : user NOT in sudoers ; PWD=/home/test.nurse ; USER=root ; COMMAND=/usr/bin/cat /srv/ehr/clinical/PT-1003.txt
+2026-10-20T16:28:47.296362+00:00 parrot-sim sshd[291]: Received disconnect from 10.77.0.1 port 58784:11: disconnected by user
+2026-10-20T16:28:47.296445+00:00 parrot-sim sshd[291]: Disconnected from user test.nurse 10.77.0.1 port 58784
+2026-10-20T16:28:47.296874+00:00 parrot-sim sshd[285]: pam_unix(sshd:session): session closed for user test.nurse
+2026-10-20T16:29:07.392048+00:00 parrot-sim sshd[293]: Connection from 10.77.0.1 port 60292 on 10.77.0.10 port 22 rdomain ""
+2026-10-20T16:29:07.402186+00:00 parrot-sim sshd[293]: User test.billing from 10.77.0.1 not allowed because a group is listed in DenyGroups
+2026-10-20T16:29:07.423591+00:00 parrot-sim sshd[293]: Connection closed by invalid user test.billing 10.77.0.1 port 60292 [preauth]
+2026-10-20T16:29:32.516718+00:00 parrot-sim sshd[295]: Connection from 10.77.0.1 port 55326 on 10.77.0.10 port 22 rdomain ""
+2026-10-20T16:29:32.526586+00:00 parrot-sim sshd[295]: User test.billing from 10.77.0.1 not allowed because a group is listed in DenyGroups
+2026-10-20T16:29:32.553105+00:00 parrot-sim sshd[295]: Connection closed by invalid user test.billing 10.77.0.1 port 55326 [preauth]

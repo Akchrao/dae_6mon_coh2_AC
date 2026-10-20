@@ -1,0 +1,24 @@
+tshark: 
+194 packets captured
+$ tshark -r ssh_sessions.pcapng -q -z conv,tcp | head
+================================================================================
+TCP Conversations
+Filter:<No Filter>
+                                                           |       <-      | |       ->      | |     Total     |    Relative    |   Duration   |
+                                                           | Frames  Bytes | | Frames  Bytes | | Frames  Bytes |      Start     |              |
+10.77.0.1:64660            <-> 10.77.0.10:22                   17 4383 bytes      20 4034 bytes      37 8417 bytes     0.000000000         0.1073
+10.77.0.1:57946            <-> 10.77.0.10:22                   17 4399 bytes      20 4086 bytes      37 8485 bytes    30.461147042         0.1349
+10.77.0.1:55994            <-> 10.77.0.10:22                   17 4351 bytes      20 4018 bytes      37 8369 bytes    50.674116385         0.1043
+10.77.0.1:58784            <-> 10.77.0.10:22                   17 4367 bytes      20 4102 bytes      37 8469 bytes    60.844402167         0.1269
+10.77.0.1:60292            <-> 10.77.0.10:22                   11 2631 bytes      12 2754 bytes      23 5385 bytes    81.046419454         0.0524
+10.77.0.1:55326            <-> 10.77.0.10:22                   11 2631 bytes      12 2754 bytes      23 5385 bytes   106.174961550         0.0538
+================================================================================
+
+# SSH identification strings sent by the CLIENT (dst port 22) - identifies the client software
+$ tshark -r ssh_sessions.pcapng -Y 'ssh.protocol && tcp.dstport==22' -T fields -e frame.time_epoch -e ip.src -e tcp.srcport -e ssh.protocol
+1792513666.326842379,10.77.0.1,64660,SSH-2.0-OpenSSH_10.2
+1792513696.788010087,10.77.0.1,57946,SSH-2.0-OpenSSH_10.2
+1792513717.000754014,10.77.0.1,55994,SSH-2.0-OpenSSH_10.2
+1792513727.171116504,10.77.0.1,58784,SSH-2.0-OpenSSH_10.2
+1792513747.373339041,10.77.0.1,60292,SSH-2.0-OpenSSH_10.2
+1792513772.501822137,10.77.0.1,55326,SSH-2.0-OpenSSH_10.2

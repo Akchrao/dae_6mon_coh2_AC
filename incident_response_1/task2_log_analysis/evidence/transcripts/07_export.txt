@@ -1,0 +1,163 @@
+$ events received by the manager, per source (archives.json, logall_json=yes)
+  18914 "location":"/var/ossec/logs/macos/install.log"
+    378 "location":"/var/ossec/logs/macos/ssh_client.log"
+    106 "location":"10.77.0.10"
+      6 "location":"df -P"
+      1 "location":"wazuh-monitord"
+
+$ alerts per rule (alerts.json)
+     1  rule 100221  L12 ePHI viewed by mover test.nurse (now Billing) through stale clinical g
+     1  rule 100231  L12 Root obtained via sudo by test.clinician, whose role has no root entit
+     1  rule 100211  L11 Repeated login attempts by JML leaver account test.billing (2+ in 10 m
+     1  rule 100210  L10 JML leaver account test.billing attempted SSH login from 10.77.0.1 - a
+     1  rule 100222  L10 JML mover test.nurse attempted root via sudo (not in sudoers)
+     2  rule 100230  L10 Account test.clinician added to privileged group sudo
+     1  rule 100244  L8  macOS host: remote-access tool installed - Splashtop Streamer (validat
+     7  rule   5901  L8  New group added to the system.
+     4  rule   5902  L8  New user added to the system.
+     2  rule 100251  L7  macOS host: SSH client used leaver account test.billing against 127.0.
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure gpgcheck
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure AIDE is 
+     8  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure permissi
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure local lo
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure remote l
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure updates,
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure time syn
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure VSFTP Se
+     3  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure nftables
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure at least
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure auditd i
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure changes 
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure actions 
+     4  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure events t
+     5  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure successf
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure session 
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure login an
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure file del
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure kernel m
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure the audi
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure only aut
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure rsyslog 
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure systemd-
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure cron is 
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure at is re
+     2  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure password
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure minimum 
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure inactive
+     1  rule  19007  L7  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure accounts
+   184  rule 100241  L5  macOS host: OS update offered but not installed - macOS 27.0.1 26A434 
+   184  rule 100241  L5  macOS host: OS update offered but not installed - macOS Tahoe 26.7.1 2
+    31  rule 100242  L5  macOS host: process 75876 tried to change Software Update settings wit
+     2  rule  19003  L5  SCA summary: CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Sc
+     2  rule   5403  L4  First time user executed sudo.
+     1  rule 100220  L3  EHR audit: test.clinician VIEW PT-1001 - ALLOW via group:clinical
+    21  rule 100240  L3  macOS host power state: system has powered on
+    20  rule 100240  L3  macOS host power state: system will sleep
+     2  rule 100250  L3  macOS host: SSH client connecting to 127.0.0.1:2222 as test.clinician
+     2  rule 100250  L3  macOS host: SSH client connecting to 127.0.0.1:2222 as test.nurse
+     2  rule 100252  L3  macOS host: SSH session refused or closed by the remote host
+     4  rule 100253  L3  macOS host: SSH client authenticated to the remote host
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SELinux 
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure no uncon
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SETroubl
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure the MCS 
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure message 
+    12  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure permissi
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure GNOME Di
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure system-w
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure xorg-x11
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure Avahi Se
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure CUPS is 
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure DHCP Ser
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure DNS Serv
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure TFTP Ser
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure a web se
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure IMAP and
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure Samba is
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure HTTP Pro
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SNMP Ser
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure NIS serv
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure dnsmasq 
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure nfs-util
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure rpcbind 
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure rsync-da
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure telnet c
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure LDAP cli
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure TFTP cli
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure FTP clie
+     3  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure audit co
+     3  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure audit to
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure sudo is 
+     2  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure password
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure default 
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure sticky b
+     1  rule  19008  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure root is 
+     2  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure mounting
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure /tmp is 
+     7  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure nodev op
+     5  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure noexec o
+     7  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure nosuid o
+     5  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure separate
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure /dev/shm
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Disable USB Sto
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure filesyst
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure cryptogr
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure bootload
+     2  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure core dum
+     2  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SELinux 
+     2  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure the SELi
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure XDMCP is
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure chrony i
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure mail tra
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure auditing
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure audit_ba
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure auditd s
+     2  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure audit lo
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure system i
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure the runn
+     3  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure rsyslog 
+     6  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure journald
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure systemd-
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure cron dae
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SSH acce
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SSH LogL
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SSH PAM 
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SSH root
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SSH Host
+     2  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SSH Perm
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SSH Igno
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SSH X11 
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SSH Allo
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure system-w
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SSH warn
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SSH MaxA
+     2  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SSH MaxS
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SSH Logi
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure SSH Idle
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure sudo com
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure sudo log
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure users mu
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure re-authe
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure sudo aut
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure access t
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure authsele
+     2  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure password
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure lockout 
+     1  rule  19009  L3  CIS Benchmark for Amazon Linux 2023 Benchmark v1.0.0.: Ensure default 
+     2  rule    502  L3  Wazuh server started.
+     6  rule   5501  L3  PAM: Login session opened.
+     6  rule   5502  L3  PAM: Login session closed.
+     2  rule   5555  L3  PAM: User changed password.
+    12  rule   5715  L3  sshd: authentication success.
+
+# alert validation: replay the raw leaver events through wazuh-logtest -v (rule trace)
+$ wazuh-logtest -v < 2026-10-20T16:29:07.402186+00:00 parrot-sim sshd[293]: User ...
+		*Rule 1 matched
+		*Rule 5700 matched
+		*Rule 5718 matched
+		*Rule 100210 matched
+	id: '100210'
+	level: '10'
+	description: 'JML leaver account test.billing attempted SSH login from 10.77.0.1 - account was deprovisioned'
+	firedtimes: '1'
+**Alert to be generated.

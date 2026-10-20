@@ -1,0 +1,58 @@
+{
+  "install_log_lines": 18914,
+  "window_start": "2026-10-13 23:38:35-04",
+  "top_processes": [
+    [
+      "softwareupdated",
+      4642
+    ],
+    [
+      "installd",
+      2289
+    ],
+    [
+      "Safari",
+      832
+    ],
+    [
+      "package_script_service",
+      105
+    ],
+    [
+      "loginwindow",
+      62
+    ],
+    [
+      "system_installd",
+      40
+    ]
+  ],
+  "updates_offered": [
+    {
+      "update": "macOS 27.0.1 26A434 (Customer)(SU)",
+      "times_offered": 184
+    },
+    {
+      "update": "macOS Tahoe 26.7.1 25G241",
+      "times_offered": 184
+    }
+  ],
+  "update_offer_first": "2026-10-14T03:38:37Z",
+  "update_offer_last": "2026-10-20T10:08:12Z",
+  "power_events": 41,
+  "sleeps": 20,
+  "wakes": 21,
+  "last_wake_before_scenario": "2026-10-20T15:57:40Z",
+  "entitlement_violations": 31,
+  "entitlement_pids": [
+    "75876"
+  ],
+  "packages_installed": [
+    {
+      "package": "Splashtop Streamer",
+      "time_utc": "2026-10-16T19:40:33Z",
+      "rule": "100244"
+    }
+  ],
+  "alerts_from_install_log": 441
+}

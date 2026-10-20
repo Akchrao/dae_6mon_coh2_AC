@@ -1,0 +1,21 @@
+# Scenario run from macOS host DAEDMAC1009; UTC times; ssh = macOS OpenSSH_10.2p1, LibreSSL 3.3.6
+
+[2026-10-20T16:27:46Z] S1 baseline - Sathya Hasi (test.clinician) views her patient PT-1001
+SYNTHETIC RECORD PT-1001
+
+[2026-10-20T16:28:01Z] S2 it_admin adds test.clinician to the sudo group (no change ticket)
+$ docker exec -u it_admin parrot-sim sudo -n usermod -aG sudo test.clinician
+
+[2026-10-20T16:28:16Z] S3 Sathya Hasi (test.clinician) runs a command as root
+uid=0(root) gid=0(root) groups=0(root)
+
+[2026-10-20T16:28:36Z] S4a Tara Jones (test.nurse, now Billing) opens clinical record PT-1003
+SYNTHETIC RECORD PT-1003
+
+[2026-10-20T16:28:47Z] S4b Tara Jones tries to read the record as root
+
+[2026-10-20T16:29:07Z] S5a login attempt as Jeevan Smith (test.billing, leaver)
+
+[2026-10-20T16:29:32Z] S5b second login attempt as test.billing
+
+[2026-10-20T16:29:37Z] scenario complete

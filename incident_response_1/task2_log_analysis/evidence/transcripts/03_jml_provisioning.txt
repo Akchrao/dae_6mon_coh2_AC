@@ -1,0 +1,25 @@
+# mirrors JML-LOG.csv (REQ-2026-0101, CHG-2026-0201, TERM-2026-0301) on parrot-sim
+(lab passwords set for test.clinician and test.nurse; values not recorded)
+$ id test.clinician
+uid=1001(test.clinician) gid=1004(test.clinician) groups=1004(test.clinician),1000(clinical)
+$ id test.nurse
+uid=1002(test.nurse) gid=1005(test.nurse) groups=1005(test.nurse),1000(clinical),1001(billing)
+$ id test.billing
+uid=1003(test.billing) gid=1006(test.billing) groups=1006(test.billing),1001(billing),1002(disabled-users)
+$ id it_admin
+uid=1000(it_admin) gid=1003(it_admin) groups=1003(it_admin),27(sudo)
+$ getent passwd test.clinician test.nurse test.billing | cut -d: -f1,5
+test.clinician:Sathya Hasi (Physician)
+test.nurse:Tara Jones (Billing Specialist)
+test.billing:Jeevan Smith (Billing Specialist)
+$ passwd -S test.billing ; chage -l test.billing | grep 'Account expires'
+test.billing L 2026-10-20 0 99999 7 -1
+Account expires						: Jan 02, 1970
+$ sshd -T | grep -E '^(loglevel|denygroups|passwordauthentication)'
+passwordauthentication no
+loglevel VERBOSE
+denygroups disabled-users
+$ ls -l /srv/ehr/clinical
+total 8
+-rw-r----- 1 root clinical 80 Oct 20 16:27 PT-1001.txt
+-rw-r----- 1 root clinical 85 Oct 20 16:27 PT-1003.txt

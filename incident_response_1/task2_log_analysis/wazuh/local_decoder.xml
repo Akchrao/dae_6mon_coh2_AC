@@ -1,0 +1,79 @@
+<!--
+  Care Access Navigator - Incident Response 1, Task 2
+  Custom decoders (Wazuh local decoders, /var/ossec/etc/decoders/local_decoder.xml)
+
+  Parrot side : usermod group changes, ehr-audit (EHR record-access audit trail)
+  macOS side  : softwareupdated / installd lines from /var/log/install.log, and the
+                OpenSSH client debug trail captured on the host by lab/host_ssh_logged.py
+-->
+
+<!-- ===================== Parrot OS (parrot-sim) ===================== -->
+
+<!-- usermod[123]: add 'test.clinician' to group 'sudo' -->
+<decoder name="usermod-group">
+  <program_name>^usermod$</program_name>
+  <prematch>^add '</prematch>
+  <regex>^add '(\S+)' to (\.*)group '(\S+)'</regex>
+  <order>dstuser,extra_data,group</order>
+</decoder>
+
+<!-- ehr-audit: user=test.nurse action=VIEW patient=PT-1003 decision=ALLOW basis=group:clinical -->
+<decoder name="ehr-audit">
+  <program_name>^ehr-audit$</program_name>
+  <regex>^user=(\S+) action=(\S+) patient=(\S+) decision=(\S+) basis=(\S+)</regex>
+  <order>dstuser,action,ehr_patient,ehr_decision,ehr_basis</order>
+</decoder>
+
+<!-- ===================== macOS host (DAEDMAC1009) ===================== -->
+
+<!-- softwareupdated[91894]: SUOSUPowerEventObserver: System will sleep -->
+<decoder name="macos-softwareupdated">
+  <program_name>^softwareupdated$</program_name>
+</decoder>
+
+<decoder name="macos-softwareupdated-power">
+  <parent>macos-softwareupdated</parent>
+  <prematch>^SUOSUPowerEventObserver: </prematch>
+  <regex>^SUOSUPowerEventObserver: System (\.+)$</regex>
+  <order>power_state</order>
+</decoder>
+
+<decoder name="macos-softwareupdated-offer">
+  <parent>macos-softwareupdated</parent>
+  <prematch>PrimaryDescriptor: </prematch>
+  <regex>PrimaryDescriptor: \S+ SU:(macOS \S+ \S+ \S+)</regex>
+  <order>update_offered</order>
+</decoder>
+
+<decoder name="macos-softwareupdated-entitlement">
+  <parent>macos-softwareupdated</parent>
+  <prematch>^Client Pid:</prematch>
+  <regex>^Client Pid:(\d+) tried to set an SU Preference but is not entitled</regex>
+  <order>client_pid</order>
+</decoder>
+
+<!-- installd[25380]: Installed "Splashtop Streamer" () -->
+<decoder name="macos-installd">
+  <program_name>^installd$</program_name>
+  <prematch>^Installed "</prematch>
+  <regex>^Installed "(\.+)"</regex>
+  <order>package</order>
+</decoder>
+
+<!-- ssh[4242]: debug1: Authenticating to 127.0.0.1:2222 as 'test.billing'   (host_ssh_logged.py) -->
+<decoder name="macos-ssh-client">
+  <program_name>^ssh$</program_name>
+  <prematch>^debug1: |^Connection closed|^\S+@\S+: Permission denied|^Authenticated to</prematch>
+</decoder>
+
+<decoder name="macos-ssh-client-fields">
+  <parent>macos-ssh-client</parent>
+  <regex>Authenticating to (\S+):(\d+) as '(\S+)'</regex>
+  <order>dstip,dstport,dstuser</order>
+</decoder>
+
+<decoder name="macos-ssh-client-fields">
+  <parent>macos-ssh-client</parent>
+  <regex>Local version string (\S+)</regex>
+  <order>ssh_client_version</order>
+</decoder>

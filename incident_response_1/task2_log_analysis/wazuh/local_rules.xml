@@ -1,0 +1,161 @@
+<!--
+  Care Access Navigator - Incident Response 1, Task 2
+  Custom rules (Wazuh local rules, /var/ossec/etc/rules/local_rules.xml), loaded by a real
+  wazuh-manager 4.9.2. They build on the bundled sshd (57xx) and sudo (54xx) rules and on
+  three CDB lists kept in step with the JML register (capstone_next_steps/jml-evidence/JML-LOG.csv):
+
+    etc/lists/jml-leavers   login -> termination ticket   (accounts that must never log in)
+    etc/lists/jml-movers    login -> current role          (role changed; old access must be gone)
+    etc/lists/rbac-no-root  login -> role                  (workforce roles with no root entitlement)
+
+  IDs 1002xx keep clear of Task 1's 1001xx rules.
+-->
+<group name="care_access_navigator,ir1,task2,">
+
+  <!-- ===================== Parrot OS: identity lifecycle ===================== -->
+
+  <!-- INC-A: a deprovisioned (leaver) account tried to log in. 5718 = sshd denied user. -->
+  <rule id="100210" level="10">
+    <if_sid>5718, 5710, 5716, 5760</if_sid>
+    <list field="user" lookup="match_key">etc/lists/jml-leavers</list>
+    <description>JML leaver account $(dstuser) attempted SSH login from $(srcip) - account was deprovisioned</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>authentication_failed,jml_leaver,hipaa_164.308.a.3.ii.c,</group>
+  </rule>
+
+  <rule id="100211" level="11" frequency="2" timeframe="600">
+    <if_matched_sid>100210</if_matched_sid>
+    <same_user />
+    <description>Repeated login attempts by JML leaver account $(dstuser) (2+ in 10 min)</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>authentication_failures,jml_leaver,</group>
+  </rule>
+
+  <!-- INC-B: a mover opened a clinical record through access their new role does not grant. -->
+  <rule id="100220" level="3">
+    <decoded_as>ehr-audit</decoded_as>
+    <description>EHR audit: $(dstuser) $(action) $(ehr_patient) - $(ehr_decision) via $(ehr_basis)</description>
+    <group>ehr_access,</group>
+  </rule>
+
+  <rule id="100221" level="12">
+    <if_sid>100220</if_sid>
+    <field name="ehr_decision">^ALLOW$</field>
+    <field name="ehr_basis">^group:clinical$</field>
+    <list field="user" lookup="match_key_value" check_value="^billing$">etc/lists/jml-movers</list>
+    <description>ePHI viewed by mover $(dstuser) (now Billing) through stale clinical group - record $(ehr_patient)</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>ehr_access,privilege_creep,hipaa_164.308.a.4,hipaa_164.312.a.1,</group>
+  </rule>
+
+  <rule id="100222" level="10">
+    <if_sid>5405, 5401</if_sid>
+    <!-- Wazuh CDB lookups only reach dstuser ("user"); sudo puts the caller in srcuser,
+         so the jml-movers list is mirrored here as a regex on the caller field. -->
+    <regex type="pcre2">^\s*(test\.nurse)\s:</regex>
+    <description>JML mover $(srcuser) attempted root via sudo (not in sudoers)</description>
+    <mitre>
+      <id>T1548.003</id>
+    </mitre>
+    <group>privilege_escalation,jml_mover,</group>
+  </rule>
+
+  <!-- INC-C: account added to the sudo group, then root used by a role with no root entitlement. -->
+  <rule id="100230" level="10">
+    <decoded_as>usermod-group</decoded_as>
+    <field name="group">^sudo$|^wheel$|^adm$</field>
+    <description>Account $(dstuser) added to privileged group $(group)</description>
+    <mitre>
+      <id>T1098</id>
+    </mitre>
+    <group>account_changed,privilege_change,hipaa_164.308.a.4,</group>
+  </rule>
+
+  <rule id="100231" level="12">
+    <if_sid>5402, 5403</if_sid>
+    <!-- mirrors etc/lists/rbac-no-root (see note on rule 100222) -->
+    <regex type="pcre2">^\s*(test\.clinician|test\.nurse|test\.billing)\s:</regex>
+    <description>Root obtained via sudo by $(srcuser), whose role has no root entitlement (RBAC/SoD violation)</description>
+    <mitre>
+      <id>T1548.003</id>
+    </mitre>
+    <group>privilege_escalation,rbac_violation,hipaa_164.312.a.1,</group>
+  </rule>
+
+  <!-- ===================== macOS host (DAEDMAC1009) ===================== -->
+
+  <rule id="100240" level="3">
+    <decoded_as>macos-softwareupdated</decoded_as>
+    <field name="power_state">\.+</field>
+    <description>macOS host power state: system $(power_state)</description>
+    <group>macos,host_state,</group>
+  </rule>
+
+  <rule id="100241" level="5">
+    <decoded_as>macos-softwareupdated</decoded_as>
+    <field name="update_offered">\.+</field>
+    <description>macOS host: OS update offered but not installed - $(update_offered)</description>
+    <group>macos,patch_management,pci_dss_6.3.3,</group>
+  </rule>
+
+  <rule id="100242" level="5">
+    <decoded_as>macos-softwareupdated</decoded_as>
+    <field name="client_pid">\d+</field>
+    <description>macOS host: process $(client_pid) tried to change Software Update settings without entitlement</description>
+    <group>macos,policy_violation,</group>
+  </rule>
+
+  <rule id="100243" level="5">
+    <decoded_as>macos-installd</decoded_as>
+    <description>macOS host: package installed - $(package)</description>
+    <group>macos,software_install,</group>
+  </rule>
+
+  <rule id="100244" level="8">
+    <if_sid>100243</if_sid>
+    <field name="package">Splashtop|TeamViewer|AnyDesk|ScreenConnect|LogMeIn|RustDesk</field>
+    <description>macOS host: remote-access tool installed - $(package) (validate against approved software list)</description>
+    <mitre>
+      <id>T1219</id>
+    </mitre>
+    <group>macos,software_install,remote_access,</group>
+  </rule>
+
+  <rule id="100250" level="3">
+    <decoded_as>macos-ssh-client</decoded_as>
+    <match>Authenticating to</match>
+    <description>macOS host: SSH client connecting to $(dstip):$(dstport) as $(dstuser)</description>
+    <group>macos,ssh_client,</group>
+  </rule>
+
+  <rule id="100251" level="7">
+    <if_sid>100250</if_sid>
+    <list field="user" lookup="match_key">etc/lists/jml-leavers</list>
+    <description>macOS host: SSH client used leaver account $(dstuser) against $(dstip):$(dstport)</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>macos,ssh_client,jml_leaver,</group>
+  </rule>
+
+  <rule id="100252" level="3">
+    <decoded_as>macos-ssh-client</decoded_as>
+    <match>Connection closed by|Permission denied</match>
+    <description>macOS host: SSH session refused or closed by the remote host</description>
+    <group>macos,ssh_client,</group>
+  </rule>
+
+  <rule id="100253" level="3">
+    <decoded_as>macos-ssh-client</decoded_as>
+    <match>Authenticated to</match>
+    <description>macOS host: SSH client authenticated to the remote host</description>
+    <group>macos,ssh_client,</group>
+  </rule>
+
+</group>

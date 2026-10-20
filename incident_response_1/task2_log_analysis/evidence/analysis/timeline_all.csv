@@ -1,0 +1,40 @@
+time_utc,host,rule_id,level,description
+2026-10-20T16:27:42.789Z,Parrot parrot-sim,5901,8,New group added to the system.
+2026-10-20T16:27:42.794Z,Parrot parrot-sim,5901,8,New group added to the system.
+2026-10-20T16:27:42.797Z,Parrot parrot-sim,5901,8,New group added to the system.
+2026-10-20T16:27:42.805Z,Parrot parrot-sim,5901,8,New group added to the system.
+2026-10-20T16:27:42.805Z,Parrot parrot-sim,5902,8,New user added to the system.
+2026-10-20T16:27:42.815Z,Parrot parrot-sim,5901,8,New group added to the system.
+2026-10-20T16:27:42.815Z,Parrot parrot-sim,5902,8,New user added to the system.
+2026-10-20T16:27:42.824Z,Parrot parrot-sim,5901,8,New group added to the system.
+2026-10-20T16:27:42.824Z,Parrot parrot-sim,5902,8,New user added to the system.
+2026-10-20T16:27:42.837Z,Parrot parrot-sim,5901,8,New group added to the system.
+2026-10-20T16:27:42.837Z,Parrot parrot-sim,5902,8,New user added to the system.
+2026-10-20T16:27:46.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2222 as test.clinician
+2026-10-20T16:27:46.363Z,Parrot parrot-sim,5715,3,sshd: authentication success.
+2026-10-20T16:27:46.370Z,Parrot parrot-sim,5715,3,sshd: authentication success.
+2026-10-20T16:27:46.376Z,Parrot parrot-sim,5715,3,sshd: authentication success.
+2026-10-20T16:27:46.431Z,Parrot parrot-sim,100220,3,EHR audit: test.clinician VIEW PT-1001 - ALLOW via group:clinical
+2026-10-20T16:28:01.673Z,Parrot parrot-sim,5403,4,First time user executed sudo.
+2026-10-20T16:28:01.673Z,Parrot parrot-sim,5403,4,First time user executed sudo.
+2026-10-20T16:28:01.681Z,Parrot parrot-sim,100230,10,Account test.clinician added to privileged group sudo
+2026-10-20T16:28:01.681Z,Parrot parrot-sim,100230,10,Account test.clinician added to privileged group sudo
+2026-10-20T16:28:16.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2222 as test.clinician
+2026-10-20T16:28:16.824Z,Parrot parrot-sim,5715,3,sshd: authentication success.
+2026-10-20T16:28:16.830Z,Parrot parrot-sim,5715,3,sshd: authentication success.
+2026-10-20T16:28:16.836Z,Parrot parrot-sim,5715,3,sshd: authentication success.
+2026-10-20T16:28:16.919Z,Parrot parrot-sim,100231,12,"Root obtained via sudo by test.clinician, whose role has no root entitlement (RBAC/SoD violation)"
+2026-10-20T16:28:37.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2222 as test.nurse
+2026-10-20T16:28:37.033Z,Parrot parrot-sim,5715,3,sshd: authentication success.
+2026-10-20T16:28:37.040Z,Parrot parrot-sim,5715,3,sshd: authentication success.
+2026-10-20T16:28:37.046Z,Parrot parrot-sim,5715,3,sshd: authentication success.
+2026-10-20T16:28:37.101Z,Parrot parrot-sim,100221,12,ePHI viewed by mover test.nurse (now Billing) through stale clinical group - record PT-1003
+2026-10-20T16:28:47.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2222 as test.nurse
+2026-10-20T16:28:47.203Z,Parrot parrot-sim,5715,3,sshd: authentication success.
+2026-10-20T16:28:47.210Z,Parrot parrot-sim,5715,3,sshd: authentication success.
+2026-10-20T16:28:47.217Z,Parrot parrot-sim,5715,3,sshd: authentication success.
+2026-10-20T16:28:47.295Z,Parrot parrot-sim,100222,10,JML mover test.nurse attempted root via sudo (not in sudoers)
+2026-10-20T16:29:07.000Z,macOS DAEDMAC1009,100251,7,macOS host: SSH client used leaver account test.billing against 127.0.0.1:2222
+2026-10-20T16:29:07.402Z,Parrot parrot-sim,100210,10,JML leaver account test.billing attempted SSH login from 10.77.0.1 - account was deprovisioned
+2026-10-20T16:29:32.000Z,macOS DAEDMAC1009,100251,7,macOS host: SSH client used leaver account test.billing against 127.0.0.1:2222
+2026-10-20T16:29:32.526Z,Parrot parrot-sim,100211,11,Repeated login attempts by JML leaver account test.billing (2+ in 10 min)

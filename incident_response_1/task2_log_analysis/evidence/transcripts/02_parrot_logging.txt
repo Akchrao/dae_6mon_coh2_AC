@@ -1,0 +1,32 @@
+$ docker run -d --name parrot-sim --network ir2-labnet --ip 10.77.0.10 -p 127.0.0.1:2222:22 ir1-parrot-sim:1.0
+8d4c55c73dcb4c8ce6fa57b3d40104a042c5aa05ed5d606f94836919e3eb0cbc
+$ docker port parrot-sim
+22/tcp -> 127.0.0.1:2222
+$ docker network inspect ir2-labnet
+network=ir2-labnet subnet=10.77.0.0/24 gw=10.77.0.1
+  host=parrot-sim ip=10.77.0.10/24
+  host=wazuh-manager ip=10.77.0.20/24
+
+$ cat /etc/os-release | head -1
+PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"
+
+# rsyslog: keep local files AND forward auth/authpriv/local5 to the Wazuh manager
+$ cat /etc/rsyslog.d/60-wazuh.conf
+local5.*                     /var/log/ehr-audit.log
+template(name="WazuhFwd" type="string" string="%TIMESTAMP:::date-rfc3339% %HOSTNAME% %syslogtag%%msg:::sp-if-no-1st-sp%%msg%\n")
+auth,authpriv.*;local5.*     action(type="omfwd" target="10.77.0.20" port="514" protocol="udp" template="WazuhFwd")
+23 rsyslogd
+
+# sshd: verbose auth logging, keys only, deprovisioned accounts blocked by group
+$ cat /etc/ssh/sshd_config.d/ir-lab.conf
+LogLevel VERBOSE
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+PubkeyAuthentication yes
+DenyGroups disabled-users
+LISTEN 0      128          0.0.0.0:22         0.0.0.0:*          
+LISTEN 0      128             [::]:22            [::]:*          
+
+# collection test: one tagged message must arrive in the manager's archive
+$ logger -p auth.info 'ir2-collection-test'
+events received by manager: 1

@@ -1,0 +1,9 @@
+		*Rule 1 matched
+		*Rule 5700 matched
+		*Rule 5718 matched
+		*Rule 100210 matched
+	id: '100210'
+	level: '10'
+	description: 'JML leaver account test.billing attempted SSH login from 10.77.0.1 - account was deprovisioned'
+	firedtimes: '1'
+**Alert to be generated.

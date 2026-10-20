@@ -1,0 +1,14 @@
+#!/bin/sh
+# ehr-view <patient-id> - EHR record viewer stub for the IR lab (installed in /usr/local/bin).
+# Access rule: members of the 'clinical' group may view records. Every view is written to the
+# EHR access audit trail (syslog local5, tag ehr-audit -> /var/log/ehr-audit.log -> Wazuh).
+# Records under /srv/ehr/clinical are SYNTHETIC - no real patient data.
+U=$(id -un); P="$1"; F="/srv/ehr/clinical/$P.txt"
+if id -nG "$U" | tr ' ' '\n' | grep -qx clinical && [ -r "$F" ]; then
+  logger -p local5.info -t ehr-audit "user=$U action=VIEW patient=$P decision=ALLOW basis=group:clinical"
+  cat "$F"
+else
+  logger -p local5.notice -t ehr-audit "user=$U action=VIEW patient=$P decision=DENY basis=no-clinical-role"
+  echo "ehr-view: access denied" >&2
+  exit 1
+fi

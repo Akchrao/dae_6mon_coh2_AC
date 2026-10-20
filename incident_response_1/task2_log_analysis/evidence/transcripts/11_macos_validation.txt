@@ -1,0 +1,38 @@
+# macOS alert validation on DAEDMAC1009 - 2026-10-20T16:35:01Z
+
+# rule 100242: which process is 'Client Pid:75876'?
+$ ps -o pid,user,lstart,comm -p 75876
+  PID USER  STARTED                      COMM
+75876 Adult Thu Oct  1 15:58:40 2026     /System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/Contents/MacOS/Safari
+
+# rule 100244: Splashtop Streamer - install record, version, code signature
+$ grep 'Installed "Splashtop' /var/log/install.log
+2026-10-16 15:40:33-04 DAEDMAC1009 installd[25380]: Installed "Splashtop Streamer" ()
+$ grep -c 'Splashtop' /var/log/install.log
+2282
+$ grep 'installer\[.*Splashtop' install.log | head -2
+2026-10-16 15:40:19-04 DAEDMAC1009 installer[32821]: Product archive /var/folders/xd/9qtt3kpd2mqf01mgsyl8cv000000gp/T/Splashtop Streamer.pkg trustLevel=350
+2026-10-16 15:40:19-04 DAEDMAC1009 installer[32821]: -[IFDInstallController(Private) _buildInstallPlanReturningError:]: file://localhost/var/folders/xd/9qtt3kpd2mqf01mgsyl8cv000000gp/T/Splashtop%20Str
+2026-10-16 15:40:19-04 DAEDMAC1009 installer[32821]: -[IFDInstallController(Private) _buildInstallPlanReturningError:]: file://localhost/var/folders/xd/9qtt3kpd2mqf01mgsyl8cv000000gp/T/Splashtop%20Str
+$ ls -ld '/Applications/Splashtop Streamer.app'
+drwxrwxr-x@ 3 root  wheel  96 Oct 16 15:40 /Applications/Splashtop Streamer.app
+$ defaults read .../Info.plist CFBundleShortVersionString
+3.8.6.3
+$ codesign -dv --verbose=2 '/Applications/Splashtop Streamer.app'
+Identifier=com.splashtop.Splashtop-Streamer
+Authority=Developer ID Application: Splashtop Inc. (CPQQ3AW49Y)
+Authority=Developer ID Certification Authority
+Authority=Apple Root CA
+TeamIdentifier=CPQQ3AW49Y
+$ spctl -a -vv '/Applications/Splashtop Streamer.app'
+/Applications/Splashtop Streamer.app: accepted
+source=Notarized Developer ID
+origin=Developer ID Application: Splashtop Inc. (CPQQ3AW49Y)
+$ pgrep -fl -i splashtop | head -3
+2024 Core Audio Driver (SplashtopRemoteSound.driver)
+33277 /Applications/Splashtop Streamer.app/Contents/MacOS/SRStreamerDaemon
+33353 /Applications/Splashtop Streamer.app/Contents/MacOS/Splashtop Streamer RunAtLaunchAgent
+
+# rule 100241: installed OS vs offered updates
+ProductName:		macOS
+ProductVersion:		26.3.1

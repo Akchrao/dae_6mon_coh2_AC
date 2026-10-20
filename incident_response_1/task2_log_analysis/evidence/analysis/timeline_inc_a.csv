@@ -1,0 +1,20 @@
+time_utc,host,source,event
+2026-10-19 18:13,Entra ID,JML-LOG TERM-2026-0301,Jeevan Smith (test.billing) disabled in Entra ID (leaver)
+2026-10-19 18:15,Entra ID,JML-LOG TERM-2026-0301,Sessions revoked; app role removed 18:17
+2026-10-19 ~18:28,Keycloak,JML-LOG TERM-2026-0301,Keycloak copy disabled
+2026-10-20T16:27:42.843Z,Parrot,auth.log usermod,Lab replay of leaver: change user 'test.billing' expiration from 'never' to '1970-01-02'
+2026-10-20T16:27:42.843Z,Parrot,auth.log usermod,Lab replay of leaver: add 'test.billing' to group 'disabled-users'
+2026-10-20T16:29:07Z,macOS,ssh_client.log ssh[18458],Attempt 1: Mac user 'Adult' starts ssh as test.billing to 127.0.0.1:2222 (SSH-2.0-OpenSSH_10.2)
+2026-10-20T16:29:07.373Z,Network,ssh_sessions.pcapng,Attempt 1: client banner SSH-2.0-OpenSSH_10.2 from 10.77.0.1:60292
+2026-10-20T16:29:07.392Z,Parrot,auth.log sshd[293],Attempt 1: Connection from 10.77.0.1:60292 (Docker gateway for 127.0.0.1:2222)
+2026-10-20T16:29:07.402Z,Parrot,auth.log sshd[293],Attempt 1: User test.billing from 10.77.0.1 not allowed because a group is listed in DenyGroups
+2026-10-20T16:29:07.402Z,Wazuh,rule 100210 (L10),Alert raised from the live Parrot syslog stream
+2026-10-20T16:29:07Z,macOS,ssh_client.log ssh[18458],Attempt 1: client receives Permission denied (publickey)
+2026-10-20T16:29:32Z,macOS,ssh_client.log ssh[18466],Attempt 2: Mac user 'Adult' starts ssh as test.billing to 127.0.0.1:2222 (SSH-2.0-OpenSSH_10.2)
+2026-10-20T16:29:32.501Z,Network,ssh_sessions.pcapng,Attempt 2: client banner SSH-2.0-OpenSSH_10.2 from 10.77.0.1:55326
+2026-10-20T16:29:32.516Z,Parrot,auth.log sshd[295],Attempt 2: Connection from 10.77.0.1:55326 (Docker gateway for 127.0.0.1:2222)
+2026-10-20T16:29:32.526Z,Parrot,auth.log sshd[295],Attempt 2: User test.billing from 10.77.0.1 not allowed because a group is listed in DenyGroups
+2026-10-20T16:29:32.527Z,Wazuh,rule 100211 (L11),Alert raised from the live Parrot syslog stream
+2026-10-20T16:29:32Z,macOS,ssh_client.log ssh[18466],Attempt 2: client receives Permission denied (publickey)
+2026-10-20T16:31:40.286Z,Wazuh,rule 100251 (L7),Attempt 1: macOS-side alert when the host log was shipped
+2026-10-20T16:31:40.287Z,Wazuh,rule 100251 (L7),Attempt 2: macOS-side alert when the host log was shipped
