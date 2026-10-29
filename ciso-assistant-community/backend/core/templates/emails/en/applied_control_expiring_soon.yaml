@@ -1,0 +1,11 @@
+subject: "CISO Assistant: Control expiring in ${days_remaining} day(s)"
+body: |
+  Hello,
+
+  You have ${control_count} control(s) expiring in ${days_remaining} day(s):
+
+  ${control_list}
+
+  Please log in to your CISO Assistant portal to review and complete these controls: [Go to CISO Assistant](${ciso_assistant_url})
+
+  Thank you.

@@ -1,0 +1,52 @@
+<script lang="ts">
+	import type { PageData } from './$types';
+	import GraphExplorer from '#lib/components/DataViz/GraphExplorer.svelte';
+	import { m } from '#paraglide/messages.js';
+	import { goto } from '#lib/utils/breadcrumbs.js';
+
+	interface Props {
+		data: PageData;
+	}
+
+	let { data }: Props = $props();
+</script>
+
+<div class="bg-surface-50-950 shadow-sm flex flex-col overflow-x-auto">
+	<div class="flex justify-end items-center p-2 border-b border-surface-200-800">
+		{#if data.hideDomains}
+			<a
+				href="/assets/graph"
+				data-sveltekit-reload
+				class="text-primary-800-200 hover:text-primary-500 cursor-pointer text-sm"
+			>
+				<i class="fa-solid fa-eye mr-1"></i>
+				{m.showDomains()}
+			</a>
+		{:else}
+			<a
+				href="/assets/graph?hideDomains=true"
+				data-sveltekit-reload
+				class="text-primary-800-200 hover:text-primary-500 cursor-pointer text-sm"
+			>
+				<i class="fa-solid fa-eye-slash mr-1"></i>
+				{m.hideDomains()}
+			</a>
+		{/if}
+	</div>
+	<div class="w-full h-screen">
+		<GraphExplorer
+			title={m.assetsExplorer()}
+			data={data.data}
+			edgeLength={100}
+			maxLegendItems={15}
+			onNodeDoubleClick={(params) => {
+				if (params.dataType === 'node' && params.data?.value !== 'Domain') {
+					goto(`/assets/${params.data?.pk}`, {
+						breadcrumbAction: 'push',
+						label: params.data?.name || 'Asset Detail'
+					});
+				}
+			}}
+		/>
+	</div>
+</div>

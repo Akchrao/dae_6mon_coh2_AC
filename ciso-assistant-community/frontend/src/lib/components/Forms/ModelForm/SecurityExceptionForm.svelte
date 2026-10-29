@@ -1,0 +1,229 @@
+<script lang="ts">
+	import AutocompleteSelect from '../AutocompleteSelect.svelte';
+	import HiddenInput from '../HiddenInput.svelte';
+	import TextField from '#lib/components/Forms/TextField.svelte';
+	import Select from '../Select.svelte';
+	import { defaults, type SuperValidated } from 'sveltekit-superforms';
+	import type { ModelInfo, CacheLock } from '#lib/utils/types.js';
+	import { m } from '#paraglide/messages.js';
+	import { onMount } from 'svelte';
+	import { getModelInfo } from '#lib/utils/crud.js';
+	import { zod4 as zod } from 'sveltekit-superforms/adapters';
+	import { safeTranslate } from '#lib/utils/i18n.js';
+	import { refreshAll } from '$app/navigation';
+	import { AppliedControlSchema } from '#lib/utils/schemas.js';
+	import { page } from '$app/state';
+	import CreateModal from '#lib/components/Modals/CreateModal.svelte';
+	import {
+		getModalStore,
+		type ModalComponent,
+		type ModalSettings
+	} from '#lib/components/Modals/stores.js';
+	import MarkdownField from '../MarkdownField.svelte';
+	import CustomFieldsSection from '../CustomFieldsSection.svelte';
+	import { formFieldProxy } from 'sveltekit-superforms';
+
+	interface Props {
+		form: SuperValidated<any>;
+		model: ModelInfo;
+		cacheLocks?: Record<string, CacheLock>;
+		formDataCache?: Record<string, any>;
+		initialData?: Record<string, any>;
+		context?: string;
+	}
+
+	let {
+		form,
+		model,
+		cacheLocks = {},
+		formDataCache = $bindable({}),
+		initialData = {},
+		context = 'default'
+	}: Props = $props();
+
+	const modalStore = getModalStore();
+
+	let appliedControlModel: ModelInfo;
+	onMount(async () => {
+		appliedControlModel = getModelInfo('applied-controls');
+		const selectOptions = {
+			status: await fetch('/applied-controls/status').then((r) => r.json()),
+			priority: await fetch('/applied-controls/priority').then((r) => r.json()),
+			category: await fetch('/applied-controls/category').then((r) => r.json()),
+			csf_function: await fetch('/applied-controls/csf_function').then((r) => r.json()),
+			effort: await fetch('/applied-controls/effort').then((r) => r.json())
+		};
+		appliedControlModel.selectOptions = selectOptions;
+	});
+
+	function modalAppliedControlCreateForm(field: string): void {
+		const modalComponent: ModalComponent = {
+			ref: CreateModal,
+			props: {
+				form: defaults(
+					{
+						security_exceptions: [page.data.object.id]
+					},
+					zod(AppliedControlSchema)
+				),
+				formAction: '/applied-controls?/create',
+				model: appliedControlModel,
+				debug: false
+			}
+		};
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			// Data
+			title: safeTranslate('add-' + appliedControlModel.localName),
+			response: (r: boolean) => {
+				if (r) {
+					refreshAll();
+				}
+			}
+		};
+		modalStore.trigger(modal);
+	}
+
+	function getTodayDateString(): string {
+		const today = new Date();
+		const year = today.getFullYear();
+		const month = String(today.getMonth() + 1).padStart(2, '0');
+		const day = String(today.getDate()).padStart(2, '0');
+		return `${year}-${month}-${day}`;
+	}
+
+	const { value: expirationDate } = formFieldProxy(form, 'expiration_date');
+	const { value: folderId } = formFieldProxy(form, 'folder');
+	const today = getTodayDateString();
+
+	let isExpirationDateInPast = $derived(Boolean($expirationDate) && $expirationDate < today);
+</script>
+
+<HiddenInput {form} field="requirement_assessments" />
+<AutocompleteSelect
+	{form}
+	multiple
+	optionsEndpoint="actors"
+	lazy
+	optionsLabelField="str"
+	optionsInfoFields={{
+		fields: [{ field: 'type', translate: true }],
+		position: 'prefix'
+	}}
+	field="owners"
+	cacheLock={cacheLocks['owners']}
+	bind:cachedValue={formDataCache['owners']}
+	label={m.owners()}
+/>
+<AutocompleteSelect
+	{form}
+	disabled={true}
+	optionsEndpoint="users?is_approver=true"
+	optionsLabelField="email"
+	field="approver"
+	cacheLock={cacheLocks['approver']}
+	bind:cachedValue={formDataCache['approver']}
+	nullable={true}
+	label={`${m.approver()} (${m.deprecated()})`}
+	helpText={m.approverDeprecatedHelpText()}
+/>
+<Select
+	{form}
+	options={model.selectOptions['severity']}
+	field="severity"
+	label={m.severity()}
+	cacheLock={cacheLocks['severity']}
+	bind:cachedValue={formDataCache['severity']}
+/>
+<Select
+	{form}
+	options={model.selectOptions['status']}
+	field="status"
+	label={m.status()}
+	cacheLock={cacheLocks['status']}
+	disableDoubleDash="true"
+	bind:cachedValue={formDataCache['status']}
+/>
+<MarkdownField
+	{form}
+	field="observation"
+	label={m.observation()}
+	helpText={m.observationHelpText()}
+	cacheLock={cacheLocks['observation']}
+	bind:cachedValue={formDataCache['observation']}
+/>
+<TextField
+	type="date"
+	{form}
+	field="expiration_date"
+	label={m.expirationDate()}
+	cacheLock={cacheLocks['expiration_date']}
+	bind:cachedValue={formDataCache['expiration_date']}
+/>
+{#if isExpirationDateInPast}
+	<p class="mt-1 text-sm text-orange-600">
+		<i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+		{m.expirationDateIsInThePastWarning()}
+	</p>
+{/if}
+<TextField
+	{form}
+	label={m.link()}
+	field="link"
+	bind:cachedValue={formDataCache['link']}
+	cacheLock={cacheLocks['link']}
+/>
+<AutocompleteSelect
+	multiple
+	lazy
+	{form}
+	optionsEndpoint="assets"
+	optionsLabelField="auto"
+	pathField="path"
+	field="assets"
+	cacheLock={cacheLocks['assets']}
+	bind:cachedValue={formDataCache['assets']}
+	label={m.assets()}
+/>
+<div class="flex flex-row space-x-2 items-center">
+	<div class="w-full">
+		{#key page.data}
+			<AutocompleteSelect
+				multiple
+				{form}
+				optionsEndpoint="applied-controls"
+				optionsExtraFields={[['folder', 'str']]}
+				optionsInfoFields={{
+					fields: [{ field: 'category', translate: true }],
+					position: 'prefix'
+				}}
+				field="applied_controls"
+				label={m.appliedControls()}
+			/>
+		{/key}
+	</div>
+	{#if context !== 'create'}
+		<div class="mt-4">
+			<button
+				class="btn bg-surface-300-700 h-10 w-10"
+				aria-label={m.addAppliedControl()}
+				onclick={(_) => modalAppliedControlCreateForm('applied_controls')}
+				type="button"><i class="fa-solid fa-plus text-sm"></i></button
+			>
+		</div>
+	{/if}
+</div>
+<AutocompleteSelect
+	multiple
+	{form}
+	optionsEndpoint="evidences"
+	lazy
+	optionsExtraFields={[['folder', 'str']]}
+	optionsLabelField="auto"
+	field="evidences"
+	cacheLock={cacheLocks['evidences']}
+	bind:cachedValue={formDataCache['evidences']}
+	label={m.evidences()}
+/>
+<CustomFieldsSection {form} model="core.securityexception" folderId={$folderId} />

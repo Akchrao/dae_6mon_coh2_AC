@@ -1,0 +1,51 @@
+<script lang="ts">
+	import AutocompleteSelect from '../AutocompleteSelect.svelte';
+	import TextField from '#lib/components/Forms/TextField.svelte';
+	import MarkdownField from '#lib/components/Forms/MarkdownField.svelte';
+	import type { SuperValidated } from 'sveltekit-superforms';
+	import type { ModelInfo, CacheLock } from '#lib/utils/types.js';
+	import { m } from '#paraglide/messages.js';
+
+	interface Props {
+		form: SuperValidated<any>;
+		model: ModelInfo;
+		cacheLocks?: Record<string, CacheLock>;
+		formDataCache?: Record<string, any>;
+		initialData?: Record<string, any>;
+	}
+
+	let {
+		form,
+		model,
+		cacheLocks = {},
+		formDataCache = $bindable({}),
+		initialData = {}
+	}: Props = $props();
+</script>
+
+<MarkdownField
+	{form}
+	field="annotation"
+	label={m.annotation()}
+	cacheLock={cacheLocks['annotation']}
+	bind:cachedValue={formDataCache['annotation']}
+/>
+<TextField
+	{form}
+	field="provider"
+	label={m.provider()}
+	cacheLock={cacheLocks['provider']}
+	bind:cachedValue={formDataCache['provider']}
+/>
+<AutocompleteSelect
+	multiple
+	{form}
+	createFromSelection={true}
+	optionsEndpoint="filtering-labels"
+	optionsLabelField="label"
+	field="filtering_labels"
+	translateOptions={false}
+	helpText={m.labelsHelpText()}
+	label={m.labels()}
+	allowUserOptions="append"
+/>

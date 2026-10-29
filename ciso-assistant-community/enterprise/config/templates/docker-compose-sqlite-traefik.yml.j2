@@ -1,0 +1,155 @@
+services:
+  backend:
+    container_name: backend
+    image: ghcr.io/intuitem/ciso-assistant-enterprise-backend:latest
+    pull_policy: always
+    restart: always
+    environment:
+      - ALLOWED_HOSTS=backend,localhost{% if fqdn != 'localhost'%},{{ fqdn }}{% endif %}
+      - CISO_ASSISTANT_URL=https://{{ fqdn }}:{{ port }}
+      - DJANGO_DEBUG={{ enable_debug }}
+      - AUTH_TOKEN_TTL=7200
+      - LICENSE_SEATS={{ license_seats }}
+      - LICENSE_EXPIRATION={{ license_expiration }}
+      - HOME=/tmp
+      - XDG_CACHE_HOME=/tmp/.cache
+      - XDG_CONFIG_HOME=/tmp/.config
+      - XDG_DATA_HOME=/tmp/.local/share
+      {% if need_mailer %}
+      - EMAIL_HOST={{ email.host }}
+      - EMAIL_PORT={{ email.port }}
+      {% if email.use_tls %}- EMAIL_USE_TLS={{ email.use_tls }}{% endif %}
+      - EMAIL_HOST_USER={{ email.user }}
+      - EMAIL_HOST_PASSWORD={{ email.password }}
+      - DEFAULT_FROM_EMAIL={{ email.from_email }}
+      {% endif %}
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+    volumes:
+      - ./db:/code/db
+    user: "1001:1001"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://backend:8000/api/health/ || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 150s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`{{ fqdn }}`) && PathPrefix(`/api`)"
+      - "traefik.http.services.backend.loadbalancer.server.port=8000"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls=true"{% if can_do_tls %}
+      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"{% endif %}
+  huey:
+    container_name: huey
+    image: ghcr.io/intuitem/ciso-assistant-enterprise-backend:latest
+    pull_policy: always
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: always
+    environment:
+      - ALLOWED_HOSTS=backend,localhost
+      - CISO_ASSISTANT_URL=https://{{ fqdn }}:{{ port }}
+      - DJANGO_DEBUG=False
+      - AUTH_TOKEN_TTL=7200
+      - LICENSE_SEATS={{ license_seats }}
+      - LICENSE_EXPIRATION={{ license_expiration }}
+      - HOME=/tmp
+      - XDG_CACHE_HOME=/tmp/.cache
+      - XDG_CONFIG_HOME=/tmp/.config
+      - XDG_DATA_HOME=/tmp/.local/share
+      {% if need_mailer %}
+      - EMAIL_HOST={{ email.host }}
+      - EMAIL_PORT={{ email.port }}
+      {% if email.use_tls %}- EMAIL_USE_TLS={{ email.use_tls }}{% endif %}
+      - EMAIL_HOST_USER={{ email.user }}
+      - EMAIL_HOST_PASSWORD={{ email.password }}
+      - DEFAULT_FROM_EMAIL={{ email.from_email }}
+      {% endif %}
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+    volumes:
+      - ./db:/code/db
+    user: "1001:1001"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        python manage.py run_huey -w 2 --scheduler-interval 60
+  frontend:
+    container_name: frontend
+    environment:
+      - PUBLIC_BACKEND_API_URL=http://backend:8000/api
+      - PUBLIC_BACKEND_API_EXPOSED_URL=https://{{ fqdn }}:{{ port }}/api
+      - PROTOCOL_HEADER=x-forwarded-proto
+      - HOST_HEADER=x-forwarded-host
+      - HOME=/tmp
+      - XDG_CACHE_HOME=/tmp/.cache
+      - XDG_CONFIG_HOME=/tmp/.config
+      - XDG_DATA_HOME=/tmp/.local/share
+    image: ghcr.io/intuitem/ciso-assistant-enterprise-frontend:latest
+    pull_policy: always
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,nodev
+    restart: always
+    depends_on:
+      backend:
+        condition: service_healthy
+    user: "1001:1001"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`{{ fqdn }}`) && PathPrefix(`/`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls=true"{% if can_do_tls %}
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"{% endif %}
+  traefik:
+    container_name: traefik
+    image: traefik:v3
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      {% if can_do_tls %}- "80:80"{% endif %}
+      - {{ port }}:{{ port }}
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik_data:/etc/traefik{% if not can_do_tls and use_custom_cert %}
+      - ./certificates.yaml:/etc/traefik/certificates.yaml:ro
+      - {{ cert_config.cert_path }}:/etc/traefik/cert.pem:ro
+      - {{ cert_config.key_path }}:/etc/traefik/key.pem:ro{% endif %}
+    command:
+      {% if enable_debug %}- "--api.insecure=true"{% endif %}
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"{% if can_do_tls %}
+      - "--entrypoints.websecure.http.tls.certresolver=letsencrypt"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"{% endif %}
+      - "--entrypoints.websecure.address=:{{ port }}"{% if can_do_tls %}
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email={{ email.from_email if need_mailer else 'admin@example.com' }}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme.json"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"{% elif use_custom_cert %}
+      - "--providers.file.directory=/etc/traefik"
+      - "--providers.file.watch=true"{% else %}
+      - "--experimental.localPlugins.selfsigned.moduleName=traefik.tls"{% endif %}

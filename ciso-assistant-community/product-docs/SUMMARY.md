@@ -1,0 +1,281 @@
+# Table of contents
+
+* [Welcome](README.md)
+
+## Introduction
+
+* [Philosophy](introduction/philosophy.md)
+* [Vocabulary](introduction/vocabulary.md)
+* [Community vs PRO](introduction/editions.md)
+
+## Concepts
+
+* Foundations
+  * [Domains](concepts/domains.md)
+  * [Perimeters](concepts/perimeters.md)
+  * [Actors and teams](concepts/actors-and-teams.md)
+  * [IAM and scoping](concepts/iam-and-scoping.md)
+* Catalog
+  * [Libraries](concepts/libraries.md)
+  * [Frameworks](concepts/frameworks.md)
+  * [Mappings](concepts/mappings.md)
+  * [Risk matrices](concepts/risk-matrices.md)
+  * [Threats](concepts/threats.md)
+  * [Threat intelligence](concepts/threat-intel.md)
+  * [TTP catalogs and threat models](concepts/ttps-and-threat-models.md)
+  * [Metrics](concepts/metrics.md)
+  * [Journeys](concepts/journeys.md)
+* Assets and resilience
+  * [Assets](concepts/assets.md)
+  * [Asset classes](concepts/asset-classes.md)
+  * [Business impact analyses](concepts/business-impact-analyses.md)
+* Operations
+  * [Applied controls](concepts/applied-controls.md)
+  * [Tasks](concepts/tasks.md)
+  * [Commitments](concepts/commitments.md)
+  * [Incidents](concepts/incidents.md)
+  * [Workflows](concepts/workflows.md)
+* Governance
+  * [Quick forms and requests](concepts/quick-forms.md)
+  * [Policies](concepts/policies.md)
+  * [Documents](concepts/documents.md)
+  * [Findings binders](concepts/findings-assessments.md)
+  * [Validation flows](concepts/validation-flows.md)
+  * [Security exceptions](concepts/security-exceptions.md)
+* Risk
+  * [Risk assessments](concepts/risk-assessments.md)
+  * [EBIOS RM](concepts/ebios-rm.md)
+  * [Quantitative risk studies](concepts/quantitative-risk-studies.md)
+  * [Vulnerabilities](concepts/vulnerabilities.md)
+* Compliance
+  * [Audits](concepts/audits.md)
+    * [Manage extended result](concepts/extended-results.md)
+  * [Technical postures](concepts/technical-postures.md)
+  * [Evidence](concepts/evidence.md)
+* Specialised modules
+  * [Third-party risk](concepts/third-party-risk.md)
+  * [Privacy register](concepts/privacy-register.md)
+    * [DPIA and screening](concepts/dpia.md)
+  * [Project management](concepts/project-management.md)
+  * [Terminology](concepts/terminology.md)
+  * [Object classifications](concepts/object-classification.md)
+
+## Installation
+
+* [Overview](installation/README.md)
+* [Quick start](installation/quick-start.md)
+* [Prerequisites](installation/prerequisites.md)
+* Deployment methods
+  * [Local](installation/local.md)
+  * [Docker rootless configuration](installation/docker-rootless.md)
+  * [Remote/Virtualization](installation/remote-virtualization.md)
+  * [Deploy on a VPS](installation/vps.md)
+  * [Windows](installation/windows.md)
+  * [Helm Chart](installation/helm-chart.md)
+* Post-install setup
+  * [Custom certificates](installation/custom-certificates.md)
+  * [Managing secrets](installation/managing-secrets.md)
+  * [Setting up S3](installation/s3.md)
+  * [Setting up mailer](installation/mailer.md)
+  * [Prometheus metrics](installation/prometheus-metrics.md)
+  * [Structured logging](installation/structured-logging.md)
+* Maintenance
+  * [Updating your local instance](installation/updating.md)
+  * [Special cases](installation/special-cases.md)
+  * [Migrate between different databases](installation/migrate-database.md)
+* [Frequent questions](installation/faq.md)
+
+## Configuration
+
+* [Overview](configuration/README.md)
+* [Settings](configuration/settings/README.md)
+  * [General settings](configuration/settings/general.md)
+  * [Feature flags](configuration/settings/feature-flags.md)
+  * [Vulnerability SLA policy](configuration/settings/vulnerability-sla.md)
+  * [Security intelligence feeds](configuration/settings/sec-intel-feeds.md)
+  * [Allowed IP whitelist](configuration/settings/infra-config-allowed-ip.md)
+  * [Branding](configuration/settings/branding.md)
+  * [Custom templates](configuration/settings/custom-templates.md)
+  * [API pagination](configuration/settings/api-pagination.md)
+* [Organization](configuration/organization/README.md)
+  * [Add and manage users](configuration/organization/users.md)
+  * [User groups](configuration/organization/user-groups.md)
+  * [Custom roles](configuration/organization/custom-roles.md)
+  * [Understanding the IAM model](configuration/organization/iam-model.md)
+  * [Teams](configuration/organization/teams.md)
+* [SSO](configuration/sso/README.md)
+  * [SAML](configuration/sso/saml.md)
+  * [OpenID Connect (OIDC)](configuration/sso/oidc.md)
+  * [SCIM provisioning and IdP groups](configuration/sso/scim.md)
+  * [Identity providers](configuration/sso/identity-providers/README.md)
+    * [Microsoft Entra ID](configuration/sso/identity-providers/entra-id.md)
+    * [Okta](configuration/sso/identity-providers/okta.md)
+    * [Google Workspace](configuration/sso/identity-providers/google-workspace.md)
+    * [Keycloak](configuration/sso/identity-providers/keycloak.md)
+* [Multi-Factor Authentication (MFA)](configuration/mfa.md)
+* [Libraries](configuration/libraries/README.md)
+  * [Library objects](configuration/libraries/library-objects/README.md)
+    * [Library metadata](configuration/libraries/library-objects/library-metadata.md)
+    * [Framework](configuration/libraries/library-objects/framework.md)
+    * [Implementation groups](configuration/libraries/library-objects/implementation-groups.md)
+    * [Answers](configuration/libraries/library-objects/answers.md)
+    * [Scores](configuration/libraries/library-objects/scores.md)
+    * [Threats](configuration/libraries/library-objects/threats.md)
+    * [Reference controls](configuration/libraries/library-objects/reference-controls.md)
+    * [URN prefixes](configuration/libraries/library-objects/urn-prefixes.md)
+    * [Risk matrices](configuration/libraries/library-objects/risk-matrices.md)
+    * [Mappings](configuration/libraries/library-objects/mappings.md)
+  * [Create a Library](configuration/libraries/create-library.md)
+  * [Create a Mapping](configuration/libraries/create-mapping.md)
+  * [Translate library content](configuration/libraries/translations.md)
+  * [Import a library](configuration/libraries/import-library.md)
+  * [Update a library](configuration/libraries/update-library.md)
+  * [Unload or delete a library](configuration/libraries/unload-or-delete-library.md)
+  * [Examples](configuration/libraries/examples.md)
+  * [Guided example: create your first framework](configuration/libraries/guided-example.md)
+  * [Special cases](configuration/libraries/special-cases/README.md)
+    * [CIS Controls and Cloud Controls Matrix (CCM)](configuration/libraries/special-cases/cis-controls-and-ccm.md)
+* [Authoring](configuration/authoring/README.md)
+  * [Library builder](configuration/authoring/library-builder.md)
+  * [Excel-driven authoring](configuration/authoring/excel.md)
+* [Data import wizard](configuration/data-import.md)
+* [Changing the language](configuration/language.md)
+* [Date format](configuration/date-format.md)
+
+## Guides
+
+* [Overview](guides/README.md)
+* [General tips](guides/general-tips.md)
+* Getting started
+  * [Initial setup](guides/initial-setup.md)
+  * [Creating your first perimeter](guides/first-perimeter.md)
+  * [Creating your first audit](guides/first-audit.md)
+  * [Creating your first risk assessment](guides/first-risk-assessment.md)
+  * [Building your first workflow](guides/first-workflow.md)
+  * [Creating your first computed metric](guides/first-computed-metric.md)
+  * [Filing and deciding your first request](guides/first-quick-form.md)
+* Assessments
+  * [Basic audit](guides/basic-audit.md)
+  * [Customize your audit](guides/customize-audit.md)
+  * [EBIOS RM study](guides/ebios-rm.md)
+  * [Cyber risk quantification](guides/quantitative-risk.md)
+  * [Cyber risk quantification — methodology](guides/quantitative-risk-methodology.md)
+  * [Conducting a Business Impact Analysis](guides/bia.md)
+* Programme management
+  * [Managing a project](guides/projects.md)
+  * [Managing a collection](guides/collections.md)
+  * [Managing an accreditation](guides/accreditations.md)
+  * [Managing a responsibility matrix](guides/responsibility-matrix.md)
+* Documents
+  * [Authoring documents](guides/documents/authoring-documents.md)
+  * [Document templates](guides/documents/document-templates.md)
+* Third-party
+  * [Third-Party Risk Management](guides/tprm.md)
+  * [Tiering your vendors](guides/vendor-tiering.md)
+  * [Common TPRM pitfalls](guides/tprm-challenges.md)
+* Privacy
+  * [Screening processings and running DPIAs](guides/dpia.md)
+
+## Features
+
+* [Catalogue overview](features/README.md)
+* [Analytics](features/analytics.md)
+* [Controls autosuggestion](features/controls-autosuggestion.md)
+* [Multi-level support](features/multi-level-support.md)
+* [Flash mode](features/flash-mode.md)
+* [Kanban mode](features/kanban-mode.md)
+* [Applied controls analytics](features/applied-controls-analytics.md)
+* [Tasks analytics](features/task-analytics.md)
+* [Evidences from clipboard](features/evidences-from-clipboard.md)
+* [Evidence preview](features/evidence-preview.md)
+* [Mappings](features/mappings.md)
+* [Mapping explorer](features/mapping-explorer.md)
+* [X-rays](features/x-rays.md)
+* [Scoring Assistant](features/scoring-assistant.md)
+* [Assignments / respondent mode](features/assignments.md)
+* [Campaigns](features/campaigns.md)
+* [Comments](features/comments.md)
+* [Audit log](features/audit-log.md)
+* [Domain export/import](features/domain-export-import.md)
+* [Focus mode](features/focus-mode.md)
+* [Personal module visibility](features/personal-module-visibility.md)
+* [Sync to actions](features/sync-to-actions.md)
+* [Dashboards](features/dashboards.md)
+* [Computed metrics](features/metrics/README.md)
+  * [Create a computed metric](features/metrics/creating.md)
+  * [Edit a formula](features/metrics/editing.md)
+  * [Formula reference](features/metrics/formulas.md)
+  * [Troubleshooting](features/metrics/troubleshooting.md)
+* [Audit advanced analytics](features/audit-analytics.md)
+* [Framework report](features/framework-report.md)
+* [Insights](features/insights.md)
+* [Control Plan](features/control-plan.md)
+* [Action plans](features/action-plans.md)
+* [Risk trajectory](features/risk-trajectory.md)
+* [Working with tables](features/working-with-tables.md)
+* [Custom fields](features/custom-fields.md)
+* [Workflow builder](features/workflows/README.md)
+  * [Cheat sheet](features/workflows/cheat-sheet.md)
+  * [Triggers](features/workflows/triggers.md)
+  * [Steps](features/workflows/steps.md)
+  * [Expressions](features/workflows/expressions.md)
+  * [Variables and secrets](features/workflows/variables-and-secrets.md)
+  * [Runs](features/workflows/runs.md)
+  * [Sharing workflows](features/workflows/sharing.md)
+  * [Template catalog](features/workflows/templates.md)
+  * [Permissions and security](features/workflows/permissions-and-security.md)
+  * [Troubleshooting](features/workflows/troubleshooting.md)
+  * [Action reference](features/workflows/actions.md)
+  * [Publish checks](features/workflows/publish-checks.md)
+* [Command palette](features/command-palette.md)
+* [Universal search](features/search.md)
+* [My assignments](features/my-assignments.md)
+* [Notifications](features/notifications.md)
+* [Portals and trust center](features/portals.md)
+* [Framework-specific features](features/framework-specific/README.md)
+  * [ISO 27001](features/framework-specific/iso.md)
+  * [CCB CyFun](features/framework-specific/cyfun.md)
+  * [DORA](features/framework-specific/dora.md)
+  * [MonServiceSécurisé](features/framework-specific/monservicesecurise.md)
+
+## AI and Integrations
+
+* [Overview](integrations/README.md)
+* [Outgoing webhooks](integrations/webhooks.md)
+* [Audit log forwarding](integrations/audit-log-forwarding.md)
+* [Microsoft Sentinel](integrations/sentinel.md)
+* [Hosted AI providers](integrations/ai-providers.md)
+* [MCP setup guide](integrations/mcp.md)
+* [Power BI connector](integrations/powerbi.md)
+* [n8n node](integrations/n8n.md)
+* [Third-party integrations](integrations/third-party/README.md)
+  * [Jira](integrations/third-party/jira.md)
+  * [ServiceNow](integrations/third-party/servicenow.md)
+
+## API documentation
+
+* [Overview](integrations/api.md)
+* [Generating a PAT](integrations/pat.md)
+* [Service accounts](integrations/service-accounts.md)
+* [API reference](api-reference/README.md)
+  * ```yaml
+    props:
+      models: false
+      downloadLink: true
+      grouping: by-tag
+    type: builtin:openapi
+    dependencies:
+      spec:
+        ref:
+          kind: openapi
+          spec: ciso-assistant
+    ```
+
+## Contributing
+
+* [Overview](contributing/README.md)
+* [Frameworks and libraries](contributing/framework.md)
+* [Code (features and fixes)](contributing/code.md)
+* [Translations](contributing/translation.md)
+* [Documentation](contributing/documentation.md)
+* [Feature page template](contributing/feature-page-template.md)

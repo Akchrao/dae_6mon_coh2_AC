@@ -1,0 +1,568 @@
+## CISO Assistant configuration
+## Ref: https://github.com/intuitem/ciso-assistant-community
+##
+
+# -- Provide a name in place of `ciso-assistant`
+nameOverride: ciso-assistant
+# -- String to fully override `"ciso-assistant.fullname"`
+fullnameOverride: ""
+
+## Globally shared configuration
+global:
+  # -- Default domain used by all components
+  ## Used for ingresses, certificates, environnement vars, etc.
+  domain: octopus.foo.bar
+  # -- Globally enable TLS (URLs, etc.)
+  tls: false
+
+  # -- Extra allowed hosts (comma separated, without spaces)
+  extraAllowedHosts: ""
+
+  ## Extra CA certificate trusted by every pod (backend, Huey and frontend).
+  ## Provide only your CA in the secret: trust is added on top of the system roots,
+  ## not replaced, so public CAs keep working. For Python (backend/Huey) an init
+  ## container merges the system bundle with your CA; for Node (frontend) it is set
+  ## via the additive NODE_EXTRA_CA_CERTS.
+  extraCerts:
+    # -- Trust an extra CA certificate on all pods (added to the default roots, not replacing them)
+    enabled: false
+    # -- Name of an existing secret holding the CA certificate
+    secretName: ""
+    # -- Key inside the secret (also the file name once mounted)
+    fileName: ca.crt
+    # -- Directory where the certificate / merged bundle is mounted
+    mountPath: /etc/ssl/extra-certs
+
+  # Default image used by all components
+  image:
+    # -- If defined, a registry applied to all CISO Assistant deployments
+    registry: ghcr.io
+    # -- Overrides the global CISO Assistant image tag whose default is the chart appVersion
+    tag: ""
+    # -- If defined, a imagePullPolicy applied to all CISO Assistant deployments
+    imagePullPolicy: IfNotPresent
+
+  # -- Secrets with credentials to pull images from a private registry
+  imagePullSecrets: []
+
+  # -- Labels to add to all deployed objects
+  commonLabels: {} # @schema additionalProperties: true
+
+  # -- Kubernetes cluster domain name
+  clusterDomain: cluster.local
+
+  # -- Toggle and define pod-level security context
+  # @default -- `{}`
+  securityContext: {} # @schema additionalProperties: true
+  #  fsGroupChangePolicy: Always
+  #  sysctls: []
+  #  supplementalGroups: []
+  #  fsGroup: 1001
+
+  # NOTE: per-component affinity, nodeSelector and tolerations
+  # fall back to global.affinity, global.nodeSelector, and global.tolerations
+  # respectively when left empty ({} / []). To skip the global fallback,
+  # set the per-component (backend/frontend) key to a non-empty value,
+  # or leave the global keys unset.
+
+  # -- Default node selector for all components
+  nodeSelector: {} # @schema additionalProperties: true
+
+  # -- Default tolerations for all components
+  tolerations: []
+
+  # -- Affinity rules for all components
+  affinity: {} # @schema additionalProperties: true
+
+## Service Account
+serviceAccount:
+  # -- Create a service account for CISO Assistant
+  create: false
+  # -- Service account name
+  # @default -- `""` (defaults to fullname)
+  name: ""
+  # -- Annotations applied to created service account
+  annotations: {} # @schema additionalProperties: true
+  # -- Labels applied to created service account
+  labels: {} # @schema additionalProperties: true
+  # -- Automount API credentials for the Service Account
+  automountServiceAccountToken: true
+
+## CISO Assistant backend
+backend:
+  # -- Backend container name
+  name: backend
+
+  # -- The number of backend pods to run
+  replicas: 1
+
+  # -- Backend deployment annotations
+  annotations: {} # @schema additionalProperties: true
+
+  # -- Backend pod annotations
+  podAnnotations: {} # @schema additionalProperties: true
+
+  ## Backend specific config
+  config:
+    # -- Admin email for initial configuration
+    emailAdmin: admin@example.net
+
+    ## SMTP configuration
+    smtp:
+      # -- Default from email address
+      defaultFrom: no-reply@ciso-assistant.net
+      # -- Name of an existing secret resource containing the SMTP password in a 'email-primary-password' key
+      existingSecret: ""
+      # -- SMTP hostname
+      host: smtp.server.local
+      # -- SMTP post
+      port: 25
+      # -- Enable TLS for SMTP (explicit TLS)
+      useTls: false
+      # -- Enable SSL for SMTP (implicit TLS)
+      ## Note: useSsl takes precedence over useTls when both are enabled
+      useSsl: false
+      # -- SMTP username
+      username: ""
+      # -- SMTP password
+      password: ""
+
+    # -- Set the database type (sqlite, pgsql or externalPgsql)
+    ## Note: PostgreSQL database configuration at `postgresql` or `externalPgsql` section
+    databaseType: sqlite
+
+    # -- Set Django secret key
+    djangoSecretKey: "changeme"
+    # -- Name of an existing secret resource containing the django secret in a 'django-secret-key' key
+    djangoExistingSecretKey: ""
+
+    # -- Enable Django debug mode
+    djangoDebug: false
+
+    ## AI assistant / chat feature
+    ## Note: requires a reachable Qdrant (enable `qdrant.enabled` or provide QDRANT_URL
+    ## via backend.env / backend.huey.env) and an LLM provider configured from the in-app settings.
+    chat:
+      # -- Enable the AI assistant / chat feature (sets ENABLE_CHAT)
+      enabled: false
+
+    ## OIDC provider signing key, used to sign the tokens issued to service accounts
+    ## Ref: https://github.com/intuitem/ciso-assistant-community/blob/main/documentation/service-accounts.md
+    ## Note: left empty, the chart generates an RSA key on first install, stores it in the
+    ## `<release>-backend-oidc` secret and injects it as IDP_OIDC_PRIVATE_KEY into the backend and
+    ## Huey containers, so the key survives restarts and is shared by every replica. Without it each
+    ## container writes its own key to IDP_OIDC_PRIVATE_KEY_FILE and loses it on every restart.
+    oidcProvider:
+      # -- RSA private key (PEM) signing the OIDC tokens
+      # @default -- `""` (generated once, then kept in the `<release>-backend-oidc` secret)
+      privateKey: ""
+      # -- Name of an existing secret resource containing the RSA private key in a 'idp-oidc-private-key' key
+      existingSecret: ""
+
+  # -- Set extra volumes for backend
+  extraVolumes: []
+    #   - name: ca-certs
+    #     secret:
+    #       secretName: my-ca-cert
+
+  # -- Set extra volume mounts for backend container
+  extraVolumeMounts: []
+    #   - name: ca-certs
+    #     mountPath: /usr/local/share/ca-certificates/custom-ca.crt
+    #     subPath: ca.crt
+    #     readOnly: true
+
+  ## Huey config
+  huey:
+    # -- Huey container name
+    name: huey
+
+    ## Note: command and args go together, clearing only one leaves the other
+    ## dangling on the image entrypoint
+    # -- Override the Huey container entrypoint
+    command: ["/bin/sh"]
+
+    # -- Override the Huey container arguments
+    args: ["-c", "python manage.py run_huey -w 2 --scheduler-interval 60"]
+
+    # -- Environment variables to pass to Huey
+    env: []
+
+    # -- Resources for Huey
+    resources: {} # @schema additionalProperties: true
+      #   requests:
+      #     cpu: 100m
+      #     memory: 512Mi
+      #   limits:
+      #     cpu: 256m
+      #     memory: 1024Mi
+
+    # -- Set extra volume mounts for Huey container
+    extraVolumeMounts: []
+      #   - name: ca-certs
+      #     mountPath: /usr/local/share/ca-certificates/custom-ca.crt
+      #     subPath: ca.crt
+      #     readOnly: true
+
+  ## Backend persistence configuration (used for sqlite DBs and local storage)
+  persistence:
+    sqlite:
+      # -- Enable SQLite persistence (for backend and/or Huey)
+      ## Note: Needed for Huey, also when `backend.config.databaseType` is not set to `sqlite`
+      enabled: false
+      # -- SQLite persistant volume size
+      size: 5Gi
+      # -- SQLite persistant volume storageClass
+      storageClass: ""
+      # -- SQLite persistant volume accessMode
+      accessMode: ReadWriteOnce
+      # -- Name of an existing PersistentVolumeClaim for sqlite
+      existingClaim: ""
+    localStorage:
+      ## Note: required for file uploads (evidences, attachments, chat documents).
+      ## Disabled, each container falls back to its own ephemeral path and the backend
+      ## and Huey containers no longer see the same files.
+      # -- Enable Local Storage persistence
+      enabled: true
+      # -- Local Storage persistant volume size
+      size: 5Gi
+      # -- Local Storage persistant volume storageClass
+      storageClass: ""
+      # -- Local Storage persistant volume accessMode
+      accessMode: ReadWriteOnce
+      # -- Name of an existing PersistentVolumeClaim for local storage. Must be different from sqlite PVC
+      existingClaim: ""
+
+  ## Backend image
+  image:
+    # -- Registry to use for the backend
+    # @default -- `""` (defaults to global.image.registry)
+    registry: ""
+    # -- Repository to use for the backend
+    repository: intuitem/ciso-assistant-community/backend
+    # -- Tag to use for the backend
+    # @default -- `""` (defaults to global.image.tag)
+    tag: ""
+    # -- Image pull policy for the backend
+    # @default -- `""` (defaults to global.image.imagePullPolicy)
+    imagePullPolicy: ""
+
+  # -- Secrets with credentials to pull images from a private registry
+  # @default -- `[]` (defaults to global.imagePullSecrets)
+  imagePullSecrets: []
+
+  # -- Resources for the backend
+  resources: {} # @schema additionalProperties: true
+    #   requests:
+    #     cpu: 100m
+    #     memory: 512Mi
+    #   limits:
+    #     cpu: 256m
+    #     memory: 1024Mi
+
+  # -- Default node selector for backend
+  nodeSelector: {} # @schema additionalProperties: true
+
+  # -- Default tolerations for backend
+  tolerations: []
+
+  # -- Affinity rules for backend
+  affinity: {} # @schema additionalProperties: true
+
+  # -- Override the backend container entrypoint
+  # @default -- `[]` (image entrypoint)
+  command: [] # @schema item: string
+
+  # -- Override the backend container arguments
+  # @default -- `[]` (image arguments)
+  args: [] # @schema item: string
+
+  # -- Environment variables to pass to backend
+  env: []
+
+  # -- Toggle and define container-level security context
+  # @default -- `{}`
+  containerSecurityContext: {} # @schema additionalProperties: true
+  #  seLinuxOptions: {} # @schema additionalProperties: true
+  #  runAsUser: 1001
+  #  runAsGroup: 1001
+  #  runAsNonRoot: true
+  #  privileged: false
+  #  readOnlyRootFilesystem: true
+  #  allowPrivilegeEscalation: false
+  #  capabilities:
+  #    drop: ["ALL"]
+  #  seccompProfile:
+  #    type: "RuntimeDefault"
+
+  ## Backend service configuration
+  service:
+    # -- Backend service annotations
+    annotations: {} # @schema additionalProperties: true
+    # -- Backend service labels
+    labels: {} # @schema additionalProperties: true
+    # -- Backend service http port
+    port: 80
+    # -- Backend service port name
+    portName: http
+
+## CISO Assistant frontend
+frontend:
+  # -- Frontend container name
+  name: frontend
+
+  # -- The number of frontend pods to run
+  replicas: 1
+
+  # -- Frontend deployment annotations
+  annotations: {} # @schema additionalProperties: true
+
+  # -- Frontend pod annotations
+  podAnnotations: {} # @schema additionalProperties: true
+
+  ## Frontend specific config
+  config:
+    # -- Configure body size limit for uploads in bytes (unit suffix like K/M/G can be used)
+    bodySizeLimit: "50M"
+
+  # -- Set extra volumes for frontend
+  extraVolumes: []
+    #   - name: ca-certs
+    #     secret:
+    #       secretName: my-ca-cert
+
+  # -- Set extra volume mounts for frontend container
+  extraVolumeMounts: []
+    #   - name: ca-certs
+    #     mountPath: /usr/local/share/ca-certificates/custom-ca.crt
+    #     subPath: ca.crt
+    #     readOnly: true
+
+  ## Frontend image
+  image:
+    # -- Registry to use for the frontend
+    # @default -- `""` (defaults to global.image.registry)
+    registry: ""
+    # -- Repository to use for the frontend
+    repository: intuitem/ciso-assistant-community/frontend
+    # -- Tag to use for the frontend
+    # @default -- `""` (defaults to global.image.tag)
+    tag: ""
+    # -- Image pull policy for the frontend
+    # @default -- `""` (defaults to global.image.imagePullPolicy)
+    imagePullPolicy: ""
+
+  # -- Secrets with credentials to pull images from a private registry
+  # @default -- `[]` (defaults to global.imagePullSecrets)
+  imagePullSecrets: []
+
+  # -- Resources for the frontend
+  resources: {} # @schema additionalProperties: true
+    #   requests:
+    #     cpu: 100m
+    #     memory: 512Mi
+    #   limits:
+    #     cpu: 256m
+    #     memory: 1024Mi
+
+  # -- Default node selector for frontend
+  nodeSelector: {} # @schema additionalProperties: true
+
+  # -- Default tolerations for frontend
+  tolerations: []
+
+  # -- Affinity rules for frontend
+  affinity: {} # @schema additionalProperties: true
+
+  # -- Override the frontend container entrypoint
+  # @default -- `[]` (image entrypoint)
+  command: [] # @schema item: string
+
+  # -- Override the frontend container arguments
+  # @default -- `[]` (image arguments)
+  args: [] # @schema item: string
+
+  # -- Environment variables to pass to frontend
+  env: []
+
+  # -- Toggle and define container-level security context
+  # @default -- `{}`
+  containerSecurityContext: {} # @schema additionalProperties: true
+  #  seLinuxOptions: {} # @schema additionalProperties: true
+  #  runAsUser: 1000
+  #  runAsGroup: 1000
+  #  runAsNonRoot: true
+  #  privileged: false
+  #  readOnlyRootFilesystem: true
+  #  allowPrivilegeEscalation: false
+  #  capabilities:
+  #    drop: ["ALL"]
+  #  seccompProfile:
+  #    type: "RuntimeDefault"
+
+  ## Frontend service configuration
+  service:
+    # -- Frontend service annotations
+    annotations: {} # @schema additionalProperties: true
+    # -- Frontend service labels
+    labels: {} # @schema additionalProperties: true
+    # -- Frontend service http port
+    port: 80
+    # -- Frontend service port name
+    portName: http
+
+# CISO Assistant ingress configuration
+# Note: host value is inherited from global.domain
+ingress:
+  # -- Enable an ingress resource for the CISO Assistant
+  enabled: false
+  # -- Additional ingress labels
+  labels: {} # @schema additionalProperties: true
+  # -- Additional ingress annotations
+  annotations: {} # @schema additionalProperties: true
+    # nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    # cert-manager.io/cluster-issuer: letsencrypt
+  # -- Defines which ingress controller will implement the resource
+  ingressClassName: ""
+  # -- The path to CISO Assistant
+  path: /
+  # -- Ingress path type. One of `Exact`, `Prefix` or `ImplementationSpecific`
+  pathType: Prefix
+  tls:
+    # -- Enable TLS for the ingress
+    enabled: false
+    # -- Use existing TLS secret
+    existingSecret: ""
+    # -- Custom TLS certificate as secret
+    ## Note: 'key' and 'certificate' are expected in PEM format
+    certificateSecret: {} # @schema additionalProperties: true
+      # key: |-
+      #   -----BEGIN RSA PRIVATE KEY-----
+      #   ...
+      #   -----END RSA PRIVATE KEY-----
+      # certificate: |-
+      #   -----BEGIN CERTIFICATE-----
+      #   ...
+      #   -----END CERTIFICATE-----
+
+## NetworkPolicy configuration
+networkPolicy:
+  # -- Create a NetworkPolicy for CISO Assistant pods
+  enabled: false
+  # -- Policy types to enable (Ingress and/or Egress)
+  policyTypes:
+    - Ingress
+  # -- Pod selector the policy applies to
+  # @default -- all pods of this release
+  podSelector: {} # @schema additionalProperties: true
+  ## Example:
+  ##   - from:
+  ##       - namespaceSelector:
+  ##           matchLabels:
+  ##             kubernetes.io/metadata.name: ingress-nginx
+  # -- Ingress rules (raw Kubernetes NetworkPolicy `ingress` entries)
+  ingress: []
+  # -- Egress rules (raw Kubernetes NetworkPolicy `egress` entries)
+  egress: []
+
+## DEPRECATED - Bundled PostgreSQL database configuration (Bitnami chart)
+## Ref: https://artifacthub.io/packages/helm/bitnami/postgresql
+## Note: Don't enable if you use SQLite mode or external PgSQL database
+## IMPORTANT: Bitnami PostgreSQL deployment will be removed in a future version, you should use SQLite mode or externalPgsql
+postgresql: # @schema additionalProperties: true
+  # -- Enable to deploy PostgreSQL.
+  enabled: false
+  global: # @schema additionalProperties: true
+    postgresql: # @schema additionalProperties: true
+      auth: # @schema additionalProperties: true
+        # -- Super-user postgres account password
+        ## Note: if not set, it will be dynamically generated
+        postgresPassword: ""
+        # -- Database name
+        database: ciso-assistant
+        # -- Database username
+        username: ciso-assistant
+        # -- Database user account password
+        ## Note: if not set, it will be dynamically generated
+        password: ""
+  primary: # @schema additionalProperties: true
+    persistence: # @schema additionalProperties: true
+      # -- PostgreSQL persistant volume size (default 8Gi).
+      size: 5Gi
+
+## External PostgreSQL database configuration
+## Note: All of these values are only used when backend.config.databaseType is set to externalPgsql
+externalPgsql:
+  # -- Host of an external PostgreSQL instance to connect
+  host: ""
+  # -- User of an external PostgreSQL instance to connect
+  user: ciso-assistant
+  # -- Password of an external PostgreSQL instance to connect
+  password: ""
+  # -- Secret containing the password of an external PostgreSQL instance to connect
+  ## Name of an existing secret resource containing the DB password in a 'password' key
+  existingSecret: ""
+  # -- Database inside an external PostgreSQL to connect
+  database: ciso-assistant
+  # -- Port of an external PostgreSQL to connect
+  port: 5432
+
+## Qdrant vector database (AI assistant / RAG)
+## Deployed via the official Qdrant chart (https://github.com/qdrant/qdrant-helm)
+## as a StatefulSet with persistence and health probes out of the box.
+## When enabled, QDRANT_URL is injected into the backend and Huey containers.
+## The keys below are the ones most often customized, but the whole section is passed
+## through to the Qdrant subchart: any key from its own values.yaml can be set here
+## (nodeSelector, tolerations, securityContext, service, ingress, ...) and is preserved
+## across chart upgrades.
+## Ref: https://github.com/qdrant/qdrant-helm/blob/main/charts/qdrant/values.yaml
+qdrant: # @schema additionalProperties: true
+  # -- Deploy the bundled Qdrant (official subchart) and inject QDRANT_URL
+  enabled: false
+
+  # -- Number of Qdrant replicas (requires `qdrant.config.cluster.enabled`)
+  replicaCount: 1
+
+  ## Qdrant image
+  ## Note: the Qdrant subchart has its own image settings, `global.image.*` does not apply
+  image: # @schema additionalProperties: true
+    # -- Qdrant image repository, registry included (point it at your own mirror if needed)
+    repository: docker.io/qdrant/qdrant
+    # -- Tag to use for Qdrant
+    # @default -- `""` (defaults to the Qdrant subchart appVersion)
+    tag: ""
+    # -- Image pull policy for Qdrant
+    pullPolicy: IfNotPresent
+
+  ## Note: the Qdrant subchart has its own pull secrets, `global.imagePullSecrets` does not apply
+  # -- Secrets with credentials to pull the Qdrant image from a private registry
+  imagePullSecrets: []
+
+  # -- Environment variables to pass to Qdrant
+  env: []
+
+  # -- Resources for Qdrant
+  resources: {} # @schema additionalProperties: true
+
+  # -- Qdrant storage persistence
+  persistence: # @schema additionalProperties: true
+    accessModes: ["ReadWriteOnce"]
+    size: 10Gi
+    annotations: {} # @schema additionalProperties: true
+    additionalLabels: {} # @schema additionalProperties: true
+    # storageVolumeName: qdrant-storage
+    # storageSubPath: ""
+    # storageClassName: local-path
+    # volumeAttributesClassName: ""
+
+  # -- Qdrant runtime configuration
+  config: # @schema additionalProperties: true
+    cluster: # @schema additionalProperties: true
+      enabled: true
+      p2p: # @schema additionalProperties: true
+        port: 6335
+        enable_tls: false
+      consensus: # @schema additionalProperties: true
+        tick_period_ms: 100
+    service: # @schema additionalProperties: true
+      enable_tls: false

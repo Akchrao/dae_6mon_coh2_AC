@@ -1,0 +1,439 @@
+<script lang="ts">
+	import ClassificationBadge from '#lib/components/ClassificationBadge.svelte';
+	import { page } from '$app/state';
+	import CreateModal from '#lib/components/Modals/CreateModal.svelte';
+	import { safeTranslate } from '#lib/utils/i18n.js';
+	import { m } from '#paraglide/messages.js';
+	import type { ActionData, PageData } from './$types';
+	import Tile from './Tile.svelte';
+	import Anchor from '#lib/components/Anchor/Anchor.svelte';
+	import MarkdownRenderer from '#lib/components/MarkdownRenderer.svelte';
+	import Card from '#lib/components/DataViz/Card.svelte';
+	import {
+		getModalStore,
+		type ModalComponent,
+		type ModalSettings,
+		type ModalStore
+	} from '#lib/components/Modals/stores.js';
+
+	const modalStore: ModalStore = getModalStore();
+
+	let exportMenuOpen = $state(false);
+
+	interface Props {
+		data: PageData;
+		form: ActionData;
+	}
+
+	let { data, form }: Props = $props();
+
+	const workshopsData = {
+		ws1: [
+			{
+				title: safeTranslate(m.ebiosWs1_1()),
+				status: data.data.meta.workshops[0].steps[0].status,
+				href: `${page.url.pathname}/workshop-1/ebios-rm-study?activity=one&next=${page.url.pathname}`
+			},
+			{
+				title: safeTranslate(m.ebiosWs1_2()),
+				status: data.data.meta.workshops[0].steps[1].status,
+				href: `${page.url.pathname}/workshop-1/ebios-rm-study?activity=two&next=${page.url.pathname}`
+			},
+			{
+				title: safeTranslate(m.ebiosWs1_3()),
+				status: data.data.meta.workshops[0].steps[2].status,
+				href: `${page.url.pathname}/workshop-1/feared-events?next=${page.url.pathname}`
+			},
+			{
+				title: safeTranslate(m.ebiosWs1_4()),
+				status: data.data.meta.workshops[0].steps[3].status,
+				href: `${page.url.pathname}/workshop-1/baseline?next=${page.url.pathname}`
+			}
+		],
+		ws2: [
+			{
+				title: safeTranslate(m.ebiosWs2_1()),
+				status: data.data.meta.workshops[1].steps[0].status,
+				href: `${page.url.pathname}/workshop-2/ro-to?activity=one&next=${page.url.pathname}`
+			},
+			{
+				title: safeTranslate(m.ebiosWs2_2()),
+				status: data.data.meta.workshops[1].steps[1].status,
+				href: `${page.url.pathname}/workshop-2/ro-to?activity=two&next=${page.url.pathname}`,
+				disabled: data.data.roto_count < 1,
+				tooltip: safeTranslate(m.ebiosWs2_2_tooltip())
+			},
+			{
+				title: safeTranslate(m.ebiosWs2_3()),
+				status: data.data.meta.workshops[1].steps[2].status,
+				href: `${page.url.pathname}/workshop-2/ro-to?activity=three&next=${page.url.pathname}`,
+				disabled: data.data.roto_count < 1,
+				tooltip: safeTranslate(m.ebiosWs2_3_tooltip())
+			}
+		],
+		ws3: [
+			{
+				title: safeTranslate(m.ebiosWs3_1()),
+				status: data.data.meta.workshops[2].steps[0].status,
+				href: `${page.url.pathname}/workshop-3/ecosystem?activity=one&next=${page.url.pathname}`
+			},
+			{
+				title: safeTranslate(m.ebiosWs3_2()),
+				status: data.data.meta.workshops[2].steps[1].status,
+				href: `${page.url.pathname}/workshop-3/strategic-scenarios?next=${page.url.pathname}`,
+				disabled: data.data.selected_roto_count < 1,
+				tooltip: safeTranslate(m.ebiosWs3_2_tooltip())
+			},
+			{
+				title: safeTranslate(m.ebiosWs3_3()),
+				status: data.data.meta.workshops[2].steps[2].status,
+				href: `${page.url.pathname}/workshop-3/ecosystem?activity=three&next=${page.url.pathname}`
+			}
+		],
+		ws4: [
+			{
+				title: safeTranslate(m.ebiosWs4_0()),
+				status: data.data.meta.workshops[3].steps[0].status,
+				href: `${page.url.pathname}/workshop-4/elementary-actions`
+			},
+			{
+				title: safeTranslate(m.ebiosWs4_1()),
+				status: data.data.meta.workshops[3].steps[1].status,
+				href: `${page.url.pathname}/workshop-4/operational-scenario?activity=one&next=${page.url.pathname}`,
+				disabled: data.data.selected_attack_path_count < 1,
+				tooltip: safeTranslate(m.ebiosWs4_2_tooltip())
+			},
+			{
+				title: safeTranslate(m.ebiosWs4_2()),
+				status: data.data.meta.workshops[3].steps[2].status,
+				href: `${page.url.pathname}/workshop-4/operational-scenario?activity=two&next=${page.url.pathname}`,
+				disabled: data.data.operational_scenario_count < 1,
+				tooltip: safeTranslate(m.ebiosWs4_3_tooltip())
+			}
+		],
+		ws5: [
+			{
+				title: safeTranslate(m.ebiosWs5_1()),
+				status: data.data.meta.workshops[4].steps[0].status,
+				href: '#'
+			},
+			{
+				title: safeTranslate(m.ebiosWs5_2()),
+				status: data.data.meta.workshops[4].steps[1].status,
+				href: `/risk-assessments/${data.data.last_risk_assessment?.id}?activity=two&next=${page.url.pathname}`,
+				disabled: data.data.last_risk_assessment == null,
+				tooltip: safeTranslate(m.ebiosWs5_tooltip())
+			},
+			{
+				title: safeTranslate(m.ebiosWs5_3()),
+				status: data.data.meta.workshops[4].steps[2].status,
+				href: `/risk-assessments/${data.data.last_risk_assessment?.id}?activity=three&next=${page.url.pathname}`,
+				disabled: data.data.last_risk_assessment == null,
+				tooltip: safeTranslate(m.ebiosWs5_tooltip())
+			},
+			{
+				title: safeTranslate(m.ebiosWs5_4()),
+				status: data.data.meta.workshops[4].steps[3].status,
+				href: `/risk-assessments/${data.data.last_risk_assessment?.id}?activity=four&next=${page.url.pathname}`,
+				disabled: data.data.last_risk_assessment == null,
+				tooltip: safeTranslate(m.ebiosWs5_tooltip())
+			},
+			{
+				title: safeTranslate(m.ebiosWs5_5()),
+				status: data.data.meta.workshops[4].steps[4].status,
+				href: `/risk-assessments/${data.data.last_risk_assessment?.id}/action-plan?next=${page.url.pathname}`,
+				disabled: data.data.last_risk_assessment == null,
+				tooltip: safeTranslate(m.ebiosWs5_tooltip())
+			}
+		]
+	};
+
+	function handleActivityOneClick(): void {
+		// Check if a risk assessment already exists
+		if (data.data.last_risk_assessment) {
+			const riskAssessment = data.data.last_risk_assessment;
+			const riskAssessmentName =
+				riskAssessment.str || riskAssessment.name || 'Existing Risk Assessment';
+
+			// Show choice modal - using i18n strings
+			const choiceModal: ModalSettings = {
+				type: 'confirm',
+				title: m.ebiosRmSyncModalTitle(),
+				body: `${m.ebiosRmSyncModalBody({ name: riskAssessmentName })}
+
+  • ${m.ebiosRmSyncExisting()}
+    ${m.ebiosRmSyncExistingDescription()}
+
+  • ${m.ebiosRmCreateNew()}
+    ${m.ebiosRmCreateNewDescription()}`,
+				buttonTextConfirm: m.ebiosRmSyncExisting(),
+				buttonTextCancel: m.ebiosRmCreateNew(),
+				response: (confirmed: boolean | undefined) => {
+					if (confirmed === true) {
+						showSyncPreview(riskAssessment.id);
+					} else if (confirmed === false) {
+						// Create new
+						modalCreateForm();
+					}
+					// If confirmed is undefined (close button/escape), do nothing
+				}
+			};
+			modalStore.trigger(choiceModal);
+		} else {
+			// No existing assessment, just create
+			modalCreateForm();
+		}
+	}
+
+	function showSyncPreview(riskAssessmentId: string): void {
+		const preview = data.syncPreview;
+
+		if (!preview || preview.error) {
+			const previewErrorModal: ModalSettings = {
+				type: 'alert',
+				title: m.ebiosRmSyncPreviewTitle(),
+				body: preview?.error || m.ebiosRmSyncPreviewError()
+			};
+			modalStore.trigger(previewErrorModal);
+			return;
+		}
+
+		const syncModeMessages: Record<string, (args: { count: number }) => string> = {
+			operational_scenarios: m.ebiosRmSyncModeOperationalScenarios,
+			attack_paths: m.ebiosRmSyncModeAttackPaths,
+			strategic_scenarios: m.ebiosRmSyncModeStrategicScenarios,
+			feared_events: m.ebiosRmSyncModeFearedEvents,
+			mixed: m.ebiosRmSyncModeMixed
+		};
+		const syncModeMessage = (syncModeMessages[preview.sync_mode] ?? syncModeMessages.mixed)({
+			count: preview.count
+		});
+
+		const sourceList = preview.source_objects
+			.map((obj: { name: string; impact: { name: string } | null }) => {
+				const impact = obj.impact ? ` [${obj.impact.name}]` : '';
+				return `• ${obj.name}${impact}`;
+			})
+			.join('\n');
+
+		const previewModal: ModalSettings = {
+			type: 'confirm',
+			title: m.ebiosRmSyncPreviewTitle(),
+			body: `${syncModeMessage}\n\n${sourceList}`,
+			buttonTextConfirm: m.ebiosRmSyncConfirm(),
+			response: (confirmed: boolean | undefined) => {
+				if (confirmed === true) {
+					window.location.href = `${page.url.pathname}/workshop-5/risk-analyses?sync=${riskAssessmentId}`;
+				}
+			}
+		};
+		modalStore.trigger(previewModal);
+	}
+
+	function modalCreateForm(): void {
+		let modalComponent: ModalComponent = {
+			ref: CreateModal,
+			props: {
+				form: data.createRiskAnalysisForm,
+				model: data.riskModel
+			}
+		};
+		let modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			// Data
+			title: safeTranslate('add-' + data.riskModel.localName)
+		};
+		modalStore.trigger(modal);
+	}
+</script>
+
+<div class="h-full w-full p-8 flex flex-col gap-6">
+	<section class="card bg-surface-50-950 shadow-lg w-full p-6 border-l-4 border-pink-600 space-y-2">
+		<h2 class="text-2xl font-bold">
+			{data.data.name}
+			<span class="text-base font-normal text-surface-500">v{data.data.version}</span>
+		</h2>
+		{#if data.data.description}
+			<div class="line-clamp-4">
+				<MarkdownRenderer content={data.data.description} />
+			</div>
+		{:else}
+			<p class="alert preset-tonal-warning flex items-center gap-2">
+				<i class="fa-solid fa-triangle-exclamation"></i>
+				<span>{m.studyDescriptionMissing()}</span>
+			</p>
+
+			<Anchor
+				href={workshopsData.ws1[0].href}
+				class="anchor inline-flex items-center gap-2 text-sm"
+			>
+				{m.describeStudy()}
+				<i class="fa-solid fa-arrow-right"></i>
+			</Anchor>
+		{/if}
+	</section>
+	<div
+		class="card relative bg-surface-50-950 shadow-lg w-full flex-1 grid xl:grid-cols-3 lg:grid-cols-2 md:grid-cols-1 gap-8 p-8"
+	>
+		{#if data.data.classification}
+			<ClassificationBadge
+				classification={data.data.classification}
+				class="absolute top-0 right-8 -translate-y-1/2 bg-surface-50-950 text-xs shadow-sm"
+			/>
+		{/if}
+		<Tile
+			workshop={1}
+			title={m.ebiosWs1()}
+			accent_color="bg-pink-600"
+			borderColor="border-pink-600"
+			meta={workshopsData.ws1}
+		/>
+		<Tile
+			workshop={2}
+			title={m.ebiosWs2()}
+			accent_color="bg-fuchsia-900"
+			borderColor="border-fuchsia-900"
+			meta={workshopsData.ws2}
+		/>
+		<Tile
+			workshop={3}
+			title={m.ebiosWs3()}
+			accent_color="bg-teal-500"
+			borderColor="border-teal-500"
+			meta={workshopsData.ws3}
+		/>
+		<Tile
+			workshop={4}
+			startAtZero={true}
+			title={m.ebiosWs4()}
+			accent_color="bg-yellow-600"
+			borderColor="border-yellow-600"
+			meta={workshopsData.ws4}
+		/>
+		<Tile
+			workshop={5}
+			title={m.ebiosWs5()}
+			accent_color="bg-red-500"
+			borderColor="border-red-500"
+			meta={workshopsData.ws5}
+			createRiskAnalysis={true}
+		>
+			{#snippet addRiskAnalysis()}
+				<div>
+					<button
+						class="flex flex-col text-left hover:text-primary-800-200"
+						onclick={handleActivityOneClick}
+					>
+						{#if data.data.meta.workshops[4].steps[0].status == 'done'}
+							<span
+								class="absolute flex items-center justify-center w-8 h-8 bg-success-300-700 text-success-950 rounded-full -start-4 ring-4 ring-surface-300-700"
+							>
+								<i class="fa-solid fa-check"></i>
+							</span>
+						{:else}
+							<span
+								class="absolute flex items-center justify-center w-8 h-8 bg-surface-200-800 rounded-full -start-4 ring-4 ring-surface-300-700"
+							>
+								<i class="fa-solid fa-clipboard-check"></i>
+							</span>
+						{/if}
+						<h3 class="font-medium leading-tight">{m.activity()} 1</h3>
+						<p class="text-sm">{safeTranslate(m.ebiosWs5_1())}</p>
+					</button>
+				</div>
+			{/snippet}
+		</Tile>
+		<Tile title={m.summary()} accent_color="bg-purple-800">
+			{#snippet action()}
+				<div class="flex flex-col gap-3">
+					<a
+						class="bg-surface-600 hover:bg-purple-600 text-white font-semibold text-sm py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+						href={`${page.url.pathname}/visual/`}
+					>
+						<i class="fa-solid fa-chart-diagram"></i>
+						<span>{m.visualAnalysis()}</span>
+					</a>
+					<a
+						class="bg-surface-600 hover:bg-purple-600 text-white font-semibold text-sm py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+						href={`${page.url.pathname}/report/`}
+					>
+						<i class="fa-solid fa-file-lines"></i>
+						<span>{m.report()}</span>
+					</a>
+					<!-- Export dropdown -->
+					<div class="relative">
+						<button
+							class="bg-surface-600 hover:bg-purple-600 text-white font-semibold text-sm py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2 w-full"
+							onclick={() => (exportMenuOpen = !exportMenuOpen)}
+							onblur={() => setTimeout(() => (exportMenuOpen = false), 150)}
+						>
+							<i class="fa-solid fa-download"></i>
+							<span>{m.exportButton()}</span>
+							<i class="fa-solid fa-chevron-down text-xs"></i>
+						</button>
+						{#if exportMenuOpen}
+							<div
+								class="absolute top-full left-0 mt-1 w-full bg-surface-50-950 border border-surface-200-800 rounded-lg shadow-lg z-10"
+							>
+								<a
+									href={`${page.url.pathname}/export/xlsx`}
+									class="block px-4 py-2 text-sm text-surface-700-300 hover:bg-surface-100-900 rounded-lg"
+								>
+									<i class="fa-solid fa-file-excel mr-2"></i>
+									{m.exportExcel()}
+								</a>
+							</div>
+						{/if}
+					</div>
+				</div>
+			{/snippet}
+			{#snippet content()}
+				{@const counters = data.data?.counters || {}}
+				<div class="grid grid-cols-2 gap-2">
+					<Card
+						count={String(counters.selected_asset_count ?? 0)}
+						label={m.assets()}
+						section={''}
+					/>
+					<Card
+						count={String(counters.selected_feared_event_count ?? 0)}
+						label={m.fearedEvents()}
+						section={''}
+					/>
+					<Card
+						count={String(counters.compliance_assessment_count ?? 0)}
+						label={m.complianceAssessments()}
+						section={''}
+					/>
+					<Card count={String(counters.roto_count ?? 0)} label={m.roToCouples()} section={''} />
+					<Card
+						count={String(counters.stakeholder_count ?? 0)}
+						label={m.stakeholders()}
+						section={''}
+					/>
+					<Card
+						count={String(counters.strategic_scenario_count ?? 0)}
+						label={m.strategicScenarios()}
+						section={''}
+					/>
+					<Card
+						count={String(counters.operational_scenario_count ?? 0)}
+						label={m.operationalScenarios()}
+						section={''}
+					/>
+					<Card
+						count={String(counters.compliance_applied_control_count ?? 0)}
+						label={m.appliedControlsFromAudits()}
+						section={''}
+					/>
+					<Card
+						count={String(counters.risk_assessment_applied_control_count ?? 0)}
+						label={m.appliedControlsFromRiskAssessment()}
+						section={''}
+					/>
+				</div>
+			{/snippet}
+		</Tile>
+	</div>
+</div>

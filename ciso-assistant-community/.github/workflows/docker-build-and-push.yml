@@ -1,0 +1,323 @@
+name: Build and Push Docker Images
+permissions:
+  contents: read
+on:
+  push:
+    tags:
+      - "v*"
+
+# Cancel older in-progress runs for the same PR or the same ref (branch)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  UBUNTU_VERSION: "ubuntu-24.04"
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      build: ${{ steps.version.outputs.build }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Generate version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          # On a tag push the pushed tag IS the version: git describe breaks
+          # ties between tags on the same commit alphabetically, so a
+          # powerbi-v* tag cut on the same commit would win over v*.
+          if [ "$GITHUB_REF_TYPE" = "tag" ]; then
+            version="$GITHUB_REF_NAME"
+          else
+            version="$(git describe --tags --always --match 'v[0-9]*')"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "build=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+  build-frontend:
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract frontend metadata
+        id: meta-frontend
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        with:
+          images: ghcr.io/${{ github.repository }}/frontend
+          tags: |
+            type=raw,value=${{ needs.prepare.outputs.version }}
+          labels: |
+            org.opencontainers.image.title=CISO Assistant Frontend
+            org.opencontainers.image.description=An open-source GRC platform for cybersecurity compliance and risk management
+            org.opencontainers.image.vendor=intuitem
+            org.opencontainers.image.licenses=AGPL-3.0
+            org.opencontainers.image.url=https://intuitem.com
+            org.opencontainers.image.documentation=https://intuitem.gitbook.io/ciso-assistant
+      - name: Build and Push
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/frontend:${{ needs.prepare.outputs.version }}-${{ matrix.arch }}
+          platforms: linux/${{ matrix.arch }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+          annotations: ${{ steps.meta-frontend.outputs.annotations }}
+
+  build-backend:
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Create .meta file
+        shell: bash
+        env:
+          CISO_ASSISTANT_VERSION: ${{ needs.prepare.outputs.version }}
+          CISO_ASSISTANT_BUILD: ${{ needs.prepare.outputs.build }}
+        run: |
+          set -euo pipefail
+          {
+            echo "CISO_ASSISTANT_VERSION=$CISO_ASSISTANT_VERSION"
+            echo "CISO_ASSISTANT_BUILD=$CISO_ASSISTANT_BUILD"
+          } > .meta
+          cp .meta ./backend/
+          cp .meta ./backend/ciso_assistant/
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract backend metadata
+        id: meta-backend
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        with:
+          images: ghcr.io/${{ github.repository }}/backend
+          tags: |
+            type=raw,value=${{ needs.prepare.outputs.version }}
+          labels: |
+            org.opencontainers.image.title=CISO Assistant Backend
+            org.opencontainers.image.description=An open-source GRC platform for cybersecurity compliance and risk management
+            org.opencontainers.image.vendor=intuitem
+            org.opencontainers.image.licenses=AGPL-3.0
+            org.opencontainers.image.url=https://intuitem.com
+            org.opencontainers.image.documentation=https://intuitem.gitbook.io/ciso-assistant
+      - name: Build and Push
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/backend:${{ needs.prepare.outputs.version }}-${{ matrix.arch }}
+          platforms: linux/${{ matrix.arch }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+          annotations: ${{ steps.meta-backend.outputs.annotations }}
+
+  build-mcp:
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            runner: ubuntu-24.04
+          - arch: arm64
+            runner: ubuntu-24.04-arm
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract mcp metadata
+        id: meta-mcp
+        uses: docker/metadata-action@c299e40c65443455700f0fdfc63efafe5b349051 # v5.10.0
+        with:
+          images: ghcr.io/${{ github.repository }}/mcp
+          tags: |
+            type=raw,value=${{ needs.prepare.outputs.version }}
+          labels: |
+            org.opencontainers.image.title=CISO Assistant MCP Server
+            org.opencontainers.image.description=Model Context Protocol server exposing CISO Assistant to AI assistants
+            org.opencontainers.image.vendor=intuitem
+            org.opencontainers.image.licenses=AGPL-3.0
+            org.opencontainers.image.url=https://intuitem.com
+            org.opencontainers.image.documentation=https://intuitem.gitbook.io/ciso-assistant
+      - name: Build and Push
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
+        with:
+          context: ./cli
+          file: ./cli/Dockerfile
+          push: true
+          tags: ghcr.io/${{ github.repository }}/mcp:${{ needs.prepare.outputs.version }}-${{ matrix.arch }}
+          platforms: linux/${{ matrix.arch }}
+          labels: ${{ steps.meta-mcp.outputs.labels }}
+          annotations: ${{ steps.meta-mcp.outputs.annotations }}
+
+  scan:
+    needs: [prepare, build-frontend, build-backend, build-mcp]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    strategy:
+      fail-fast: false
+      matrix:
+        component: [frontend, backend, mcp]
+    env:
+      SCOUT_IMAGE: ghcr.io/intuitem/ciso-assistant-community/mirror/scout-cli:1.25.0
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Gate on CRITICAL
+        shell: bash
+        env:
+          TARGET: ghcr.io/${{ github.repository }}/${{ matrix.component }}:${{ needs.prepare.outputs.version }}-amd64
+          DOCKER_SCOUT_HUB_USER: ${{ secrets.DOCKERHUB_USER }}
+          DOCKER_SCOUT_HUB_PASSWORD: ${{ secrets.DOCKERHUB_TOKEN }}
+          DOCKER_SCOUT_REGISTRY_USER: ${{ github.actor }}
+          DOCKER_SCOUT_REGISTRY_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          docker run --rm \
+            -e DOCKER_SCOUT_HUB_USER -e DOCKER_SCOUT_HUB_PASSWORD \
+            -e DOCKER_SCOUT_REGISTRY_USER -e DOCKER_SCOUT_REGISTRY_PASSWORD \
+            "$SCOUT_IMAGE" \
+            cves --platform linux/amd64 --only-severity critical,high --only-fixed --format markdown \
+              "$TARGET" | tee -a "$GITHUB_STEP_SUMMARY"
+          docker run --rm \
+            -e DOCKER_SCOUT_HUB_USER -e DOCKER_SCOUT_HUB_PASSWORD \
+            -e DOCKER_SCOUT_REGISTRY_USER -e DOCKER_SCOUT_REGISTRY_PASSWORD \
+            "$SCOUT_IMAGE" \
+            cves --platform linux/amd64 --only-severity critical --only-fixed \
+              --exit-code "$TARGET" > /dev/null
+
+  merge-manifests:
+    needs: [prepare, build-frontend, build-backend, build-mcp, scan]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@af1e73f918a031802d376d3c8bbc3fe56130a9b0 # v4.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create multi-arch manifests
+        shell: bash
+        env:
+          REPO: ${{ github.repository }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          GIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          CREATED="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+          docker buildx imagetools create \
+            --annotation "index:org.opencontainers.image.title=CISO Assistant Frontend" \
+            --annotation "index:org.opencontainers.image.description=An open-source GRC platform for cybersecurity compliance and risk management" \
+            --annotation "index:org.opencontainers.image.vendor=intuitem" \
+            --annotation "index:org.opencontainers.image.licenses=AGPL-3.0" \
+            --annotation "index:org.opencontainers.image.url=https://intuitem.com" \
+            --annotation "index:org.opencontainers.image.documentation=https://intuitem.gitbook.io/ciso-assistant" \
+            --annotation "index:org.opencontainers.image.source=https://github.com/$REPO" \
+            --annotation "index:org.opencontainers.image.version=$VERSION" \
+            --annotation "index:org.opencontainers.image.revision=$GIT_SHA" \
+            --annotation "index:org.opencontainers.image.created=$CREATED" \
+            -t "ghcr.io/$REPO/frontend:$VERSION" \
+            -t "ghcr.io/$REPO/frontend:latest" \
+            "ghcr.io/$REPO/frontend:$VERSION-amd64" \
+            "ghcr.io/$REPO/frontend:$VERSION-arm64"
+
+          docker buildx imagetools create \
+            --annotation "index:org.opencontainers.image.title=CISO Assistant Backend" \
+            --annotation "index:org.opencontainers.image.description=An open-source GRC platform for cybersecurity compliance and risk management" \
+            --annotation "index:org.opencontainers.image.vendor=intuitem" \
+            --annotation "index:org.opencontainers.image.licenses=AGPL-3.0" \
+            --annotation "index:org.opencontainers.image.url=https://intuitem.com" \
+            --annotation "index:org.opencontainers.image.documentation=https://intuitem.gitbook.io/ciso-assistant" \
+            --annotation "index:org.opencontainers.image.source=https://github.com/$REPO" \
+            --annotation "index:org.opencontainers.image.version=$VERSION" \
+            --annotation "index:org.opencontainers.image.revision=$GIT_SHA" \
+            --annotation "index:org.opencontainers.image.created=$CREATED" \
+            -t "ghcr.io/$REPO/backend:$VERSION" \
+            -t "ghcr.io/$REPO/backend:latest" \
+            "ghcr.io/$REPO/backend:$VERSION-amd64" \
+            "ghcr.io/$REPO/backend:$VERSION-arm64"
+
+          docker buildx imagetools create \
+            --annotation "index:org.opencontainers.image.title=CISO Assistant MCP Server" \
+            --annotation "index:org.opencontainers.image.description=Model Context Protocol server exposing CISO Assistant to AI assistants" \
+            --annotation "index:org.opencontainers.image.vendor=intuitem" \
+            --annotation "index:org.opencontainers.image.licenses=AGPL-3.0" \
+            --annotation "index:org.opencontainers.image.url=https://intuitem.com" \
+            --annotation "index:org.opencontainers.image.documentation=https://intuitem.gitbook.io/ciso-assistant" \
+            --annotation "index:org.opencontainers.image.source=https://github.com/$REPO" \
+            --annotation "index:org.opencontainers.image.version=$VERSION" \
+            --annotation "index:org.opencontainers.image.revision=$GIT_SHA" \
+            --annotation "index:org.opencontainers.image.created=$CREATED" \
+            -t "ghcr.io/$REPO/mcp:$VERSION" \
+            -t "ghcr.io/$REPO/mcp:latest" \
+            "ghcr.io/$REPO/mcp:$VERSION-amd64" \
+            "ghcr.io/$REPO/mcp:$VERSION-arm64"

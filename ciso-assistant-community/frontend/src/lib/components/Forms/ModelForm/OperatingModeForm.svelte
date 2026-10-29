@@ -1,0 +1,82 @@
+<script lang="ts">
+	import AutocompleteSelect from '../AutocompleteSelect.svelte';
+	import Select from '#lib/components/Forms/Select.svelte';
+	import type { SuperForm } from 'sveltekit-superforms';
+	import type { ModelInfo, CacheLock } from '#lib/utils/types.js';
+	import { m } from '#paraglide/messages.js';
+
+	interface Props {
+		form: SuperForm<any>;
+		model: ModelInfo;
+		cacheLocks?: Record<string, CacheLock>;
+		formDataCache?: Record<string, any>;
+		initialData?: Record<string, any>;
+		object?: Record<string, any>;
+	}
+
+	let {
+		form,
+		model,
+		cacheLocks = {},
+		formDataCache = $bindable({}),
+		initialData = {},
+		object = {},
+		updated_fields = new Set()
+	}: Props = $props();
+
+	const likelihoodFromSteps = $derived(
+		['standard', 'advanced'].includes(object?.quotation_method ?? (model as any).quotationMethod)
+	);
+
+	async function fetchDefaultRefId(operationalScenarioId: string) {
+		try {
+			const response = await fetch(
+				`/operating-modes/default-ref-id/?operational_scenario=${operationalScenarioId}`
+			);
+			const result = await response.json();
+			if (response.ok && result.results) {
+				form.form.update((currentData) => {
+					// Only update ref_id if it's empty/null/undefined
+					if (!currentData.ref_id || currentData.ref_id === '') {
+						updated_fields.add('ref_id');
+						return { ...currentData, ref_id: result.results };
+					}
+					// Return unchanged data if ref_id already has a value
+					return currentData;
+				});
+			} else {
+				console.error(result.error || 'Failed to fetch default ref_id');
+			}
+		} catch (error) {
+			console.error('Error fetching default ref_id:', error);
+		}
+	}
+</script>
+
+<AutocompleteSelect
+	{form}
+	optionsEndpoint="operational-scenarios"
+	field="operational_scenario"
+	cacheLock={cacheLocks['operational_scenario']}
+	bind:cachedValue={formDataCache['operational_scenario']}
+	label={m.operationalScenario()}
+	hidden
+	onChange={async (e) => fetchDefaultRefId(e)}
+	mount={async (e) => fetchDefaultRefId(e)}
+/>
+{#if likelihoodFromSteps}
+	<p class="text-sm text-surface-600-400">
+		<i class="fa-solid fa-calculator mr-1"></i>
+		{m.operatingModeLikelihoodFromSteps()}
+	</p>
+{:else}
+	<Select
+		{form}
+		options={model.selectOptions['likelihood']}
+		field="likelihood"
+		label={m.likelihood()}
+		cacheLock={cacheLocks['likelihood']}
+		bind:cachedValue={formDataCache['likelihood']}
+		helpText={m.likelihoodHelpText()}
+	/>
+{/if}

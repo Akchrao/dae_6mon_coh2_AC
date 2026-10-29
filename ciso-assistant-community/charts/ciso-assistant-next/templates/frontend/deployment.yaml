@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "ciso-assistant.fullname" . }}-frontend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ciso-assistant.labels" (dict "context" . "component" "frontend") | nindent 4 }}
+  {{- with .Values.frontend.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.frontend.replicas }}
+  selector:
+    matchLabels:
+      {{- include "ciso-assistant.selectorLabels" (dict "context" . "component" "frontend") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ciso-assistant.labels" (dict "context" . "component" "frontend") | nindent 8 }}
+      {{- with .Values.frontend.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.frontend.imagePullSecrets | default .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.global.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: {{ .Values.frontend.name }}
+        image: {{ default .Values.global.image.registry .Values.frontend.image.registry }}/{{ .Values.frontend.image.repository }}:{{ default (include "ciso-assistant.defaultTag" .) .Values.frontend.image.tag }}
+        imagePullPolicy: {{ default .Values.global.image.imagePullPolicy .Values.frontend.image.imagePullPolicy }}
+        {{- with .Values.frontend.command }}
+        command:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.frontend.args }}
+        args:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        env:
+          {{- with .Values.frontend.env }}
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+          - name: ORIGIN
+            value: {{ template "ciso-assistant.url" . }}
+          - name: PROTOCOL_HEADER
+            value: x-forwarded-proto
+          - name: HOST_HEADER
+            value: x-forwarded-host
+          - name: PUBLIC_BACKEND_API_URL
+            value: {{ include "ciso-assistant.backendApiUrl" . }}
+          - name: PUBLIC_BACKEND_API_EXPOSED_URL
+            value: {{ template "ciso-assistant.url" . }}/api
+          - name: BODY_SIZE_LIMIT
+            value: {{ .Values.frontend.config.bodySizeLimit | quote }}
+          {{- include "ciso-assistant.extraCerts.nodeEnv" . | nindent 10 }}
+        ports:
+          - name: http
+            containerPort: 3000
+            protocol: TCP
+        {{- if and .Values.frontend.extraVolumeMounts (not .Values.frontend.extraVolumes) }}
+          {{- fail "frontend.extraVolumeMounts can't be set without frontend.extraVolumes" }}
+        {{- end }}
+        {{- if or .Values.global.extraCerts.enabled .Values.frontend.extraVolumeMounts }}
+        volumeMounts:
+          {{- include "ciso-assistant.extraCerts.frontendVolumeMount" . | nindent 10 }}
+          {{- with .Values.frontend.extraVolumeMounts }}
+          {{- toYaml . | nindent 10 }}
+          {{- end }}
+        {{- end }}
+        {{- if .Values.frontend.resources }}
+        resources:
+          {{- toYaml .Values.frontend.resources | nindent 10 }}
+        {{- end }}
+        {{- with .Values.frontend.containerSecurityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- with .Values.frontend.nodeSelector | default .Values.global.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.frontend.tolerations | default .Values.global.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.frontend.affinity | default .Values.global.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if or .Values.global.extraCerts.enabled .Values.frontend.extraVolumes }}
+      volumes:
+        {{- include "ciso-assistant.extraCerts.frontendVolume" . | nindent 8 }}
+        {{- with .Values.frontend.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}

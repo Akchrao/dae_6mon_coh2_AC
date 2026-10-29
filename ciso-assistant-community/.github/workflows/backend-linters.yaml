@@ -1,0 +1,82 @@
+name: Backend Linters
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - "backend/**"
+      - "enterprise/backend/**"
+      - ".github/workflows/backend-linters.yaml"
+
+# Cancel older in-progress runs for the same PR or the same ref (branch)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GITHUB_WORKFLOW: github_actions
+  PYTHON_VERSION: "3.12"
+  UBUNTU_VERSION: "ubuntu-24.04"
+
+jobs:
+  ruff-community:
+    runs-on: ubuntu-24.04
+    env:
+      working-directory: ./backend
+
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ["3.14"]
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+      - name: Install ruff
+        working-directory: ${{env.working-directory}}
+        run: |
+          python -m pip install ruff==0.15.17
+      - name: Run ruff format check
+        working-directory: ${{env.working-directory}}
+        run: ruff format --check .
+      # NOTE: The following will be uncommented once the codebase is cleaned up
+      # - name: ruff
+      #   working-directory: ${{env.working-directory}}
+      #   run: ruff check .
+  ruff-enterprise:
+    runs-on: ubuntu-24.04
+    env:
+      working-directory: ./enterprise/backend
+
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ["3.14"]
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Set up python ${{ matrix.python-version }}
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: "pip"
+      - name: Install ruff
+        working-directory: ${{env.working-directory}}
+        run: |
+          python -m pip install ruff==0.15.17
+      - name: Run ruff format check
+        working-directory: ${{env.working-directory}}
+        run: ruff format --check .
+      # NOTE: The following will be uncommented once the codebase is cleaned up
+      # - name: ruff
+      #   working-directory: ${{env.working-directory}}
+      #   run: ruff check .

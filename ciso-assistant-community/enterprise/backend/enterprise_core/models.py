@@ -1,0 +1,112 @@
+import base64
+import os
+from enum import Enum
+
+import magic
+from auditlog.registry import auditlog
+from django.core.validators import FileExtensionValidator
+from django.db import models
+from django.utils.translation import gettext_lazy as _
+
+from core.base_models import AbstractBaseModel
+from core.utils import sha256
+from iam.models import FolderMixin
+
+from enum import IntEnum
+
+
+class ClientSettings(AbstractBaseModel, FolderMixin):
+    class FileField(Enum):
+        LOGO = "logo"
+        FAVICON = "favicon"
+
+    name = models.CharField(max_length=255, blank=True)
+    logo = models.ImageField(
+        upload_to="client_logos",
+        null=True,
+        blank=True,
+        validators=[FileExtensionValidator(["png", "jpeg", "jpg", "webp", "svg"])],
+    )
+    favicon = models.ImageField(
+        upload_to="client_favicons",
+        null=True,
+        blank=True,
+        validators=[
+            FileExtensionValidator(["ico", "png", "jpeg", "jpg", "webp", "svg"])
+        ],
+    )
+    show_images_unauthenticated = models.BooleanField(
+        default=True, help_text=_("Show logo and favicon to unauthenticated users")
+    )
+
+    @property
+    def logo_base64(self):
+        try:
+            self.logo.open("rb")
+            return base64.b64encode(self.logo.read()).decode("utf-8")
+        except Exception:
+            return None
+
+    @property
+    def logo_hash(self):
+        if not self.logo_base64:
+            return None
+        return sha256(self.logo_base64.encode("utf-8"))
+
+    @property
+    def logo_mime_type(self):
+        try:
+            self.logo.open("rb")
+            return magic.Magic(mime=True).from_buffer(self.logo.read())
+        except Exception:
+            return None
+
+    @property
+    def favicon_base64(self):
+        try:
+            self.favicon.open("rb")
+            return base64.b64encode(self.favicon.read()).decode("utf-8")
+        except Exception:
+            return None
+
+    @property
+    def favicon_hash(self):
+        if not self.favicon_base64:
+            return None
+        return sha256(self.favicon_base64.encode("utf-8"))
+
+    @property
+    def favicon_mime_type(self):
+        try:
+            self.favicon.open("rb")
+            return magic.Magic(mime=True).from_buffer(self.favicon.read())
+        except Exception:
+            return None
+
+    def __str__(self):
+        return self.name
+
+    def filename(self, field: FileField):
+        return os.path.basename(getattr(self, field.value).name)
+
+
+class LogEntryAction(IntEnum):
+    CREATE = 0
+    UPDATE = 1
+    DELETE = 2
+    ACCESS = 3
+    LOGIN_FAILED = 4
+
+    def to_string(self):
+        LOG_ENTRY_ACTION_TRANSLATIONS: dict[LogEntryAction, str] = {
+            LogEntryAction.CREATE: "create",
+            LogEntryAction.UPDATE: "update",
+            LogEntryAction.DELETE: "delete",
+            LogEntryAction.ACCESS: "access",
+            LogEntryAction.LOGIN_FAILED: "loginFailed",
+        }
+        UNKNOWN_ACTION_TRANSLATION = "unknown"
+        return LOG_ENTRY_ACTION_TRANSLATIONS.get(self, UNKNOWN_ACTION_TRANSLATION)
+
+
+auditlog.register(ClientSettings, exclude_fields=["created_at", "updated_at"])

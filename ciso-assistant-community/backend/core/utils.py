@@ -1,0 +1,2344 @@
+import hashlib
+from decimal import Decimal
+from enum import Enum
+
+import json
+import re
+from re import sub
+from typing import Literal
+from datetime import datetime, timedelta, date
+
+from django.utils.translation import gettext_lazy as _
+from django.conf import settings
+
+from rest_framework.exceptions import ValidationError
+import structlog
+import calendar
+from dateutil import relativedelta as rd
+from uuid import UUID
+
+# Re-export so callers can import from a single utils module.
+from .friendly_names import generate_friendly_name  # noqa: F401
+
+import yaml
+
+try:
+    from yaml import CSafeLoader as SafeLoader
+except ImportError:  # libyaml unavailable
+    from yaml import SafeLoader
+
+logger = structlog.get_logger(__name__)
+
+
+def yaml_safe_load(stream):
+    """yaml.safe_load backed by libyaml when available (~10x faster)."""
+    return yaml.load(stream, Loader=SafeLoader)
+
+
+def extract_node_id(urn: str | None) -> str | None:
+    """Extract the node_id (mobile part) from a URN.
+
+    URN format: urn:{org}:risk:{type}:{slug}:{node_id}
+    The node_id is everything after the 5th colon and may contain colons.
+    """
+    if not urn or not isinstance(urn, str):
+        return None
+    parts = urn.split(":")
+    if len(parts) <= 5:
+        return None
+    node_id = ":".join(parts[5:]).strip()
+    return node_id if node_id else None
+
+
+def resolve_compute_result(compute_result: str | None) -> str | None:
+    """Map a QuestionChoice.compute_result string to a Result value."""
+    if compute_result is None:
+        return None
+    value = compute_result.strip().lower()
+    if value == "":
+        return None
+    if value in ("true", "1", "compliant"):
+        return "compliant"
+    if value in ("false", "0", "non_compliant"):
+        return "non_compliant"
+    if value == "partially_compliant":
+        return "partially_compliant"
+    if value == "not_applicable":
+        return "not_applicable"
+    logger.warning(
+        "Unknown compute_result value ignored", compute_result=compute_result
+    )
+    return None
+
+
+def resolve_result_tier(compute_results) -> str | None:
+    """The tier a question states, read from the results its choices can set.
+
+    A question that can set `compliant` states the top tier; one that can only
+    set `partially_compliant` states the middle tier; one that can only set
+    `non_compliant` is a blocking statement (the "at least one of these is
+    true" column of a maturity table). A question whose choices set nothing is
+    captured for the record only and states no tier.
+    """
+    resolved = {resolve_compute_result(value) for value in compute_results}
+    if "compliant" in resolved:
+        return "compliant"
+    if "partially_compliant" in resolved:
+        return "partially_compliant"
+    if "non_compliant" in resolved:
+        return "blocking"
+    return None
+
+
+def aggregate_tiered_results(question_results: list[tuple]) -> str | None:
+    """Aggregate answers where a tier is earned only if all of it holds.
+
+    `question_results` is one `(tier, selected)` pair per answered question,
+    `selected` being the resolved results of the choices the respondent picked.
+    A tier is earned when every question stating it was answered with that
+    tier's result; a blocking statement answered `non_compliant` denies every
+    tier outright. `not_applicable` answers stay neutral, as in
+    `aggregate_compute_results`, and an all-`not_applicable` set is
+    `not_applicable`.
+
+    Unlike per-answer aggregation, this can express "all of these must hold",
+    which is how assessment tables built on indicator statements are read (the
+    NCSC CAF being the reference case).
+    """
+    # Every entry is an answered question (the caller only records those), so a
+    # question that states a tier but whose answer affirms nothing - the False
+    # side of "all the following are true" - means that tier does not hold.
+    # Questions stating no tier at all are captured for the record only.
+    answered = [(tier, selected) for tier, selected in question_results if tier]
+    if not answered:
+        return None
+
+    # `not_applicable` is neutral, as in `aggregate_compute_results`: on a
+    # multiple choice answer it drops out of the selection rather than failing
+    # the tier, and a question answered entirely `not_applicable` stops
+    # contributing at all.
+    contributing = []
+    for tier, selected in answered:
+        effective = [result for result in selected if result != "not_applicable"]
+        if selected and not effective:
+            continue
+        contributing.append((tier, effective))
+    if not contributing:
+        return "not_applicable"
+
+    holds_by_tier: dict[str, list[bool]] = {"compliant": [], "partially_compliant": []}
+    for tier, selected in contributing:
+        if tier == "blocking":
+            if any(result == "non_compliant" for result in selected):
+                return "non_compliant"
+            continue
+        holds_by_tier[tier].append(
+            bool(selected) and all(result == tier for result in selected)
+        )
+
+    for tier in ("compliant", "partially_compliant"):
+        if holds_by_tier[tier] and all(holds_by_tier[tier]):
+            return tier
+
+    # Nothing states a tier - only blocking statements, none of them triggered.
+    if not holds_by_tier["compliant"] and not holds_by_tier["partially_compliant"]:
+        return "compliant"
+    return "non_compliant"
+
+
+def aggregate_compute_results(resolved_results: list[str | None]) -> str | None:
+    """Aggregate resolved compute_result values, each answer standing on its own.
+
+    not_applicable is neutral; unanimous answers carry, and answers that
+    disagree land on partially_compliant.
+    """
+    contributing = [r for r in resolved_results if r is not None]
+    if not contributing:
+        return None
+
+    non_na = [r for r in contributing if r != "not_applicable"]
+    if not non_na:
+        return "not_applicable"
+
+    has_compliant = any(r == "compliant" for r in non_na)
+    has_non_compliant = any(r == "non_compliant" for r in non_na)
+    has_partial = any(r == "partially_compliant" for r in non_na)
+
+    if has_partial or (has_compliant and has_non_compliant):
+        return "partially_compliant"
+    if has_non_compliant:
+        return "non_compliant"
+    return "compliant"
+
+
+# Currency formatting conventions: (position, space)
+# position: "before" or "after" the amount
+# space: whether to include a space between symbol and amount
+_CURRENCY_FORMAT = {
+    # Symbol before, no space: $100
+    "$": ("before", False),
+    "£": ("before", False),
+    "¥": ("before", False),
+    "CN¥": ("before", False),
+    "₹": ("before", False),
+    "₩": ("before", False),
+    "A$": ("before", False),
+    "NZ$": ("before", False),
+    "S$": ("before", False),
+    "₺": ("before", False),
+    "NT$": ("before", False),
+    "฿": ("before", False),
+    "MYR": ("before", False),
+    # Symbol before, with space: CHF 100
+    "C$": ("before", True),
+    "CHF": ("before", True),
+    "HK$": ("before", True),
+    "R$": ("before", True),
+    "MX$": ("before", True),
+    "ZAR": ("before", True),
+    # Symbol after, with space: 100 €
+    "€": ("after", True),
+    "SEK": ("after", True),
+    "NOK": ("after", True),
+    "DKK": ("after", True),
+    "PLN": ("after", True),
+    "XPF": ("after", True),
+}
+
+
+def get_global_currency() -> str:
+    """Get the currency from global settings, defaulting to €."""
+    from global_settings.models import GlobalSettings
+
+    general_settings = GlobalSettings.objects.filter(name="general").first()
+    value = general_settings.value if general_settings else None
+    return (value or {}).get("currency") or "€"
+
+
+def format_currency(value, currency: str) -> str:
+    """Format a numeric value with its currency symbol in the correct position.
+
+    Respects per-currency conventions for symbol position (before/after)
+    and spacing. For large values, uses abbreviated forms (K, M, B).
+    """
+    if not currency:
+        return f"{value} *"
+
+    if isinstance(value, (int, float, Decimal)):
+        if value >= 1_000_000_000:
+            formatted = f"{value / 1_000_000_000:.1f}B"
+        elif value >= 1_000_000:
+            formatted = f"{value / 1_000_000:.1f}M"
+        elif value >= 1_000:
+            formatted = f"{value / 1_000:.0f}K"
+        else:
+            formatted = f"{value:,.0f}"
+    else:
+        formatted = str(value)
+
+    position, space = _CURRENCY_FORMAT.get(currency, ("before", True))
+    sep = " " if space else ""
+
+    if position == "after":
+        return f"{formatted}{sep}{currency}"
+    return f"{currency}{sep}{formatted}"
+
+
+def sizeof_json(obj) -> int:
+    """
+    Returns the size of a JSON-encoded object in bytes.
+    If obj is already bytes (compressed), return its length directly.
+    """
+    if isinstance(obj, (bytes, bytearray, memoryview)):
+        return len(obj)
+    return len(json.dumps(obj).encode("utf-8"))
+
+
+def camel_case(s):
+    if not s:
+        return ""
+    s = sub(r"(_|-)+", " ", s).title().replace(" ", "")
+
+    return "".join([s[0].lower(), s[1:]])
+
+
+def sha256(string: bytes) -> str:
+    """Return the SHA256-hashed hexadecimal representation of the bytes object given as argument."""
+    h = hashlib.new("SHA256")
+    h.update(string)
+    return h.hexdigest()
+
+
+class RoleCodename(Enum):
+    ADMINISTRATOR = "BI-RL-ADM"
+    DOMAIN_MANAGER = "BI-RL-DMA"
+    ANALYST = "BI-RL-ANA"
+    APPROVER = "BI-RL-APP"
+    READER = "BI-RL-AUD"
+    THIRD_PARTY_RESPONDENT = "BI-RL-TPR"
+    AUDITEE = "BI-RL-ADE"
+    TECHNICAL_TESTER = "BI-RL-TST"
+    USER_CREATOR = "BI-RL-UCR"
+
+    def __str__(self) -> str:
+        return self.value
+
+
+class UserGroupCodename(Enum):
+    ADMINISTRATOR = "BI-UG-ADM"
+    GLOBAL_READER = "BI-UG-GAD"
+    GLOBAL_APPROVER = "BI-UG-GAP"
+    GLOBAL_AUDITEE = "BI-UG-GAE"
+    GLOBAL_USER_CREATOR = "BI-UG-GUC"
+    DOMAIN_MANAGER = "BI-UG-DMA"
+    ANALYST = "BI-UG-ANA"
+    APPROVER = "BI-UG-APP"
+    READER = "BI-UG-AUD"
+    THIRD_PARTY_RESPONDENT = "BI-UG-TPR"
+    AUDITEE = "BI-UG-ADE"
+    TECHNICAL_TESTER = "BI-UG-TST"
+
+    def __str__(self) -> str:
+        return self.value
+
+
+# Translations for builtin role names, following the library localization pattern.
+# Structure: {role_codename: {locale: {"name": translated_name}}}
+# The English name serves as the base; other locales provide translations.
+BUILTIN_ROLE_TRANSLATIONS = {
+    "BI-RL-ADM": {
+        "en": {"name": "Administrator"},
+        "ar": {"name": "المسؤول"},
+        "cs": {"name": "Administrátor"},
+        "da": {"name": "Administrator"},
+        "de": {"name": "Administrator"},
+        "el": {"name": "Διαχειριστής"},
+        "es": {"name": "Administrador"},
+        "et": {"name": "Administraator"},
+        "fr": {"name": "Administrateur"},
+        "hi": {"name": "प्रशासक"},
+        "hr": {"name": "Administrator"},
+        "hu": {"name": "Adminisztrátor"},
+        "id": {"name": "Administrator"},
+        "it": {"name": "Amministratore"},
+        "ko": {"name": "관리자"},
+        "lt": {"name": "Administratorius"},
+        "nl": {"name": "Beheerder"},
+        "pl": {"name": "Administrator"},
+        "pt": {"name": "Administrador"},
+        "ro": {"name": "Administrator"},
+        "sv": {"name": "Administratör"},
+        "tr": {"name": "Yönetici"},
+        "uk": {"name": "Адміністратор"},
+        "ur": {"name": "ایڈمنسٹریٹر"},
+        "zh": {"name": "管理员"},
+    },
+    "BI-RL-DMA": {
+        "en": {"name": "Domain manager"},
+        "ar": {"name": "مدير النطاق"},
+        "cs": {"name": "Správce domény"},
+        "da": {"name": "Domæneansvarlig"},
+        "de": {"name": "Bereichsverantwortlicher"},
+        "el": {"name": "Υπεύθυνος τομέα"},
+        "es": {"name": "Gerente de dominio"},
+        "et": {"name": "Valdkonnahaldur"},
+        "fr": {"name": "Gestionnaire de domaine"},
+        "hi": {"name": "डोमेन प्रबंधक"},
+        "hr": {"name": "Upravitelj domene"},
+        "hu": {"name": "Tartománykezelő"},
+        "id": {"name": "Manajer domain"},
+        "it": {"name": "Gestore del dominio"},
+        "ko": {"name": "도메인 관리자"},
+        "lt": {"name": "Srities vadovas"},
+        "nl": {"name": "Domeinbeheerder"},
+        "pl": {"name": "Menadżer domeny"},
+        "pt": {"name": "Gerente de domínio"},
+        "ro": {"name": "Manager de domeniu"},
+        "sv": {"name": "Domänansvarig"},
+        "tr": {"name": "Etki alanı yöneticisi"},
+        "uk": {"name": "Менеджер домену"},
+        "ur": {"name": "ڈومین مینیجر"},
+        "zh": {"name": "域管理员"},
+    },
+    "BI-RL-ANA": {
+        "en": {"name": "Analyst"},
+        "ar": {"name": "المحلل"},
+        "cs": {"name": "Analytik"},
+        "da": {"name": "Analytiker"},
+        "de": {"name": "Analyst"},
+        "el": {"name": "Αναλυτής"},
+        "es": {"name": "Analista"},
+        "et": {"name": "Analüütik"},
+        "fr": {"name": "Analyste"},
+        "hi": {"name": "विश्लेषक"},
+        "hr": {"name": "Analitičar"},
+        "hu": {"name": "Elemző"},
+        "id": {"name": "Analis"},
+        "it": {"name": "Analista"},
+        "ko": {"name": "분석가"},
+        "lt": {"name": "Analitikas"},
+        "nl": {"name": "Analist"},
+        "pl": {"name": "Analityk"},
+        "pt": {"name": "Analista"},
+        "ro": {"name": "Analist"},
+        "sv": {"name": "Analytiker"},
+        "tr": {"name": "Analist"},
+        "uk": {"name": "Аналітик"},
+        "ur": {"name": "تجزیہ کار"},
+        "zh": {"name": "分析师"},
+    },
+    "BI-RL-APP": {
+        "en": {"name": "Approver"},
+        "ar": {"name": "الموافق"},
+        "cs": {"name": "Schvalovatel"},
+        "da": {"name": "Godkender"},
+        "de": {"name": "Genehmiger"},
+        "el": {"name": "Εγκρίνων"},
+        "es": {"name": "Aprobador"},
+        "et": {"name": "Kinnitaja"},
+        "fr": {"name": "Approbateur"},
+        "hi": {"name": "स्वीकर्ता"},
+        "hr": {"name": "Odobravatelj"},
+        "hu": {"name": "Jóváhagyó"},
+        "id": {"name": "Penyetuju"},
+        "it": {"name": "Approvatore"},
+        "ko": {"name": "승인자"},
+        "lt": {"name": "Tvirtintojas"},
+        "nl": {"name": "Goedkeurder"},
+        "pl": {"name": "Akceptujący"},
+        "pt": {"name": "Aprovador"},
+        "ro": {"name": "Aprobator"},
+        "sv": {"name": "Godkännare"},
+        "tr": {"name": "Onaylayan"},
+        "uk": {"name": "Затверджувач"},
+        "ur": {"name": "منظور کنندہ"},
+        "zh": {"name": "审批者"},
+    },
+    "BI-RL-AUD": {
+        "en": {"name": "Reader"},
+        "ar": {"name": "القارئ"},
+        "cs": {"name": "Čtečka"},
+        "da": {"name": "Læser"},
+        "de": {"name": "Leser"},
+        "el": {"name": "Αναγνώστης"},
+        "es": {"name": "Lector"},
+        "et": {"name": "Lugeja"},
+        "fr": {"name": "Lecteur"},
+        "hi": {"name": "रीडर"},
+        "hr": {"name": "Čitatelj"},
+        "hu": {"name": "Olvasó"},
+        "id": {"name": "Pembaca"},
+        "it": {"name": "Lettore"},
+        "ko": {"name": "열람자"},
+        "lt": {"name": "Skaitytojas"},
+        "nl": {"name": "Lezer"},
+        "pl": {"name": "Czytelnik"},
+        "pt": {"name": "Leitor"},
+        "ro": {"name": "Cititor"},
+        "sv": {"name": "Läsare"},
+        "tr": {"name": "Okuyucu"},
+        "uk": {"name": "Читач"},
+        "ur": {"name": "ریڈر"},
+        "zh": {"name": "阅读者"},
+    },
+    "BI-RL-TPR": {
+        "en": {"name": "Third-party respondent"},
+        "ar": {"name": "المجيب من طرف ثالث"},
+        "cs": {"name": "Respondent třetí strany"},
+        "da": {"name": "Tredjepartsrespondent"},
+        "de": {"name": "Drittanbieter-Befragter"},
+        "el": {"name": "Ερωτώμενος τρίτου μέρους"},
+        "es": {"name": "Encuestado de terceros"},
+        "et": {"name": "Kolmanda osapoole vastaja"},
+        "fr": {"name": "Répondant tiers"},
+        "hi": {"name": "तृतीय-पक्ष प्रतिवादी"},
+        "hr": {"name": "Ispitanik treće strane"},
+        "hu": {"name": "Harmadik fél válaszadója"},
+        "id": {"name": "Responden pihak ketiga"},
+        "it": {"name": "Rispondente di terze parti"},
+        "ko": {"name": "제3자 응답자"},
+        "lt": {"name": "Trečiosios šalies respondentas"},
+        "nl": {"name": "Externe respondent"},
+        "pl": {"name": "Respondent strony trzeciej"},
+        "pt": {"name": "Respondente terceiro"},
+        "ro": {"name": "Respondent terță parte"},
+        "sv": {"name": "Tredjepartsrespondent"},
+        "tr": {"name": "Üçüncü taraf yanıtlayıcı"},
+        "uk": {"name": "Респондент третьої сторони"},
+        "ur": {"name": "فریق ثالث جواب دہندہ"},
+        "zh": {"name": "第三方受访者"},
+    },
+    "BI-RL-ADE": {
+        "en": {"name": "Respondent"},
+        "ar": {"name": "المجيب"},
+        "cs": {"name": "Respondent"},
+        "da": {"name": "Respondent"},
+        "de": {"name": "Befragter"},
+        "el": {"name": "Ερωτώμενος"},
+        "es": {"name": "Encuestado"},
+        "et": {"name": "Vastaja"},
+        "fr": {"name": "Répondant"},
+        "hi": {"name": "प्रतिवादी"},
+        "hr": {"name": "Ispitanik"},
+        "hu": {"name": "Válaszadó"},
+        "id": {"name": "Responden"},
+        "it": {"name": "Rispondente"},
+        "ko": {"name": "응답자"},
+        "lt": {"name": "Respondentas"},
+        "nl": {"name": "Respondent"},
+        "pl": {"name": "Respondent"},
+        "pt": {"name": "Respondente"},
+        "ro": {"name": "Respondent"},
+        "sv": {"name": "Respondent"},
+        "tr": {"name": "Yanıtlayıcı"},
+        "uk": {"name": "Респондент"},
+        "ur": {"name": "جواب دہندہ"},
+        "zh": {"name": "受访者"},
+    },
+    "BI-RL-TST": {
+        "en": {"name": "Technical tester"},
+        "ar": {"name": "مختبِر تقني"},
+        "cs": {"name": "Technický tester"},
+        "da": {"name": "Teknisk tester"},
+        "de": {"name": "Technischer Tester"},
+        "el": {"name": "Τεχνικός δοκιμαστής"},
+        "es": {"name": "Probador técnico"},
+        "et": {"name": "Tehniline testija"},
+        "fr": {"name": "Testeur technique"},
+        "hi": {"name": "तकनीकी परीक्षक"},
+        "hr": {"name": "Tehnički tester"},
+        "hu": {"name": "Műszaki tesztelő"},
+        "id": {"name": "Penguji teknis"},
+        "it": {"name": "Tester tecnico"},
+        "ko": {"name": "기술 테스터"},
+        "lt": {"name": "Techninis testuotojas"},
+        "nl": {"name": "Technisch tester"},
+        "pl": {"name": "Tester techniczny"},
+        "pt": {"name": "Testador técnico"},
+        "ro": {"name": "Tester tehnic"},
+        "sv": {"name": "Teknisk testare"},
+        "tr": {"name": "Teknik test uzmanı"},
+        "uk": {"name": "Технічний тестувальник"},
+        "ur": {"name": "تکنیکی ٹیسٹر"},
+        "zh": {"name": "技术测试员"},
+    },
+    "BI-RL-BSL": {
+        "en": {"name": "Baseline reader"},
+        "ar": {"name": "قارئ خط الأساس"},
+        "cs": {"name": "Čtenář základní úrovně"},
+        "da": {"name": "Basislæser"},
+        "de": {"name": "Basis-Leser"},
+        "el": {"name": "Αναγνώστης βασικής γραμμής"},
+        "es": {"name": "Lector de línea base"},
+        "et": {"name": "Baastaseme lugeja"},
+        "fr": {"name": "Lecteur de socle"},
+        "hi": {"name": "आधारभूत रीडर"},
+        "hr": {"name": "Osnovni čitatelj"},
+        "hu": {"name": "Alapszintű olvasó"},
+        "id": {"name": "Pembaca dasar"},
+        "it": {"name": "Lettore di base"},
+        "ko": {"name": "기본 열람자"},
+        "lt": {"name": "Bazinis skaitytojas"},
+        "nl": {"name": "Basislezer"},
+        "pl": {"name": "Czytelnik bazowy"},
+        "pt": {"name": "Leitor de base"},
+        "ro": {"name": "Cititor de bază"},
+        "sv": {"name": "Basläsare"},
+        "tr": {"name": "Temel okuyucu"},
+        "uk": {"name": "Базовий читач"},
+        "ur": {"name": "بنیادی ریڈر"},
+        "zh": {"name": "基线阅读者"},
+    },
+    "BI-RL-UCR": {
+        "en": {"name": "User creator"},
+        "ar": {"name": "منشئ المستخدمين"},
+        "cs": {"name": "Tvůrce uživatelů"},
+        "da": {"name": "Brugeropretter"},
+        "de": {"name": "Benutzerersteller"},
+        "el": {"name": "Δημιουργός χρηστών"},
+        "es": {"name": "Creador de usuarios"},
+        "et": {"name": "Kasutajate looja"},
+        "fr": {"name": "Créateur d'utilisateurs"},
+        "hi": {"name": "उपयोगकर्ता निर्माता"},
+        "hr": {"name": "Kreator korisnika"},
+        "hu": {"name": "Felhasználólétrehozó"},
+        "id": {"name": "Pembuat pengguna"},
+        "it": {"name": "Creatore di utenti"},
+        "ko": {"name": "사용자 생성자"},
+        "lt": {"name": "Naudotojų kūrėjas"},
+        "nl": {"name": "Gebruikersaanmaker"},
+        "pl": {"name": "Twórca użytkowników"},
+        "pt": {"name": "Criador de usuários"},
+        "ro": {"name": "Creator de utilizatori"},
+        "sv": {"name": "Användarskapare"},
+        "tr": {"name": "Kullanıcı oluşturucu"},
+        "uk": {"name": "Творець користувачів"},
+        "ur": {"name": "صارف تخلیق کار"},
+        "zh": {"name": "用户创建者"},
+    },
+}
+
+
+def get_translated_builtin_role_name(role_codename: str) -> str:
+    """Return the translated display name for a builtin role codename.
+
+    Uses the same locale-resolution pattern as library objects:
+    check BUILTIN_ROLE_TRANSLATIONS for the current Django language,
+    fall back to English, then to the raw codename.
+    """
+    from django.utils.translation import get_language
+
+    translations = BUILTIN_ROLE_TRANSLATIONS.get(role_codename, {})
+    lang = get_language() or "en"
+    # Try exact locale, then base language (e.g. "fr-FR" → "fr")
+    locale_trans = translations.get(lang) or translations.get(lang.split("-")[0], {})
+    return locale_trans.get("name") or translations.get("en", {}).get(
+        "name", role_codename
+    )
+
+
+BUILTIN_USERGROUP_CODENAMES = {
+    str(UserGroupCodename.ADMINISTRATOR): str(RoleCodename.ADMINISTRATOR),
+    str(UserGroupCodename.GLOBAL_READER): str(RoleCodename.READER),
+    str(UserGroupCodename.GLOBAL_APPROVER): str(RoleCodename.APPROVER),
+    str(UserGroupCodename.GLOBAL_AUDITEE): str(RoleCodename.AUDITEE),
+    str(UserGroupCodename.GLOBAL_USER_CREATOR): str(RoleCodename.USER_CREATOR),
+    str(UserGroupCodename.DOMAIN_MANAGER): str(RoleCodename.DOMAIN_MANAGER),
+    str(UserGroupCodename.ANALYST): str(RoleCodename.ANALYST),
+    str(UserGroupCodename.APPROVER): str(RoleCodename.APPROVER),
+    str(UserGroupCodename.READER): str(RoleCodename.READER),
+    str(UserGroupCodename.THIRD_PARTY_RESPONDENT): str(
+        RoleCodename.THIRD_PARTY_RESPONDENT
+    ),
+    str(UserGroupCodename.AUDITEE): str(RoleCodename.AUDITEE),
+    str(UserGroupCodename.TECHNICAL_TESTER): str(RoleCodename.TECHNICAL_TESTER),
+}
+
+# NOTE: This is set to "Main" now, but will be changed to a unique identifier
+# for internationalization.
+MAIN_ENTITY_DEFAULT_NAME = "Main"
+
+COUNTRY_FLAGS = {
+    "fr": "🇫🇷",
+    "en": "🇬🇧",
+}
+
+LANGUAGES = {
+    "fr": _("French"),
+    "en": _("English"),
+}
+
+
+class VersionFormatError(Exception):
+    """Raised when a version string is not properly formatted."""
+
+    pass
+
+
+def parse_version(version: str) -> list[int]:
+    """
+    Parses a version string that starts with 'v' and contains dot-separated numbers.
+    Accepts strings like 'v1', 'v1.2', or 'v1.2.3'.
+    """
+    if not version.startswith("v"):
+        raise VersionFormatError(f"Version must start with 'v': {version}")
+    # Remove leading 'v' and split on dots
+    parts = version.lstrip("v").split(".")
+    try:
+        return [int(part) for part in parts]
+    except ValueError as e:
+        raise VersionFormatError(f"Non-numeric version component in {version}") from e
+
+
+def compare_versions(
+    version_a: str, version_b: str, level: Literal["major", "minor", "patch"] = "patch"
+) -> int:
+    """
+    Compares two version strings at the specified level of granularity.
+
+    Parameters:
+        version_a (str): A version string (e.g., 'v1.2.3' or 'v1.2').
+        version_b (str): Another version string.
+        level (str): Granularity to compare: 'major' (only the first component),
+                     'minor' (first two components), or 'patch' (all three components).
+                     For example, comparing 'v1.2' with 'v1.2.0' at level='minor' will be equal.
+
+    Returns:
+        int: -1 if version_a is lower than version_b;
+             0 if they are equal (up to the specified level);
+             1 if version_a is greater than version_b.
+
+    Raises:
+        VersionFormatError: if either version string is not formatted correctly.
+        ValueError: if an invalid level is specified.
+
+    Example:
+        >>> compare_versions("v1.2", "v1.2.0", level="minor")
+        0
+        >>> compare_versions("v1.2.1", "v1.2.0", level="patch")
+        1
+        >>> compare_versions("v2", "v1.9.9", level="major")
+        1
+    """
+    level_to_parts = {"major": 1, "minor": 2, "patch": 3}
+    if level not in level_to_parts:
+        raise ValueError(
+            "Invalid level specified; choose 'major', 'minor', or 'patch'."
+        )
+    parts_to_check = level_to_parts[level]
+
+    va = parse_version(version_a)
+    vb = parse_version(version_b)
+
+    # Pad with zeros if necessary
+    while len(va) < parts_to_check:
+        va.append(0)
+    while len(vb) < parts_to_check:
+        vb.append(0)
+
+    # Compare component-wise using tuple comparison
+    if tuple(va[:parts_to_check]) < tuple(vb[:parts_to_check]):
+        return -1
+    elif tuple(va[:parts_to_check]) > tuple(vb[:parts_to_check]):
+        return 1
+    return 0
+
+
+def compare_schema_versions(
+    schema_ver_a: int | None,
+    version_a: str | None,
+    version_b: str = settings.VERSION.split("-")[0],
+    schema_ver_b: int = settings.SCHEMA_VERSION,
+    level: Literal["major", "minor", "patch"] = "patch",
+):
+    """
+    Compares the schema version in a backup with the current schema version,
+    falling back to a semantic version comparison if no schema version is provided.
+
+    Parameters:
+        schema_ver_a (int): The schema version stored in the backup.
+        version_a (str): The application version stored in the backup (e.g., '1.2.3').
+        version_b (str, optional): The current application version. Defaults to
+                                   `settings.VERSION.split("-")[0]`.
+        schema_ver_b (int, optional): The current schema version. Defaults to
+                                      `settings.SCHEMA_VERSION`.
+        level (str, optional): Granularity to compare for the semantic version check:
+                               'major' (first component), 'minor' (first two components),
+                               or 'patch' (all three components). Defaults to 'patch'.
+
+    Raises:
+        ValidationError: If the backup's schema version is greater than the current schema version,
+                        or if the backup's version is not compatible with the current version.
+
+    Logs:
+        - Logs an info message if a schema version is found in the backup.
+        - Logs an error and raises a `ValidationError` if the backup's schema version
+          is greater than the current schema version.
+        - Logs an info message if no schema version is found and falls back to a
+          semantic version comparison.
+        - Logs an error and raises a `ValidationError` if the backup version is
+          greater than or incompatible with the current version.
+
+    Example:
+        >>> compare_schema_versions(3, "1.2.0", "1.3.0", schema_ver_b=3, level="minor")
+        # No error raised, schema versions match, versions are not checked.
+
+        >>> compare_schema_versions(4, schema_ver_b=3, level="minor")
+        ValidationError: {'error': 'backupGreaterVersionError'}
+
+        >>> compare_schema_versions(None, "1.4.0", "1.3.0", level="minor")
+        ValidationError: {'error': 'backupGreaterVersionError'}
+    """
+    if schema_ver_a is not None:
+        logger.info(
+            "Schema version found in backup",
+            backup_schema_version=schema_ver_a,
+        )
+        if schema_ver_a > schema_ver_b:
+            logger.error(
+                "Backup schema version greater than current schema version",
+                backup_schema_version=schema_ver_a,
+                ciso_assistant_schema_version=schema_ver_b,
+            )
+            raise ValidationError({"error": "backupGreaterVersionError"})
+        elif schema_ver_a < schema_ver_b:
+            logger.info(
+                "Backup schema version less than current schema version",
+                backup_schema_version=schema_ver_a,
+                ciso_assistant_schema_version=schema_ver_b,
+            )
+            raise ValidationError({"error": "backupLowerVersionError"})
+        logger.info("Schema version in backup matches current schema version")
+    else:
+        logger.info(
+            "Schema version not found in backup, using version instead",
+            import_version=version_a,
+        )
+        current_version = version_b
+
+        # Compare backup and current versions at the 'minor' level
+        cmp_minor = compare_versions(version_a, current_version, level="minor")
+        if cmp_minor == 1:
+            logger.error(
+                "Backup version greater than current version",
+                version=version_a,
+            )
+            raise ValidationError({"error": "backupGreaterVersionError"})
+        elif cmp_minor != 0:
+            logger.error(
+                f"Import version {version_a} not compatible with current version {current_version}"
+            )
+            raise ValidationError(
+                {"error": "importVersionNotCompatibleWithCurrentVersion"}
+            )
+
+
+def time_state(date_str: str) -> dict:
+    """
+    Determine the state based on the provided date string.
+
+    Args:
+        date_str (str): Date string in ISO 8601 format.
+
+    Returns:
+        dict: A dictionary with 'name' and 'hexcolor' keys indicating the state.
+              - 'incoming' if the date is in the future.
+              - 'outdated' if the date is in the past.
+              - 'today' if the date exactly matches the current time.
+    """
+    # Parse the date string
+    eta = datetime.fromisoformat(date_str)
+    # Get the current date and time. If eta contains timezone info, use it.
+    now = datetime.now(eta.tzinfo) if eta.tzinfo else datetime.now()
+
+    if eta > now:
+        return {"name": "incoming", "hexcolor": "#93c5fd"}
+    elif eta < now:
+        return {"name": "outdated", "hexcolor": "#f87171"}
+    else:
+        return {"name": "today", "hexcolor": "#fbbf24"}
+
+
+def _convert_to_python_weekday(day):
+    """Converts from 0=Sunday to 0=Monday weekday format"""
+    return (day - 1) % 7
+
+
+def _get_month_range(year, month):
+    """Returns first and last day of given month"""
+    first_day = date(year, month, 1)
+    last_day = date(year, month, calendar.monthrange(year, month)[1])
+    return first_day, last_day
+
+
+def _get_nth_weekday_of_month(year, month, weekday, n):
+    """Gets the nth occurrence of a specific weekday in a month"""
+    first_day, last_day = _get_month_range(year, month)
+
+    if n < 0:  # Handle negative indexing (from end of month)
+        current_date = last_day
+        count = 0
+        while current_date >= first_day:
+            if current_date.weekday() == weekday:
+                count -= 1
+                if count == n:
+                    return current_date
+            current_date -= timedelta(days=1)
+        return None
+    else:  # Handle positive indexing (from start of month)
+        current_date = first_day
+        days_to_add = (weekday - current_date.weekday()) % 7
+        first_occurrence = current_date + timedelta(days=days_to_add)
+        target_date = first_occurrence + timedelta(days=(n - 1) * 7)
+
+        # Check if still in same month
+        return target_date if target_date.month == month else None
+
+
+def _date_matches_schedule(task, date_to_check):
+    """Checks if a given date matches the schedule pattern"""
+    schedule = task.schedule
+    frequency = schedule.get("frequency")
+
+    if frequency == "DAILY":
+        return True
+
+    # Python's weekday() returns 0 for Monday, 6 for Sunday
+    # Convert to 0=Sunday, 6=Saturday for our system
+    weekday = date_to_check.weekday()
+    adjusted_weekday = (weekday + 1) % 7
+
+    if frequency == "WEEKLY":
+        days_of_week = schedule.get("days_of_week", [])
+        return not days_of_week or adjusted_weekday in days_of_week
+
+    elif frequency == "MONTHLY":
+        days_of_week = schedule.get("days_of_week", [])
+        weeks_of_month = schedule.get("weeks_of_month", [])
+
+        # If both are empty, any day matches
+        if not days_of_week and not weeks_of_month:
+            return True
+
+        # Check days of week if specified
+        if days_of_week and adjusted_weekday not in days_of_week:
+            return False
+
+        # Check weeks of month if specified
+        if weeks_of_month:
+            # Calculate which occurrence of the weekday it is in the month
+            first_day = date(date_to_check.year, date_to_check.month, 1)
+            first_matching_day = first_day
+
+            while first_matching_day.weekday() != weekday:
+                first_matching_day += timedelta(days=1)
+
+            occurrence = ((date_to_check.day - first_matching_day.day) // 7) + 1
+
+            # Check if it's the last occurrence (-1)
+            if -1 in weeks_of_month:
+                next_month = date(
+                    date_to_check.year + (1 if date_to_check.month == 12 else 0),
+                    1 if date_to_check.month == 12 else date_to_check.month + 1,
+                    1,
+                )
+                last_day = next_month - timedelta(days=1)
+                last_matching_day = last_day
+
+                while last_matching_day.weekday() != weekday:
+                    last_matching_day -= timedelta(days=1)
+
+                if date_to_check == last_matching_day:
+                    return True
+
+            return occurrence in weeks_of_month
+
+        return True
+
+    elif frequency == "YEARLY":
+        months_of_year = schedule.get("months_of_year", [])
+        days_of_week = schedule.get("days_of_week", [])
+        weeks_of_month = schedule.get("weeks_of_month", [])
+
+        # Check month
+        if months_of_year and date_to_check.month not in months_of_year:
+            return False
+
+        # If no further restrictions, any day in valid months matches
+        if not days_of_week and not weeks_of_month:
+            return True
+
+        # Check day of week
+        if days_of_week and adjusted_weekday not in days_of_week:
+            return False
+
+        # Check week of month
+        if weeks_of_month:
+            first_day = date(date_to_check.year, date_to_check.month, 1)
+            first_matching_day = first_day
+            while first_matching_day.weekday() != weekday:
+                first_matching_day += timedelta(days=1)
+            occurrence = ((date_to_check.day - first_matching_day.day) // 7) + 1
+
+            # Check for last week special case (-1)
+            if -1 in weeks_of_month:
+                last_day_num = calendar.monthrange(
+                    date_to_check.year, date_to_check.month
+                )[1]
+                last_date = date(date_to_check.year, date_to_check.month, last_day_num)
+                last_matching_day = last_date
+                while last_matching_day.weekday() != weekday:
+                    last_matching_day -= timedelta(days=1)
+                if date_to_check == last_matching_day:
+                    return True
+
+            return occurrence in weeks_of_month
+
+        return True
+
+    return False
+
+
+def _calculate_next_occurrence(task, base_date):
+    """Calculates the next occurrence date based on the schedule"""
+    if not task.schedule:
+        return None
+
+    schedule = task.schedule
+    frequency = schedule.get("frequency")
+    interval = schedule.get("interval", 1)
+
+    if frequency == "DAILY":
+        return base_date + timedelta(days=interval)
+
+    elif frequency == "WEEKLY":
+        days_of_week = schedule.get("days_of_week", [])
+
+        if not days_of_week:
+            return base_date + timedelta(weeks=interval)
+
+        current_weekday = base_date.weekday()
+        current_dow_adjusted = (current_weekday + 1) % 7
+        sorted_days = sorted(days_of_week)
+
+        # Find next day in the same week
+        next_day = next(
+            (day for day in sorted_days if day > current_dow_adjusted), None
+        )
+
+        if next_day is not None:
+            # Calculate days to add
+            python_weekday = _convert_to_python_weekday(next_day)
+            days_to_add = (python_weekday - current_weekday) % 7
+            if days_to_add == 0:  # Same day next week
+                days_to_add = 7
+            return base_date + timedelta(days=days_to_add)
+        else:
+            # Move to first day of next week
+            first_day_next_week = sorted_days[0]
+            python_weekday = _convert_to_python_weekday(first_day_next_week)
+            days_to_add = (python_weekday - current_weekday) % 7
+            if days_to_add == 0:  # Same day next week
+                days_to_add = 7
+            days_to_add += 7 * (interval - 1)  # Add interval weeks
+            return base_date + timedelta(days=days_to_add)
+
+    elif frequency == "MONTHLY":
+        days_of_week = schedule.get("days_of_week", [])
+        weeks_of_month = schedule.get("weeks_of_month", [])
+
+        if not days_of_week and not weeks_of_month:
+            return base_date + rd.relativedelta(months=interval)
+
+        # Check remaining days in current month first
+        next_date = base_date + timedelta(days=1)
+        while next_date.month == base_date.month:
+            if _date_matches_schedule(task, next_date):
+                return next_date
+            next_date += timedelta(days=1)
+
+        # Calculate for next month(s)
+        target_month = base_date.month + interval
+        target_year = base_date.year
+
+        # Adjust year if needed
+        while target_month > 12:
+            target_month -= 12
+            target_year += 1
+
+        possible_dates = []
+
+        if weeks_of_month and days_of_week:
+            for week in sorted(weeks_of_month):
+                for day in sorted(days_of_week):
+                    python_weekday = _convert_to_python_weekday(day)
+
+                    if week < 0:  # Last occurrence of weekday
+                        last_day = calendar.monthrange(target_year, target_month)[1]
+                        last_date = date(target_year, target_month, last_day)
+
+                        # Find last occurrence of this weekday
+                        days_diff = (last_date.weekday() - python_weekday) % 7
+                        if days_diff > 0:
+                            target_date = last_date - timedelta(days=days_diff)
+                        else:
+                            target_date = last_date - timedelta(days=7 - days_diff)
+
+                        if target_date.month == target_month:
+                            possible_dates.append(target_date)
+                    else:
+                        target_date = _get_nth_weekday_of_month(
+                            target_year, target_month, python_weekday, week
+                        )
+                        if target_date:
+                            possible_dates.append(target_date)
+        else:
+            # Use same day in next month(s)
+            day = min(base_date.day, calendar.monthrange(target_year, target_month)[1])
+            possible_dates.append(date(target_year, target_month, day))
+
+        # Return earliest date after base_date
+        valid_dates = [d for d in possible_dates if d > base_date]
+        if valid_dates:
+            return min(valid_dates)
+
+        # Try next interval if no valid dates found
+        return _calculate_next_occurrence(
+            task, base_date + rd.relativedelta(months=interval)
+        )
+
+    elif frequency == "YEARLY":
+        months_of_year = schedule.get("months_of_year", [])
+        days_of_week = schedule.get("days_of_week", [])
+        weeks_of_month = schedule.get("weeks_of_month", [])
+
+        if not months_of_year and not days_of_week and not weeks_of_month:
+            return base_date + rd.relativedelta(years=interval)
+
+        target_year = base_date.year
+
+        # If we're past all months in current year, move to next year
+        if months_of_year and base_date.month > max(months_of_year):
+            target_year += interval
+        elif base_date.month == 12:  # End of year case
+            target_year += interval
+
+        sorted_months = sorted(months_of_year) if months_of_year else [base_date.month]
+        possible_dates = []
+
+        for month in sorted_months:
+            if not days_of_week and not weeks_of_month:
+                # Same day each year
+                last_day_of_month = calendar.monthrange(target_year, month)[1]
+                day = min(base_date.day, last_day_of_month)
+                possible_dates.append(date(target_year, month, day))
+            elif weeks_of_month and days_of_week:
+                # Specific week/day combinations
+                for week in sorted(weeks_of_month):
+                    for day in sorted(days_of_week):
+                        python_weekday = _convert_to_python_weekday(day)
+
+                        if week < 0:  # From end of month
+                            target_date = _get_nth_weekday_of_month(
+                                target_year, month, python_weekday, week
+                            )
+                            if target_date:
+                                possible_dates.append(target_date)
+                        else:
+                            target_date = _get_nth_weekday_of_month(
+                                target_year, month, python_weekday, week
+                            )
+                            if target_date:
+                                possible_dates.append(target_date)
+            elif days_of_week:
+                # All occurrences of specified weekdays in month
+                for day in range(1, calendar.monthrange(target_year, month)[1] + 1):
+                    check_date = date(target_year, month, day)
+                    adjusted_weekday = (check_date.weekday() + 1) % 7
+                    if adjusted_weekday in days_of_week:
+                        possible_dates.append(check_date)
+            else:
+                # Just specified weeks of month
+                day = min(base_date.day, calendar.monthrange(target_year, month)[1])
+                possible_dates.append(date(target_year, month, day))
+
+        # Return earliest date after base_date
+        valid_dates = [d for d in possible_dates if d > base_date]
+        if valid_dates:
+            return min(valid_dates)
+
+        # If no valid dates, try next interval
+        return date(target_year + interval, sorted_months[0], 1)
+
+    return None
+
+
+def _create_task_dict(task, task_date):
+    """Creates a dictionary representing a future task based on the template."""
+
+    # Create task dictionary with all necessary properties
+    task_dict = {
+        "id": task.id,
+        "virtual": True,
+        "name": task.name,
+        "description": task.description,
+        "due_date": task_date,
+        "status": "pending",
+        "task_template": task.id,
+    }
+
+    return task_dict
+
+
+def _generate_occurrences(template, start_date, end_date):
+    """Generates future occurrences for a task template."""
+    occurrences = []
+
+    if not template.schedule:
+        return occurrences
+
+    # Determine start date
+    base_date = template.task_date or datetime.now().date()
+
+    # Get recurrence settings
+    end_recurrence_date = None
+    end_recurrence_date_str = template.schedule.get("end_date")
+    if end_recurrence_date_str:
+        end_recurrence_date = datetime.strptime(
+            end_recurrence_date_str, "%Y-%m-%d"
+        ).date()
+        if end_recurrence_date < start_date:
+            return occurrences  # Recurrence ended before our range
+
+    max_occurrences = template.schedule.get("occurrences")
+
+    # Find first occurrence on or after start_date
+    current_date = base_date
+    while current_date < start_date:
+        next_date = _calculate_next_occurrence(template, current_date)
+        if not next_date or (end_recurrence_date and next_date > end_recurrence_date):
+            return occurrences  # No occurrences in our range
+        current_date = next_date
+
+    occurrence_count = 0
+
+    # Generate occurrences in the date range
+    while current_date and current_date <= end_date:
+        # Check if recurrence has ended
+        if (end_recurrence_date and current_date > end_recurrence_date) or (
+            max_occurrences and occurrence_count >= max_occurrences
+        ):
+            break
+
+        # Generate task if date matches schedule pattern
+        if _date_matches_schedule(template, current_date):
+            occurrences.append(_create_task_dict(template, current_date))
+            occurrence_count += 1
+
+        # Calculate next date
+        current_date = _calculate_next_occurrence(template, current_date)
+
+    return occurrences
+
+
+def _is_question_visible(question, answers_by_urn, questions_by_urn=None, visited=None):
+    """Check if a question is visible based on depends_on logic.
+
+    Works with Question model objects (new relational models).
+    - question: a Question model instance
+    - answers_by_urn: dict of {question.urn: answer_value}
+    - questions_by_urn: dict of {question.urn: Question} (optional, for lookups)
+    - visited: set of urns already visited (cycle protection)
+    """
+    depends_on = (
+        question.depends_on
+        if hasattr(question, "depends_on")
+        else question.get("depends_on")
+        if isinstance(question, dict)
+        else None
+    )
+    if not depends_on:
+        return True
+
+    dep_ref = depends_on.get("question") if isinstance(depends_on, dict) else None
+    if not dep_ref:
+        return True
+
+    # Cycle protection
+    if visited is None:
+        visited = set()
+    q_urn = getattr(question, "urn", None) or (
+        question.get("urn") if isinstance(question, dict) else None
+    )
+    if q_urn:
+        if q_urn in visited:
+            return True
+        visited = visited | {q_urn}
+
+    # Check parent question visibility first (recursive chain)
+    if questions_by_urn:
+        parent_question = questions_by_urn.get(dep_ref)
+        if parent_question and not _is_question_visible(
+            parent_question, answers_by_urn, questions_by_urn, visited
+        ):
+            return False
+
+    target_answer = answers_by_urn.get(dep_ref)
+    # Use explicit None/empty-list check to avoid hiding on falsy values like 0 or False
+    if target_answer is None or (isinstance(target_answer, list) and not target_answer):
+        return False
+
+    condition = depends_on.get("condition", "any")
+    dep_answers = depends_on.get("answers", [])
+
+    if condition == "any":
+        if isinstance(target_answer, list):
+            return any(a in dep_answers for a in target_answer)
+        return target_answer in dep_answers
+
+    if condition == "all":
+        if isinstance(target_answer, list):
+            return all(a in target_answer for a in dep_answers)
+        # Single-value answer can only satisfy "all" if there's exactly one expected answer
+        return len(dep_answers) == 1 and target_answer == dep_answers[0]
+
+    return False
+
+
+def apply_answers_dict(owner_field, owner, questions_by_urn, answers_data, user=None):
+    """Write a legacy `{question_urn: value}` dict onto the Answer rows of
+    *owner*, a RequirementAssessment (owner_field="requirement_assessment")
+    or a QuickFormResponse (owner_field="response").
+
+    Choice questions receive URNs (one string for unique_choice, a list for
+    multiple_choice) resolved into `selected_choices`; every other type
+    stores the raw value. Unknown question URNs and unknown choice URNs are
+    logged and skipped rather than rejected, matching the historical
+    requirement assessment write path.
+    """
+    from core.models import Answer, Question
+
+    for q_urn, answer_value in answers_data.items():
+        question = questions_by_urn.get(q_urn)
+        if not question:
+            logger.warning(
+                "Question URN not found, skipping answer",
+                q_urn=q_urn,
+                available_urns=list(questions_by_urn.keys()),
+            )
+            continue
+
+        answer, _created = Answer.objects.update_or_create(
+            **{owner_field: owner},
+            question=question,
+            defaults={"folder": owner.folder},
+        )
+
+        if question.type == Question.Type.UNIQUE_CHOICE:
+            if answer_value:
+                choice = question.choices.filter(urn=answer_value).first()
+                answer.selected_choices.set([choice] if choice else [])
+                if not choice:
+                    logger.warning(
+                        "Choice not found for answer", q_urn=q_urn, value=answer_value
+                    )
+            else:
+                answer.selected_choices.clear()
+            answer.value = None
+            answer.save(update_fields=["value"])
+        elif question.type == Question.Type.MULTIPLE_CHOICE:
+            if isinstance(answer_value, list) and answer_value:
+                choices = question.choices.filter(urn__in=answer_value)
+                found_identifiers = set(choices.values_list("urn", flat=True))
+                missing = set(answer_value) - found_identifiers
+                answer.selected_choices.set(choices)
+                if missing:
+                    logger.warning(
+                        "Some choices not found for answer",
+                        q_urn=q_urn,
+                        missing_values=list(missing),
+                    )
+            else:
+                answer.selected_choices.clear()
+            answer.value = None
+            answer.save(update_fields=["value"])
+        elif question.type == Question.Type.OBJECT_REFERENCE:
+            # Ids only, always a list, and only ones reachable from the owner's folder —
+            # this path bypasses the serializer, so it cannot bypass the check too.
+            from core.object_references import ReferenceError_, validate_ids
+
+            ids = (
+                answer_value
+                if isinstance(answer_value, list)
+                else ([answer_value] if answer_value else [])
+            )
+            try:
+                answer.value = validate_ids(
+                    question, owner.folder, [str(i) for i in ids], user=user
+                )
+            except ReferenceError_ as e:
+                logger.warning("Rejected object reference answer", q_urn=q_urn, error=e)
+                answer.value = []
+            answer.save(update_fields=["value"])
+        else:
+            answer.value = answer_value
+            answer.save(update_fields=["value"])
+
+
+def build_answers_dict(answers_qs):
+    """Build {question.urn: answer_value} dict from Answer queryset for backward compat.
+
+    For choice-type questions, returns ref_id strings (single choice) or lists
+    of ref_id strings (multiple choice). For other types, returns the raw value.
+    """
+    from core.models import Question
+
+    result = {}
+    for a in answers_qs:
+        if a.question.type == Question.Type.UNIQUE_CHOICE:
+            refs = [c.urn for c in a.selected_choices.all()]
+            result[a.question.urn] = refs[0] if refs else None
+        elif a.question.type == Question.Type.MULTIPLE_CHOICE:
+            result[a.question.urn] = [c.urn for c in a.selected_choices.all()]
+        else:
+            result[a.question.urn] = a.value
+    return result
+
+
+def question_score_bounds(scores, multiple: bool) -> tuple[int, int]:
+    """Lowest and highest total a completed choice question can reach.
+
+    `scores` is the contribution of every selectable choice, an unscored one counting
+    as 0. A completed question has at least one choice selected, so a unique choice
+    reaches exactly one score, and a multiple choice reaches every positive (or every
+    negative) one at once.
+    """
+    scores = list(scores)
+    if not scores:
+        return 0, 0
+    if multiple:
+        positives = [s for s in scores if s > 0]
+        negatives = [s for s in scores if s < 0]
+        hi = sum(positives) if positives else max(scores)
+        lo = sum(negatives) if negatives else min(scores)
+        return lo, hi
+    return min(scores), max(scores)
+
+
+def project_weighted_sum(total, weighted_lo, weighted_hi, lo, hi):
+    """Map a weighted SUM total back onto the unweighted scale of the same questions.
+
+    Weights multiply the answers but not the scale the library author designed, so a
+    raw weighted total saturates at max_score whatever the answers. When the total can
+    reach 0, each side of it is scaled on its own, the positive one from weighted_hi to
+    hi and the negative one from weighted_lo to lo, so both ends of the original scale
+    stay reachable and a choice worth 0 stays neutral. When 0 sits outside the reachable
+    range, the whole range is mapped onto the unweighted one. With all weights at 1 the
+    two ranges coincide and the total comes back unchanged.
+    """
+    if weighted_lo > 0 or weighted_hi < 0:
+        span = weighted_hi - weighted_lo
+        if span <= 0:
+            return total
+        return lo + (total - weighted_lo) * (hi - lo) / span
+    if total >= 0:
+        return total * hi / weighted_hi if weighted_hi > 0 else total
+    return total * lo / weighted_lo if weighted_lo < 0 else total
+
+
+def _build_answer_context(questions_qs, answers_qs):
+    """Build lookup dicts used for question visibility and score computation.
+
+    Returns (selected_choice_pks_by_qid, answers_by_urn, questions_by_urn, has_answer_by_qid).
+    """
+    from core.models import Question
+
+    selected_choice_pks_by_qid = {}
+    answers_by_urn = {}
+    questions_by_urn = {}
+    has_answer_by_qid = {}
+
+    for a in answers_qs:
+        q_type = a.question.type
+        if q_type in (
+            Question.Type.UNIQUE_CHOICE,
+            Question.Type.MULTIPLE_CHOICE,
+        ):
+            pks = {c.id for c in a.selected_choices.all()}
+            selected_choice_pks_by_qid[a.question_id] = pks
+            has_answer_by_qid[a.question_id] = len(pks) > 0
+        elif q_type == Question.Type.FILE:
+            # A file question is answered by uploading, not by writing a value.
+            has_answer_by_qid[a.question_id] = a.attachments.exists()
+        elif q_type == Question.Type.OBJECT_REFERENCE:
+            # Always a list, so an empty one is unanswered rather than "[]".
+            has_answer_by_qid[a.question_id] = bool(a.value)
+        else:
+            has_answer_by_qid[a.question_id] = a.value is not None and a.value != ""
+
+        if a.question.urn:
+            answers_by_urn[a.question.urn] = a.get_choice_urns() or a.value
+
+    for q in questions_qs:
+        questions_by_urn[q.urn] = q
+
+    return (
+        selected_choice_pks_by_qid,
+        answers_by_urn,
+        questions_by_urn,
+        has_answer_by_qid,
+    )
+
+
+def _trigger_assignment(groups, new_groups, ig_triggers, assignment_by_ra_id):
+    """The assignment owning an answer that selected one of the new groups."""
+    for group in groups or []:
+        if group not in new_groups:
+            continue
+        for trigger_ra_id in ig_triggers.get(group, []):
+            if trigger_ra_id in assignment_by_ra_id:
+                return assignment_by_ra_id[trigger_ra_id]
+    return None
+
+
+def sync_requirement_assignments(compliance_assessment, ig_triggers, previous_groups):
+    """Keep assignment scopes in step with the selected implementation groups.
+
+    Requirements already visible under the previous groups are left alone. Call
+    inside the transaction that saves the selection: previous_groups is the only
+    record of the old scope, so a partial write cannot be retried.
+    """
+    from core.models import RequirementAssessment, RequirementAssignment
+
+    selected = set(compliance_assessment.selected_implementation_groups or [])
+    if selected == previous_groups:
+        return
+
+    # A submitted or closed assignment keeps the scope it was judged on.
+    open_statuses = {
+        RequirementAssignment.Status.DRAFT,
+        RequirementAssignment.Status.IN_PROGRESS,
+        RequirementAssignment.Status.CHANGES_REQUESTED,
+    }
+    assigned_ra_ids: set = set()
+    assignment_by_ra_id: dict = {}
+    for assignment_id, assignment_status, ra_id in RequirementAssignment.objects.filter(
+        compliance_assessment=compliance_assessment
+    ).values_list("id", "status", "requirement_assessments__id"):
+        if not ra_id:
+            continue
+        assigned_ra_ids.add(ra_id)
+        if assignment_status in open_statuses:
+            assignment_by_ra_id[ra_id] = assignment_id
+    if not assignment_by_ra_id:
+        return
+
+    new_groups = selected - previous_groups
+    to_add: dict = {}
+    to_remove: dict = {}
+    for ra_id, assessable, groups in RequirementAssessment.objects.filter(
+        compliance_assessment=compliance_assessment
+    ).values_list(
+        "id", "requirement__assessable", "requirement__implementation_groups"
+    ):
+        owner = assignment_by_ra_id.get(ra_id)
+        if owner is not None:
+            if selected and not selected & set(groups or []):
+                to_remove.setdefault(owner, []).append(ra_id)
+            continue
+        if ra_id in assigned_ra_ids or not assessable:
+            continue
+        if not previous_groups or previous_groups & set(groups or []):
+            continue
+        target = _trigger_assignment(
+            groups, new_groups, ig_triggers, assignment_by_ra_id
+        )
+        if target is not None:
+            to_add.setdefault(target, []).append(ra_id)
+
+    assignments = RequirementAssignment.objects.in_bulk(set(to_add) | set(to_remove))
+    for assignment_id, ra_ids in to_add.items():
+        assignments[assignment_id].requirement_assessments.add(*ra_ids)
+    for assignment_id, ra_ids in to_remove.items():
+        assignments[assignment_id].requirement_assessments.remove(*ra_ids)
+
+
+def update_selected_implementation_groups(compliance_assessment):
+    """Recalculate dynamic IGs from visible answers, preserving manually-picked ones.
+
+    An IG is "dynamic" iff at least one QuestionChoice in the framework lists it in
+    select_implementation_groups. Those get fully recomputed here. Any other IG already
+    on the assessment is treated as a manual pick and left untouched.
+    """
+    from django.db import transaction
+    from django.db.models import F
+
+    from core.models import Answer, Question, QuestionChoice
+
+    dynamic_eligible_igs: set[str] = set()
+    for select_list in QuestionChoice.objects.filter(
+        question__requirement_node__framework=compliance_assessment.framework,
+        select_implementation_groups__isnull=False,
+    ).values_list("select_implementation_groups", flat=True):
+        if select_list:
+            dynamic_eligible_igs.update(select_list)
+
+    igs_to_select: set[str] = set()
+    # ref_id -> the RAs whose answers selected that IG
+    ig_triggers: dict[str, list] = {}
+
+    requirement_assessments = (
+        compliance_assessment.requirement_assessments.order_by(
+            F("requirement__order_id").asc(nulls_last=True)
+        )
+        .select_related("requirement", "requirement__framework")
+        .prefetch_related(
+            "answers",
+            "answers__question",
+            "answers__selected_choices",
+            "requirement__questions",
+            "requirement__questions__choices",
+        )
+        .all()
+    )
+
+    for ra in requirement_assessments:
+        questions_qs = ra.requirement.questions.all()
+        if not questions_qs:
+            continue
+
+        answers_qs = ra.answers.all()
+        (
+            selected_choice_pks_by_qid,
+            answers_by_urn,
+            questions_by_urn,
+            has_answer_by_qid,
+        ) = _build_answer_context(questions_qs, answers_qs)
+
+        for question in questions_qs:
+            if not _is_question_visible(question, answers_by_urn, questions_by_urn):
+                continue
+
+            if not has_answer_by_qid.get(question.id):
+                continue
+
+            selected_pks = selected_choice_pks_by_qid.get(question.id, set())
+            for choice in question.choices.all():
+                if choice.id in selected_pks:
+                    for ig in choice.select_implementation_groups or []:
+                        igs_to_select.add(ig)
+                        ig_triggers.setdefault(ig, []).append(ra.id)
+
+        if ra.requirement.framework.implementation_groups_definition:
+            for ig in ra.requirement.framework.implementation_groups_definition:
+                if ig.get("default_selected"):
+                    igs_to_select.add(ig["ref_id"])
+
+    current = set(compliance_assessment.selected_implementation_groups or [])
+    manual_only = current - dynamic_eligible_igs
+
+    compliance_assessment.selected_implementation_groups = list(
+        manual_only | igs_to_select
+    )
+    # Answer.save() defers this to on_commit, so the outer transaction is gone.
+    with transaction.atomic():
+        compliance_assessment.save(update_fields=["selected_implementation_groups"])
+        sync_requirement_assignments(compliance_assessment, ig_triggers, current)
+
+
+def build_questions_dict(node):
+    """Reconstruct the JSON-format questions dict from relational Question/QuestionChoice models.
+
+    Returns a dict like {urn: {type, text, choices, ...}} or None for unsaved objects
+    or nodes with no questions.
+    """
+    if node.pk is None:
+        return None
+
+    from core.models import Question
+
+    questions_qs = node.questions.all()
+
+    if not questions_qs:
+        return None
+
+    result = {}
+    for question in questions_qs:
+        choices = []
+        for choice in question.choices.all():
+            choice_data = {
+                "urn": choice.urn,
+                "value": choice.value or "",
+            }
+            if choice.add_score is not None:
+                choice_data["add_score"] = choice.add_score
+            if choice.compute_result is not None:
+                resolved = resolve_compute_result(choice.compute_result)
+                if resolved is not None:
+                    choice_data["compute_result"] = resolved
+            if choice.description:
+                choice_data["description"] = choice.description
+            if choice.color:
+                choice_data["color"] = choice.color
+            if choice.select_implementation_groups:
+                choice_data["select_implementation_groups"] = (
+                    choice.select_implementation_groups
+                )
+            if choice.annotation:
+                choice_data["annotation"] = choice.annotation
+            # Carried through so an import can recognise a choice exported under
+            # a different language (see `_choice_values`).
+            if choice.translations:
+                choice_data["translations"] = choice.translations
+            choices.append(choice_data)
+
+        q_data = {
+            "type": question.type,
+            "text": question.text or "",
+            "weight": question.weight,
+        }
+        if question.annotation:
+            q_data["annotation"] = question.annotation
+        if question.translations:
+            q_data["translations"] = question.translations
+        if choices:
+            q_data["choices"] = choices
+        if question.depends_on:
+            q_data["depends_on"] = question.depends_on
+        result[question.urn] = q_data
+
+    return result if result else None
+
+
+# One block per question in an exported `answers` cell:
+#     [urn:...:question:1] Do you encrypt backups? >> Yes
+# The leading URN is the round-trip key, and it also keeps every line starting
+# with "[" so Excel formula escaping never rewrites one (a rewritten line would
+# no longer match on re-import).
+ANSWER_LINE_RE = re.compile(r"^\[(?P<urn>urn:[^\]]+)\]\s*(?P<rest>.*)$")
+
+# Returned by the body parser for a line that must leave the stored answer alone
+# (an untouched template hint, or one we could not make sense of). Distinct from
+# None, which means "clear this answer".
+_SKIP = object()
+
+
+def visible_questions(questions_dict, answers_dict):
+    """Drop questions hidden by an unsatisfied `depends_on`, preserving order.
+
+    Each returned definition carries its own `urn`, which `_is_question_visible`
+    needs for cycle protection when it walks a `depends_on` chain.
+    """
+    if not questions_dict:
+        return {}
+    answers_dict = answers_dict or {}
+    by_urn = {urn: {**qdef, "urn": urn} for urn, qdef in questions_dict.items()}
+    return {
+        urn: qdef
+        for urn, qdef in by_urn.items()
+        if _is_question_visible(qdef, answers_dict, by_urn)
+    }
+
+
+def render_answers_cell(questions_dict, answers_dict):
+    """Render a requirement's questions and answers as one spreadsheet cell.
+
+    Blocks are separated by a blank line. An unanswered question gets a
+    bracketed hint instead of a value, which `parse_answers_cell` leaves alone,
+    so an exported workbook doubles as a fillable questionnaire and re-importing
+    an untouched one changes nothing.
+    """
+    questions = visible_questions(questions_dict, answers_dict)
+    if not questions:
+        return ""
+
+    answers_dict = answers_dict or {}
+    lines = []
+    for q_urn, question in questions.items():
+        q_text = question.get("text", "")
+        if not q_text:
+            continue
+        q_type = question.get("type")
+        choices_map = {
+            c["urn"]: c.get("value", "") for c in question.get("choices", [])
+        }
+        answer_value = answers_dict.get(q_urn)
+
+        readable = ""
+        if answer_value:
+            if q_type in ("text", "date"):
+                readable = str(answer_value)
+            elif q_type == "multiple_choice" and isinstance(answer_value, list):
+                readable = " | ".join(choices_map.get(a, a) for a in answer_value)
+            else:
+                readable = choices_map.get(answer_value, str(answer_value))
+
+        if readable:
+            lines.append(f"[{q_urn}] {q_text} >> {readable}")
+        elif q_type == "multiple_choice":
+            lines.append(
+                f"[{q_urn}] {q_text} (multiple) >> [{' / '.join(choices_map.values())}]"
+            )
+        elif q_type in ("text", "date"):
+            lines.append(f"[{q_urn}] {q_text} >> [free text]")
+        else:
+            lines.append(f"[{q_urn}] {q_text} >> [{' / '.join(choices_map.values())}]")
+
+    return "\n\n".join(lines)
+
+
+def _choice_values(choice):
+    """Every string a choice may have been exported as: base value, then each
+    translation. Matching on all of them is what lets a workbook exported in one
+    language be re-imported under another."""
+    values = []
+    base = choice.get("value", "")
+    if base:
+        values.append(base)
+    for translation in (choice.get("translations") or {}).values():
+        value = (translation or {}).get("value")
+        if value:
+            values.append(value)
+    return values
+
+
+def _question_texts(qdef):
+    """Same as `_choice_values`, for the pre-URN text-matching fallback."""
+    texts = []
+    base = qdef.get("text", "")
+    if base:
+        texts.append(base)
+    for translation in (qdef.get("translations") or {}).values():
+        text = (translation or {}).get("text")
+        if text:
+            texts.append(text)
+    return texts
+
+
+def _parse_answer_body(qdef, body, label):
+    """Parse one "... >> answer" block into (value, warning).
+
+    `value` is `_SKIP` to leave the stored answer untouched, None to clear it,
+    otherwise a choice URN, a list of choice URNs, or a raw string.
+    """
+    if ">>" not in body:
+        return _SKIP, f"No '>>' separator for {label}, line skipped"
+
+    _, _, answer_part = body.partition(">>")
+    # strip() drops the space after ">>" and the blank line before the next
+    # block, but keeps the newlines inside a multi-line free-text answer.
+    answer = answer_part.strip()
+
+    if answer.startswith("[") and answer.endswith("]"):
+        return _SKIP, None  # untouched template hint
+    if not answer:
+        return None, None  # emptied by hand: clear the answer
+
+    q_type = qdef.get("type")
+    if q_type in ("text", "date"):
+        return answer, None
+
+    value_to_urn = {}
+    for choice in qdef.get("choices", []):
+        for value in _choice_values(choice):
+            value_to_urn.setdefault(value, choice["urn"])
+
+    if q_type == "multiple_choice":
+        selected = [v.strip() for v in answer.split("|") if v.strip()]
+        urns = [value_to_urn[v] for v in selected if v in value_to_urn]
+        unknown = [v for v in selected if v not in value_to_urn]
+        warning = (
+            f"Unknown choice(s) {', '.join(repr(v) for v in unknown)} for {label}"
+            if unknown
+            else None
+        )
+        if not urns:
+            return _SKIP, warning
+        return urns, warning
+
+    if answer in value_to_urn:
+        return value_to_urn[answer], None
+    return _SKIP, f"Unknown choice '{answer}' for {label}"
+
+
+def _parse_legacy_answers_cell(lines, questions_dict):
+    """Cells exported before the URN prefix existed: one answer per line, matched
+    on question text."""
+    text_to_question = {}
+    for q_urn, qdef in questions_dict.items():
+        for text in _question_texts(qdef):
+            text_to_question.setdefault(text, (q_urn, qdef))
+
+    answers = {}
+    warnings = []
+    for line in lines:
+        line = line.strip()
+        if not line or ">>" not in line:
+            continue
+        q_part, _, _ = line.partition(">>")
+        q_text = q_part.replace("(multiple)", "").strip()
+        matched = text_to_question.get(q_text)
+        if not matched:
+            warnings.append(f"No question matches '{q_text}', line skipped")
+            continue
+        q_urn, qdef = matched
+        value, warning = _parse_answer_body(qdef, line, f"'{q_text}'")
+        if warning:
+            warnings.append(warning)
+        if value is not _SKIP:
+            answers[q_urn] = value
+    return answers, warnings
+
+
+def parse_answers_cell(cell, questions_dict):
+    """Parse an exported `answers` cell back into ({question_urn: value}, warnings).
+
+    Blocks are delimited by the leading "[urn:...]" rather than by newlines, so a
+    free-text answer keeps its own line breaks. Anything skipped is reported in
+    `warnings` instead of vanishing.
+    """
+    if cell in (None, "") or not questions_dict:
+        return {}, []
+
+    blocks = []
+    legacy_lines = []
+    for raw_line in str(cell).split("\n"):
+        match = ANSWER_LINE_RE.match(raw_line.lstrip())
+        if match:
+            blocks.append([match.group("urn"), match.group("rest")])
+        elif blocks:
+            blocks[-1][1] += "\n" + raw_line
+        else:
+            legacy_lines.append(raw_line)
+
+    if not blocks:
+        return _parse_legacy_answers_cell(legacy_lines, questions_dict)
+
+    answers = {}
+    warnings = []
+    for q_urn, body in blocks:
+        qdef = questions_dict.get(q_urn)
+        if qdef is None:
+            warnings.append(f"Unknown question '{q_urn}', line skipped")
+            continue
+        value, warning = _parse_answer_body(qdef, body, f"'{qdef.get('text', q_urn)}'")
+        if warning:
+            warnings.append(warning)
+        if value is not _SKIP:
+            answers[q_urn] = value
+    return answers, warnings
+
+
+AUDITOR_VIEW_PERM = "view_compliance_assessment_full"
+AUDIT_ACCESS_PERM = "view_complianceassessment"
+
+
+def get_respondent_scoped_folder_ids(user) -> set[UUID]:
+    """Return folder IDs where *user* sees audits as a **respondent** — i.e. the
+    scoped, field-stripped view applies.
+
+    A user is a respondent on a folder when they can access compliance
+    assessments there (``view_complianceassessment``) but have NOT been granted
+    the full auditor view (``view_compliance_assessment_full``). This is permission-based and
+    **default-deny**: any role not explicitly granted ``view_compliance_assessment_full`` is
+    treated as a respondent. Auditor-side roles (reader, approver, analyst,
+    domain-manager, administrator) hold ``view_compliance_assessment_full`` and are therefore
+    excluded; auditee and third-party respondent do not and are included.
+    """
+    from iam.models import RoleAssignment
+
+    perms_per_folder = RoleAssignment.get_permissions_per_folder(
+        user, is_recursive=True
+    )
+    return {
+        UUID(folder_id)
+        for folder_id, codenames in perms_per_folder.items()
+        if AUDIT_ACCESS_PERM in codenames and AUDITOR_VIEW_PERM not in codenames
+    }
+
+
+# --- Field Visibility ---
+#
+# The compliance assessment's `field_visibility` is the single source of truth
+# at runtime. It is populated at CA creation from DEFAULT_VISIBILITY merged with
+# the framework's `field_visibility`, and can be edited per-CA from then on.
+#
+# Storage shape: {field_name: {role: 'edit'|'read'|'hidden'}}
+# Roles known today: 'auditor', 'respondent'. Future roles slot in alongside.
+# A missing field key, or a missing role within a field's pair, resolves to 'edit'
+# (matching the "no restriction" default).
+
+EVERYONE_EDIT = {"auditor": "edit", "respondent": "edit"}
+AUDITOR_ONLY = {"auditor": "edit", "respondent": "hidden"}
+AUDITOR_READ_ONLY = {"auditor": "read", "respondent": "hidden"}
+HIDDEN = {"auditor": "hidden", "respondent": "hidden"}
+
+DEFAULT_VISIBILITY = {
+    "score": HIDDEN,
+    "is_scored": HIDDEN,
+    "documentation_score": HIDDEN,
+    "status": AUDITOR_ONLY,
+    "extended_result": AUDITOR_ONLY,
+    # respondent_alignment is only ever populated by the respondent answering
+    # the auto-question. AUDITOR_ONLY would prevent that, so the auditor's
+    # badge would never render — functionally equivalent to HIDDEN. Default
+    # off; auditors who want it explicitly flip to "Auditor + Respondent".
+    "respondent_alignment": HIDDEN,
+    # Off unless the audit opts in: existing audits track remediation through
+    # applied controls or findings, and should not sprout a tasks tab.
+    "task_templates": HIDDEN,
+    # Findings are the auditor's verdict; a missing key would resolve to
+    # EVERYONE_EDIT and show them to the auditee.
+    "findings": AUDITOR_ONLY,
+}
+
+
+# A third party sees their side of the exchange: answers, alignment, the tasks they
+# owe and the evidence around them — not the auditor's verdict or internal controls.
+# Scores stay off for both; a framework that scores turns them on itself.
+THIRD_PARTY_VISIBILITY = {
+    "answers": EVERYONE_EDIT,
+    "respondent_alignment": EVERYONE_EDIT,
+    "status": AUDITOR_ONLY,
+    "result": AUDITOR_ONLY,
+    "extended_result": HIDDEN,
+    "score": HIDDEN,
+    "documentation_score": HIDDEN,
+    "applied_controls": AUDITOR_ONLY,
+    "findings": AUDITOR_ONLY,
+    "task_templates": EVERYONE_EDIT,
+    "evidences": EVERYONE_EDIT,
+    "observation": EVERYONE_EDIT,
+    "comments": EVERYONE_EDIT,
+}
+
+
+def resolve_visibility_from_overrides(overrides, field_name):
+    """Resolve a field's visibility pair from a raw `field_visibility` dict.
+
+    Shape: {role: 'edit'|'read'|'hidden'}.
+
+    Lookup order:
+      1. Explicit override in `overrides`.
+      2. DEFAULT_VISIBILITY (backstop in case a new field was added in code
+         without a migration to backfill existing CAs).
+      3. EVERYONE_EDIT (truly unknown field).
+
+    Use this when you have a raw dict (e.g. from a queryset `.values()` call).
+    For a model instance, prefer `resolve_field_visibility(ca, field)`.
+    """
+    # is_score_overridden inherits score's visibility.
+    if field_name == "is_score_overridden":
+        field_name = "score"
+    pair = (overrides or {}).get(field_name)
+    if isinstance(pair, dict):
+        return pair
+    fallback = DEFAULT_VISIBILITY.get(field_name)
+    if isinstance(fallback, dict):
+        return dict(fallback)
+    return dict(EVERYONE_EDIT)
+
+
+def resolve_field_visibility(compliance_assessment, field_name):
+    """Return the per-role visibility pair for a field on a CA instance."""
+    overrides = getattr(compliance_assessment, "field_visibility", None) or {}
+    return resolve_visibility_from_overrides(overrides, field_name)
+
+
+def _role_access(compliance_assessment, field_name, role):
+    pair = resolve_field_visibility(compliance_assessment, field_name)
+    return pair.get(role, "edit")
+
+
+def is_field_visible_to(compliance_assessment, field_name, role):
+    """Whether a field is readable by the given role."""
+    return _role_access(compliance_assessment, field_name, role) != "hidden"
+
+
+def is_field_editable_by(compliance_assessment, field_name, role):
+    """Whether a field is writable by the given role."""
+    return _role_access(compliance_assessment, field_name, role) == "edit"
+
+
+def build_initial_field_visibility(framework, base=None):
+    """Build the initial `field_visibility` map for a new CA.
+
+    Layered per-role: *base* (the code defaults unless a caller supplies another
+    starting profile) is seeded for every known field, then the framework's
+    overrides are merged on top — but per-role, so a framework that only specifies
+    a single role (e.g. {"score": {"auditor": "edit"}}) does not erase the default
+    value for the other roles.
+    """
+    fw_overrides = getattr(framework, "field_visibility", None) or {}
+    merged = {key: dict(pair) for key, pair in (base or DEFAULT_VISIBILITY).items()}
+    for key, pair in fw_overrides.items():
+        if not isinstance(pair, dict):
+            continue
+        # Ensure the field has a starting pair (DEFAULT_VISIBILITY may not
+        # cover every key the framework configures).
+        merged.setdefault(key, dict(EVERYONE_EDIT))
+        merged[key].update(pair)
+    return merged
+
+
+def respondent_progress_counts(
+    compliance_assessment, requirement_assessments
+) -> tuple[int, int, int]:
+    """How much of the questionnaire the respondent has filled in.
+
+    Returns (units, answered units, requirements completed). Not the auditor's
+    `ComplianceAssessment.progress`.
+    """
+    from core.models import RequirementAssessment
+
+    ca = compliance_assessment
+    alignment_pair = resolve_visibility_from_overrides(
+        ca.field_visibility
+        or (
+            getattr(ca.framework, "field_visibility", None) if ca.framework_id else None
+        ),
+        "respondent_alignment",
+    )
+    alignment_in_use = alignment_pair.get("respondent", "edit") != "hidden"
+
+    total_q = 0
+    answered_q = 0
+    done = 0
+    for ra in requirement_assessments:
+        visible, answered = ra.get_visible_questions_counts()
+        if visible > 0:
+            total_q += visible
+            answered_q += answered
+            if answered >= visible:
+                done += 1
+            continue
+        total_q += 1
+        unit_done = (
+            bool(ra.respondent_alignment)
+            if alignment_in_use
+            else ra.result != RequirementAssessment.Result.NOT_ASSESSED
+        )
+        if unit_done:
+            answered_q += 1
+            done += 1
+    return total_q, answered_q, done
+
+
+def compute_respondent_progress(compliance_assessment, requirement_assessments) -> int:
+    """`respondent_progress_counts` as a percentage."""
+    total_q, answered_q, _ = respondent_progress_counts(
+        compliance_assessment, requirement_assessments
+    )
+    return int(answered_q / total_q * 100) if total_q else 0
+
+
+def assessable_requirement_assessments(audit):
+    """The rows an audit's own aggregates expect, read off a caller's prefetch:
+    assessable, and within the selected implementation groups.
+
+    Same selection rules as `get_requirement_assessments(include_non_assessable=False)`,
+    which would re-query per audit.
+    """
+    rows = [
+        ra for ra in audit.requirement_assessments.all() if ra.requirement.assessable
+    ]
+    selected = set(audit.selected_implementation_groups or [])
+    if not selected:
+        return rows
+    return [
+        ra for ra in rows if selected & set(ra.requirement.implementation_groups or [])
+    ]
+
+
+def viewable_audit_ids(user, audit_ids) -> set:
+    """Which of `audit_ids` the user may read.
+
+    Seeing a third-party assessment does not carry the right to read its
+    questionnaire: the audit sits in an enclave folder of its own, and a role
+    assignment only reaches sub-folders when it is recursive.
+    """
+    from core.models import ComplianceAssessment
+    from iam.models import RoleAssignment
+
+    audit_ids = list(audit_ids)
+    if not audit_ids or user is None:
+        return set()
+    return set(
+        ComplianceAssessment.objects.filter(id__in=audit_ids)
+        .filter(
+            id__in=RoleAssignment.get_viewable_object_ids(user, ComplianceAssessment)
+        )
+        .values_list("id", flat=True)
+    )
+
+
+def compliance_overview(audit, requirement_assessments=None) -> dict:
+    """The questionnaire's compliance split and global score, as its own page shows them.
+
+    Built from the audit's own methods, so a third-party card and the audit
+    page cannot drift apart. Pass `requirement_assessments` to read a caller's
+    prefetch; left out, the rows are fetched in one query.
+    """
+    if requirement_assessments is None:
+        from core.models import RequirementAssessment
+
+        requirement_assessments = list(
+            RequirementAssessment.objects.filter(
+                compliance_assessment=audit, requirement__assessable=True
+            ).select_related("requirement", "compliance_assessment")
+        )
+    return {
+        "donut": audit.get_donut_data(requirement_assessments)["result"],
+        "global_score": {
+            **audit.get_global_score(requirement_assessments),
+            "min_score": audit.min_score,
+            "max_score": audit.max_score,
+            "total_max_score": audit.get_total_max_score(requirement_assessments),
+            "score_calculation_method": audit.score_calculation_method,
+        },
+        "show_result": is_field_visible_to(audit, "result", "auditor"),
+        "show_score": is_field_visible_to(audit, "score", "auditor"),
+    }
+
+
+def compliance_overviews(audits) -> dict:
+    """`compliance_overview` for a page of audits, keyed by audit id.
+
+    Reads the requirement rows off the caller's prefetch and primes the
+    framework trees AVG_OF_AVG needs in a single query, so the cost stays flat
+    as the page grows.
+    """
+    from core.models import ComplianceAssessment
+
+    audits = list(audits)
+    tree_frameworks = {
+        audit.framework_id
+        for audit in audits
+        if audit.score_calculation_method
+        == ComplianceAssessment.CalculationMethod.AVG_OF_AVG
+    }
+    trees = (
+        ComplianceAssessment.framework_node_trees(tree_frameworks)
+        if tree_frameworks
+        else {}
+    )
+    overviews = {}
+    for audit in audits:
+        tree = trees.get(audit.framework_id)
+        if tree is not None:
+            audit.__dict__["framework_node_tree"] = tree
+        overviews[audit.id] = compliance_overview(
+            audit,
+            [
+                ra
+                for ra in audit.requirement_assessments.all()
+                if ra.requirement.assessable
+            ],
+        )
+    return overviews
+
+
+def build_third_party_field_visibility(framework):
+    """The map a questionnaire sent to a third party starts from; the framework still wins."""
+    return build_initial_field_visibility(framework, base=THIRD_PARTY_VISIBILITY)
+
+
+def bulk_update_with_log(model, rows, fields, batch_size=500):
+    """``bulk_update`` that still leaves a trail: it skips ``post_save``, so
+    auditlog logs nothing and workflow events never fire. Writes the entries a
+    per-object ``save()`` would. Returns the number of rows that changed."""
+    from auditlog.diff import model_instance_diff
+    from auditlog.models import LogEntry
+    from django.db import transaction
+
+    rows = [row for row in rows if row.pk is not None]
+    fields = list(fields)
+    if not rows or not fields:
+        return 0
+
+    use_json = getattr(settings, "AUDITLOG_STORE_JSON_CHANGES", False)
+    logged = 0
+    # One transaction: a half-written trail is worse than a failed call.
+    with transaction.atomic():
+        # Stored values first: after bulk_update there is nothing left to diff.
+        # Locked, because at READ COMMITTED two concurrent writers would both
+        # read the pre-change value and log the same "from".
+        stored = model.objects.select_for_update().in_bulk([row.pk for row in rows])
+        model.objects.bulk_update(rows, fields, batch_size=batch_size)
+        for row in rows:
+            old = stored.get(row.pk)
+            if old is None:
+                continue
+            changes = model_instance_diff(
+                old, row, fields_to_check=fields, use_json_for_changes=use_json
+            )
+            if not changes:
+                continue
+            # log_create fills content_type, cid and additional_data (folder_id,
+            # which the dispatcher scopes on); the middleware fills the actor.
+            LogEntry.objects.log_create(
+                row, action=LogEntry.Action.UPDATE, changes=changes
+            )
+            logged += 1
+    return logged
+
+
+def assign_audit_to(audit, actors):
+    """Point one assignment covering the whole audit at *actors*.
+
+    Created in DRAFT: it is the wiring, not the send.
+    """
+    from core.models import RequirementAssignment
+
+    actors = [actor for actor in actors if actor is not None]
+    assignment = audit.requirement_assignments.first()
+    if assignment is None:
+        if not actors:
+            return None
+        requirement_assessments = audit.requirement_assessments.all()
+        if not requirement_assessments.exists():
+            return None
+        assignment = RequirementAssignment.objects.create(
+            compliance_assessment=audit,
+            folder=audit.folder,
+        )
+        assignment.requirement_assessments.set(requirement_assessments)
+    assignment.actor.set(actors)
+    return assignment
+
+
+def ensure_audit_assignment(audit):
+    """Wire an audit to whoever answers for it, when nothing is wired yet.
+
+    Only ever fills a gap: an existing assignment is left alone, its actors included.
+    """
+    from tprm.models import EntityAssessment
+    from tprm.services import (
+        default_representatives_from_entity,
+        grant_respondent_access,
+    )
+
+    if audit.requirement_assignments.exists():
+        return None
+
+    entity_assessment = EntityAssessment.objects.filter(
+        compliance_assessment=audit
+    ).first()
+    if entity_assessment is not None:
+        # Pulls the entity's representatives onto the assessment when it has none,
+        # which is exactly the "I added the missing representative" case.
+        default_representatives_from_entity(entity_assessment)
+        # And lets them into the workspace: whoever is about to be emailed a link
+        # must be able to open it.
+        grant_respondent_access(entity_assessment)
+        actors = [
+            rep.actor
+            for rep in entity_assessment.representatives.all()
+            if hasattr(rep, "actor")
+        ]
+    else:
+        actors = list(audit.perimeter.default_assignee.all()) if audit.perimeter else []
+
+    if not actors:
+        return None
+    # add, not set: never remove an author the audit already had.
+    audit.authors.add(*actors)
+    return assign_audit_to(audit, actors)
+
+
+def escape_excel_formula(value):
+    """
+    Escape Excel formula injection by prefixing dangerous characters.
+    Prevents CSV/Formula injection (OWASP) when values start with =+-@
+    """
+    if value is None:
+        return ""
+    s = str(value)
+    if not s:
+        return ""
+    stripped = s.lstrip()
+    if stripped and stripped[0] in ("=", "+", "-", "@"):
+        return "'" + s
+    return s
+
+
+def unescape_excel_formula(value):
+    """Undo escape_excel_formula, so an exported value re-imports unchanged."""
+    if not isinstance(value, str) or not value.startswith("'"):
+        return value
+    stripped = value[1:].lstrip()
+    if stripped and stripped[0] in ("=", "+", "-", "@"):
+        return value[1:]
+    return value
+
+
+ILLEGAL_XLSX_CHARS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+XLSX_MAX_CELL_CHARS = 32_767
+
+
+def sanitize_xlsx_value(value):
+    """Strip ASCII control characters openpyxl refuses to write (tab/LF/CR are allowed)
+    and cap strings at Excel's per-cell limit."""
+    if isinstance(value, str):
+        return ILLEGAL_XLSX_CHARS_RE.sub("", value)[:XLSX_MAX_CELL_CHARS]
+    return value

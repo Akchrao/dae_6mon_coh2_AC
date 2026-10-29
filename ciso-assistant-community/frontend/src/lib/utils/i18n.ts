@@ -1,0 +1,149 @@
+import { m } from '#paraglide/messages.js';
+import { toCamelCase } from '#lib/utils/locales.js';
+
+// Alternate wording for the "qualification" concept, driven by the
+// use_risk_category_label general setting (display only). The flag is synced
+// from hooks.server.ts on the server and from the (app) layout on the client,
+// so every translation of these keys — table headers, detail fields, filters,
+// direct safeTranslate calls — swaps automatically.
+const RISK_CATEGORY_KEY_MAP: Record<string, string> = {
+	qualification: 'riskCategory',
+	qualifications: 'riskCategories',
+	qualificationsChartTitle: 'riskCategoriesChartTitle',
+	noQualificationsFoundOnRiskScenarios: 'noRiskCategoriesFoundOnRiskScenarios',
+	noQualificationsData: 'noRiskCategoriesData',
+	incidentQualificationsRadar: 'incidentRiskCategoriesRadar'
+};
+
+let useRiskCategoryLabel = false;
+
+export function setUseRiskCategoryLabel(value: unknown): void {
+	useRiskCategoryLabel = value === true;
+}
+
+/**
+ * Unafe translate function that doesn't return anything if the key if the translation is not found.
+ * @param key The key to translate.
+ * @param params The parameters to pass to the translation function.
+ * @param options The options to pass to the translation function.
+ */
+export function unsafeTranslate(
+	key: string | { day?: number; hour?: number; minute?: number },
+	params = {},
+	options = {}
+): string | undefined {
+	try {
+		if (
+			useRiskCategoryLabel &&
+			typeof key === 'string' &&
+			Object.hasOwn(RISK_CATEGORY_KEY_MAP, key)
+		) {
+			key = RISK_CATEGORY_KEY_MAP[key];
+		}
+		if (
+			typeof key === 'object' &&
+			key !== null &&
+			'day' in key &&
+			'hour' in key &&
+			'minute' in key
+		) {
+			const { day, hour, minute } = key;
+			const parts = [];
+			if (day !== undefined && day !== 0) parts.push(`${m['dayCount']({ count: day }, options)}`);
+			if (hour !== undefined && hour !== 0)
+				parts.push(`${m['hourCount']({ count: hour }, options)}`);
+			if (minute !== undefined && minute !== 0)
+				parts.push(`${m['minuteCount']({ count: minute }, options)}`);
+			return parts.join(', ');
+		}
+
+		if (Object.hasOwn(m, key) && typeof m[key] === 'function') {
+			return m[key](params, options);
+		}
+		// Choice labels containing a colon (e.g. DORA termination reasons) or a slash
+		// (e.g. "Company culture / communication") would be captured by the prefix:suffix
+		// or per-part split branches below; try a punctuation-stripped camelCase key
+		// first so a label with a whole-label message translates as one.
+		if (typeof key === 'string' && (key.includes(':') || key.includes('/'))) {
+			const sanitizedKey = toCamelCase(
+				key
+					.replace(/[^\w\s]/g, ' ')
+					.replace(/\s+/g, ' ')
+					.trim()
+			);
+			if (sanitizedKey && Object.hasOwn(m, sanitizedKey) && typeof m[sanitizedKey] === 'function') {
+				return m[sanitizedKey](params, options);
+			}
+		}
+		if (typeof key === 'string' && key) {
+			let res = key.match('^([^:]+):([^:]+)$');
+			if (res) {
+				return (
+					(Object.hasOwn(m, res[1]) && typeof m[res[1]] === 'function'
+						? m[res[1]](params, options)
+						: res[1]) +
+					':' +
+					res[2]
+				);
+			}
+		}
+		if (Object.hasOwn(m, toCamelCase(key)) && typeof m[toCamelCase(key)] === 'function') {
+			return m[toCamelCase(key)](params, options);
+		}
+		if (typeof key === 'boolean') {
+			return key ? '✅' : '❌';
+		}
+		if (key === 'YES') {
+			return '✅';
+		}
+		if (key === 'NO') {
+			return '❌';
+		}
+		if (typeof key === 'string' && key.includes('->')) {
+			const parts = key.split('->');
+			if (parts.length === 2) {
+				const [from, to] = parts;
+				const translatedFrom = m[toCamelCase(from)] ? m[toCamelCase(from)](params, options) : from;
+				const translatedTo = m[toCamelCase(to)] ? m[toCamelCase(to)](params, options) : to;
+				return translatedFrom + '->' + translatedTo;
+			}
+		}
+		if (typeof key === 'string' && key.includes('/')) {
+			const parts = key.split('/');
+			const translatedParts = parts.map((part) => {
+				const camelCasePart = toCamelCase(part);
+				return m[camelCasePart] ? m[camelCasePart](params, options) : part;
+			});
+			return translatedParts.join('/');
+		}
+	} catch (e) {
+		console.error(`Error translating key "${key}"`, e);
+	}
+}
+
+/**
+ * Safe translate function that returns the key if the translation is not found.
+ * @param key The key to translate.
+ * @param params The parameters to pass to the translation function.
+ * @param options The options to pass to the translation function.
+ */
+export function safeTranslate(key: string, params = {}, options = {}): string {
+	return unsafeTranslate(key, params, options) || key;
+}
+
+/**
+ * Translate a select option, preferring the key derived from its value.
+ * Choice endpoints serve the English label from the Django choices, which is
+ * not always the message key — privacy choices key on their `privacy_*` value —
+ * so a label-only lookup leaves those options untranslated. The value is what
+ * tables and detail views translate, so it wins here too.
+ * @param label The option label, used when the value has no message key.
+ * @param value The option value, the canonical message key for choice fields.
+ */
+export function translateChoiceLabel(label: unknown, value: unknown): string {
+	if (typeof value === 'string') {
+		const fromValue = safeTranslate(value);
+		if (fromValue !== value) return fromValue;
+	}
+	return safeTranslate(label as string);
+}

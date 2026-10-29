@@ -1,0 +1,143 @@
+<script lang="ts">
+	import { run } from 'svelte/legacy';
+
+	import { displayScoreColor } from '#lib/utils/helpers.js';
+	import { getLocale } from '#paraglide/runtime.js';
+	import { localizedLevelField, type ScoreLevel } from '#lib/utils/score-scales.js';
+	import { Progress } from '@skeletonlabs/skeleton-svelte';
+	import { formFieldProxy, type SuperForm } from 'sveltekit-superforms';
+
+	type ScoresDefinition = ScoreLevel;
+
+	interface Props {
+		label?: string | undefined;
+		field: string;
+		isDoc?: boolean;
+		fullDonut?: boolean;
+		inversedColors?: boolean;
+		styles?: string;
+		min_score?: number;
+		max_score?: number;
+		score_step?: number;
+		helpText?: string | undefined;
+		disabled?: boolean;
+		scores_definition?: ScoresDefinition[];
+		form: SuperForm<Record<string, any>>;
+		score?: any;
+		onChange?: (score: number) => void;
+		left?: import('svelte').Snippet;
+	}
+
+	let {
+		label = undefined,
+		field,
+		isDoc = false,
+		fullDonut = false,
+		inversedColors = false,
+		styles = '',
+		min_score = 0,
+		max_score = 100,
+		score_step = $bindable(max_score === 100 ? 5 : 1),
+		helpText = undefined,
+		disabled = false,
+		scores_definition = [],
+		form,
+		onChange = () => {},
+		left
+	}: Props = $props();
+
+	const { value, errors, constraints } = formFieldProxy(form, field);
+
+	// onChange fires on user input only: a programmatic reset of the form value
+	// (reload, locale switch, min_score fallback) must never be persisted as a score.
+	run(() => {
+		$value = !disabled ? ($value ?? min_score) : $value;
+	});
+
+	function localizedScoreField(
+		definition: ScoresDefinition,
+		field: 'name' | 'description' | 'description_doc'
+	) {
+		return localizedLevelField(definition, field, getLocale().split('-')[0]);
+	}
+</script>
+
+{@render left?.()}
+{#if !disabled}
+	<div class={styles}>
+		{#if $errors && $errors.length > 0}
+			<div>
+				{#each $errors as error}
+					<p class="text-error-500 text-xs font-medium">{error}</p>
+				{/each}
+			</div>
+		{/if}
+		<div class="flex flex-row w-full items-center justify-evenly space-x-4">
+			<div class="flex flex-col w-full align-top">
+				{#if label !== undefined}
+					{#if $constraints?.required}
+						<label class="text-sm font-semibold" for={field}
+							>{label} <span class="text-red-500">*</span></label
+						>
+					{:else}
+						<label class="text-sm font-semibold" for={field}>{label}</label>
+					{/if}
+				{/if}
+				<input
+					data-testid="range-slider-input"
+					id={field}
+					aria-label={label}
+					name={field}
+					type="range"
+					class="input px-0"
+					bind:value={$value}
+					min={min_score}
+					max={max_score}
+					step={score_step}
+					{disabled}
+					{...constraints}
+					oninput={() => onChange($value)}
+				/>
+			</div>
+			<div class="shrink-0 relative">
+				<Progress
+					value={fullDonut ? max_score : $value}
+					min={min_score}
+					max={max_score}
+					data-testid="progress-ring-svg"
+				>
+					<Progress.Circle class="[--size:--spacing(12)]">
+						<Progress.CircleTrack />
+						<Progress.CircleRange
+							class={displayScoreColor($value, max_score, inversedColors, min_score)}
+						/>
+					</Progress.Circle>
+					<div class="absolute inset-0 flex items-center justify-center">
+						<span class="text-xs font-bold">{$value}</span>
+					</div>
+				</Progress>
+			</div>
+		</div>
+		<div class="flex w-full items-center">
+			<div class="flex space-x-8 w-full justify-center">
+				<div class="w-full max-w-[80ch] justify-center text-center whitespace-pre-wrap">
+					{#if !disabled && scores_definition && $value !== null}
+						{#each scores_definition as definition}
+							{#if definition.score === $value}
+								<p class="font-bold">{localizedScoreField(definition, 'name')}</p>
+								{#if isDoc && localizedScoreField(definition, 'description_doc')}
+									{localizedScoreField(definition, 'description_doc')}
+								{:else if localizedScoreField(definition, 'description')}
+									{localizedScoreField(definition, 'description')}
+								{/if}
+							{/if}
+						{/each}
+					{/if}
+				</div>
+			</div>
+		</div>
+		{#if helpText}
+			<p class="text-sm text-surface-600-400">{helpText}</p>
+		{/if}
+	</div>
+{/if}

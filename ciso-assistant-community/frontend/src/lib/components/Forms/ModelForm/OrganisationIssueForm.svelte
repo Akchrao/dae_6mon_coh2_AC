@@ -1,0 +1,96 @@
+<script lang="ts">
+	import AutocompleteSelect from '../AutocompleteSelect.svelte';
+	import TextField from '#lib/components/Forms/TextField.svelte';
+	import TextArea from '#lib/components/Forms/TextArea.svelte';
+	import Select from '../Select.svelte';
+	import type { SuperValidated } from 'sveltekit-superforms';
+	import type { ModelInfo, CacheLock } from '#lib/utils/types.js';
+	import MarkdownField from '#lib/components/Forms/MarkdownField.svelte';
+	import * as m from '#paraglide/messages.js';
+
+	interface Props {
+		form: SuperValidated<any>;
+		model: ModelInfo;
+		cacheLocks?: Record<string, CacheLock>;
+		formDataCache?: Record<string, any>;
+		initialData?: Record<string, any>;
+	}
+
+	let {
+		form,
+		model,
+		cacheLocks = {},
+		formDataCache = $bindable({}),
+		initialData = {}
+	}: Props = $props();
+</script>
+
+<Select
+	{form}
+	options={model.selectOptions['origin']}
+	field="origin"
+	label={m.origin()}
+	cacheLock={cacheLocks['origin']}
+	bind:cachedValue={formDataCache['origin']}
+/>
+<Select
+	{form}
+	options={model.selectOptions['category']}
+	field="category"
+	label={m.category()}
+	cacheLock={cacheLocks['category']}
+	bind:cachedValue={formDataCache['category']}
+/>
+<Select
+	{form}
+	options={model.selectOptions['status']}
+	field="status"
+	label={m.status()}
+	disableDoubleDash={true}
+	cacheLock={cacheLocks['status']}
+	bind:cachedValue={formDataCache['status']}
+/>
+<AutocompleteSelect
+	{form}
+	multiple
+	lazy
+	optionsEndpoint="assets"
+	optionsLabelField="auto"
+	optionsExtraFields={[['folder', 'str']]}
+	optionsInfoFields={{
+		fields: [
+			{
+				field: 'type'
+			}
+		],
+		classes: 'text-blue-500'
+	}}
+	field="assets"
+	cacheLock={cacheLocks['assets']}
+	bind:cachedValue={formDataCache['assets']}
+	label={m.assets()}
+/>
+<MarkdownField
+	{form}
+	field="observation"
+	label={m.observation()}
+	helpText={m.observationHelpText()}
+	cacheLock={cacheLocks['observation']}
+	bind:cachedValue={formDataCache['observation']}
+/>
+<TextField
+	type="date"
+	{form}
+	field="start_date"
+	label={m.startDate()}
+	cacheLock={cacheLocks['start_date']}
+	bind:cachedValue={formDataCache['start_date']}
+/>
+<TextField
+	type="date"
+	{form}
+	field="expiration_date"
+	label={m.expiryDate()}
+	cacheLock={cacheLocks['expiration_date']}
+	bind:cachedValue={formDataCache['expiration_date']}
+/>

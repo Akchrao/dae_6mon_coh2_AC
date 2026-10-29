@@ -1,0 +1,69 @@
+import { BASE_API_URL } from '#lib/utils/constants.js';
+import type { PageServerLoad } from './$types';
+import { m } from '#paraglide/messages.js';
+
+function buildMultiParam(key: string, values: string[]): string {
+	if (!values || values.length === 0) return '';
+	return values.map((v) => `${key}=${v}`).join('&');
+}
+
+function buildEndpoint(base: string, filterParams: string, extraParams: string = ''): string {
+	const params = [filterParams, extraParams].filter(Boolean).join('&');
+	return params ? `${base}?${params}` : base;
+}
+
+export const load: PageServerLoad = async ({ fetch, parent, url }) => {
+	const { user } = await parent();
+	const includeTeams = url.searchParams.get('include_teams') === 'true';
+
+	const res = await fetch(`${BASE_API_URL}/folders/my_assignments/?include_teams=${includeTeams}`);
+	const data = await res.json();
+
+	// Actor IDs from backend ensure consistency with backend filtering
+	const actorIds: string[] = data.actor_ids || [];
+
+	const ownerParams = buildMultiParam('owner', actorIds);
+	const ownersParams = buildMultiParam('owners', actorIds);
+	const authorsParams = buildMultiParam('authors', actorIds);
+	const assignedToParams = buildMultiParam('assigned_to', actorIds);
+
+	const countEndpoints: Record<string, string> = {
+		appliedControls: buildEndpoint('/applied-controls', ownerParams, 'limit=1'),
+		tasks: buildEndpoint('/task-templates', assignedToParams, 'limit=1'),
+		complianceAssessments: buildEndpoint('/compliance-assessments', authorsParams, 'limit=1'),
+		riskAssessments: buildEndpoint('/risk-assessments', authorsParams, 'limit=1'),
+		riskScenarios: buildEndpoint('/risk-scenarios', ownerParams, 'limit=1'),
+		incidents: buildEndpoint('/incidents', ownersParams, 'limit=1'),
+		securityExceptions: buildEndpoint('/security-exceptions', ownersParams, 'limit=1'),
+		findingsAssessments: buildEndpoint('/findings-assessments', authorsParams, 'limit=1'),
+		findings: buildEndpoint('/findings', ownerParams, 'limit=1'),
+		organisationObjectives: buildEndpoint('/organisation-objectives', assignedToParams, 'limit=1'),
+		rightRequests: buildEndpoint('/privacy/right-requests', ownerParams, 'limit=1'),
+		validationFlows: `/validation-flows?approver=${user?.id}&limit=1`,
+		riskAcceptances: `/risk-acceptances?approver=${user?.id}&state=submitted&limit=1`,
+		metricInstances: buildEndpoint('/metrology/metric-instances', ownerParams, 'limit=1')
+	};
+
+	const countsPromise = Promise.all(
+		Object.entries(countEndpoints).map(async ([key, endpoint]) => {
+			try {
+				const countRes = await fetch(`${BASE_API_URL}${endpoint}`);
+				const countData = await countRes.json();
+				return [key, countData.count || 0] as const;
+			} catch {
+				return [key, 0] as const;
+			}
+		})
+	).then((entries) => Object.fromEntries(entries) as Record<string, number>);
+
+	return {
+		data,
+		user,
+		includeTeams,
+		actorIds,
+		title: m.myAssignments(),
+		stream: {
+			counts: countsPromise
+		}
+	};
+};

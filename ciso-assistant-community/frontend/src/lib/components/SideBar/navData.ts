@@ -1,0 +1,590 @@
+export const navData = {
+	items: [
+		// {
+		// 	name: 'Home',
+		// 	items: [
+		// 		{
+		// 			name: 'Home',
+		// 			fa_icon: 'fa-solid fa-house',
+		// 			href: '/'
+		// 		},
+		// 		{ name: 'Quick start', fa_icon: 'fa-solid fa-plane', href: '/quick-start' }
+		// 	]
+		// },
+		{
+			name: 'overview',
+			items: [
+				{
+					name: 'analytics',
+					fa_icon: 'fa-solid fa-gauge',
+					href: '/analytics',
+					permissions: [
+						'view_perimeter',
+						'view_riskscenario',
+						'view_referencecontrol',
+						'view_assessment',
+						'view_riskassessment'
+					]
+				},
+				{
+					name: 'reports',
+					fa_icon: 'fas fa-file-invoice',
+					href: '/reports',
+					permissions: [
+						'view_perimeter',
+						'view_riskscenario',
+						'view_referencecontrol',
+						'view_riskassessment'
+					]
+				},
+				{
+					name: 'notifications',
+					fa_icon: 'fa-solid fa-bell',
+					href: '/notifications',
+					// `exclude` short-circuits `permissions` in canSeeNavItem, so the latter
+					// documents intent rather than gating -- same shape as myAssignments
+					// below. Third-party respondents are email-only in v1, so hide a page
+					// that would always be empty for them.
+					permissions: ['view_notification'],
+					exclude: ['BI-RL-TPR']
+				},
+				{
+					name: 'myRequests',
+					fa_icon: 'fa-solid fa-hand',
+					href: '/my-requests',
+					permissions: ['view_quickformresponse', 'add_quickformresponse']
+				},
+				{
+					name: 'myAssignments',
+					fa_icon: 'fa-solid fa-list-check',
+					href: '/my-assignments',
+					permissions: [
+						'view_perimeter',
+						'view_riskscenario',
+						'view_referencecontrol',
+						'view_assessment',
+						'view_riskassessment',
+						'view_requirementassignment'
+					],
+					exclude: ['BI-RL-TPR']
+				},
+				{
+					name: 'auditDashboard',
+					fa_icon: 'fa-solid fa-clipboard-check',
+					href: '/auditee-dashboard',
+					permissions: ['view_complianceassessment']
+				},
+				{
+					name: 'presets',
+					fa_icon: 'fa-solid fa-rocket',
+					href: '/presets',
+					permissions: ['add_loadedlibrary', 'view_presetjourney']
+				}
+			]
+		},
+		{
+			name: 'organization',
+			items: [
+				{
+					name: 'domains',
+					fa_icon: 'fa-solid fa-sitemap',
+					href: '/folders',
+					exclude: ['BI-RL-TPR', 'BI-RL-ADE']
+				},
+				{
+					name: 'perimeters',
+					fa_icon: 'fa-solid fa-cubes',
+					href: '/perimeters'
+				},
+				{
+					name: 'users',
+					fa_icon: 'fa-solid fa-user',
+					href: '/users'
+				},
+				{
+					name: 'teams',
+					fa_icon: 'fa-solid fa-people-group',
+					href: '/teams'
+				},
+				{
+					name: 'userGroups',
+					fa_icon: 'fa-solid fa-users',
+					href: '/user-groups'
+				},
+				{
+					name: 'idpGroups',
+					fa_icon: 'fa-solid fa-id-badge',
+					href: '/idp-groups'
+				}
+			]
+		},
+		{
+			name: 'catalog',
+			items: [
+				{
+					name: 'frameworks',
+					fa_icon: 'fa-solid fa-book',
+					href: '/frameworks'
+				},
+				{
+					name: 'threats',
+					fa_icon: 'fa-solid fa-biohazard',
+					href: '/threats'
+				},
+				{
+					name: 'ttpCatalogs',
+					fa_icon: 'fa-solid fa-table-cells',
+					href: '/ttp-catalogs'
+				},
+				{
+					name: 'securityAdvisories',
+					fa_icon: 'fa-solid fa-shield-virus',
+					href: '/security-advisories'
+				},
+				{
+					name: 'cwes',
+					fa_icon: 'fa-solid fa-bug-slash',
+					href: '/cwes'
+				},
+				{
+					name: 'referenceControls',
+					fa_icon: 'fa-solid fa-gears',
+					href: '/reference-controls'
+				},
+				{
+					name: 'requirementMappingSets',
+					fa_icon: 'fa-solid fa-diagram-project',
+					href: '/requirement-mapping-sets'
+				},
+				{
+					name: 'riskMatrices',
+					fa_icon: 'fa-solid fa-table-cells-large',
+					href: '/risk-matrices'
+				},
+				{
+					name: 'documentTemplates',
+					fa_icon: 'fa-solid fa-file-code',
+					href: '/document-templates',
+					permissions: ['view_documenttemplate']
+				},
+				{
+					name: 'quickForms',
+					fa_icon: 'fa-solid fa-clipboard-question',
+					href: '/quick-forms',
+					permissions: ['view_quickformpublication']
+				},
+				{
+					name: 'lbListLibraryBuilder',
+					fa_icon: 'fas fa-shapes',
+					href: '/experimental/library-builder',
+					permissions: ['add_threat', 'add_riskmatrix', 'add_referencecontrol', 'add_framework']
+				}
+			]
+		},
+		{
+			name: 'assetsManagement',
+			items: [
+				{
+					name: 'assets',
+					fa_icon: 'fa-solid fa-gem',
+					href: '/assets'
+				},
+				{
+					name: 'businessImpactAnalysis',
+					fa_icon: 'fa-solid fa-arrows-to-eye',
+					href: '/business-impact-analysis',
+					permissions: [
+						'view_businessimpactanalysis',
+						'view_assetassessment',
+						'view_escalationthreshold'
+					]
+				}
+			]
+		},
+		{
+			name: 'operations',
+			items: [
+				{
+					name: 'appliedControls',
+					fa_icon: 'fa-solid fa-fire-extinguisher',
+					href: '/applied-controls'
+				},
+				{
+					name: 'documents',
+					fa_icon: 'fa-solid fa-file-lines',
+					href: '/documents',
+					permissions: ['view_documentcontainer', 'view_published_documentcontainer']
+				},
+				{
+					name: 'calendar',
+					fa_icon: 'fa-solid fa-calendar-days',
+					href: '/calendar',
+					permissions: ['view_appliedcontrol', 'view_riskacceptance', 'view_riskassessment']
+				},
+				{
+					name: 'xRays',
+					fa_icon: 'fa-solid fa-bolt',
+					href: '/x-rays',
+					permissions: ['view_riskassessment', 'view_assessment'],
+					exclude: ['BI-RL-TPR']
+				},
+				{
+					name: 'incidents',
+					fa_icon: 'fa-solid fa-bug',
+					href: '/incidents'
+				},
+				{
+					name: 'tasks',
+					fa_icon: 'fa-solid fa-note-sticky',
+					href: '/task-templates'
+				},
+				{
+					name: 'tasksReview',
+					fa_icon: 'fa-solid fa-table-columns',
+					href: '/tasks-review',
+					permissions: ['view_appliedcontrol']
+				},
+				{
+					name: 'workflows',
+					fa_icon: 'fa-solid fa-diagram-project',
+					href: '/workflows',
+					permissions: ['view_workflow']
+				}
+			]
+		},
+		{
+			name: 'governance',
+			items: [
+				{
+					name: 'libraries',
+					fa_icon: 'fa-solid fa-folder-plus',
+					href: '/libraries',
+					permissions: ['add_threat', 'add_riskmatrix', 'add_referencecontrol', 'add_framework']
+				},
+				{
+					name: 'policies',
+					fa_icon: 'fa-solid fa-file-alt',
+					href: '/policies',
+					permissions: ['view_appliedcontrol']
+				},
+				{
+					name: 'organisationIssues',
+					fa_icon: 'fa-solid fa-briefcase',
+					href: '/organisation-issues',
+					permissions: ['view_organisationissue']
+				},
+				{
+					name: 'organisationObjectives',
+					fa_icon: 'fa-solid fa-bullseye',
+					href: '/organisation-objectives',
+					permissions: ['view_organisationobjective']
+				},
+				{
+					name: 'riskAcceptances',
+					fa_icon: 'fa-solid fa-signature',
+					href: '/risk-acceptances'
+				},
+				{
+					name: 'requestQueue',
+					fa_icon: 'fa-solid fa-inbox',
+					href: '/requests',
+					permissions: ['view_quickformresponse']
+				},
+				{
+					name: 'validationFlows',
+					fa_icon: 'fa-solid fa-clipboard-check',
+					href: '/validation-flows',
+					permissions: ['view_validationflow']
+				},
+				{
+					name: 'securityExceptions',
+					fa_icon: 'fa-solid fa-circle-exclamation',
+					href: '/security-exceptions'
+				},
+				{
+					name: 'findings',
+					fa_icon: 'fas fa-bug',
+					href: '/findings'
+				},
+				{
+					name: 'commitments',
+					fa_icon: 'fa-solid fa-handshake',
+					href: '/commitments',
+					permissions: ['view_commitment']
+				},
+				{
+					name: 'followUp',
+					fa_icon: 'fas fa-th-list',
+					href: '/findings-assessments'
+				}
+			]
+		},
+		{
+			name: 'risk',
+			items: [
+				{
+					name: 'riskAssessments',
+					fa_icon: 'fa-solid fa-magnifying-glass-chart',
+					href: '/risk-assessments'
+				},
+				{
+					name: 'ebiosRM',
+					fa_icon: 'fa-solid fa-gopuram',
+					href: '/ebios-rm'
+				},
+				{
+					name: 'threatModeling',
+					fa_icon: 'fa-solid fa-diagram-project',
+					href: '/threat-models',
+					permissions: ['view_threatmodel']
+				},
+				{
+					name: 'quantitativeRiskStudies',
+					fa_icon: 'fa-solid fa-calculator',
+					href: '/quantitative-risk-studies',
+					permissions: ['view_quantitativeriskstudy']
+				},
+				{
+					name: 'riskScenarios',
+					fa_icon: 'fa-solid fa-clone',
+					href: '/risk-scenarios'
+				},
+				{
+					name: 'scoringAssistant',
+					fa_icon: 'fa-solid fa-star-half-stroke',
+					href: '/scoring-assistant',
+					permissions: ['view_riskmatrix']
+				},
+				{
+					name: 'vulnerabilities',
+					// What is the best icon between "fa-triangle-exclamation" and "fa-skull-crossbones" for a vulnerability ?
+					fa_icon: 'fa-solid fa-triangle-exclamation',
+					href: '/vulnerabilities'
+				}
+			]
+		},
+
+		{
+			name: 'compliance',
+			items: [
+				{
+					name: 'complianceAssessments',
+					fa_icon: 'fa-solid fa-certificate',
+					href: '/compliance-assessments',
+					exclude: ['BI-RL-ADE', 'BI-RL-TPR']
+				},
+				{
+					name: 'postureAssessments',
+					fa_icon: 'fa-solid fa-list-check',
+					href: '/posture-assessments',
+					permissions: ['view_postureassessment']
+				},
+				{
+					name: 'evidences',
+					fa_icon: 'fa-solid fa-receipt',
+					href: '/evidences'
+				},
+				{
+					name: 'recap',
+					fa_icon: 'fa-solid fa-clipboard-list',
+					href: '/recap',
+					permissions: ['view_perimeter'] //this is temporary workaround to manage 3rd parties
+				}
+			]
+		},
+		{
+			name: 'metrology',
+			items: [
+				{
+					name: 'metricDefinitions',
+					fa_icon: 'fa-solid fa-ruler',
+					href: '/metric-definitions',
+					permissions: ['view_metricdefinition']
+				},
+				{
+					name: 'metricInstances',
+					fa_icon: 'fa-solid fa-chart-line',
+					href: '/metric-instances',
+					permissions: ['view_metricinstance']
+				},
+				{
+					name: 'dashboards',
+					fa_icon: 'fa-solid fa-chart-bar',
+					href: '/dashboards',
+					permissions: ['view_dashboard']
+				}
+			]
+		},
+		{
+			name: 'thirdPartyCategory',
+			items: [
+				{
+					name: 'tprmOverview',
+					fa_icon: 'fa-solid fa-gauge',
+					href: '/analytics/tprm',
+					permissions: ['view_entity', 'view_solution', 'view_contract', 'view_entityassessment']
+				},
+				{
+					name: 'entities',
+					fa_icon: 'fa-solid fa-building',
+					href: '/entities'
+				},
+				{
+					name: 'criticality',
+					fa_icon: 'fa-solid fa-layer-group',
+					href: '/entities/tiers',
+					permissions: ['view_tier']
+				},
+				{
+					name: 'representatives',
+					fa_icon: 'fa-solid fa-user-tie',
+					href: '/representatives'
+				},
+				{
+					name: 'solutions',
+					fa_icon: 'fa-solid fa-box',
+					href: '/solutions'
+				},
+				{
+					name: 'contracts',
+					fa_icon: 'fa-solid fa-file-contract',
+					href: '/contracts'
+				},
+				{
+					name: 'entityAssessments',
+					fa_icon: 'fa-solid fa-clipboard-list',
+					href: '/entity-assessments'
+				}
+			]
+		},
+		{
+			name: 'privacy',
+			items: [
+				{
+					name: 'overview',
+					fa_icon: 'fa-solid fa-gauge',
+					href: '/analytics/gdpr',
+					permissions: ['view_processing', 'view_purpose']
+				},
+				{
+					name: 'processingsRegister',
+					fa_icon: 'fa-solid fa-clipboard-list',
+					href: '/processings',
+					permissions: ['view_processing']
+				},
+				{
+					name: 'personalData',
+					fa_icon: 'fa-solid fa-users-viewfinder',
+					href: '/personal-data',
+					permissions: ['view_personaldata']
+				},
+				{
+					name: 'purposes',
+					fa_icon: 'fa-solid fa-diamond',
+					href: '/purposes',
+					permissions: ['view_purpose']
+				},
+				{
+					name: 'rightRequests',
+					fa_icon: 'fa-solid fa-user-shield',
+					href: '/right-requests',
+					permissions: ['view_rightrequest']
+				},
+				{
+					name: 'dataBreaches',
+					fa_icon: 'fa-solid fa-triangle-exclamation',
+					href: '/data-breaches',
+					permissions: ['view_databreach']
+				},
+				{
+					name: 'dpias',
+					fa_icon: 'fa-solid fa-scale-balanced',
+					href: '/dpias',
+					permissions: ['view_processing']
+				}
+			]
+		},
+		{
+			name: 'projectManagement',
+			items: [
+				{
+					name: 'genericCollections',
+					fa_icon: 'fa-solid fa-box-archive',
+					href: '/generic-collections',
+					permissions: ['view_genericcollection']
+				},
+				{
+					name: 'accreditations',
+					fa_icon: 'fa-solid fa-award',
+					href: '/accreditations',
+					permissions: ['view_accreditation']
+				},
+				{
+					name: 'projects',
+					fa_icon: 'fa-solid fa-diagram-project',
+					href: '/projects',
+					permissions: ['view_project']
+				},
+				{
+					name: 'responsibilityMatrices',
+					fa_icon: 'fa-solid fa-people-arrows',
+					href: '/responsibility-matrices',
+					permissions: ['view_responsibilitymatrix']
+				}
+			]
+		},
+		{
+			name: 'extra',
+			items: [
+				{
+					name: 'labels',
+					fa_icon: 'fa-solid fa-tag',
+					href: '/filtering-labels',
+					permissions: ['view_filteringlabel']
+				},
+				{
+					name: 'terminologies',
+					fa_icon: 'fa-solid fa-language',
+					href: '/terminologies',
+					permissions: ['view_terminology']
+				},
+				{
+					name: 'objectClassifications',
+					fa_icon: 'fa-solid fa-shield-halved',
+					href: '/object-classifications',
+					permissions: ['view_objectclassification']
+				},
+				{
+					name: 'assetClasses',
+					fa_icon: 'fa-solid fa-sitemap',
+					href: '/asset-class',
+					permissions: ['view_assetclass']
+				},
+				{
+					name: 'settings',
+					fa_icon: 'fa-solid fa-cog',
+					href: '/settings',
+					permissions: ['change_globalsettings']
+				},
+				{
+					name: 'backupRestore',
+					fa_icon: 'fa-solid fa-floppy-disk',
+					href: '/backup-restore',
+					permissions: ['backup']
+				},
+				{
+					name: 'experimental',
+					fa_icon: 'fa-solid fa-flask',
+					href: '/experimental',
+					permissions: ['change_globalsettings']
+				},
+				{
+					name: 'managePortals',
+					fa_icon: 'fa-solid fa-table-cells-large',
+					href: '/portal-editor',
+					permissions: ['change_portal']
+				}
+			]
+		}
+	]
+};

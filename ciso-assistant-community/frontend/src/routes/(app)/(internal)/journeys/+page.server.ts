@@ -1,0 +1,37 @@
+import { BASE_API_URL } from '#lib/utils/constants.js';
+import { fetchAllPages } from '#lib/utils/pagination.js';
+import { listViewFields } from '#lib/utils/table.js';
+import { type TableSource } from '#lib/components/ModelTable/types.js';
+import { superValidate } from 'sveltekit-superforms';
+import { zod4 as zod } from 'sveltekit-superforms/adapters';
+import { z } from 'zod';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ fetch }) => {
+	// Build the (empty) table skeleton from the journeys list-view config; ModelTable
+	// fetches the rows client-side from /journeys.
+	const base = listViewFields['journeys'];
+	const head = base ? [...base.head] : [];
+	const body = base ? [...base.body] : [];
+	const headData: Record<string, string> = body.reduce(
+		(obj, key, index) => {
+			obj[key] = head[index];
+			return obj;
+		},
+		{} as Record<string, string>
+	);
+	const table: TableSource = { head: headData, body: [], meta: [] };
+
+	const deleteForm = await superValidate(zod(z.object({ id: z.string().uuid() })));
+
+	// Presets feed the "Start a journey" picker; domains feed the folder selector.
+	// Always resolve to an array: tolerate non-OK responses and non-list payloads.
+	const fetchCollection = (endpoint: string) => fetchAllPages(fetch, endpoint).catch(() => []);
+
+	const [presets, domains] = await Promise.all([
+		fetchCollection(`${BASE_API_URL}/presets/`),
+		fetchCollection(`${BASE_API_URL}/folders?content_type=DO&content_type=GL`)
+	]);
+
+	return { table, deleteForm, presets, domains, URLModel: 'journeys' };
+};

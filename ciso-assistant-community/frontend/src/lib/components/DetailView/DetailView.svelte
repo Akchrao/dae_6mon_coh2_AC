@@ -1,0 +1,1207 @@
+<script lang="ts">
+	import { page } from '$app/state';
+	import { urlModelForDjangoName } from '#lib/utils/crud.js';
+	import Anchor from '#lib/components/Anchor/Anchor.svelte';
+	import List from '#lib/components/List/List.svelte';
+	import BatchCreatePersonalDataModal from '#lib/components/Modals/BatchCreatePersonalDataModal.svelte';
+	import BatchAddAssetAssessmentsModal from '#lib/components/Modals/BatchAddAssetAssessmentsModal.svelte';
+	import ConfirmModal from '#lib/components/Modals/ConfirmModal.svelte';
+	import RiskAcceptanceModal from '#lib/components/Modals/RiskAcceptanceModal.svelte';
+	import CreateModal from '#lib/components/Modals/CreateModal.svelte';
+	import SelectExistingModal from '#lib/components/Modals/SelectExistingModal.svelte';
+	import ModelTable from '#lib/components/ModelTable/ModelTable.svelte';
+	import CustomFieldsDisplay from '#lib/components/Forms/CustomFieldsDisplay.svelte';
+	import { hasRelationGraph } from '#lib/components/RelationsGraph/relations.js';
+	import { booleanDisplay } from '#lib/utils/boolean-display.js';
+	import { DATE_FIELDS_TO_FORMAT, ISO_8601_REGEX } from '#lib/utils/constants.js';
+	import { type ModelMapEntry, type ReverseForeignKeyField } from '#lib/utils/crud.js';
+	import { getModelInfo, getMarkdownFields, isFieldFlagEnabled } from '#lib/utils/crud.js';
+	import { formatDate, formatDateOrDateTime } from '#lib/utils/datetime.js';
+	import { isURL } from '#lib/utils/helpers.js';
+	import { safeTranslate } from '#lib/utils/i18n.js';
+	import { toCamelCase } from '#lib/utils/locales.js';
+	import { countMasked, isMaskedPlaceholder } from '#lib/utils/related-visibility.js';
+	import { m } from '#paraglide/messages.js';
+	import { getLocale } from '#paraglide/runtime.js';
+
+	import { Tabs, Tooltip } from '@skeletonlabs/skeleton-svelte';
+
+	import { onMount } from 'svelte';
+
+	import { goto, refreshAll } from '$app/navigation';
+	import MarkdownRenderer from '#lib/components/MarkdownRenderer.svelte';
+	import { getListViewFields } from '#lib/utils/table.js';
+	import {
+		canPerformActionOnObject,
+		hasPermissionAnywhere,
+		resolveObjectDomain
+	} from '#lib/utils/access-control.js';
+	import AuditTrailButton from '#lib/components/AuditTrail/AuditTrailButton.svelte';
+	import {
+		getModalStore,
+		type ModalComponent,
+		type ModalSettings,
+		type ModalStore
+	} from '#lib/components/Modals/stores.js';
+	import { getToastStore } from '#lib/components/Toast/stores.js';
+
+	const modalStore: ModalStore = getModalStore();
+	const toastStore = getToastStore();
+
+	// The one setting an instance owns on a library form (see QuickForm.always_review).
+	async function setAlwaysReview(box: HTMLInputElement) {
+		const ok = await fetch(`/quick-forms/${data.data?.id}/always-review`, {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ always_review: box.checked })
+		})
+			.then((res) => res.ok)
+			.catch(() => false);
+		if (!ok) {
+			// The page data did not change, so the box would keep showing the refused value.
+			box.checked = !box.checked;
+			toastStore.trigger({ message: m.anErrorOccurred(), background: 'preset-filled-error-500' });
+			return;
+		}
+		await refreshAll();
+	}
+
+	const defaultExcludes = ['id', 'str', 'path', 'sync_mappings'];
+
+	// Format the raw numbers of the ROSI explanation per the active locale.
+	function formatRosiExplanationParams(params: Record<string, number> | undefined) {
+		if (!params) return {};
+		const locale = getLocale();
+		const amount = (value: number) =>
+			new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
+				value
+			);
+		const percent = (value: number) =>
+			new Intl.NumberFormat(locale, {
+				style: 'percent',
+				minimumFractionDigits: 1,
+				maximumFractionDigits: 1
+			}).format(value);
+		return {
+			currentAle: amount(params.currentAle),
+			residualAle: amount(params.residualAle),
+			riskReduction: amount(params.riskReduction),
+			treatmentCost: amount(params.treatmentCost),
+			netBenefit: amount(params.netBenefit),
+			rosi: percent(params.rosi)
+		};
+	}
+
+	interface Props {
+		data: any;
+		mailing?: boolean;
+		fields?: string[];
+		exclude?: string[];
+		displayModelTable?: boolean;
+		dateFieldsToFormat?: string[];
+		widgets?: import('svelte').Snippet;
+		/** Lets a caller keep the widget column out of the layout when its only
+		 * widget is behind a feature flag that is off. */
+		widgetsEnabled?: boolean;
+		/** List every field instead of folding them after MAX_ROWS behind "view more". */
+		showAllFields?: boolean;
+		actions?: import('svelte').Snippet;
+		disableCreate?: boolean;
+		disableEdit?: boolean;
+		disableDelete?: boolean;
+	}
+
+	let {
+		data = $bindable(),
+		mailing = false,
+		fields = [],
+		exclude = $bindable([]),
+		displayModelTable = true,
+		dateFieldsToFormat = DATE_FIELDS_TO_FORMAT,
+		widgets,
+		widgetsEnabled = true,
+		showAllFields = false,
+		actions,
+		disableCreate = false,
+		disableEdit = false,
+		disableDelete = false
+	}: Props = $props();
+
+	exclude = [...exclude, ...defaultExcludes];
+
+	const markdownFieldSet = $derived(getMarkdownFields(data.urlModel));
+
+	// Fields whose serialized value is a stable code (e.g. "eba_TA:S02") or an
+	// English choice label (e.g. "Low reliance") that safeTranslate can map to a
+	// message key. Countries (data_location_*) are excluded on purpose: their
+	// ~250 labels have no message keys.
+	const translatedValueFieldSet = new Set([
+		'kind',
+		'status',
+		'roc_display',
+		'dora_ict_service_type',
+		'dora_data_sensitiveness',
+		'dora_reliance_level',
+		'dora_substitutability',
+		'dora_non_substitutability_reason',
+		'dora_has_exit_plan',
+		'dora_reintegration_possibility',
+		'dora_discontinuing_impact',
+		'dora_alternative_providers_identified'
+	]);
+
+	const getRelatedModelIndex = (model: ModelMapEntry, relatedModel: Record<string, string>) => {
+		if (!model.reverseForeignKeyFields) return -1;
+		return model.reverseForeignKeyFields.findIndex((o) => o.urlModel === relatedModel.urlModel);
+	};
+
+	// A field declared in flaggedFields disappears with its feature flag.
+	let visibleDetailViewFields = $derived(
+		data.model?.detailViewFields?.filter((fieldConfig) => {
+			const flag = data.model?.flaggedFields?.[fieldConfig.field];
+			return isFieldFlagEnabled(flag, page.data?.featureflags ?? {});
+		})
+	);
+
+	let filteredData = $derived(
+		visibleDetailViewFields
+			? Object.fromEntries(
+					Object.entries(data.data).filter(
+						([key, _]) => visibleDetailViewFields.filter((field) => field.field === key).length > 0
+					)
+				)
+			: data.data
+	);
+
+	// Get ordered entries based on detailViewFields configuration
+	let orderedEntries = $derived(() => {
+		if (visibleDetailViewFields) {
+			// Return entries in the order specified by detailViewFields
+			return visibleDetailViewFields
+				.map((fieldConfig) => [fieldConfig.field, data.data[fieldConfig.field]])
+				.filter(([key, value]) => value !== undefined);
+		} else {
+			// Fall back to original order from data object
+			return Object.entries(filteredData);
+		}
+	});
+
+	// Helper to get field configuration including tooltip
+	const getFieldConfig = (fieldName: string) => {
+		return data.model?.detailViewFields?.find((field) => field.field === fieldName);
+	};
+
+	let hasWidgets = $derived(!!widgets && widgetsEnabled);
+	let relatedFieldNames = $derived(
+		new Set(data.model?.foreignKeyFields?.map((field) => field.field) ?? [])
+	);
+
+	const getExpectedCount = (
+		urlmodel: string,
+		field?: ReverseForeignKeyField
+	): number | undefined => {
+		const candidates = [
+			field?.expectedCountField,
+			urlmodel ? urlmodel.replace(/-/g, '_') : undefined,
+			field?.field
+		].filter(Boolean) as string[];
+
+		for (const candidate of candidates) {
+			const value = data.data?.[candidate];
+			if (Array.isArray(value)) {
+				// Count how many {} (masked) objects are in the array
+				return value.filter((item) => isMaskedPlaceholder(item)).length;
+			}
+		}
+		return undefined;
+	};
+
+	function handleKeydown(event: KeyboardEvent) {
+		if (event.metaKey || event.ctrlKey) return;
+		if (document.activeElement?.tagName !== 'BODY') return;
+		// Check if the pressed key is 'e' and the edit button should be displayed
+
+		if (event.key === 'e' && displayEditButton()) {
+			event.preventDefault();
+			goto(`${page.url.pathname}/edit?next=${page.url.pathname}`);
+		}
+	}
+
+	onMount(() => {
+		// Add event listener to the document
+		document.addEventListener('keydown', handleKeydown);
+
+		// Cleanup function to remove event listener
+		return () => {
+			document.removeEventListener('keydown', handleKeydown);
+		};
+	});
+
+	function modalCreateForm(model: Record<string, any>): void {
+		let modalComponent: ModalComponent = {
+			ref: CreateModal,
+			props: {
+				form: model.createForm,
+				model: model,
+				debug: false,
+				additionalInitialData: model.initialData,
+				formAction: `/${model.urlModel}?/create`
+			}
+		};
+		let modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			// Data
+			title: safeTranslate('add-' + model.info.localName)
+		};
+		modalStore.trigger(modal);
+	}
+
+	// Table-scoped batch actions for a reverse-FK table, gated by change on the
+	// parent object (so parent_action entries are only offered to users the
+	// parent endpoint would authorize). parent_action endpoints are resolved
+	// here — the only place that knows the parent url and id.
+	function tableBatchActions(field: ReverseForeignKeyField) {
+		if (!field.tableBatchActions || !canEditObject) return [];
+		return field.tableBatchActions.map((a) =>
+			a.type === 'parent_action'
+				? { ...a, endpoint: `/${data.model.urlModel}/${data.data.id}/${a.action}` }
+				: a
+		);
+	}
+
+	function modalSelectExisting(field: ReverseForeignKeyField): void {
+		if (!field.addExisting || !data.updateForm) return;
+		const addExisting = field.addExisting;
+		const modalComponent: ModalComponent = {
+			ref: SelectExistingModal,
+			props: {
+				form: data.updateForm,
+				urlModel: data.urlModel,
+				field: addExisting.parentField,
+				optionsEndpoint: addExisting.optionsEndpoint ?? field.endpointUrl ?? field.urlModel,
+				label: addExisting.label,
+				optionsInfoFields: addExisting.optionsInfoFields,
+				lazy: addExisting.lazy
+			}
+		};
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			title: safeTranslate(addExisting.label ?? 'selectExisting')
+		};
+		modalStore.trigger(modal);
+	}
+
+	const batchCreateModals: Record<string, ModalComponent['ref']> = {
+		'personal-data': BatchCreatePersonalDataModal,
+		'asset-assessments': BatchAddAssetAssessmentsModal
+	};
+
+	function modalBatchCreate(field: ReverseForeignKeyField, parentId: string): void {
+		const ref = batchCreateModals[field.urlModel];
+		if (!field.batchCreate || !ref) return;
+		const modalComponent: ModalComponent = {
+			ref,
+			props: {
+				parentId,
+				urlModel: field.urlModel
+			}
+		};
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			title: safeTranslate(field.batchCreate.label ?? 'batchCreate')
+		};
+		modalStore.trigger(modal);
+	}
+	function modalRiskAcceptanceApproval(id: string, name: string, action: string): void {
+		const urlModel = getModelInfo('risk-acceptances').urlModel;
+		const modalComponent: ModalComponent = {
+			ref: RiskAcceptanceModal,
+			props: {
+				_form: {
+					id: id,
+					urlmodel: urlModel,
+					justification: action.includes('revoke') ? (data.data.justification ?? '') : ''
+				},
+				id: id,
+				debug: false,
+				URLModel: urlModel,
+				formAction: action
+			}
+		};
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			title: m.confirmModalTitle(),
+			body: `${m.confirmModalMessage()}: ${name}?`
+		};
+		modalStore.trigger(modal);
+	}
+
+	function modalConfirm(id: string, name: string, action: string): void {
+		const urlModel = getModelInfo('risk-acceptances').urlModel;
+		const modalComponent: ModalComponent = {
+			ref: ConfirmModal,
+			props: {
+				_form: { id: id, urlmodel: urlModel },
+				id: id,
+				debug: false,
+				URLModel: urlModel,
+				formAction: action
+			}
+		};
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			// Data
+			title: m.confirmModalTitle(),
+			body: `${m.confirmModalMessage()}: ${name}?`
+		};
+		modalStore.trigger(modal);
+	}
+
+	function modalDuplicateForm(titleKey: () => string): void {
+		const modalComponent: ModalComponent = {
+			ref: CreateModal,
+			props: {
+				form: data.duplicateForm,
+				model: data.model,
+				debug: false,
+				duplicate: true,
+				formAction: '?/duplicate'
+			}
+		};
+
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			title: titleKey()
+		};
+		modalStore.trigger(modal);
+	}
+
+	function modalMailConfirm(id: string, name: string, action: string): void {
+		const modalComponent: ModalComponent = {
+			ref: ConfirmModal,
+			props: {
+				_form: { id: id, urlmodel: getModelInfo('compliance-assessments').urlModel },
+				id: id,
+				debug: false,
+				URLModel: getModelInfo('compliance-assessments').urlModel,
+				formAction: action,
+				bodyComponent: List,
+				bodyProps: {
+					items: data.data.representatives,
+					message: m.theFollowingRepresentativesWillReceiveTheQuestionnaireColon()
+				}
+			}
+		};
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			// Data
+			title: m.confirmModalTitle(),
+			body: m.sureToSendQuestionnaire({ questionnaire: name })
+		};
+		modalStore.trigger(modal);
+	}
+
+	function getReverseForeignKeyEndpoint({
+		parentModel,
+		targetUrlModel,
+		field,
+		id,
+		endpointUrl
+	}: {
+		parentModel: ModelMapEntry;
+		targetUrlModel: string;
+		field: string;
+		id: string;
+		endpointUrl?: string;
+	}) {
+		if (endpointUrl?.startsWith('./')) {
+			return `/${parentModel.urlModel}/${id}/${endpointUrl.slice(2)}`;
+		}
+		return `/${targetUrlModel}?${field}=${id}`;
+	}
+
+	const user = page.data.user;
+	const objectDomain: string = $derived(
+		resolveObjectDomain(data.model.name, data.data) ?? user.root_folder_id
+	);
+	// Same helper as ModelTable/TableRowActions so edit affordances agree everywhere,
+	// including the no-folder fallback (existential check deferring to the backend).
+	const canEditObject: boolean = $derived(
+		canPerformActionOnObject({
+			user,
+			action: 'change',
+			model: data.model.name,
+			object: data.data
+		})
+	);
+
+	let relationsOpen = $state(false);
+	// Here rather than an `actions` snippet: most models ship their own detail route.
+	const showRelations = $derived(
+		Boolean(page.data?.featureflags?.relations_graph) && hasRelationGraph(data.urlModel)
+	);
+
+	let displayEditButton = $derived(function () {
+		return (
+			(canEditObject &&
+				!['Submitted', 'Accepted', 'Rejected', 'Revoked'].includes(data.data.state) &&
+				!data.data.urn &&
+				!data.data.builtin) ||
+			data?.urlModel === 'terminologies' ||
+			data?.urlModel === 'entities'
+		);
+	});
+
+	function getSortedRelatedModels() {
+		return Object.entries(data?.relatedModels ?? {}).sort((a: [string, any], b: [string, any]) => {
+			return getRelatedModelIndex(data.model, a[1]) - getRelatedModelIndex(data.model, b[1]);
+		});
+	}
+
+	let relatedModels = $derived(getSortedRelatedModels());
+	let relatedModelsNames: Set<string> = $state(new Set());
+
+	let group = $state(
+		Object.keys(data?.relatedModels ?? {}).length > 0 ? getSortedRelatedModels()[0][0] : undefined
+	);
+	// Tabs.Content renders hidden panels too, so gate on first visit. Kept once
+	// visited, so switching back costs no refetch. Reassigned: a Set is not deep state.
+	let visitedTabs = $state(
+		new Set(
+			Object.keys(data?.relatedModels ?? {}).length > 0 ? [getSortedRelatedModels()[0][0]] : []
+		)
+	);
+	$effect(() => {
+		if (group && !visitedTabs.has(group)) visitedTabs = new Set(visitedTabs).add(group);
+	});
+	$effect(() => {
+		const newRelatedModelsNames = new Set(relatedModels.map((model) => model[0]));
+
+		// Check if the sets are actually different
+		const setsAreDifferent =
+			relatedModelsNames.size !== newRelatedModelsNames.size ||
+			[...newRelatedModelsNames].some((name) => !relatedModelsNames.has(name));
+
+		if (setsAreDifferent) {
+			relatedModelsNames = newRelatedModelsNames;
+			const firstTab = relatedModelsNames.size > 0 ? relatedModels[0][0] : undefined;
+			group = firstTab;
+			visitedTabs = new Set(firstTab ? [firstTab] : []);
+		}
+	});
+
+	function truncateString(str: string, maxLength: number = 50): string {
+		return str.length > maxLength ? str.slice(0, maxLength) + '...' : str;
+	}
+
+	let openStateRA = $state(false);
+
+	let expandedTable = $state(false);
+	const MAX_ROWS = 10;
+
+	// Check if there are non-visible objects and user can edit
+	let hasNonVisibleObjects = $derived(() => {
+		if (!canEditObject) return false;
+
+		for (const [key, value] of Object.entries(data.data)) {
+			if (Array.isArray(value)) {
+				const maskedCount = countMasked(value);
+				if (maskedCount > 0) return true;
+			} else if (isMaskedPlaceholder(value)) {
+				return true;
+			}
+		}
+		return false;
+	});
+</script>
+
+<div class="flex flex-col space-y-2">
+	<!-- Warning for non-visible objects (only for users with edit permissions) -->
+
+	{#if data.urlModel === 'risk-acceptances' && data.data.state === 'Created'}
+		<div
+			class="flex flex-row items-center bg-yellow-100 dark:bg-yellow-900 rounded-container shadow-sm px-6 py-2"
+		>
+			<div class="text-yellow-800 dark:text-yellow-200">
+				{m.riskAcceptanceNotYetSubmittedMessage()}
+			</div>
+		</div>
+	{:else if data.data.state === 'Submitted' && page.data.user.id === data.data.approver?.id}
+		<div
+			class="flex flex-row space-x-4 items-center bg-yellow-100 dark:bg-yellow-900 rounded-container shadow-sm px-6 py-2 justify-between"
+		>
+			<div class="text-yellow-800 dark:text-yellow-200">
+				{m.riskAcceptanceValidatingReviewMessage()}
+			</div>
+			<div class="flex space-x-2">
+				<button
+					onclick={(_) => {
+						modalRiskAcceptanceApproval(data.data.id, data.data.name, '?/accept');
+					}}
+					class="btn preset-filled-success-500"
+				>
+					<i class="fas fa-check mr-2"></i> {m.validate()}</button
+				>
+				<button
+					onclick={(_) => {
+						modalRiskAcceptanceApproval(data.data.id, data.data.name, '?/reject');
+					}}
+					class="btn preset-filled-error-500"
+				>
+					<i class="fas fa-xmark mr-2"></i> {m.reject()}</button
+				>
+			</div>
+		</div>
+	{:else if data.data.state === 'Accepted'}
+		<div
+			class="flex flex-row items-center space-x-4 bg-green-100 dark:bg-green-900 rounded-container shadow-lg px-6 py-2 mt-2 justify-between"
+		>
+			<div class="text-green-800 dark:text-green-200">
+				{m.riskAcceptanceValidatedMessage()}
+			</div>
+			{#if page.data.user.id === data.data.approver?.id}
+				<div class="ml-auto whitespace-nowrap">
+					<button
+						onclick={(_) => {
+							modalRiskAcceptanceApproval(data.data.id, data.data.name, '?/revoke');
+						}}
+						class="btn preset-filled-error-500"
+					>
+						<i class="fas fa-xmark mr-2"></i> {m.revoke()}</button
+					>
+				</div>
+			{/if}
+		</div>
+	{/if}
+
+	<!-- Main content area - modified to use conditional flex layout -->
+	<div class="card shadow-lg bg-surface-50-950 p-4">
+		{#if data.urlModel === 'stakeholders' && data.data?.ebios_rm_study?.id}
+			<div class="mb-4 p-3">
+				<Anchor
+					href={'/ebios-rm/' + data.data.ebios_rm_study.id + '/workshop-3/ecosystem'}
+					class="anchor text-sm"
+				>
+					<i class="fa-solid fa-arrow-left"></i>
+					{m.backToWorkshop()} : {m.ebiosWs3_1()}
+				</Anchor>
+			</div>
+		{/if}
+		{#each data.data?.sync_mappings as syncMapping}
+			<div class="mb-4 p-4 bg-secondary-50 border-l-4 border-secondary-400">
+				<h3 class="font-semibold text-secondary-800 mb-2">
+					{m.syncedWith({ integrationName: syncMapping.provider?.toUpperCase() ?? 'UNKNOWN' })}
+				</h3>
+
+				<dl class="grid grid-cols-1 gap-1 sm:grid-cols-2 text-secondary-700">
+					<dt class="font-medium">{m.remoteId()}</dt>
+					<dd>{syncMapping.remote_id}</dd>
+
+					<dt class="font-medium">{m.lastSynced()}</dt>
+					<dd>{formatDate(new Date(syncMapping.last_synced_at), true, getLocale())}</dd>
+
+					<dt class="font-medium">{m.status()}</dt>
+					<dd>{safeTranslate(syncMapping.sync_status)}</dd>
+				</dl>
+			</div>
+		{/each}
+		<div class={hasWidgets ? 'flex flex-row flex-wrap gap-4' : 'w-full'}>
+			<!-- Left side - Details (conditional width) -->
+			<div
+				class="flow-root rounded-lg border border-surface-100-900 py-3 shadow-xs {hasWidgets
+					? 'flex-1 min-w-[300px]'
+					: 'w-full'}"
+			>
+				<dl class="-my-3 divide-y divide-surface-100-900 text-sm">
+					{#each orderedEntries().filter(([key, _]) => (fields.length > 0 ? fields.includes(key) : true) && !exclude.includes(key)) as [key, value], index}
+						{@const isRelatedField = relatedFieldNames.has(key)}
+						{@const hiddenCountForValue = isRelatedField ? countMasked(value) : 0}
+						<div
+							class="grid grid-cols-1 gap-1 py-3 px-2 even:bg-surface-100-900 sm:grid-cols-5 sm:gap-4 {index >=
+								MAX_ROWS &&
+							!expandedTable &&
+							!showAllFields
+								? 'hidden'
+								: ''}"
+						>
+							<!-- Keys column -->
+							<dt
+								class="font-medium text-surface-950-50 flex items-center gap-2"
+								data-testid="{key.replace('_', '-')}-field-title"
+							>
+								<span>{safeTranslate(key)}</span>
+								{#if getFieldConfig(key)?.tooltip}
+									{@const tooltipKey = getFieldConfig(key)?.tooltip}
+									{@const tooltipText = m[tooltipKey] ? m[tooltipKey]() : tooltipKey}
+									<Tooltip positioning={{ placement: 'right' }} openDelay={200} closeDelay={100}>
+										<Tooltip.Trigger>
+											<i
+												class="fas fa-info-circle text-sm text-blue-500 hover:text-blue-600 cursor-help"
+											></i>
+										</Tooltip.Trigger>
+										<Tooltip.Positioner>
+											<Tooltip.Content
+												class="card bg-surface-950-50 text-surface-50-950 p-3 max-w-xs shadow-xl border border-surface-700-300"
+											>
+												<p class="text-sm">{tooltipText}</p>
+											</Tooltip.Content>
+										</Tooltip.Positioner>
+									</Tooltip>
+								{/if}
+							</dt>
+							<!-- Value column -->
+							<dd class="text-surface-700-300 sm:col-span-4">
+								<ul class="">
+									<li
+										class="list-none whitespace-pre-line"
+										data-testid={!(value instanceof Array)
+											? key.replace('_', '-') + '-field-value'
+											: null}
+									>
+										{#if value !== null && value !== undefined && (value !== '' || hiddenCountForValue > 0)}
+											{#if hiddenCountForValue > 0 && isMaskedPlaceholder(value) && !Array.isArray(value)}
+												<p class="text-xs text-yellow-700">
+													{m.objectsNotVisible({ count: hiddenCountForValue })}
+												</p>
+											{:else if key === 'asset_class'}
+												<!-- Special case for asset_class - Always translate the value -->
+												{#if typeof value === 'object' && (value.str || value.name)}
+													{safeTranslate(value.str || value.name)}
+												{:else}
+													{safeTranslate(value)}
+												{/if}
+											{:else if key === 'library'}
+												{@const itemHref = `/loaded-libraries/${value.id}`}
+												<Anchor breadcrumbAction="push" href={itemHref} class="anchor"
+													>{value.name}</Anchor
+												>
+											{:else if key === 'severity' && data.urlModel !== 'incidents'}
+												<!-- We must add translations for the following severity levels -->
+												<!-- Is this a correct way to convert the severity integer to the stringified security level ? -->
+												{@const stringifiedSeverity = !value
+													? '--'
+													: (safeTranslate(value) ?? m.undefined())}
+												{stringifiedSeverity}
+											{:else if key === 'children_assets'}
+												{#if Object.keys(value).length > 0}
+													<ul class="inline-flex flex-wrap space-x-4">
+														{#each value as val}
+															<li data-testid={key.replace('_', '-') + '-field-value'}>
+																{#if val.str && val.id}
+																	{@const itemHref = `/${
+																		data.model?.foreignKeyFields?.find((item) => item.field === key)
+																			?.urlModel
+																	}/${val.id}`}
+																	<Anchor breadcrumbAction="push" href={itemHref} class="anchor">
+																		{truncateString(val.str)}</Anchor
+																	>
+																{:else if val.str}
+																	{safeTranslate(val.str)}
+																{:else}
+																	{val}
+																{/if}
+															</li>
+														{/each}
+													</ul>
+												{:else}
+													--
+												{/if}
+											{:else if key === 'translations'}
+												{#if Object.keys(value).length > 0}
+													<div class="flex flex-col gap-2">
+														{#each Object.entries(value) as [lang, translation]}
+															<div class="flex flex-row gap-2">
+																<strong>{lang}:</strong>
+																<span>{safeTranslate(translation)}</span>
+															</div>
+														{/each}
+													</div>
+												{:else}
+													--
+												{/if}
+												<!-- Values that are Arrays -->
+											{:else if Array.isArray(value)}
+												{@const visibleValues = isRelatedField
+													? value.filter((item) => !isMaskedPlaceholder(item))
+													: value}
+												{#if visibleValues.length > 0}
+													<ul>
+														{#each [...visibleValues].sort((a, b) => {
+															if ((!a.str && typeof a === 'object') || (!b.str && typeof b === 'object')) return 0;
+															return safeTranslate(a.str || a).localeCompare(safeTranslate(b.str || b));
+														}) as val}
+															<li data-testid={key.replace('_', '-') + '-field-value'}>
+																{#if key === 'produced_from'}
+																	{@const producedUrlModel = urlModelForDjangoName(val.model)}
+																	{#if producedUrlModel}
+																		<Anchor
+																			breadcrumbAction="push"
+																			href={`/${producedUrlModel}/${val.id}`}
+																			class="anchor">{val.str}</Anchor
+																		>
+																	{:else}
+																		{val.str}
+																	{/if}
+																	{#if val.source}
+																		<span class="text-surface-600-400 text-xs">
+																			— {val.source}</span
+																		>
+																	{/if}
+																{:else if key === 'purposes'}
+																	{@const itemHref = `/${
+																		data.model?.foreignKeyFields?.find((item) => item.field === key)
+																			?.urlModel ?? 'purposes'
+																	}/${val.id}`}
+																	<Anchor breadcrumbAction="push" href={itemHref} class="anchor"
+																		>{val.name}</Anchor
+																	>
+																	{#if val.legal_basis}
+																		<span class="text-surface-600-400">
+																			- {safeTranslate(val.legal_basis)}
+																		</span>
+																	{/if}
+																{:else if key === 'security_objectives' || key === 'security_capabilities'}
+																	{@const [securityObjectiveName, securityObjectiveValue] =
+																		Object.entries(val)[0]}
+																	{safeTranslate(securityObjectiveName).toUpperCase()}: {securityObjectiveValue}
+																{:else if key === 'choices_definition'}
+																	<span class="font-mono text-xs bg-surface-200-800 px-1 rounded"
+																		>{val.ref_id}</span
+																	>
+																	- {val.name}
+																{:else if val.str && val.id && key !== 'qualifications' && key !== 'relationship' && key !== 'nature'}
+																	{@const itemHref = `/${
+																		data.model?.foreignKeyFields?.find((item) => item.field === key)
+																			?.urlModel
+																	}/${val.id}`}
+																	<Anchor breadcrumbAction="push" href={itemHref} class="anchor"
+																		>{safeTranslate(val.str)}</Anchor
+																	>
+																{:else if val.str && (val.str.startsWith('http://') || val.str.startsWith('https://'))}
+																	<a
+																		href={val.str}
+																		target="_blank"
+																		rel="noopener noreferrer"
+																		class="anchor">{val.str}</a
+																	>
+																{:else if val.str && key === 'permissions'}
+																	{val.str}
+																{:else if val.str}
+																	{safeTranslate(val.str)}
+																{:else}
+																	{safeTranslate(val)}
+																{/if}
+															</li>
+														{/each}
+													</ul>
+													{#if hiddenCountForValue > 0}
+														<p class="mt-1 text-xs text-yellow-700">
+															{m.objectsNotVisible({ count: hiddenCountForValue })}
+														</p>
+													{/if}
+												{:else if hiddenCountForValue > 0}
+													<p class="text-xs text-yellow-700">
+														{m.objectsNotVisible({ count: hiddenCountForValue })}
+													</p>
+												{:else}
+													--
+												{/if}
+											{:else if value.id && !value.hexcolor}
+												{@const itemHref = `/${
+													data.model?.foreignKeyFields?.find((item) => item.field === key)?.urlModel
+												}/${value.id}`}
+												{#if key === 'ro_to_couple'}
+													<Anchor breadcrumbAction="push" href={itemHref} class="anchor"
+														>{safeTranslate(toCamelCase(value.str.split(' - ')[0]))} - {value.str.split(
+															'-'
+														)[1]}</Anchor
+													>
+												{:else}
+													<Anchor breadcrumbAction="push" href={itemHref} class="anchor"
+														>{safeTranslate(value.str || value.name)}</Anchor
+													>
+												{/if}
+												<!-- Shortcut before DetailView refactoring -->
+											{:else if value === 'P1'}
+												<li class="fa-solid fa-flag text-red-500"></li>
+												{m.p1()}
+											{:else if value === 'P2'}
+												<li class="fa-solid fa-flag text-orange-500"></li>
+												{m.p2()}
+											{:else if value === 'P3'}
+												<li class="fa-solid fa-flag text-blue-500"></li>
+												{m.p3()}
+											{:else if value === 'P4'}
+												<li class="fa-solid fa-flag text-surface-600-400"></li>
+												{m.p4()}
+											{:else if key === 'icon'}
+												<i class="text-lg fa {data.data.icon_fa_class}"></i>
+												{safeTranslate((value.str || value.name) ?? value)}
+											{:else if isURL(value) && !value.startsWith('urn')}
+												<Anchor breadcrumbAction="push" href={value} target="_blank" class="anchor"
+													>{value}</Anchor
+												>
+											{:else if ISO_8601_REGEX.test(value) && dateFieldsToFormat.includes(key)}
+												{formatDateOrDateTime(value, getLocale())}
+											{:else if markdownFieldSet.has(key)}
+												<MarkdownRenderer content={value} />
+											{:else if typeof value === 'boolean'}
+												{@const bd = booleanDisplay(value, key, data.urlModel)}
+												<i class="{bd.icon} {bd.colorClass}"></i>
+											{:else if translatedValueFieldSet.has(key)}
+												{safeTranslate(value)}
+											{:else if key === 'roc_calculation_explanation'}
+												{safeTranslate(value.key, formatRosiExplanationParams(value.params))}
+											{:else if !['name', 'ref_id'].includes(key) && m[toCamelCase(value.str || value.name)]}
+												{safeTranslate((value.str || value.name) ?? value)}
+											{:else}
+												{(value.str || value.name) ?? value}
+											{/if}
+										{:else}
+											--
+										{/if}
+									</li>
+								</ul>
+							</dd>
+						</div>
+					{/each}
+				</dl>
+			</div>
+			<!-- Right side - Widgets area (only if widgets exist) -->
+			{#if hasWidgets}
+				<div class="flex-1 min-w-[300px] flex flex-col">
+					<!-- Slot for widgets and metrics -->
+					<div class="h-full">
+						{@render widgets?.()}
+					</div>
+				</div>
+			{/if}
+		</div>
+		{#if !showAllFields && orderedEntries().filter( ([key, _]) => (fields.length > 0 ? fields.includes(key) : true && !exclude.includes(key)) ).length > MAX_ROWS}
+			<button
+				onclick={() => (expandedTable = !expandedTable)}
+				class="m-5 text-primary-800-200"
+				aria-expanded={expandedTable}
+			>
+				<i class="{expandedTable ? 'fas fa-chevron-up' : 'fas fa-chevron-down'} mr-3"></i>
+				{expandedTable ? m.viewLess() : m.viewMore()}
+			</button>
+		{/if}
+
+		<!-- Bottom row for action buttons -->
+		<div class="flex flex-row justify-end mt-4 gap-2">
+			{#if mailing}
+				<button
+					class="btn preset-filled-primary-500 h-fit"
+					onclick={(_) => {
+						modalMailConfirm(
+							data.data.compliance_assessment.id,
+							data.data.compliance_assessment.str,
+							'?/mailing'
+						);
+					}}
+					onkeydown={(_) =>
+						modalMailConfirm(
+							data.data.compliance_assessment.id,
+							data.data.compliance_assessment.str,
+							'?/mailing'
+						)}
+				>
+					<i class="fas fa-paper-plane mr-2"></i>
+					{m.sendQuestionnaire()}
+				</button>
+			{/if}
+
+			{#if data.data.state === 'Submitted' && canEditObject}
+				<button
+					onclick={(_) => {
+						modalConfirm(data.data.id, data.data.name, '?/draft');
+					}}
+					onkeydown={(_) => modalConfirm(data.data.id, data.data.name, '?/draft')}
+					class="btn preset-filled-primary-500"
+					disabled={!data.data.approver}
+				>
+					<i class="fas fa-arrow-alt-circle-left mr-2"></i> {m.draft()}</button
+				>
+			{/if}
+
+			{#if displayEditButton()}
+				{#if data.data.state === 'Created'}
+					<Tooltip
+						open={openStateRA && !data.data.approver}
+						onOpenChange={(e) => (openStateRA = e.open)}
+						positioning={{ placement: 'top' }}
+						openDelay={200}
+						closeDelay={100}
+					>
+						<Tooltip.Trigger
+							onclick={() => {
+								if (data.data.approver) modalConfirm(data.data.id, data.data.name, '?/submit');
+							}}
+							onkeydown={(_: any) => {
+								if (data.data.approver)
+									return modalConfirm(data.data.id, data.data.name, '?/submit');
+							}}
+							class={data.data.approver
+								? 'btn preset-filled-primary-500 *:pointer-events-none'
+								: 'btn preset-filled-primary-500 opacity-50 *:pointer-events-none cursor-not-allowed'}
+						>
+							<i class="fas fa-paper-plane mr-2"></i>
+							{m.submit()}
+						</Tooltip.Trigger>
+						{#if !data.data.approver}
+							<Tooltip.Positioner>
+								<Tooltip.Content class="card preset-tonal-error p-4">
+									<p>{m.riskAcceptanceMissingApproverMessage()}</p>
+								</Tooltip.Content>
+							</Tooltip.Positioner>
+						{/if}
+					</Tooltip>
+				{/if}
+
+				<Anchor
+					breadcrumbAction="push"
+					href={`${page.url.pathname}/edit?next=${page.url.pathname}`}
+					label={m.edit()}
+					class="btn preset-filled-primary-500 h-fit"
+					><i class="fa-solid fa-pen-to-square mr-2" data-testid="edit-button"
+					></i>{m.edit()}</Anchor
+				>
+
+				{#if data.urlModel === 'applied-controls'}
+					<button
+						class="btn text-white bg-linear-to-l from-sky-500 to-green-600"
+						onclick={(_) => modalDuplicateForm(m.duplicateAppliedControl)}
+						data-testid="duplicate-button"
+					>
+						<i class="fa-solid fa-copy mr-2"></i>
+						{m.duplicate()}</button
+					>
+				{/if}
+				{#if data.urlModel === 'organisation-objectives'}
+					<button
+						class="btn text-white bg-linear-to-l from-sky-500 to-green-600"
+						onclick={(_) => modalDuplicateForm(m.duplicateOrganisationObjective)}
+						data-testid="duplicate-button"
+					>
+						<i class="fa-solid fa-copy mr-2"></i>
+						{m.duplicate()}</button
+					>
+				{/if}
+			{/if}
+			{#if showRelations}
+				<button
+					type="button"
+					class="btn h-fit text-white bg-linear-to-l from-violet-500 to-indigo-600"
+					data-testid="relations-button"
+					onclick={() => (relationsOpen = true)}
+				>
+					<i class="fa-solid fa-circle-nodes mr-2"></i>{m.relationsGraph()}
+				</button>
+			{/if}
+			{@render actions?.()}
+			{#if data.urlModel === 'quick-forms' && hasPermissionAnywhere(user, 'change_quickform')}
+				<label
+					class="flex h-fit items-center gap-2 text-sm"
+					title={m.alwaysReviewHelpText()}
+					data-testid="quick-form-always-review"
+				>
+					<input
+						type="checkbox"
+						class="checkbox"
+						checked={data.data?.always_review}
+						onchange={(e) => setAlwaysReview(e.currentTarget)}
+					/>{m.alwaysReview()}
+				</label>
+			{/if}
+			{#if data.urlModel === 'quick-forms'}
+				<!-- Answering a form is the only way to see what its conditions and outcomes
+				     actually do; the same preview serves drafts in the builder. -->
+				<a
+					class="btn preset-filled-primary-500 h-fit"
+					href={`/quick-forms/${data.data?.id}/preview`}
+				>
+					<i class="fa-solid fa-eye mr-2"></i>{m.preview()}
+				</a>
+				{#if data.relatedModels?.['quick-form-publications']?.createForm && hasPermissionAnywhere(user, 'add_quickformpublication')}
+					<button
+						class="btn preset-filled-primary-500 h-fit"
+						data-testid="publish-quick-form"
+						onclick={() => modalCreateForm(data.relatedModels['quick-form-publications'])}
+					>
+						<i class="fa-solid fa-paper-plane mr-2"></i>{m.publish()}
+					</button>
+				{/if}
+			{/if}
+			<AuditTrailButton model={data.urlModel} objectId={data.data?.id} folderId={objectDomain} />
+		</div>
+	</div>
+</div>
+
+<CustomFieldsDisplay
+	urlModel={data.urlModel}
+	folderId={data.data?.folder?.id ?? data.data?.folder}
+	values={data.data?.custom_fields}
+/>
+
+{#if relatedModels.length > 0 && displayModelTable}
+	<div class="card shadow-lg mt-8 bg-surface-50-950 px-2 py-6">
+		<Tabs
+			value={group}
+			onValueChange={(e) => (group = e.value)}
+			orientation="vertical"
+			class="w-full"
+		>
+			<Tabs.List class="shrink-0 gap-3">
+				{#each relatedModels as [urlmodel, model]}
+					<Tabs.Trigger
+						value={urlmodel}
+						class="justify-between w-full rounded-md px-3 py-2 transition-colors
+			       aria-[selected=true]:!bg-surface-200-800
+			       "
+						data-testid="tabs-control"
+					>
+						{safeTranslate(model.info.localNamePlural)}
+						{#if model.count !== undefined && model.count > 0}
+							<span
+								class="ml-2 rounded-full px-2 py-0.5 text-xs
+						   preset-tonal-secondary text-surface-700-300"
+							>
+								{model.count}
+							</span>
+						{/if}
+					</Tabs.Trigger>
+				{/each}
+			</Tabs.List>
+			{#each relatedModels as [urlmodel, model]}
+				<Tabs.Content value={urlmodel} class="flex-1 min-w-0">
+					{#if visitedTabs.has(urlmodel)}
+						{#key urlmodel}
+							{@const field = data.model.reverseForeignKeyFields.find(
+								(item) => item.urlModel === urlmodel
+							)}
+							{@const fieldsToUse =
+								field?.tableFields ||
+								getListViewFields({
+									key: urlmodel,
+									featureFlags: page.data?.featureflags
+								}).body.filter((v) => v !== field.field)}
+							{#if model.table}
+								<ModelTable
+									baseEndpoint={getReverseForeignKeyEndpoint({
+										parentModel: data.model,
+										targetUrlModel: urlmodel,
+										field: field.field,
+										id: data.data.id,
+										endpointUrl: field.endpointUrl
+									})}
+									source={model.table}
+									disableCreate={disableCreate || model.disableCreate}
+									disableEdit={disableEdit || model.disableEdit || Boolean(data.data.is_locked)}
+									disableDelete={disableDelete ||
+										model.disableDelete ||
+										Boolean(data.data.is_locked)}
+									deleteForm={model.deleteForm}
+									URLModel={urlmodel}
+									expectedCount={getExpectedCount(urlmodel, field)}
+									columnSelector={field?.columnSelector}
+									columnStateKey={`${data.urlModel}:${urlmodel}`}
+									fields={fieldsToUse}
+									defaultFilters={field.defaultFilters || {}}
+									extraBatchActions={tableBatchActions(field)}
+								>
+									{#snippet addButton()}
+										{#if data.data.is_locked}
+											<!-- Locked parent: no add affordances, matching the hidden remove selection. -->
+										{:else if canEditObject && field?.addExisting}
+											<span
+												class="inline-flex overflow-hidden rounded-md border bg-surface-50-950 shadow-xs"
+											>
+												<button
+													class="inline-block p-3 btn-mini-secondary w-12 focus:relative"
+													data-testid="select-existing-button"
+													title={safeTranslate(field.addExisting.label ?? 'selectExisting')}
+													onclick={() => modalSelectExisting(field)}
+												>
+													<i class="fa-solid fa-hand-pointer"></i>
+												</button>
+											</span>
+											{#if field?.batchCreate}
+												<span
+													class="inline-flex overflow-hidden rounded-md border bg-surface-50-950 shadow-xs"
+												>
+													<button
+														class="inline-block p-3 btn-mini-secondary w-12 focus:relative"
+														data-testid="batch-create-button"
+														title={safeTranslate(field.batchCreate.label ?? 'batchCreate')}
+														onclick={() => modalBatchCreate(field, data.data.id)}
+													>
+														<i class="fa-solid fa-layer-group"></i>
+													</button>
+												</span>
+											{/if}
+											<span
+												class="inline-flex overflow-hidden rounded-md border bg-surface-50-950 shadow-xs"
+											>
+												<button
+													class="inline-block border-e p-3 btn-mini-primary w-12 focus:relative"
+													data-testid="add-button"
+													title={safeTranslate('add-' + model.info.localName)}
+													onclick={(_) => modalCreateForm(model)}
+												>
+													<i class="fa-solid fa-file-circle-plus"></i>
+												</button>
+											</span>
+										{:else}
+											{#if field?.batchCreate}
+												<span
+													class="inline-flex overflow-hidden rounded-md border bg-surface-50-950 shadow-xs"
+												>
+													<button
+														class="inline-block p-3 btn-mini-secondary w-12 focus:relative"
+														data-testid="batch-create-button"
+														title={safeTranslate(field.batchCreate.label ?? 'batchCreate')}
+														onclick={() => modalBatchCreate(field, data.data.id)}
+													>
+														<i class="fa-solid fa-layer-group"></i>
+													</button>
+												</span>
+											{/if}
+											<button
+												class="btn preset-filled-primary-500 self-end my-auto"
+												data-testid="add-button"
+												onclick={(_) => modalCreateForm(model)}
+												><i class="fa-solid fa-plus mr-2 lowercase"></i>{safeTranslate(
+													'add-' + model.info.localName
+												)}</button
+											>
+										{/if}
+									{/snippet}
+								</ModelTable>
+							{/if}
+						{/key}
+					{/if}
+				</Tabs.Content>
+			{/each}
+		</Tabs>
+	</div>
+{/if}
+
+{#if showRelations}
+	{#await import('#lib/components/RelationsGraph/RelationsDrawer.svelte') then { default: RelationsDrawer }}
+		<RelationsDrawer
+			open={relationsOpen}
+			urlModel={data.urlModel}
+			id={data.data.id}
+			name={data.data.name ?? data.data.str ?? ''}
+			onClose={() => (relationsOpen = false)}
+		/>
+	{/await}
+{/if}

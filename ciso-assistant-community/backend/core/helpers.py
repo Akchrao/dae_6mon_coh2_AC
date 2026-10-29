@@ -1,0 +1,2371 @@
+import json
+from collections import defaultdict
+from collections.abc import MutableMapping
+from datetime import date, datetime, timedelta
+from typing import Optional
+from typing import Dict, List, Iterable
+from uuid import UUID
+
+# from icecream import ic
+from django.core.exceptions import NON_FIELD_ERRORS as DJ_NON_FIELD_ERRORS
+from django.core.exceptions import ValidationError as DjValidationError
+from django.db.models import Count
+from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import ValidationError as DRFValidationError
+from rest_framework.views import api_settings
+from rest_framework.views import exception_handler as drf_exception_handler
+
+from iam.models import Folder, Permission, RoleAssignment, User
+from library.helpers import get_referential_translation
+
+from statistics import mean
+import math
+
+from .models import *
+from .utils import build_answers_dict, camel_case
+
+DRF_NON_FIELD_ERRORS = api_settings.NON_FIELD_ERRORS_KEY
+
+
+def flatten_dict(
+    d: MutableMapping, parent_key: str = "", sep: str = "."
+) -> MutableMapping:
+    items = []
+    for k, v in d.items():
+        new_key = parent_key + sep + k if parent_key else k
+        if isinstance(v, MutableMapping):
+            items.extend(flatten_dict(v, new_key, sep=sep).items())
+        else:
+            items.append((new_key, v))
+    return dict(items)
+
+
+STATUS_COLOR_MAP = {  # TODO: Move these kinds of color maps to frontend
+    "undefined": "#CCC",
+    "--": "#CCC",
+    "to_do": "#BFDBFE",
+    "active": "#46D39A",
+    "degraded": "#F97316",
+    "deprecated": "#E55759",
+    "in_progress": "#5470c6",
+    "in_review": "#BBF7D0",
+    "done": "#46D39A",
+    "deprecated": "#E55759",
+    "open": "#fac858",
+    "mitigate": "#91cc75",
+    "accept": "#73c0de",
+    "avoid": "#ee6666",
+    "on_hold": "#ee6666",
+    "transfer": "#91cc75",
+    "cancelled": "#9ca3af",
+}
+
+
+def color_css_class(status):
+    return {
+        "not_assessed": "gray-300",
+        "compliant": "green-500",
+        "to_do": "gray-400",
+        "in_progress": "blue-500",
+        "done": "green-500",
+        "non_compliant": "red-500",
+        "partially_compliant": "yellow-400",
+        "not_applicable": "black",
+    }.get(status)
+
+
+def applied_control_priority(user: User):
+    def get_quadrant(applied_control):
+        if applied_control.effort in ["S", "M"]:
+            return "1st"
+        elif applied_control.effort in ["L", "XL"]:
+            return "2nd"
+        else:
+            return "undefined"
+
+    clusters = {
+        "1st": list(),
+        "2nd": list(),
+        "3rd": list(),
+        "4th": list(),
+        "undefined": list(),
+    }
+    object_ids_view = RoleAssignment.get_viewable_object_ids(user, AppliedControl)
+
+    for mtg in AppliedControl.objects.filter(id__in=object_ids_view):
+        clusters[get_quadrant(mtg)].append(mtg)
+
+    return clusters
+
+
+def measures_to_review(user: User):
+    object_ids_view = RoleAssignment.get_viewable_object_ids(user, AppliedControl)
+    measures = (
+        AppliedControl.objects.filter(id__in=object_ids_view)
+        .filter(expiry_date__lte=date.today() + timedelta(days=30))
+        .order_by("expiry_date")
+    )
+
+    return measures
+
+
+def compile_perimeter_for_composer(user: User, perimeters_list: list):
+    """
+    Compiling information from choosen perimeters for composer
+    """
+    compliance_assessments_status = {"values": [], "labels": []}
+    applied_control_status = {"values": [], "labels": []}
+
+    # Requirements assessment bar chart
+    color_map = {
+        "in_progress": "#3b82f6",
+        "non_compliant": "#f87171",
+        "to_do": "#d1d5db",
+        "partially_compliant": "#fde047",
+        "not_applicable": "#000000",
+        "compliant": "#86efac",
+    }
+    for st in RequirementAssessment.Status:
+        count = (
+            RequirementAssessment.objects.filter(status=st)
+            .filter(compliance_assessment__perimeter__in=perimeters_list)
+            .count()
+        )
+        v = {"value": count, "itemStyle": {"color": color_map[st]}}
+        compliance_assessments_status["values"].append(v)
+        compliance_assessments_status["labels"].append(st.label)
+
+    # Applied controls bar chart
+    color_map = {
+        "open": "#93c5fd",
+        "in_progress": "#fdba74",
+        "on_hold": "#f87171",
+        "done": "#86efac",
+    }
+    for st in AppliedControl.Status.choices:
+        count = (
+            AppliedControl.objects.filter(status=st[0])
+            .filter(requirement_assessments__assessment__perimeter__in=perimeters_list)
+            .count()
+        )
+        v = {"value": count, "itemStyle": {"color": color_map[st[0]]}}
+        applied_control_status["values"].append(v)
+        applied_control_status["labels"].append(st[1])
+
+    perimeter_objects = []
+    for perimeter in perimeters_list:
+        perimeter_objects.append(
+            {"perimeter": get_object_or_404(Perimeter, pk=perimeter)}
+        )
+
+    return {
+        "perimeter_objects": perimeter_objects,
+        "compliance_assessments_status": compliance_assessments_status,
+        "applied_control_status": applied_control_status,
+        "change_usergroup": RoleAssignment.is_access_allowed(
+            user=user,
+            perm=Permission.objects.get(codename="change_usergroup"),
+            folder=Folder.get_root_folder(),
+        ),
+    }
+
+
+def get_compliance_assessment_stats(
+    compliance_assessment: ComplianceAssessment,
+) -> dict:
+    """
+    Function to calculate requirement groups statistics for a compliance assessment
+    Optimization by limiting the calls to the database
+    """
+
+    requirement_nodes_candidates = list(
+        RequirementNode.objects.filter(framework=compliance_assessment.framework)
+    )
+    requirement_assessment_candidates = list(
+        RequirementAssessment.objects.filter(
+            compliance_assessment=compliance_assessment
+        )
+    )
+    requirement_assessment_candidates_per_status = {
+        st: [ra for ra in requirement_assessment_candidates if ra.status == st]
+        for st in RequirementAssessment.Status
+    }
+
+    def _get_all_requirement_nodes_id_in_requirement_node(
+        requirement_node: RequirementNode, candidates
+    ) -> list:
+        requirement_list = []
+        requirement_list.extend(
+            [req.id for req in candidates if req.parent_urn == requirement_node.urn]
+        )
+        for rg in [rg for rg in candidates if rg.parent_urn == requirement_node.urn]:
+            requirement_list += _get_all_requirement_nodes_id_in_requirement_node(
+                rg, candidates
+            )
+        return requirement_list
+
+    requirement_nodes_statistics = {}
+    for requirement_node in requirement_nodes_candidates:
+        requirement_nodes_statistics[requirement_node.id] = []
+        requirement_id_list = _get_all_requirement_nodes_id_in_requirement_node(
+            requirement_node, requirement_nodes_candidates
+        )
+        for st in RequirementAssessment.Status:
+            count = len(
+                [
+                    a
+                    for a in requirement_assessment_candidates_per_status[st]
+                    if a.requirement_id in requirement_id_list
+                ]
+            )
+            total = len(requirement_id_list)
+            if total > 0:
+                requirement_nodes_statistics[requirement_node.id].append(
+                    (st, st.label, round(count * 100 / total))
+                )
+    return requirement_nodes_statistics
+
+
+def get_sorted_requirement_nodes(
+    requirement_nodes: list,
+    requirements_assessed: Optional[list] = None,
+    max_score: int = 0,
+    min_score: int = 0,
+) -> dict:
+    """
+    Recursive function to build framework groups tree
+    requirement_nodes: the list of all requirement_nodes
+    requirements_assessed: the list of all requirements_assessed
+    max_score: the maximum score (CA or framework). Used as the fallback when
+    a RequirementNode has no override.
+    min_score: the minimum score (CA or framework). Used as the fallback when
+    a RequirementNode has no override; needed for offset scales (e.g. 1..4).
+    Returns a dictionary containing key=name and value={"description": description, "style": "leaf|node"}}
+    Values are correctly sorted based on order_id
+    If order_id is missing, sorting is based on created_at
+    """
+
+    # Cope for old version not creating order_id correctly
+    for req in requirement_nodes:
+        if req.order_id is None:
+            req.order_id = req.created_at
+
+    requirement_assessment_from_requirement_id = {
+        str(ra.requirement_id): ra for ra in (requirements_assessed or [])
+    }
+
+    def _resolved_max(req_node):
+        """Resolved max score for the RA-side display: Node override if set,
+        otherwise the framework's max_score (as fed in via *max_score*)."""
+        return req_node.max_score if req_node.max_score is not None else max_score
+
+    def _resolved_min(req_node):
+        return req_node.min_score if req_node.min_score is not None else min_score
+
+    # Build a dictionary to quickly access children nodes
+    children_dict = {}
+    for node in requirement_nodes:
+        if node.parent_urn not in children_dict:
+            children_dict[node.parent_urn] = []
+        children_dict[node.parent_urn].append(node)
+
+    # Sort children nodes by order_id
+    for key in children_dict:
+        children_dict[key].sort(key=lambda x: x.order_id)
+
+    def get_sorted_requirement_nodes_rec(start: list) -> dict:
+        """
+        Recursive function to build framework groups tree, within get_sorted_requirements_nodes
+        start: the initial list
+        """
+        result = {}
+        for node in start:
+            req_as = requirement_assessment_from_requirement_id.get(str(node.id))
+
+            node_data = {
+                "urn": node.urn,
+                "parent_urn": node.parent_urn,
+                "ref_id": node.ref_id,
+                "name": get_referential_translation(node, "name"),
+                "implementation_groups": node.implementation_groups or None,
+                "ra_id": str(req_as.id) if req_as else None,
+                "status": req_as.status if req_as else None,
+                "result": req_as.result if req_as else None,
+                "extended_result": req_as.extended_result if req_as else None,
+                "is_scored": req_as.is_scored if req_as else None,
+                "score": req_as.score if req_as else None,
+                "documentation_score": req_as.documentation_score if req_as else None,
+                "max_score": _resolved_max(node) if req_as else None,
+                "min_score": _resolved_min(node) if req_as else None,
+                "weight": node.weight if node.weight else 1,
+                "questions": node.get_questions_translated,
+                "answers": build_answers_dict(req_as.answers.all()) if req_as else None,
+                "mapping_inference": req_as.mapping_inference if req_as else None,
+                "status_display": req_as.get_status_display() if req_as else None,
+                "status_i18n": camel_case(req_as.status) if req_as else None,
+                "result_i18n": camel_case(req_as.result)
+                if req_as and req_as.result is not None
+                else None,
+                "node_content": node.display_long,
+                "display_mode": node.display_mode,
+                "style": "node",
+                "assessable": node.assessable,
+                "description": get_referential_translation(node, "description"),
+                "children": {},
+            }
+
+            result[str(node.id)] = node_data
+
+            # Process children nodes recursively
+            children = children_dict.get(node.urn, [])
+            child_nodes = get_sorted_requirement_nodes_rec(children)
+            result[str(node.id)]["children"] = child_nodes
+
+            # Update each child node with associated requirements
+            for child in children:
+                child_req_as = requirement_assessment_from_requirement_id.get(
+                    str(child.id)
+                )
+
+                child_data = {
+                    "urn": child.urn,
+                    "ref_id": child.ref_id,
+                    "implementation_groups": child.implementation_groups or None,
+                    "name": get_referential_translation(child, "name"),
+                    "description": get_referential_translation(child, "description"),
+                    "ra_id": str(child_req_as.id) if child_req_as else None,
+                    "status": child_req_as.status if child_req_as else None,
+                    "is_scored": child_req_as.is_scored if child_req_as else None,
+                    "score": child_req_as.score if child_req_as else None,
+                    "documentation_score": child_req_as.documentation_score
+                    if child_req_as
+                    else None,
+                    "max_score": _resolved_max(child) if child_req_as else None,
+                    "min_score": _resolved_min(child) if child_req_as else None,
+                    "weight": child.weight if child.weight else 1,
+                    "questions": child.get_questions_translated,
+                    "answers": build_answers_dict(child_req_as.answers.all())
+                    if child_req_as
+                    else None,
+                    "mapping_inference": child_req_as.mapping_inference
+                    if child_req_as
+                    else None,
+                    "status_display": child_req_as.get_status_display()
+                    if child_req_as
+                    else None,
+                    "status_i18n": camel_case(child_req_as.status)
+                    if child_req_as
+                    else None,
+                    "result": child_req_as.result if child_req_as else None,
+                    "extended_result": child_req_as.extended_result
+                    if child_req_as
+                    else None,
+                    "result_i18n": camel_case(child_req_as.result)
+                    if child_req_as and child_req_as.result is not None
+                    else None,
+                    "style": "leaf",
+                }
+
+                result[str(node.id)]["children"][str(child.id)].update(child_data)
+
+        return result
+
+    top_level_nodes = [rn for rn in requirement_nodes if not rn.parent_urn]
+    top_level_nodes.sort(key=lambda x: x.order_id)
+
+    tree = get_sorted_requirement_nodes_rec(top_level_nodes)
+    return tree
+
+
+def annotate_tree_with_aggregated_scores(
+    tree: dict[str, dict], compliance_assessment
+) -> dict[str, dict]:
+    """
+    Walk the requirement tree and annotate each node with `aggregated_score`,
+    `aggregated_max_score` (and the documentation counterparts when enabled).
+
+    AVG/AVG_OF_AVG: leaves contribute a normalized ratio (against their own
+    resolved scale). The parent rolls up the weighted ratio and denormalizes
+    onto the CA scale. The display ceiling is the CA's max_score.
+
+    SUM: raw weighted sum of leaf scores, with the display ceiling being the
+    sum of per-RA resolved maxes × weight. Per-requirement scale overrides
+    contribute their own ceiling; 100% stays achievable.
+
+    Leaves are included only when is_scored is True, the node is assessable,
+    and the result is not N/A. When the audit anchors N/A to its target, N/A
+    leaves are included with both layers set to the target projected onto
+    their scale (or their max when no target is set), like get_global_score.
+    """
+    method = compliance_assessment.score_calculation_method
+    show_doc = compliance_assessment.show_documentation_score
+    ca_min = (
+        compliance_assessment.min_score
+        if compliance_assessment.min_score is not None
+        else 0
+    )
+    ca_max = (
+        compliance_assessment.max_score
+        if compliance_assessment.max_score is not None
+        else 100
+    )
+    ca_range = ca_max - ca_min if ca_max > ca_min else 1
+    anchor_na = compliance_assessment.anchor_na_to_target
+
+    def _clean(value):
+        """A parent's value like the global score (clean_score): unrounded,
+        rendering rounds it."""
+        if value is None:
+            return None
+        return clean_score(value)
+
+    def walk(node: dict) -> None:
+        children = node.get("children") or {}
+
+        for child in children.values():
+            walk(child)
+
+        if not children:
+            is_na = node.get("result") == "not_applicable"
+            anchored = bool(anchor_na and is_na and node.get("assessable"))
+            is_assessed = node.get("is_scored") and node.get("assessable") and not is_na
+            score_val = node.get("score")
+            # `is_scored` with `score is None` is a data inconsistency; treat
+            # it as unscored to avoid producing a negative ratio on offset
+            # scales (where (0 - min) / range < 0).
+            if is_assessed and score_val is None:
+                is_assessed = False
+            weight = node.get("weight") or 1
+            ra_min = (
+                node.get("min_score") if node.get("min_score") is not None else ca_min
+            )
+            ra_max = (
+                node.get("max_score") if node.get("max_score") is not None else ca_max
+            )
+            ra_range = ra_max - ra_min if ra_max > ra_min else 1
+            doc_val = node.get("documentation_score")
+            if anchored:
+                score_val = compliance_assessment.na_anchor_score(ra_min, ra_max)
+                doc_val = score_val
+                is_assessed = True
+            if is_assessed:
+                ratio = (score_val - ra_min) / ra_range
+                node["aggregated_score"] = score_val
+                node["aggregated_min_score"] = ra_min
+                node["aggregated_max_score"] = ra_max
+                # Normalized to [0, 1] on the RA's own scale — the only sane
+                # axis to roll up across mixed scales.
+                node["_aggregated_ratio"] = ratio
+                node["_leaf_weighted_ratio"] = ratio * weight
+                node["_leaf_weighted_score"] = score_val * weight
+                node["_leaf_weighted_max"] = ra_max * weight
+                node["_leaf_weight"] = weight
+                if show_doc:
+                    # documentation_score=None counts as the bottom of the
+                    # scale, like _compute_raw_score_for_field, with every
+                    # method. (score=None is excluded above; doc is not.)
+                    if doc_val is None:
+                        doc_val = ra_min
+                    doc_ratio = (doc_val - ra_min) / ra_range
+                    node["aggregated_documentation_score"] = doc_val
+                    node["_aggregated_doc_ratio"] = doc_ratio
+                    node["_leaf_weighted_doc_ratio"] = doc_ratio * weight
+                    node["_leaf_weighted_doc"] = doc_val * weight
+            else:
+                node["_aggregated_ratio"] = None
+                node["_aggregated_doc_ratio"] = None
+                node["_leaf_weighted_ratio"] = 0
+                node["_leaf_weighted_score"] = 0
+                node["_leaf_weighted_max"] = 0
+                node["_leaf_weight"] = 0
+                node["_leaf_weighted_doc_ratio"] = 0
+                node["_leaf_weighted_doc"] = 0
+            return
+
+        leaf_weighted_ratio = sum(
+            c.get("_leaf_weighted_ratio", 0) for c in children.values()
+        )
+        leaf_weighted_doc_ratio = sum(
+            c.get("_leaf_weighted_doc_ratio", 0) for c in children.values()
+        )
+        leaf_weighted_score = sum(
+            c.get("_leaf_weighted_score", 0) for c in children.values()
+        )
+        leaf_weighted_doc = sum(
+            c.get("_leaf_weighted_doc", 0) for c in children.values()
+        )
+        leaf_weighted_max = sum(
+            c.get("_leaf_weighted_max", 0) for c in children.values()
+        )
+        leaf_weight = sum(c.get("_leaf_weight", 0) for c in children.values())
+        node["_leaf_weighted_ratio"] = leaf_weighted_ratio
+        node["_leaf_weighted_doc_ratio"] = leaf_weighted_doc_ratio
+        node["_leaf_weighted_score"] = leaf_weighted_score
+        node["_leaf_weighted_doc"] = leaf_weighted_doc
+        node["_leaf_weighted_max"] = leaf_weighted_max
+        node["_leaf_weight"] = leaf_weight
+
+        if method == ComplianceAssessment.CalculationMethod.AVG_OF_AVG:
+            # Roll up children's normalized ratios (each in [0, 1] regardless
+            # of the child's own scale) weighted by the child's own weight.
+            total_weighted_ratio = 0.0
+            total_weighted_doc_ratio = 0.0
+            total_child_weight = 0
+            for child in children.values():
+                child_ratio = child.get("_aggregated_ratio")
+                if child_ratio is None:
+                    continue
+                cw = child.get("weight") or 1
+                total_weighted_ratio += child_ratio * cw
+                if show_doc:
+                    child_doc_ratio = child.get("_aggregated_doc_ratio") or 0
+                    total_weighted_doc_ratio += child_doc_ratio * cw
+                total_child_weight += cw
+            if total_child_weight > 0:
+                avg_ratio = total_weighted_ratio / total_child_weight
+                node["_aggregated_ratio"] = avg_ratio
+                node["aggregated_score"] = _clean(ca_min + avg_ratio * ca_range)
+                node["aggregated_min_score"] = ca_min
+                node["aggregated_max_score"] = ca_max
+                if show_doc:
+                    avg_doc_ratio = total_weighted_doc_ratio / total_child_weight
+                    node["_aggregated_doc_ratio"] = avg_doc_ratio
+                    node["aggregated_documentation_score"] = _clean(
+                        ca_min + avg_doc_ratio * ca_range
+                    )
+            else:
+                node["_aggregated_ratio"] = None
+                node["_aggregated_doc_ratio"] = None
+        elif method == ComplianceAssessment.CalculationMethod.SUM:
+            if leaf_weight > 0:
+                node["aggregated_score"] = _clean(leaf_weighted_score)
+                node["aggregated_max_score"] = leaf_weighted_max
+                node["aggregated_min_score"] = 0
+                # Ratio in [0, 1] for any future consumer (e.g. nested SUM).
+                node["_aggregated_ratio"] = (
+                    leaf_weighted_score / leaf_weighted_max
+                    if leaf_weighted_max
+                    else None
+                )
+                if show_doc:
+                    node["aggregated_documentation_score"] = _clean(leaf_weighted_doc)
+                    node["_aggregated_doc_ratio"] = (
+                        leaf_weighted_doc / leaf_weighted_max
+                        if leaf_weighted_max
+                        else None
+                    )
+            else:
+                node["_aggregated_ratio"] = None
+                node["_aggregated_doc_ratio"] = None
+        else:
+            if leaf_weight > 0:
+                avg_ratio = leaf_weighted_ratio / leaf_weight
+                node["_aggregated_ratio"] = avg_ratio
+                node["aggregated_score"] = _clean(ca_min + avg_ratio * ca_range)
+                node["aggregated_min_score"] = ca_min
+                node["aggregated_max_score"] = ca_max
+                if show_doc:
+                    avg_doc_ratio = leaf_weighted_doc_ratio / leaf_weight
+                    node["_aggregated_doc_ratio"] = avg_doc_ratio
+                    node["aggregated_documentation_score"] = _clean(
+                        ca_min + avg_doc_ratio * ca_range
+                    )
+            else:
+                node["_aggregated_ratio"] = None
+                node["_aggregated_doc_ratio"] = None
+
+    def cleanup(node: dict) -> None:
+        for key in (
+            "_aggregated_ratio",
+            "_aggregated_doc_ratio",
+            "_leaf_weighted_ratio",
+            "_leaf_weighted_doc_ratio",
+            "_leaf_weighted_score",
+            "_leaf_weighted_doc",
+            "_leaf_weighted_max",
+            "_leaf_weight",
+        ):
+            node.pop(key, None)
+        for child in (node.get("children") or {}).values():
+            cleanup(child)
+
+    for root in tree.values():
+        walk(root)
+        cleanup(root)
+    return tree
+
+
+def filter_graph_by_implementation_groups(
+    graph: dict[str, dict], implementation_groups: set[str] | None
+) -> dict[str, dict]:
+    if not implementation_groups:
+        return graph
+
+    def should_include_node(node: dict) -> bool:
+        node_groups = node.get("implementation_groups") or []
+        # Include a node if:
+        #   - it has any matching IG of its own, OR
+        #   - any of its children survived the filter (i.e., this node is the
+        #     ancestor of a match).
+        # The prior implementation short-circuited on node_groups and dropped
+        # ancestors whose own IGs didn't match, hiding matching descendants —
+        # e.g., ISO 27001's annex-a (IGs=['SoA']) would hide leaves tagged with
+        # a custom IG added via the framework builder.
+        if any(group in node_groups for group in implementation_groups):
+            return True
+        return bool(node.get("children"))
+
+    filtered_graph = {}
+    for key, value in graph.items():
+        if value.get("children"):
+            value["children"] = filter_graph_by_implementation_groups(
+                value["children"], implementation_groups
+            )
+        if should_include_node(value):
+            filtered_graph[key] = value
+
+    return filtered_graph
+
+
+def annotate_tree_with_coverage(tree: dict[str, dict], compliance_assessment) -> dict:
+    """Flag each assessed node with whether it is covered by applied controls
+    and by evidence.
+
+    ``has_evidence`` follows RequirementAssessment.has_evidence(): evidence
+    attached directly to the requirement assessment OR reachable through one
+    of its applied controls.
+
+    Keys are only emitted when True, so an uncovered audit — the case the
+    coverage filter exists for — costs nothing in payload size.
+    """
+    ac_through = RequirementAssessment.applied_controls.through.objects.filter(
+        requirementassessment__compliance_assessment=compliance_assessment
+    )
+    with_controls = set(ac_through.values_list("requirementassessment_id", flat=True))
+    with_evidence = set(
+        RequirementAssessment.evidences.through.objects.filter(
+            requirementassessment__compliance_assessment=compliance_assessment
+        ).values_list("requirementassessment_id", flat=True)
+    ) | set(
+        ac_through.filter(appliedcontrol__evidences__isnull=False).values_list(
+            "requirementassessment_id", flat=True
+        )
+    )
+
+    def _annotate(node: dict):
+        ra_id = node.get("ra_id")
+        if ra_id:
+            ra_uuid = UUID(ra_id)
+            if ra_uuid in with_controls:
+                node["has_applied_controls"] = True
+            if ra_uuid in with_evidence:
+                node["has_evidence"] = True
+        for child in node.get("children", {}).values():
+            _annotate(child)
+
+    for node in tree.values():
+        _annotate(node)
+
+    return tree
+
+
+def enrich_tree_for_soa(
+    tree: dict,
+    ra_lookup: dict,
+    ac_to_risk_scenarios: dict | None = None,
+) -> dict:
+    """
+    Walk the requirement tree and enrich each assessed leaf node with:
+    - selected (applicability boolean)
+    - observation
+    - applied_controls (list of dicts with id, name, ref_id, status, category, eta)
+    - risk_scenarios (list of dicts per applied control, if ac_to_risk_scenarios provided)
+    """
+
+    def _enrich_node(node: dict):
+        ra_id = node.get("ra_id")
+        if ra_id and ra_id in ra_lookup:
+            ra = ra_lookup[ra_id]
+            node["selected"] = ra.selected
+            node["observation"] = ra.observation or ""
+
+            controls = []
+            node_risk_scenarios = {}
+            for ac in ra.applied_controls.all():
+                ac_data = {
+                    "id": str(ac.id),
+                    "name": ac.name,
+                    "ref_id": ac.ref_id or "",
+                    "status": ac.status,
+                    "category": ac.category or "",
+                    "eta": str(ac.eta) if ac.eta else None,
+                }
+                controls.append(ac_data)
+                if ac_to_risk_scenarios and str(ac.id) in ac_to_risk_scenarios:
+                    for rs in ac_to_risk_scenarios[str(ac.id)]:
+                        node_risk_scenarios[rs["id"]] = rs
+            node["applied_controls"] = controls
+            node["risk_scenarios"] = list(node_risk_scenarios.values())
+        else:
+            node["selected"] = None
+            node["observation"] = None
+            node["applied_controls"] = []
+            node["risk_scenarios"] = []
+
+        for child in node.get("children", {}).values():
+            _enrich_node(child)
+
+    for node in tree.values():
+        _enrich_node(node)
+
+    return tree
+
+
+def get_parsed_matrices(
+    user: User, risk_assessments: list | None = None, folder_id=None
+):
+    scoped_folder = (
+        Folder.objects.get(id=folder_id) if folder_id else Folder.get_root_folder()
+    )
+    object_ids_view = RoleAssignment.get_viewable_object_ids(
+        user, RiskScenario, scoped_folder
+    )
+    queryset = RiskScenario.objects.filter(id__in=object_ids_view)
+    if risk_assessments is not None:
+        queryset = queryset.filter(risk_assessment__in=risk_assessments)
+    # Return tuples of (matrix_id, json_definition) so callers can scope queries per matrix
+    matrix_rows = queryset.values_list(
+        "risk_assessment__risk_matrix__id",
+        "risk_assessment__risk_matrix__json_definition",
+    ).distinct()
+    # Deduplicate by matrix id
+    seen = set()
+    matrices = []
+    for matrix_id, json_def in matrix_rows:
+        if matrix_id not in seen:
+            seen.add(matrix_id)
+            matrices.append((matrix_id, json_def))
+    return sorted(matrices, key=lambda m: len(m[1]["risk"]), reverse=True)
+
+
+def get_risk_field(user: User, field: str):
+    """
+    Returns a list of the field values of all risks in all matrices
+    """
+    parsed_matrices = get_parsed_matrices(user)
+    return [
+        m["risk"][i][field] for _, m in parsed_matrices for i in range(len(m["risk"]))
+    ]
+
+
+def get_risk_color_map(user: User):
+    """
+    Returns a dictionary with the risk abbreviations as keys and its hex color as value
+    """
+    risk_abbreviations: list = get_risk_field(user, "abbreviation")
+    risk_colors: list = get_risk_field(user, "hexcolor")
+    return dict(zip(risk_abbreviations, risk_colors))
+
+
+def get_risk_color_map_name(user: User):
+    """
+    Returns a dictionary with the risk names as keys and its hex color as value
+    """
+    risk_names: list = get_risk_field(user, "name")
+    risk_colors: list = get_risk_field(user, "hexcolor")
+    return dict(zip(risk_names, risk_colors))
+
+
+def get_risk_color_ordered_list(user: User, risk_assessments_list: list | None = None):
+    """
+    Returns a list of hex colors ordered by risk matrix and risk
+    """
+    risk_colors = list()
+    encountered_risks = set()
+    parsed_matrices = get_parsed_matrices(user, risk_assessments_list)
+    for _, m in parsed_matrices:
+        for i in range(len(m["risk"])):
+            if m["risk"][i]["name"] in encountered_risks:
+                continue
+            risk_colors.append(m["risk"][i]["hexcolor"])
+            encountered_risks.add(m["risk"][i]["name"])
+    return risk_colors
+
+
+def get_rating_options(user: User) -> list:
+    risk_labels: list = get_risk_field(user, "name")
+    return [(i, l) for i, l in enumerate(risk_labels)]
+
+
+def get_rating_options_abbr(user: User):
+    risk_abbreviations: list = get_risk_field(user, "abbreviation")
+    risk_names: list = get_risk_field(user, "name")
+    return list(zip(risk_abbreviations, risk_names))
+
+
+def get_rating_options_parsed_matrix(user: User, parsed_matrix):
+    risk_names: list = [
+        f"{parsed_matrix['risk'][i]['name']}" for i in range(len(parsed_matrix["risk"]))
+    ]
+    return [(i, l) for i, l in enumerate(risk_names)]
+
+
+def risk_per_status(user: User):
+    # NOTE: if we want to skip empty values, we could just use the user_group by using annotation
+    # rs_groups =
+    # RiskScenario.objects.all().values('treatment').annotate(total=Count('treatment')).order_by('treatment')
+
+    labels = list()
+    values = list()
+    # Pal ['#5470c6', '#91cc75', '#fac858', '#ee6666', '#73c0de', '#3ba272', '#fc8452', '#9a60b4', '#ea7ccc']
+    #
+
+    # this formatting is a constraint from eCharts
+    color_map = {
+        "open": "#fac858",
+        "mitigate": "#91cc75",
+        "accept": "#73c0de",
+        "avoid": "#ee6666",
+        "transfer": "#3ba272",
+        "cancelled": "#9ca3af",
+    }
+
+    object_ids_view = RoleAssignment.get_viewable_object_ids(user, RiskScenario)
+    for st in RiskScenario.TREATMENT_OPTIONS:
+        count = (
+            RiskScenario.objects.filter(id__in=object_ids_view)
+            .filter(treatment=st[0])
+            .count()
+        )
+        v = {
+            "value": count,
+            "localName": st[0],
+            "itemStyle": {"color": color_map[st[0]]},
+        }
+        values.append(v)
+        labels.append(st[1])
+
+    local_lables = [camel_case(str(label)) for label in labels]
+    return {"localLables": local_lables, "labels": labels, "values": values}
+
+
+def applied_control_per_status(user: User):
+    values = list()
+    labels = list()
+    local_lables = list()
+    color_map = {
+        AppliedControl.Status.UNDEFINED: "#CCC",
+        AppliedControl.Status.TO_DO: "#BFDBFE",
+        AppliedControl.Status.ACTIVE: "#46D39A",
+        AppliedControl.Status.IN_PROGRESS: "#392F5A",
+        AppliedControl.Status.ON_HOLD: "#F4D06F",
+        AppliedControl.Status.DEGRADED: "#F97316",
+        AppliedControl.Status.DEPRECATED: "#E55759",
+    }
+    object_ids_view = RoleAssignment.get_viewable_object_ids(user, AppliedControl)
+    viewable_applied_controls = AppliedControl.objects.filter(id__in=object_ids_view)
+    for st in AppliedControl.Status.choices:
+        count = viewable_applied_controls.filter(status=st[0]).count()
+        v = {"value": count, "itemStyle": {"color": color_map[st[0]]}}
+        values.append(v)
+        labels.append(st[1])
+    local_lables = [camel_case(str(label)) for label in labels]
+    return {"localLables": local_lables, "labels": labels, "values": values}
+
+
+def task_template_per_status(user: User):
+    from core.models import TaskTemplate, TaskNode
+
+    values = list()
+    labels = list()
+    local_lables = list()
+    color_map = {
+        "pending": "#BFDBFE",
+        "in_progress": "#392F5A",
+        "completed": "#46D39A",
+        "cancelled": "#E55759",
+    }
+    object_ids_view = RoleAssignment.get_viewable_object_ids(user, TaskTemplate)
+    viewable_task_templates = TaskTemplate.objects.filter(id__in=object_ids_view)
+
+    # Count statuses based on the logic:
+    # - If not recurrent: get the status of the node
+    # - If recurrent: get the status of the last occurrence (most recent past event)
+    from django.db.models import Subquery, OuterRef
+    from django.utils import timezone
+
+    status_counts = {"pending": 0, "in_progress": 0, "completed": 0, "cancelled": 0}
+    today = timezone.localdate()
+
+    # For recurrent templates, get last occurrence status (most recent past)
+    last_occurrence_subq = (
+        TaskNode.objects.filter(task_template=OuterRef("pk"), due_date__lt=today)
+        .order_by("-due_date")
+        .values("status")[:1]
+    )
+
+    recurrent_with_status = (
+        viewable_task_templates.filter(is_recurrent=True)
+        .annotate(node_status=Subquery(last_occurrence_subq))
+        .values_list("node_status", flat=True)
+    )
+
+    # For non-recurrent templates, get the single node's status
+    single_node_subq = (
+        TaskNode.objects.filter(task_template=OuterRef("pk"))
+        .order_by("-due_date")
+        .values("status")[:1]
+    )
+
+    non_recurrent_with_status = (
+        viewable_task_templates.filter(is_recurrent=False)
+        .annotate(node_status=Subquery(single_node_subq))
+        .values_list("node_status", flat=True)
+    )
+
+    # Count statuses
+    for status in recurrent_with_status:
+        status_counts[status or "pending"] += 1
+
+    for status in non_recurrent_with_status:
+        status_counts[status or "pending"] += 1
+
+    for st in TaskNode.TASK_STATUS_CHOICES:
+        count = status_counts[st[0]]
+        v = {"value": count, "itemStyle": {"color": color_map[st[0]]}}
+        values.append(v)
+        labels.append(st[1])
+    local_lables = [camel_case(str(label)) for label in labels]
+    return {"localLables": local_lables, "labels": labels, "values": values}
+
+
+def get_governance_calendar_data(
+    user: User, year: Optional[int] = None, folder_id: Optional[str] = None
+) -> list:
+    """
+    Generate calendar heatmap data for governance activities.
+    Returns activity counts per date for:
+    - TaskNode due dates
+    - AppliedControl ETAs
+    - RiskAcceptance expiry dates
+    - RiskAssessment due dates and ETAs
+    - ComplianceAssessment due dates and ETAs
+    - FindingsAssessment due dates and ETAs
+    """
+
+    if year is None:
+        year = datetime.now().year
+
+    start_date = datetime(year, 1, 1).date()
+    end_date = datetime(year, 12, 31).date()
+
+    scoped_folder = (
+        Folder.objects.get(id=folder_id) if folder_id else Folder.get_root_folder()
+    )
+
+    # Dictionary to accumulate activity counts per date
+    activity_counts = defaultdict(int)
+
+    # Get accessible objects for each model
+    task_ids = RoleAssignment.get_viewable_object_ids(user, TaskNode, scoped_folder)
+    control_ids = RoleAssignment.get_viewable_object_ids(
+        user, AppliedControl, scoped_folder
+    )
+    acceptance_ids = RoleAssignment.get_viewable_object_ids(
+        user, RiskAcceptance, scoped_folder
+    )
+    risk_assessment_ids = RoleAssignment.get_viewable_object_ids(
+        user, RiskAssessment, scoped_folder
+    )
+    compliance_assessment_ids = RoleAssignment.get_viewable_object_ids(
+        user, ComplianceAssessment, scoped_folder
+    )
+    findings_assessment_ids = RoleAssignment.get_viewable_object_ids(
+        user, FindingsAssessment, scoped_folder
+    )
+
+    # Count TaskNode due dates
+    task_nodes = TaskNode.objects.filter(
+        id__in=task_ids, due_date__gte=start_date, due_date__lte=end_date
+    ).values_list("due_date", flat=True)
+
+    for due_date in task_nodes:
+        if due_date:
+            activity_counts[str(due_date)] += 1
+
+    # Count AppliedControl ETAs
+    applied_controls = AppliedControl.objects.filter(
+        id__in=control_ids, eta__gte=start_date, eta__lte=end_date
+    ).values_list("eta", flat=True)
+
+    for eta in applied_controls:
+        if eta:
+            activity_counts[str(eta)] += 1
+
+    # Count RiskAcceptance expiry dates
+    risk_acceptances = RiskAcceptance.objects.filter(
+        id__in=acceptance_ids, expiry_date__gte=start_date, expiry_date__lte=end_date
+    ).values_list("expiry_date", flat=True)
+
+    for expiry_date in risk_acceptances:
+        if expiry_date:
+            activity_counts[str(expiry_date)] += 1
+
+    # Helper function to count assessment dates
+    def count_assessment_dates(
+        assessment_ids: Iterable[UUID], model: type[models.Model]
+    ):
+        # Count due dates
+        due_dates = model.objects.filter(
+            id__in=assessment_ids, due_date__gte=start_date, due_date__lte=end_date
+        ).values_list("due_date", flat=True)
+
+        for due_date in due_dates:
+            if due_date:
+                activity_counts[str(due_date)] += 1
+
+        # Count ETAs
+        etas = model.objects.filter(
+            id__in=assessment_ids, eta__gte=start_date, eta__lte=end_date
+        ).values_list("eta", flat=True)
+
+        for eta in etas:
+            if eta:
+                activity_counts[str(eta)] += 1
+
+    # Count dates from all assessment types
+    count_assessment_dates(risk_assessment_ids, RiskAssessment)
+    count_assessment_dates(compliance_assessment_ids, ComplianceAssessment)
+    count_assessment_dates(findings_assessment_ids, FindingsAssessment)
+
+    # Convert to array format expected by frontend: [[date, value], ...]
+    result = [[date_str, count] for date_str, count in sorted(activity_counts.items())]
+
+    return result
+
+
+def assessment_per_status(
+    user: User, model: type[RiskAssessment] | type[ComplianceAssessment]
+):
+    values = list()
+    labels = list()
+    local_lables = list()
+    color_map = {
+        "undefined": "#CCC",
+        "planned": "#BFDBFE",
+        "in_progress": "#5470c6",
+        "in_review": "#BBF7D0",
+        "done": "#46D39A",
+        "deprecated": "#E55759",
+    }
+    object_ids_view = RoleAssignment.get_viewable_object_ids(user, model)
+    viewable_applied_controls = model.objects.filter(id__in=object_ids_view)
+    undefined_count = viewable_applied_controls.filter(status__isnull=True).count()
+    values.append(
+        {"value": undefined_count, "itemStyle": {"color": color_map["undefined"]}}
+    )
+    for st in model.Status.choices:
+        count = viewable_applied_controls.filter(status=st[0]).count()
+        v = {"value": count, "itemStyle": {"color": color_map[st[0]]}}
+        values.append(v)
+        labels.append(st[1])
+    # add undefined as the first element in the labels to balance the values
+    labels.insert(0, "undefined")
+    local_lables = [camel_case(str(label)) for label in labels]
+    return {"localLables": local_lables, "labels": labels, "values": values}
+
+
+def combined_assessments_per_status(
+    user: User, folder_id: Optional[str] = None
+) -> dict:
+    """
+    Returns assessment counts grouped by status for all three assessment types:
+    RiskAssessment, ComplianceAssessment, and FindingsAssessment
+    """
+    scoped_folder = (
+        Folder.objects.filter(id=folder_id).first() if folder_id else None
+    ) or Folder.get_root_folder()
+
+    # Get all unique statuses across all assessment types
+    # Using RiskAssessment.Status as they should all share the same status choices
+    all_statuses = ["undefined"] + [
+        choice[0] for choice in RiskAssessment.Status.choices
+    ]
+    status_labels = ["undefined"] + [
+        choice[1] for choice in RiskAssessment.Status.choices
+    ]
+
+    # Initialize result structure
+    result = {"statuses": all_statuses, "status_labels": status_labels, "series": []}
+
+    # Process each assessment type
+    assessment_types = [
+        ("complianceAssessments", ComplianceAssessment),
+        ("riskAssessments", RiskAssessment),
+        ("findingsAssessments", FindingsAssessment),
+    ]
+
+    for series_name, model in assessment_types:
+        # Get accessible objects
+        object_ids_view = RoleAssignment.get_viewable_object_ids(
+            user, model, scoped_folder
+        )
+        viewable_assessments = model.objects.filter(id__in=object_ids_view)
+
+        # Count by status in a single query
+        status_counts = dict(
+            viewable_assessments.exclude(status__isnull=True)
+            .values_list("status")
+            .annotate(count=Count("status"))
+        )
+        undefined_count = viewable_assessments.filter(status__isnull=True).count()
+
+        # Build data array matching all_statuses order
+        data = [undefined_count] + [
+            status_counts.get(status, 0) for status in all_statuses[1:]
+        ]
+
+        result["series"].append({"name": series_name, "data": data})
+
+    return result
+
+
+def applied_control_per_cur_risk(user: User):
+    output = list()
+    object_ids_view = RoleAssignment.get_viewable_object_ids(user, AppliedControl)
+    for lvl in get_rating_options(user):
+        cnt = (
+            AppliedControl.objects.filter(id__in=object_ids_view)
+            .exclude(status="active")
+            .filter(risk_scenarios__current_level=lvl[0])
+            .count()
+        )
+        output.append({"name": lvl[1], "value": cnt})
+
+    return {"values": output}
+
+
+def applied_control_per_reference_control(user: User):
+    indicators = list()
+    values = list()
+    object_ids_view = RoleAssignment.get_viewable_object_ids(user, AppliedControl)
+
+    tmp = (
+        AppliedControl.objects.filter(id__in=object_ids_view)
+        .values("reference_control__name")
+        .annotate(total=Count("reference_control"))
+        .order_by("reference_control")
+    )
+    for entry in tmp:
+        indicators.append(entry["reference_control__name"])
+        values.append(entry["total"])
+
+    return {
+        "indicators": indicators,
+        "values": values,
+        "min": min(values, default=0) - 1,
+        "max": max(values, default=0) + 1,
+    }
+
+
+def aggregate_risks_per_field(
+    user: User,
+    field: str,
+    residual: bool = False,
+    inherent: bool = False,
+    risk_assessments: list | None = None,
+    folder_id=None,
+):
+    scoped_folder = (
+        Folder.objects.get(id=folder_id) if folder_id else Folder.get_root_folder()
+    )
+    object_ids_view = RoleAssignment.get_viewable_object_ids(
+        user, RiskScenario, scoped_folder
+    )
+    parsed_matrices: list = get_parsed_matrices(
+        user=user, risk_assessments=risk_assessments, folder_id=folder_id
+    )
+    values = dict()
+    level_field = (
+        "residual_level"
+        if residual
+        else "inherent_level"
+        if inherent
+        else "current_level"
+    )
+    base_scenarios = RiskScenario.objects.filter(id__in=object_ids_view)
+    if risk_assessments is not None:
+        base_scenarios = base_scenarios.filter(risk_assessment__in=risk_assessments)
+    for matrix_id, m in parsed_matrices:
+        # Scope scenario counting to scenarios belonging to this specific matrix
+        matrix_scenarios = base_scenarios.filter(
+            risk_assessment__risk_matrix_id=matrix_id,
+        )
+        for i in range(len(m["risk"])):
+            k = get_referential_translation(m["risk"][i], field)
+            if k not in values:
+                values[k] = dict()
+
+            count = matrix_scenarios.filter(**{level_field: i}).count()
+
+            if "count" not in values[k]:
+                values[k]["count"] = count
+                values[k]["color"] = m["risk"][i]["hexcolor"]
+            else:
+                values[k]["count"] += count
+    return values
+
+
+def risks_count_per_level(
+    user: User,
+    risk_assessments: list | None = None,
+    folder_id=None,
+    include_inherent=False,
+):
+    current_level = list()
+    residual_level = list()
+    inherent_level = list()
+
+    for r in aggregate_risks_per_field(
+        user, "name", risk_assessments=risk_assessments, folder_id=folder_id
+    ).items():
+        current_level.append(
+            {
+                "name": r[0],
+                "value": r[1]["count"],
+                "color": r[1]["color"],
+            }
+        )
+    for r in aggregate_risks_per_field(
+        user,
+        "name",
+        residual=True,
+        risk_assessments=risk_assessments,
+        folder_id=folder_id,
+    ).items():
+        residual_level.append(
+            {
+                "name": r[0],
+                "value": r[1]["count"],
+                "color": r[1]["color"],
+            }
+        )
+
+    if not include_inherent:
+        return {
+            "current": current_level,
+            "residual": residual_level,
+        }
+
+    for r in aggregate_risks_per_field(
+        user,
+        "name",
+        inherent=True,
+        risk_assessments=risk_assessments,
+        folder_id=folder_id,
+    ).items():
+        inherent_level.append(
+            {
+                "name": r[0],
+                "value": r[1]["count"],
+                "color": r[1]["color"],
+            }
+        )
+    return {
+        "current": current_level,
+        "residual": residual_level,
+        "inherent": inherent_level,
+    }
+
+
+def p_risks(user: User):
+    p_risks_labels = list()
+    p_risks_counts = list()
+    object_ids_view = RoleAssignment.get_viewable_object_ids(user, Threat)
+    for p_risk in Threat.objects.filter(id__in=object_ids_view).order_by("name"):
+        p_risks_labels.append(p_risk.name)
+        p_risks_counts.append(RiskScenario.objects.filter(threat=p_risk).count())
+
+    return {
+        "indicators": p_risks_labels,
+        "values": p_risks_counts,
+        "min": min(p_risks_counts, default=0) - 1,
+        "max": max(p_risks_counts, default=0) + 1,
+    }
+
+
+def p_risks_2(user: User):
+    data = list()
+    object_ids_view = RoleAssignment.get_viewable_object_ids(user, Threat)
+    for p_risk in Threat.objects.filter(id__in=object_ids_view).order_by("name"):
+        cnt = RiskScenario.objects.filter(threat=p_risk).count()
+        if cnt > 0:
+            data.append(
+                {
+                    "value": RiskScenario.objects.filter(threat=p_risk).count(),
+                    "name": p_risk.name,
+                }
+            )
+    return data
+
+
+def risks_per_perimeter_groups(user: User):
+    output = list()
+    object_ids_view = RoleAssignment.get_viewable_object_ids(user, RiskScenario)
+    for folder in Folder.objects.all().order_by("name"):
+        ri_level = (
+            RiskScenario.objects.filter(id__in=object_ids_view)
+            .filter(risk_assessment__perimeter__folder=folder)
+            .values("current_level")
+            .annotate(total=Count("current_level"))
+        )
+        output.append({"folder": folder, "ri_level": ri_level})
+    return output
+
+
+def get_counters(user: User, folder_id: Optional[str] = None) -> dict:
+    scoped_folder = (
+        Folder.objects.filter(id=folder_id).first() if folder_id else None
+    ) or Folder.get_root_folder()
+
+    # Get all accessible applied controls
+    applied_controls_ids = RoleAssignment.get_viewable_object_ids(
+        user, AppliedControl, scoped_folder
+    )
+
+    # Count policies and non-policies separately
+    all_applied_controls = AppliedControl.objects.filter(id__in=applied_controls_ids)
+    policies_count = all_applied_controls.filter(category="policy").count()
+    applied_controls_count = all_applied_controls.exclude(category="policy").count()
+
+    # Get accessible frameworks
+    frameworks_ids = RoleAssignment.get_viewable_object_ids(
+        user, Framework, scoped_folder
+    )
+
+    # Get accessible risk acceptances
+    risk_acceptances_ids = RoleAssignment.get_viewable_object_ids(
+        user, RiskAcceptance, scoped_folder
+    )
+
+    # Get accessible security exceptions
+    security_exceptions_ids = RoleAssignment.get_viewable_object_ids(
+        user, SecurityException, scoped_folder
+    )
+
+    return {
+        "domains": RoleAssignment.get_viewable_object_ids(
+            user, Folder, scoped_folder
+        ).count(),
+        "frameworks": frameworks_ids.count(),
+        "applied_controls": applied_controls_count,
+        "policies": policies_count,
+        "exceptions": security_exceptions_ids.count(),
+        "risk_acceptances": risk_acceptances_ids.count(),
+    }
+
+
+def build_audits_tree_metrics(user):
+    object_ids = RoleAssignment.get_viewable_object_ids(user, Folder)
+    viewable_domains = Folder.objects.filter(id__in=object_ids)
+
+    tree = list()
+    domain_prj_children = list()
+    for domain in viewable_domains.exclude(name="Global"):
+        block_domain = {"name": domain.name, "children": []}
+        domain_prj_children = []
+        for perimeter in Perimeter.objects.filter(folder=domain):
+            block_prj = {"name": perimeter.name, "domain": domain.name, "children": []}
+            children = []
+            for audit in ComplianceAssessment.objects.filter(perimeter=perimeter):
+                cnt_res = {}
+                for result in RequirementAssessment.Result.choices:
+                    requirement_assessments = audit.get_requirement_assessments(
+                        include_non_assessable=False
+                    )
+                    cnt_res[result[0]] = len(
+                        [
+                            requirement
+                            for requirement in requirement_assessments
+                            if requirement.result == result[0]
+                        ]
+                    )
+                blk_audit = {
+                    "name": audit.name,
+                    "children": [
+                        {
+                            "name": "compliant",
+                            "value": cnt_res["compliant"],
+                        },
+                        {
+                            "name": "not assessed",
+                            "value": cnt_res["not_assessed"],
+                        },
+                        {
+                            "name": "Not Applicable",
+                            "value": cnt_res["not_applicable"],
+                        },
+                        {
+                            "name": "partial",
+                            "value": cnt_res["partially_compliant"],
+                        },
+                        {
+                            "name": "Non compliant",
+                            "value": cnt_res["non_compliant"],
+                        },
+                    ],
+                }
+                children.append(blk_audit)
+            block_prj["children"] = children
+            domain_prj_children.append(block_prj)
+        block_domain["children"] = domain_prj_children
+        tree.append(block_domain)
+    return tree
+
+
+def build_audits_stats(user, folder_id=None, object_ids=None):
+    if object_ids is None:
+        scoped_folder = (
+            Folder.objects.get(id=folder_id) if folder_id else Folder.get_root_folder()
+        )
+        object_ids = RoleAssignment.get_viewable_object_ids(
+            user, ComplianceAssessment, scoped_folder
+        )
+    top_audits = list(
+        ComplianceAssessment.objects.filter(id__in=object_ids)
+        .order_by("-updated_at")
+        .only("id", "name", "selected_implementation_groups")[:10]
+    )
+    if not top_audits:
+        return {"data": [], "names": [], "uuids": []}
+
+    # Single fetch for all RAs across the top 10 audits, then aggregate
+    # in Python so each audit's selected_implementation_groups filter is
+    # honored (replaces 10× get_requirements_result_count()).
+    top_ids = [a.id for a in top_audits]
+    ig_by_audit = {
+        a.id: set(a.selected_implementation_groups)
+        if a.selected_implementation_groups
+        else None
+        for a in top_audits
+    }
+    counts_by_audit: dict = {aid: {} for aid in top_ids}
+    ra_qs = RequirementAssessment.objects.filter(
+        compliance_assessment_id__in=top_ids,
+        requirement__assessable=True,
+    ).values_list(
+        "compliance_assessment_id",
+        "result",
+        "requirement__implementation_groups",
+    )
+    for ca_id, result, req_igs in ra_qs:
+        ig = ig_by_audit[ca_id]
+        if ig is not None and not (req_igs and ig & set(req_igs)):
+            continue
+        bucket = counts_by_audit[ca_id]
+        bucket[result] = bucket.get(result, 0) + 1
+
+    results_order = list(RequirementAssessment.Result)
+    data = [
+        [counts_by_audit[a.id].get(r, 0) for r in results_order] for a in top_audits
+    ]
+    names = [a.name for a in top_audits]
+    uuids = [a.id for a in top_audits]
+    return {"data": data, "names": names, "uuids": uuids}
+
+
+def csf_functions(user, folder_id=None):
+    scoped_folder = (
+        Folder.objects.get(id=folder_id) if folder_id else Folder.get_root_folder()
+    )
+    object_ids = RoleAssignment.get_viewable_object_ids(
+        user, AppliedControl, scoped_folder
+    )
+    viewable_controls = AppliedControl.objects.filter(id__in=object_ids)
+    cnt = dict()
+    for choice in ReferenceControl.CSF_FUNCTION:
+        cnt[choice[0]] = viewable_controls.filter(csf_function=choice[0]).count()
+    undefined = viewable_controls.filter(csf_function__isnull=True).count()
+    data = [
+        {"name": "Govern", "value": cnt["govern"]},
+        {"name": "Identify", "value": cnt["identify"]},
+        {"name": "Protect", "value": cnt["protect"]},
+        {"name": "Detect", "value": cnt["detect"]},
+        {"name": "Respond", "value": cnt["respond"]},
+        {"name": "Recover", "value": cnt["recover"]},
+    ]
+    if undefined > 0:
+        data.append({"name": "(undefined)", "value": undefined})
+
+    return data
+
+
+def get_metrics(user: User, folder_id):
+    def viewable_items(model, folder_id=None):
+        scoped_folder = (
+            Folder.objects.get(id=folder_id) if folder_id else Folder.get_root_folder()
+        )
+        object_ids = RoleAssignment.get_viewable_object_ids(user, model, scoped_folder)
+        return model.objects.filter(id__in=object_ids)
+
+    viewable_controls = viewable_items(AppliedControl, folder_id)
+    viewable_risk_assessments = viewable_items(RiskAssessment, folder_id)
+    viewable_compliance_assessments = viewable_items(ComplianceAssessment, folder_id)
+    viewable_risk_scenarios = viewable_items(RiskScenario, folder_id)
+    viewable_threats = viewable_items(Threat, folder_id)
+    viewable_risk_acceptances = viewable_items(RiskAcceptance, folder_id)
+    viewable_evidences = viewable_items(Evidence, folder_id)
+    viewable_requirement_assessments = viewable_items(RequirementAssessment, folder_id)
+    controls_count = viewable_controls.count()
+    missed_eta_count = (
+        viewable_controls.filter(
+            eta__lt=date.today(),
+        )
+        .exclude(status="active")
+        .count()
+    )
+
+    data = {
+        "controls": {
+            "total": controls_count,
+            "to_do": viewable_controls.filter(status="to_do").count(),
+            "in_progress": viewable_controls.filter(status="in_progress").count(),
+            "on_hold": viewable_controls.filter(status="on_hold").count(),
+            "active": viewable_controls.filter(status="active").count(),
+            "degraded": viewable_controls.filter(status="degraded").count(),
+            "deprecated": viewable_controls.filter(status="deprecated").count(),
+            "p1": viewable_controls.filter(priority=1).exclude(status="active").count(),
+            "eta_missed": missed_eta_count,
+        },
+        "risk": {
+            "assessments": viewable_risk_assessments.count(),
+            "scenarios": viewable_risk_scenarios.count(),
+            "threats": viewable_threats.filter(risk_scenarios__isnull=False)
+            .distinct()
+            .count(),
+            "acceptances": viewable_risk_acceptances.count(),
+        },
+        "compliance": {
+            "used_frameworks": viewable_compliance_assessments.values("framework_id")
+            .distinct()
+            .count(),
+            "audits": viewable_compliance_assessments.count(),
+            "active_audits": viewable_compliance_assessments.filter(
+                status__in=["in_progress", "in_review", "done"]
+            ).count(),
+            "evidences": viewable_evidences.count(),
+            "expired_evidences": viewable_evidences.filter(status="expired").count(),
+            "non_compliant_items": viewable_requirement_assessments.filter(
+                result="non_compliant"
+            ).count(),
+        },
+        "csf_functions": csf_functions(user, folder_id),
+    }
+    return data
+
+
+def _compute_progress_by_assessment(assessment_ids: QuerySet[UUID]) -> dict[UUID, int]:
+    """
+    Bulk-compute progress (% assessed) for a set of ComplianceAssessment ids,
+    honoring each assessment's selected_implementation_groups. Mirrors the
+    .progress property semantics (assessed = result != NOT_ASSESSED OR score
+    is not None) but in two queries instead of N heavy prefetched ones.
+    """
+    if not assessment_ids.exists():
+        return {}
+
+    ig_by_audit = {
+        ca_id: set(igs) if igs else None
+        for ca_id, igs in ComplianceAssessment.objects.filter(
+            id__in=assessment_ids
+        ).values_list("id", "selected_implementation_groups")
+    }
+
+    totals = {aid: 0 for aid in assessment_ids}
+    assessed = {aid: 0 for aid in assessment_ids}
+    rows = RequirementAssessment.objects.filter(
+        compliance_assessment_id__in=assessment_ids,
+        requirement__assessable=True,
+    ).values_list(
+        "compliance_assessment_id",
+        "result",
+        "score",
+        "requirement__implementation_groups",
+    )
+    for ca_id, result, score, req_igs in rows:
+        ig = ig_by_audit.get(ca_id)
+        if ig is not None and not (req_igs and ig & set(req_igs)):
+            continue
+        totals[ca_id] += 1
+        if result != RequirementAssessment.Result.NOT_ASSESSED or score is not None:
+            assessed[ca_id] += 1
+
+    return {
+        aid: int((assessed[aid] / totals[aid]) * 100) if totals[aid] else 0
+        for aid in assessment_ids
+    }
+
+
+def get_audits_metrics(user: User, folder_id=None):
+    scoped_folder = (
+        Folder.objects.get(id=folder_id) if folder_id else Folder.get_root_folder()
+    )
+    object_ids = RoleAssignment.get_viewable_object_ids(
+        user, ComplianceAssessment, scoped_folder
+    )
+    progresses = list(_compute_progress_by_assessment(object_ids).values())
+    progress_avg = math.ceil(mean(progresses)) if progresses else 0
+    return {
+        "progress_avg": progress_avg,
+        "audits_stats": build_audits_stats(user, folder_id, object_ids=object_ids),
+    }
+
+
+def get_compliance_analytics(user: User, folder_id=None):
+    """
+    Returns analytics data for compliance assessments structured by:
+    Framework -> Domain (folder) -> Assessment details
+
+    Structure:
+    {
+        "framework_name": {
+            "framework_id": "uuid",
+            "framework_average": 75.5,
+            "domains": [
+                {
+                    "domain": "Domain Name",
+                    "domain_id": "uuid",
+                    "domain_average": 80.0,
+                    "assessments": [
+                        {
+                            "assessment_id": "uuid",
+                            "assessment_name": "Assessment Name",
+                            "progress": 85,
+                            "perimeter": "Perimeter Name",
+                            "perimeter_id": "uuid",
+                            "status": "in_progress"
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+    """
+
+    def viewable_items[T: models.Model](model: type[T], folder_id=None) -> QuerySet[T]:
+        scoped_folder = (
+            Folder.objects.get(id=folder_id) if folder_id else Folder.get_root_folder()
+        )
+        object_ids = RoleAssignment.get_viewable_object_ids(user, model, scoped_folder)
+        return model.objects.filter(id__in=object_ids)
+
+    viewable_assessments = viewable_items(
+        ComplianceAssessment, folder_id
+    ).select_related("framework", "folder", "perimeter")
+
+    progress_by_id = _compute_progress_by_assessment(
+        viewable_assessments.values_list("id", flat=True)
+    )
+
+    framework_data = {}
+
+    for assessment in viewable_assessments:
+        framework_name = assessment.framework.name
+        framework_id = str(assessment.framework.id)
+        domain_name = assessment.folder.name if assessment.folder else "No Domain"
+        domain_id = str(assessment.folder.id) if assessment.folder else None
+        perimeter_name = (
+            assessment.perimeter.name if assessment.perimeter else "No Perimeter"
+        )
+        perimeter_id = str(assessment.perimeter.id) if assessment.perimeter else None
+
+        if framework_name not in framework_data:
+            framework_data[framework_name] = {
+                "framework_id": framework_id,
+                "framework_average": 0,
+                "domains": {},
+            }
+
+        if domain_name not in framework_data[framework_name]["domains"]:
+            framework_data[framework_name]["domains"][domain_name] = {
+                "domain_id": domain_id,
+                "domain_average": 0,
+                "assessments": [],
+            }
+
+        framework_data[framework_name]["domains"][domain_name]["assessments"].append(
+            {
+                "assessment_id": str(assessment.id),
+                "assessment_name": assessment.name,
+                "progress": progress_by_id.get(assessment.id, 0),
+                "perimeter": perimeter_name,
+                "perimeter_id": perimeter_id,
+                "status": assessment.status,
+            }
+        )
+
+    # Calculate averages
+    for framework_name, framework_info in framework_data.items():
+        all_framework_progress = []
+
+        for domain_name, domain_info in framework_info["domains"].items():
+            # Calculate domain average
+            domain_progress = [a["progress"] for a in domain_info["assessments"]]
+            domain_info["domain_average"] = (
+                round(sum(domain_progress) / len(domain_progress), 1)
+                if domain_progress
+                else 0
+            )
+
+            all_framework_progress.extend(domain_progress)
+
+        # Calculate framework average
+        framework_info["framework_average"] = (
+            round(sum(all_framework_progress) / len(all_framework_progress), 1)
+            if all_framework_progress
+            else 0
+        )
+
+        # Convert domains dict to list for frontend consumption
+        framework_info["domains"] = [
+            {"domain": domain_name, **domain_data}
+            for domain_name, domain_data in framework_info["domains"].items()
+        ]
+
+    return framework_data
+
+
+def get_instance_metrics():
+    """
+    Returns the instance metrics such as the number of users, domains, perimeters, etc.
+    """
+    nb_users = User.objects.all().count()
+    nb_first_login = User.objects.filter(first_login=True).count()
+    nb_libraries = LoadedLibrary.objects.all().count()
+    nb_domains = Folder.objects.filter(content_type="DO").count()
+    nb_perimeters = Perimeter.objects.all().count()
+    nb_assets = Asset.objects.all().count()
+    nb_threats = Threat.objects.all().count()
+    nb_functions = ReferenceControl.objects.all().count()
+    nb_measures = AppliedControl.objects.all().count()
+    nb_evidences = Evidence.objects.all().count()
+    nb_compliance_assessments = ComplianceAssessment.objects.all().count()
+    nb_risk_assessments = RiskAssessment.objects.all().count()
+    nb_risk_scenarios = RiskScenario.objects.all().count()
+    nb_risk_acceptances = RiskAcceptance.objects.all().count()
+
+    created_at = int(Folder.get_root_folder().created_at.timestamp())
+    last_login_dt = max(
+        [
+            x["last_login"]
+            for x in User.objects.all().values("last_login")
+            if x["last_login"]
+        ],
+        default=None,
+    )
+    last_login = int(last_login_dt.timestamp()) if last_login_dt else 0
+
+    return {
+        "nb_users": nb_users,
+        "nb_first_login": nb_first_login,
+        "nb_libraries": nb_libraries,
+        "nb_domains": nb_domains,
+        "nb_perimeters": nb_perimeters,
+        "nb_assets": nb_assets,
+        "nb_threats": nb_threats,
+        "nb_functions": nb_functions,
+        "nb_measures": nb_measures,
+        "nb_evidences": nb_evidences,
+        "nb_compliance_assessments": nb_compliance_assessments,
+        "nb_risk_assessments": nb_risk_assessments,
+        "nb_risk_scenarios": nb_risk_scenarios,
+        "nb_risk_acceptances": nb_risk_acceptances,
+        "created_at": created_at,
+        "last_login": last_login,
+    }
+
+
+def risk_status(user: User, risk_assessment_list):
+    risk_color_map = get_risk_color_map(user)
+    names = list()
+    risk_abbreviations: list = get_risk_field(user, "abbreviation")
+    current_out = {abbr: list() for abbr in risk_abbreviations}
+    residual_out = {abbr: list() for abbr in risk_abbreviations}
+
+    rsk_status_out = {
+        "open": list(),
+        "mitigate": list(),
+        "accept": list(),
+        "avoid": list(),
+        "transfer": list(),
+        "cancelled": list(),
+    }
+    mtg_status_out = {
+        "--": list(),
+        "to_do": list(),
+        "in_progress": list(),
+        "on_hold": list(),
+        "active": list(),
+        "deprecated": list(),
+    }
+
+    max_tmp = list()
+    abbreviations = [x[0] for x in get_rating_options_abbr(user)]
+    for risk_assessment in risk_assessment_list:
+        for lvl in get_rating_options(user):
+            abbr = abbreviations[lvl[0]]
+            cnt = RiskScenario.objects.filter(
+                risk_assessment=risk_assessment, current_level=lvl[0]
+            ).count()
+            current_out[abbr].append(
+                {"value": cnt, "itemStyle": {"color": risk_color_map[abbr]}}
+            )
+
+            cnt = RiskScenario.objects.filter(
+                risk_assessment=risk_assessment, residual_level=lvl[0]
+            ).count()
+            residual_out[abbr].append(
+                {"value": cnt, "itemStyle": {"color": risk_color_map[abbr]}}
+            )
+
+            max_tmp.append(
+                RiskScenario.objects.filter(risk_assessment=risk_assessment).count()
+            )
+
+        for option in RiskScenario.TREATMENT_OPTIONS:
+            cnt = RiskScenario.objects.filter(
+                risk_assessment=risk_assessment, treatment=option[0]
+            ).count()
+            rsk_status_out[option[0]].append(
+                {"value": cnt, "itemStyle": {"color": STATUS_COLOR_MAP[option[0]]}}
+            )
+
+        for status in AppliedControl.Status.choices:
+            cnt = AppliedControl.objects.filter(
+                risk_scenarios__risk_assessment=risk_assessment, status=status[0]
+            ).count()
+            mtg_status_out[status[0]].append(
+                {"value": cnt, "itemStyle": {"color": STATUS_COLOR_MAP[status[0]]}}
+            )
+
+        names.append(
+            str(risk_assessment.perimeter) + " " + str(risk_assessment.version)
+        )
+
+    y_max_rsk = max(max_tmp, default=0) + 1
+
+    return {
+        "names": names,
+        "current_out": current_out,
+        "residual_out": residual_out,
+        "rsk_status_out": rsk_status_out,
+        "mtg_status_out": mtg_status_out,
+        "y_max_rsk": y_max_rsk,
+    }
+
+
+def acceptances_to_review(user: User):
+    object_ids_view = RoleAssignment.get_viewable_object_ids(user, RiskAcceptance)
+    acceptances = (
+        RiskAcceptance.objects.filter(id__in=object_ids_view)
+        .filter(expiry_date__lte=date.today() + timedelta(days=30))
+        .filter(approver=user)
+        .filter(state__in=["submitted", "accepted"])
+        .order_by("expiry_date")
+    )
+
+    return acceptances
+
+
+def build_scenario_clusters(risk_assessment: RiskAssessment, include_inherent=False):
+    risk_matrix = risk_assessment.risk_matrix.parse_json()
+    grid = risk_matrix["grid"]
+    risk_matrix_current = [
+        [set() for _ in range(len(grid[0]))] for _ in range(len(grid))
+    ]
+    risk_matrix_residual = [
+        [set() for _ in range(len(grid[0]))] for _ in range(len(grid))
+    ]
+    risk_matrix_inherent = [
+        [set() for _ in range(len(grid[0]))] for _ in range(len(grid))
+    ]
+
+    for ri in RiskScenario.objects.filter(risk_assessment=risk_assessment).order_by(
+        "created_at"
+    ):
+        if ri.current_level >= 0:
+            risk_matrix_current[ri.current_proba][ri.current_impact].add(ri.ref_id)
+        if ri.residual_level >= 0:
+            risk_matrix_residual[ri.residual_proba][ri.residual_impact].add(ri.ref_id)
+        if include_inherent:
+            if ri.inherent_level >= 0:
+                risk_matrix_inherent[ri.inherent_proba][ri.inherent_impact].add(
+                    ri.ref_id
+                )
+
+    clusters = {"current": risk_matrix_current, "residual": risk_matrix_residual}
+
+    if include_inherent:
+        clusters["inherent"] = risk_matrix_inherent
+
+    return clusters
+
+
+def compile_risk_assessment_for_composer(user, risk_assessment_list: list):
+    rc = risks_count_per_level(user, risk_assessment_list)
+    current_level = rc["current"]
+    residual_level = rc["residual"]
+
+    untreated = RiskScenario.objects.filter(
+        risk_assessment__in=risk_assessment_list
+    ).exclude(treatment__in=["mitigate", "accept", "cancelled"])
+    untreated_h_vh = (
+        RiskScenario.objects.filter(risk_assessment__in=risk_assessment_list)
+        .exclude(treatment__in=["mitigate", "accept", "cancelled"])
+        .filter(current_level__gte=2)
+    )
+    accepted = RiskScenario.objects.filter(
+        risk_assessment__in=risk_assessment_list
+    ).filter(treatment="accept")
+
+    values = list()
+    labels = list()
+    # WARNING: this is wrong - FIX ME because we compute the controls multiple times if used accross multiple scenarios
+    for st in AppliedControl.Status.choices:
+        count = (
+            AppliedControl.objects.filter(status=st[0])
+            .filter(risk_scenarios__risk_assessment__in=risk_assessment_list)
+            .count()
+        )
+        v = {"value": count, "itemStyle": {"color": STATUS_COLOR_MAP[st[0]]}}
+        values.append(v)
+        labels.append(st[1])
+    local_lables = [camel_case(str(l)) for l in labels]
+
+    risk_assessment_objects = list()
+
+    for _ra in risk_assessment_list:
+        synth_table = list()
+        _rc = risks_count_per_level(user=user, risk_assessments=[_ra])
+        length = len(_rc["current"])
+        for i in range(length):
+            count_c = _rc["current"][i]["value"]
+            count_r = _rc["residual"][i]["value"]
+            lvl = _rc["current"][i]["name"]
+            color = _rc["current"][i]["color"]
+            synth_table.append(
+                {"lvl": lvl, "current": count_c, "residual": count_r, "color": color}
+            )
+        hvh_risks = RiskScenario.objects.filter(risk_assessment__id=_ra).filter(
+            current_level__gte=2
+        )
+        risk_assessment_objects.append(
+            {
+                "risk_assessment": get_object_or_404(RiskAssessment, pk=_ra),
+                "synth_table": synth_table,
+                "hvh_risks": hvh_risks,
+            }
+        )
+
+    return {
+        "risk_assessment_objects": risk_assessment_objects,
+        "current_level": current_level,
+        "residual_level": residual_level,
+        "counters": {
+            "untreated": untreated.count(),
+            "untreated_h_vh": untreated_h_vh.count(),
+            "accepted": accepted.count(),
+        },
+        "riskscenarios": {
+            "untreated": untreated,
+            "untreated_h_vh": untreated_h_vh,
+            "accepted": accepted,
+        },
+        "applied_control_status": {
+            "localLables": local_lables,
+            "labels": labels,
+            "values": values,
+        },
+        "colors": get_risk_color_ordered_list(user, risk_assessment_list),
+    }
+
+
+def threats_count_per_name(user: User, folder_id=None) -> Dict[str, List]:
+    from collections import defaultdict
+
+    scoped_folder = (
+        Folder.objects.get(id=folder_id) if folder_id else Folder.get_root_folder()
+    )
+    object_ids_view = RoleAssignment.get_viewable_object_ids(
+        user, Threat, scoped_folder
+    )
+    viewable_scenarios = RoleAssignment.get_viewable_object_ids(
+        user, RiskScenario, scoped_folder
+    )
+
+    # Updated field name from 'riskscenario' to 'risk_scenarios'
+    threats_with_counts = (
+        Threat.objects.filter(id__in=object_ids_view)
+        .annotate(
+            scenario_count=Count(
+                "risk_scenarios",
+                filter=models.Q(risk_scenarios__id__in=viewable_scenarios),
+            )
+        )
+        .filter(scenario_count__gt=0)
+        .order_by("name")
+        .values("name", "scenario_count")
+    )
+
+    labels = [{"name": threat["name"]} for threat in threats_with_counts]
+    values = [threat["scenario_count"] for threat in threats_with_counts]
+
+    max_offset = max(values, default=0)
+    for label in labels:
+        label["max"] = max_offset
+
+    # Build threat-grouped treemap: threat → folders with scenario counts
+    threat_folders = defaultdict(lambda: defaultdict(int))
+    threat_scenarios = (
+        RiskScenario.objects.filter(
+            id__in=viewable_scenarios,
+            threats__id__in=object_ids_view,
+        )
+        .values("threats__name", "folder__name")
+        .annotate(count=Count("id"))
+    )
+    for row in threat_scenarios:
+        threat_folders[row["threats__name"]][row["folder__name"]] += row["count"]
+
+    tree = []
+    for threat_name, folders in threat_folders.items():
+        children = sorted(
+            [
+                {"name": folder_name, "value": count}
+                for folder_name, count in folders.items()
+            ],
+            key=lambda x: x["value"],
+            reverse=True,
+        )
+        tree.append({"name": threat_name, "children": children})
+    tree.sort(key=lambda x: sum(c["value"] for c in x["children"]), reverse=True)
+
+    return {"labels": labels, "values": values, "tree": tree}
+
+
+def qualifications_count_per_name(user: User, folder_id=None) -> Dict[str, List]:
+    scoped_folder = (
+        Folder.objects.get(id=folder_id) if folder_id else Folder.get_root_folder()
+    )
+    viewable_scenarios = RoleAssignment.get_viewable_object_ids(
+        user, RiskScenario, scoped_folder
+    )
+
+    # Get all risk scenarios that user can view
+    risk_scenarios = RiskScenario.objects.filter(id__in=viewable_scenarios)
+
+    # Count occurrences of each qualification
+    qualification_counts = {}
+    for scenario in risk_scenarios:
+        for qualification in scenario.qualifications.all():
+            key = qualification.name
+            qualification_counts[key] = qualification_counts.get(key, 0) + 1
+
+    # Sort by qualification name and only include those with count > 0
+    sorted_qualifications = sorted(
+        [(qual, count) for qual, count in qualification_counts.items() if count > 0]
+    )
+
+    labels = [qualification for qualification, _ in sorted_qualifications]
+    values = [count for _, count in sorted_qualifications]
+
+    return {"labels": labels, "values": values}
+
+
+# Curated, not every folder-FK model: there are 151 of those, ~150 queries. Deletion
+# emptiness is checked exhaustively instead (FolderViewSet._folder_emptiness_blocker).
+FOLDER_CONTENT_MODELS = (
+    "core.Perimeter",
+    "core.Asset",
+    "core.AppliedControl",
+    "core.ComplianceAssessment",
+    "core.RiskAssessment",
+    "core.FindingsAssessment",
+    "core.Evidence",
+    "core.Policy",
+    "core.RiskScenario",
+    "tprm.Entity",
+)
+
+
+def folder_direct_content_counts() -> dict:
+    """{folder_id: curated content objects directly in it}. Callers roll subtrees up."""
+    from django.apps import apps
+    from django.db.models import Count
+
+    totals: dict = {}
+    for label in FOLDER_CONTENT_MODELS:
+        try:
+            model = apps.get_model(label)
+        except LookupError:
+            continue
+        for row in model.objects.values("folder").annotate(n=Count("id")):
+            if row["folder"] is not None:
+                totals[row["folder"]] = totals.get(row["folder"], 0) + row["n"]
+    return totals
+
+
+def build_folder_indexes(*, include_perimeters: bool):
+    """Fetch the whole folder tree (and optionally its perimeters) in two queries.
+
+    Left unordered deliberately: `Folder._meta.ordering` is empty, so the per-parent
+    queries this replaces had no defined order either.
+    """
+    folders = list(
+        Folder.objects.values("id", "name", "parent_folder_id", "content_type")
+    )
+    children_by_parent = defaultdict(list)
+    for f in folders:
+        children_by_parent[f["parent_folder_id"]].append(f)
+
+    parent_of = {f["id"]: f["parent_folder_id"] for f in folders}
+
+    perimeters_by_folder = defaultdict(list)
+    if include_perimeters:
+        for p in Perimeter.objects.values("id", "name", "folder_id"):
+            perimeters_by_folder[p["folder_id"]].append(p)
+
+    return children_by_parent, parent_of, perimeters_by_folder
+
+
+def get_folder_content(
+    folder_id,
+    *,
+    include_perimeters,
+    include_enclaves,
+    viewable_objects,
+    needed_folders,
+    children_by_parent,
+    perimeters_by_folder,
+    writable_ids: Optional[set[UUID]] = None,
+    content_counts: Optional[dict] = None,
+):
+    """Nested payload for one folder, from prebuilt indexes. No queries."""
+    content = []
+    for f in children_by_parent.get(folder_id, ()):
+        if f["id"] not in viewable_objects and f["id"] not in needed_folders:
+            continue
+        # Skip enclaves if not included
+        if not include_enclaves and f["content_type"] == Folder.ContentType.ENCLAVE:
+            continue
+        entry = {
+            "name": f["name"],
+            "uuid": f["id"],
+            "viewable": bool(viewable_objects) and f["id"] in viewable_objects,
+            "writable": f["id"] in writable_ids if writable_ids is not None else True,
+            "content_type": f["content_type"],
+        }
+        # Counts only for folders the caller can see: ancestors are here to keep the
+        # tree connected, not to be described.
+        if content_counts is not None and entry["viewable"]:
+            entry["content_count"] = content_counts.get(f["id"], 0)
+        # Add enclave-specific styling
+        if f["content_type"] == Folder.ContentType.ENCLAVE:
+            entry.update(
+                {
+                    "symbol": "triangle",
+                    "symbolSize": 12,
+                    "itemStyle": {"color": "#6366f1"},
+                }
+            )
+        children = get_folder_content(
+            f["id"],
+            include_perimeters=include_perimeters,
+            include_enclaves=include_enclaves,
+            viewable_objects=viewable_objects,
+            needed_folders=needed_folders,
+            children_by_parent=children_by_parent,
+            perimeters_by_folder=perimeters_by_folder,
+            writable_ids=writable_ids,
+            content_counts=content_counts,
+        )
+        if len(children) > 0:
+            entry.update({"children": children})
+        content.append(entry)
+
+    if include_perimeters and folder_id in viewable_objects:
+        for p in perimeters_by_folder.get(folder_id, ()):
+            content.append(
+                {
+                    "name": p["name"],
+                    "symbol": "circle",
+                    "symbolSize": 10,
+                    "itemStyle": {"color": "#222436"},
+                }
+            )
+    return content
+
+
+def handle(exc, context):
+    # translate django validation error which ...
+    # .. causes HTTP 500 status ==> DRF validation which will cause 400 HTTP status
+    if isinstance(exc, DjValidationError):
+        if hasattr(exc, "error_dict"):
+            data = exc.message_dict
+            if DJ_NON_FIELD_ERRORS in data:
+                data[DRF_NON_FIELD_ERRORS] = data[DJ_NON_FIELD_ERRORS]
+                del data[DJ_NON_FIELD_ERRORS]
+        else:
+            data = {DRF_NON_FIELD_ERRORS: exc.messages}
+
+        exc = DRFValidationError(detail=data)
+
+    return drf_exception_handler(exc, context)
+
+
+def duplicate_related_objects(
+    source_object: models.Model,
+    duplicate_object: models.Model,
+    target_folder: Folder,
+    field_name: str,
+):
+    """
+    Duplicates related objects from a source object to a duplicate object, avoiding duplicates in the target folder.
+
+    Parameters:
+    - source_object (object): The source object containing related objects to duplicate.
+    - duplicate_object (object): The object where duplicated objects will be linked.
+    - target_folder (Folder): The folder where duplicated objects will be stored.
+    - field_name (str): The field name representing the related objects in the source
+    """
+
+    def process_related_object(
+        obj,
+        duplicate_object,
+        target_folder,
+        target_parent_folders,
+        sub_folders,
+        field_name,
+        model_class,
+    ):
+        """
+        Process a single related object: add, link, or duplicate it based on folder and existence checks.
+        """
+
+        # Check if the object already exists in the target folder
+        existing_obj = get_existing_object(obj, target_folder, model_class)
+
+        if existing_obj:
+            # If the object exists in the target folder, link it to the duplicate object
+            link_existing_object(duplicate_object, existing_obj, field_name)
+
+        elif (
+            obj.folder in target_parent_folders
+            and obj.folder.default_role is not None
+            and obj.folder.default_role.permissions.filter(
+                codename=f"view_{model_class._meta.model_name}"
+            ).exists()
+        ):
+            # Link the object if the user can see it thanks to the `obj.folder.default_role`.
+            link_existing_object(duplicate_object, obj, field_name)
+
+        elif obj.folder in sub_folders:
+            # If the object's folder is a subfolder of the target folder, link it
+            link_existing_object(duplicate_object, obj, field_name)
+
+        else:
+            # Otherwise, duplicate the object and link it
+            duplicate_and_link_object(obj, duplicate_object, target_folder, field_name)
+
+    def get_existing_object(obj, target_folder, model_class):
+        """
+        Check if an object with the same name already exists in the target folder.
+        """
+        return model_class.objects.filter(name=obj.name, folder=target_folder).first()
+
+    def link_existing_object(duplicate_object, existing_obj, field_name):
+        """
+        Link an existing object to the duplicate object by adding it to the related field.
+        """
+        getattr(duplicate_object, field_name).add(existing_obj)
+
+    def duplicate_and_link_object(new_obj, duplicate_object, target_folder, field_name):
+        """
+        Duplicate an object and link it to the duplicate object.
+        """
+        # Get the model of the object
+        model_class = new_obj.__class__
+
+        # Extract all fields except the primary key
+        field_values = {}
+        for field in new_obj._meta.fields:
+            if not field.primary_key and not field.auto_created:
+                field_values[field.name] = getattr(new_obj, field.name)
+
+        # Apply changes
+        field_values["folder"] = target_folder
+
+        # Create the new object
+        new_obj = model_class.objects.create(**field_values)
+        link_existing_object(duplicate_object, new_obj, field_name)
+
+    model_class = getattr(type(source_object), field_name).field.related_model
+
+    # Get parent and sub-folders of the target folder
+    target_parent_folders = list(target_folder.get_parent_folders())
+    sub_folders = list(target_folder.get_sub_folders())
+
+    # Get all related objects for the specified field
+    related_objects = getattr(source_object, field_name).all()
+
+    # Process each related object
+    for obj in related_objects:
+        process_related_object(
+            obj,
+            duplicate_object,
+            target_folder,
+            target_parent_folders,
+            sub_folders,
+            field_name,
+            model_class,
+        )
+
+
+def scoped_requirement_assessments(
+    compliance_assessment, user, *, include_non_assessable=True
+):
+    """Requirement assessments of `compliance_assessment` that `user` may see.
+
+    Two row-level filters that object-level permissions do not cover:
+    a respondent sees only what is assigned to their actors, and requirements
+    hidden by an unsatisfied `visibility_expression` do not apply at all.
+    Returns `(assessments, hidden_urns)`; callers that also build a requirement
+    tree need `hidden_urns` to prune it the same way.
+    """
+    from core.cel_service import build_cel_context
+    from core.models import Actor, RequirementAssignment
+    from core.utils import get_respondent_scoped_folder_ids
+
+    assessments = list(
+        compliance_assessment.get_requirement_assessments(
+            include_non_assessable=include_non_assessable
+        )
+    )
+
+    respondent_folders = get_respondent_scoped_folder_ids(user)
+    if respondent_folders and compliance_assessment.folder_id in respondent_folders:
+        user_actors = Actor.get_all_for_user(user)
+        assigned_ids = set(
+            RequirementAssignment.objects.filter(
+                compliance_assessment=compliance_assessment,
+                actor__in=user_actors,
+            ).values_list("requirement_assessments__id", flat=True)
+        )
+        assessments = [ra for ra in assessments if ra.id in assigned_ids]
+
+    _ctx, hidden_urns = build_cel_context(compliance_assessment)
+    if hidden_urns:
+        assessments = [
+            ra for ra in assessments if ra.requirement.urn not in hidden_urns
+        ]
+    return assessments, hidden_urns

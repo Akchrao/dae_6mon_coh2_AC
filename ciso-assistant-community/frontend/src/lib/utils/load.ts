@@ -1,0 +1,345 @@
+import { BASE_API_URL, UUID_REGEX } from '#lib/utils/constants.js';
+import { formatSelectFieldData } from '#lib/utils/select-field.js';
+import { discardBody } from '#lib/utils/responses.js';
+export { formatSelectFieldData };
+import {
+	getModelInfo,
+	MODEL_FEATURE_FLAGS,
+	urlParamModelVerboseName,
+	type ModelMapEntry,
+	type SelectField,
+	type SelectFieldData
+} from '#lib/utils/crud.js';
+import { type TableSource } from '#lib/components/ModelTable/types.js';
+
+import { modelSchema, type FormDataShape } from '#lib/utils/schemas.js';
+import { listViewFields } from '#lib/utils/table.js';
+import type { urlModel } from '#lib/utils/types.js';
+import type { SuperValidated } from 'sveltekit-superforms';
+import { superValidate } from 'sveltekit-superforms';
+import { zod4 as zod } from 'sveltekit-superforms/adapters';
+import { z } from 'zod';
+import { canPerformAction } from './access-control';
+import { error, redirect } from '@sveltejs/kit';
+import { setFlash } from 'sveltekit-flash-message/server';
+import { m } from '#paraglide/messages.js';
+
+interface LoadValidationFlowFormDataParams {
+	event: { fetch: typeof fetch };
+	folderId: string;
+	targetField: string;
+	targetIds: string[];
+}
+
+/**
+ * Format select field data received by the backend to a valid `SelectFieldData[]` list.
+ * The return value is meant to be assigned to `model.selectOptions[field]` inside load functions.
+ * The data will then be usable by components like `<AutoCompleteSelect {...} />` / `<Select {...} />`.
+ */
+
+/**
+ * Load validation flow form data with preset values and select options.
+ * This utility extracts the common pattern used across detail pages that support validation flows.
+ */
+export const loadValidationFlowFormData = async ({
+	event,
+	folderId,
+	targetField,
+	targetIds
+}: LoadValidationFlowFormDataParams) => {
+	const validationFlowSchema = modelSchema('validation-flows');
+	const validationFlowInitialData = {
+		folder: folderId,
+		[targetField]: targetIds,
+		ref_id: ''
+	};
+	const validationFlowForm = await superValidate(
+		validationFlowInitialData,
+		zod(validationFlowSchema),
+		{ errors: false }
+	);
+	const validationFlowModel = getModelInfo('validation-flows');
+
+	const validationFlowSelectOptions: Record<string, any> = {};
+	if (validationFlowModel.selectFields) {
+		await Promise.all(
+			validationFlowModel.selectFields.map(async (selectField) => {
+				const url = `${BASE_API_URL}/validation-flows/${selectField.field}/`;
+				const response = await event.fetch(url);
+				if (response.ok) {
+					const responseData = await response.json();
+					validationFlowSelectOptions[selectField.field] = formatSelectFieldData(
+						responseData,
+						selectField
+					);
+				} else {
+					await discardBody(response);
+					console.error(`Failed to fetch data for ${selectField.field}: ${response.statusText}`);
+				}
+			})
+		);
+	}
+	validationFlowModel.selectOptions = validationFlowSelectOptions;
+
+	return { validationFlowForm, validationFlowModel };
+};
+
+export const loadDetail = async ({ event, model, id }) => {
+	const endpoint = `${BASE_API_URL}/${model.endpointUrl ?? model.urlModel}/${id}/`;
+
+	const res = await event.fetch(endpoint);
+	if (!res.ok) {
+		await discardBody(res);
+		if (res.status === 404) {
+			// Check if focus mode is active
+			const focusFolderId = event.cookies.get('focus_folder_id');
+			const focusModeEnabled = (await event.locals.getFeatureFlags())?.focus_mode ?? false;
+			const isFocusModeActive = focusFolderId && focusModeEnabled;
+
+			const message = isFocusModeActive
+				? m.objectNotReachableFromCurrentFocus()
+				: m.objectNotFound();
+			setFlash({ type: 'warning', message }, event);
+			throw redirect(302, `/${model.urlModel}`);
+		}
+		// Let other errors (403, 500, etc.) propagate with appropriate error
+		throw error(res.status, res.statusText || `Failed to load ${model.urlModel}`);
+	}
+	const data = await res.json();
+
+	type RelatedModel = {
+		urlModel: urlModel;
+		info: ModelMapEntry;
+		table: TableSource;
+		deleteForm: SuperValidated<FormDataShape>;
+		createForm: SuperValidated<FormDataShape>;
+		foreignKeys: Record<string, any>;
+		selectOptions: Record<string, any>;
+		count?: number;
+	};
+
+	type RelatedModels = {
+		[K in urlModel]: RelatedModel;
+	};
+
+	const form = await superValidate(zod(z.object({ id: z.string().uuid() })));
+
+	const relatedModels = {} as RelatedModels;
+
+	const reverseCounts: Record<string, number> | undefined = model.reverseCountsEndpoint
+		? await event
+				.fetch(
+					`${BASE_API_URL}/${model.endpointUrl ?? model.urlModel}/${id}/${model.reverseCountsEndpoint}/`
+				)
+				.then(async (res) => (res.ok ? res.json() : discardBody(res).then(() => ({}))))
+				.catch(() => ({}))
+		: undefined;
+
+	if (model.reverseForeignKeyFields) {
+		const initialData = {};
+		// Hoisted: the filters below are synchronous.
+		const [featureflags, user] = await Promise.all([
+			event.locals.getFeatureFlags(),
+			event.locals.getUser()
+		]);
+		// The (app) layout redirect runs concurrently with this load, so it cannot be
+		// relied on to have happened before the folder-permission filter reads `user`.
+		if (!user) throw redirect(302, `/login?next=${event.url.pathname}`);
+		await Promise.all(
+			model.reverseForeignKeyFields
+				// Flag from the reverse FK when it declares one, else from the model.
+				.filter((m) => {
+					const flag = m?.featureFlag ?? MODEL_FEATURE_FLAGS[m.urlModel];
+					return !flag || featureflags?.[flag];
+				})
+				.filter(
+					(m) =>
+						!m?.folderPermsNeeded ||
+						canPerformAction({
+							user,
+							action: 'change',
+							model: 'folder',
+							domain:
+								model.name === 'folder'
+									? data.id
+									: (data.folder?.id ?? data.folder ?? user.root_folder_id)
+						})
+				)
+				.filter(
+					(m) =>
+						!reverseCounts ||
+						!model.hideEmptyReverseTabs ||
+						reverseCounts[getModelInfo(m.urlModel).name] > 0
+				)
+				.map(async (e) => {
+					const tableFieldsRef = listViewFields[e.urlModel];
+					// A table offering the column picker needs the optional columns in its head:
+					// that head is the universe the picker chooses from.
+					const tableFields = e.columnSelector
+						? {
+								head: [...tableFieldsRef.head, ...(tableFieldsRef.optionalFields?.head ?? [])],
+								body: [...tableFieldsRef.body, ...(tableFieldsRef.optionalFields?.body ?? [])]
+							}
+						: {
+								head: [...tableFieldsRef.head],
+								body: [...tableFieldsRef.body]
+							};
+					const index = tableFields.body.indexOf(e.field);
+					if (index > -1) {
+						tableFields.head.splice(index, 1);
+						tableFields.body.splice(index, 1);
+					}
+					const headData: Record<string, string> = tableFields.body.reduce((obj, key, index) => {
+						obj[key] = index < tableFields.head.length ? tableFields.head[index] : key;
+						return obj;
+					}, {});
+					const table: TableSource = {
+						head: headData,
+						body: [],
+						meta: []
+					};
+
+					const info = getModelInfo(e.urlModel);
+					const urlModel = e.urlModel;
+
+					const deleteForm = await superValidate(zod(z.object({ id: z.string().uuid() })));
+					const createSchema = modelSchema(e.urlModel);
+					const fieldSchema = createSchema.shape[e.field];
+					let isArrayField = false;
+
+					if (fieldSchema) {
+						let currentSchema = fieldSchema;
+						while (
+							currentSchema instanceof z.ZodOptional ||
+							currentSchema instanceof z.ZodNullable
+						) {
+							currentSchema = currentSchema.unwrap();
+						}
+						isArrayField = currentSchema instanceof z.ZodArray;
+					}
+					initialData[e.field] = isArrayField ? [data.id] : data.id;
+					if (data.ebios_rm_study) {
+						initialData['ebios_rm_study'] = data.ebios_rm_study.id;
+					}
+					if (data.folder) {
+						if (!new RegExp(UUID_REGEX).test(data.folder) && !data?.folder?.id) {
+							const objectEndpoint = `${endpoint}object/`;
+							const objectResponse = await event.fetch(objectEndpoint);
+							const objectData = await objectResponse.json();
+							initialData['folder'] = objectData.folder;
+						} else {
+							initialData['folder'] = data?.folder?.id ?? data.folder;
+						}
+					}
+
+					// Pass additional nested data for specific models
+					if (e.fieldForInitialData) {
+						e.fieldForInitialData.forEach((fieldPath) => {
+							const parts = fieldPath.split('.');
+							let value = data;
+							for (const part of parts) {
+								value = value?.[part];
+								if (!value) break;
+							}
+							if (value) {
+								// Store nested data under a special key that won't interfere with form fields
+								initialData[`_${fieldPath.replace('.', '_')}`] = value;
+							}
+						});
+					}
+
+					const createForm = await superValidate(initialData, zod(createSchema), { errors: false });
+
+					// Filled when a create form opens: see ensureSelectOptions.
+					const selectOptions: Record<string, any> = {};
+					relatedModels[e.urlModel] = {
+						urlModel,
+						info,
+						table,
+						deleteForm,
+						createForm,
+						selectOptions,
+						initialData,
+						disableCreate: e.disableCreate,
+						disableDelete: e.disableDelete,
+						disableEdit: e.disableEdit
+					};
+				})
+		);
+	}
+	// Fetch counts for each reverse FK tab in parallel
+	if (model.reverseForeignKeyFields && reverseCounts) {
+		for (const e of model.reverseForeignKeyFields) {
+			const count = reverseCounts[getModelInfo(e.urlModel).name];
+			if (relatedModels[e.urlModel] && typeof count === 'number') {
+				relatedModels[e.urlModel].count = count;
+			}
+		}
+	} else if (model.reverseForeignKeyFields) {
+		await Promise.all(
+			model.reverseForeignKeyFields
+				.filter((e) => relatedModels[e.urlModel])
+				.map(async (e) => {
+					try {
+						let countUrl: string;
+						if (e.endpointUrl?.startsWith('./')) {
+							const relPath = e.endpointUrl.slice(2);
+							const sep = relPath.includes('?') ? '&' : '?';
+							countUrl = `${BASE_API_URL}/${model.endpointUrl ?? model.urlModel}/${id}/${relPath}${sep}limit=1`;
+						} else {
+							const relatedModelInfo = getModelInfo(e.urlModel);
+							countUrl = `${BASE_API_URL}/${relatedModelInfo.endpointUrl ?? e.urlModel}/?${e.field}=${id}&limit=1`;
+						}
+						const countRes = await event.fetch(countUrl);
+						if (countRes.ok) {
+							const countData = await countRes.json();
+							if (typeof countData.count === 'number') {
+								relatedModels[e.urlModel].count = countData.count;
+							}
+						} else {
+							await discardBody(countRes);
+						}
+					} catch {
+						// Graceful degradation — leave count as undefined
+					}
+				})
+		);
+	}
+	if (model.hideEmptyReverseTabs) {
+		for (const [key, related] of Object.entries(relatedModels)) {
+			if (related.count === 0) delete relatedModels[key];
+		}
+	}
+
+	let title = data.str || data.name || data.email || data.label || data.id;
+	if (model.urlModel === 'reference-controls') {
+		const hasName = typeof data.name === 'string' && data.name.trim().length > 0;
+		title = hasName ? data.name : data.ref_id || title;
+	}
+	// If any reverseForeignKeyField has addExisting, load the parent's updateForm
+	let updateForm: SuperValidated<FormDataShape> | undefined;
+	const hasAddExisting = model.reverseForeignKeyFields?.some((f) => f.addExisting);
+	if (hasAddExisting) {
+		const parentEndpointUrl = model.endpointUrl ?? model.urlModel;
+		const objectEndpoint = `${BASE_API_URL}/${parentEndpointUrl}/${id}/object/`;
+		const objectResponse = await event.fetch(objectEndpoint);
+		if (objectResponse.ok) {
+			const parentObject = await objectResponse.json();
+			const parentSchema = modelSchema(model.urlModel);
+			updateForm = await superValidate(parentObject, zod(parentSchema), { errors: false });
+		} else {
+			await discardBody(objectResponse);
+		}
+	}
+
+	return {
+		data,
+		title,
+		form,
+		relatedModels,
+		urlModel: model.urlModel as urlModel,
+		model,
+		modelVerboseName: urlParamModelVerboseName(model.urlModel),
+		updateForm
+	};
+};

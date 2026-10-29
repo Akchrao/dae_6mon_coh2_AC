@@ -1,0 +1,81 @@
+import { BASE_API_URL } from '#lib/utils/constants.js';
+import { getModelInfo } from '#lib/utils/crud.js';
+import { formatSelectFieldData } from '#lib/utils/load.js';
+import { getSecureRedirect } from '#lib/utils/helpers.js';
+import { safeTranslate } from '#lib/utils/i18n.js';
+import { UserEditSchema } from '#lib/utils/schemas.js';
+import { m } from '#paraglide/messages.js';
+import { fail, redirect, type Actions } from '@sveltejs/kit';
+import { setFlash } from 'sveltekit-flash-message/server';
+import { setError, superValidate } from 'sveltekit-superforms';
+import { zod4 as zod } from 'sveltekit-superforms/adapters';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async ({ params, fetch }) => {
+	const URLModel = 'users';
+	const model = getModelInfo(URLModel);
+	const objectEndpoint = `${BASE_API_URL}/${URLModel}/${params.id}/object/`;
+
+	const object = await fetch(objectEndpoint).then((res) => res.json());
+	const schema = UserEditSchema;
+	const form = await superValidate(object, zod(schema));
+
+	// This route shadows the generic edit page, so it has to load the select options
+	// the generic layout would have provided.
+	const selectOptions: Record<string, any> = {};
+	for (const selectField of model.selectFields ?? []) {
+		const response = await fetch(`${BASE_API_URL}/${URLModel}/${selectField.field}/`);
+		if (response.ok) {
+			selectOptions[selectField.field] = formatSelectFieldData(await response.json(), selectField);
+		} else {
+			console.error(`Failed to fetch data for ${selectField.field}: ${response.statusText}`);
+		}
+	}
+	model.selectOptions = selectOptions;
+
+	return { form, model, object, title: m.edit() };
+};
+
+export const actions: Actions = {
+	default: async (event) => {
+		const schema = UserEditSchema;
+		const endpoint = `${BASE_API_URL}/users/${event.params.id}/`;
+		const form = await superValidate(event.request, zod(schema));
+
+		if (!form.valid) {
+			console.log(form.errors);
+			return fail(400, { form: form });
+		}
+
+		const requestInitOptions: RequestInit = {
+			method: 'PUT',
+			body: JSON.stringify(form.data)
+		};
+
+		const res = await event.fetch(endpoint, requestInitOptions);
+
+		if (!res.ok) {
+			const response = await res.json();
+			console.error('server response:', response);
+			if (response.error) {
+				setFlash({ type: 'error', message: safeTranslate(response.error) }, event);
+				return fail(403, { form: form });
+			}
+			if (response.non_field_errors) {
+				setError(form, 'non_field_errors', response.non_field_errors);
+			}
+			Object.entries(response).forEach(([key, value]) => {
+				setError(form, key, safeTranslate(value));
+			});
+			return fail(400, { form: form });
+		}
+		setFlash(
+			{ type: 'success', message: m.successfullyUpdatedUser({ email: form.data.email }) },
+			event
+		);
+		redirect(
+			302,
+			getSecureRedirect(event.url.searchParams.get('next')) ?? `/users/${event.params.id}`
+		);
+	}
+};

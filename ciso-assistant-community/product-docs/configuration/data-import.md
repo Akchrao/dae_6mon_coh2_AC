@@ -1,0 +1,1010 @@
+---
+description: Guidelines on data import format
+---
+
+# Data import wizard
+
+{% hint style="info" %}
+## Applicable for: Data import wizard UI (Pro) and CLI (Community or Pro)
+
+Importing existing data from excel sheets is supported on the Pro plan through the UI and CLI, and on Community edition through the dedicated CLI, not a django command. The cli is available on the cli folder with the associated instructions.\
+Keep in mind that the CLI needs to reach the API as it wraps its actions around it.\
+The mention to the API is regarding the fact that users on both plans can still interact with the API directly in case they have some data prep phase on their end for batch import or equivalent.
+{% endhint %}
+
+{% hint style="warning" %}
+### Connection Error
+
+![](<../.gitbook/assets/image (86).png>)
+
+If you encounter this error, it could be due to the Excel file being protected by **Information Rights Management (IRM)**.
+
+IRM protection restricts access to the file and prevents it from being read by external tools such as data-wizard.
+
+**How to fix**
+
+To resolve this issue, use an unprotected version of the file:
+
+* Download a copy of the file (**File → Create a Copy → Download a Copy**)
+* Or export the file as **CSV**
+* Or remove IRM protection using the desktop version of Excel
+{% endhint %}
+
+## Overview
+
+The **Data Import Wizard** and the **CLI** both support batch creation and updates of fields. They provide the same capabilities; the only difference lies in how the import is initiated:
+
+* through the user interface for the Data Import Wizard
+* through the command line for the CLI
+
+When an object already exists during an import, one of the following conflict-resolution strategies can be applied:
+
+* **Stop the import** (default): the import is aborted as soon as a conflict is detected
+* **Skip the row**: the existing field is left unchanged and the import continues
+* **Update the row**: the existing field is updated with the imported data
+
+The **Update** strategy enables batch updates of existing fields and is particularly useful for changes that could technically be performed through the graphical interface, but become tedious or error-prone when repeated across many objects. In such cases, downloading the existing objects, applying the required transformations in an Excel file, and re-importing the updated data can be significantly faster and more reliable than performing the same actions manually in the UI. This approach reduces repetitive interactions, minimizes the risk of manual mistakes, and provides a clear, auditable workflow for large-scale updates.
+
+In this workflow, it is strongly recommended to retain the **field IDs (UUIDs)** in the import schema. Doing so ensures reliable object matching during re-import, even if other attributes (such as names or labels) have changed, making the update process fail-safe.
+
+If the imported object supports the **domain** attribute, the wizard will attempt to assign it to the specified domain, provided you have the required permissions. If no domain is specified, the wizard will automatically fall back to the default domain configured in the wizard form.
+
+
+
+Fields with (\*) are mandatory and don't have any supported fallback.&#x20;
+
+Unless marked as mandatory, ref\_id fields can be left blank but the column must still exist.
+
+&#x20;
+
+## Assets
+
+### Template
+
+{% file src="../.gitbook/assets/sample001.xlsx" %}
+
+### Supported fields
+
+
+
+* ref\_id
+* name\*
+* description
+* domain
+* type
+  * `PR` : primary
+  * `SP` : supporting
+*
+* reference\_link - URL reference; also accepted as `link`
+* observation&#x20;
+* filtering\_labels - pipe- or comma-separated label names (created if missing)
+* parent\_assets -comma- or pipe-separated list of parent asset `ref_id` values; parent links are resolved after all assets in the file are created, so forward references are supported
+* security\_objectives
+  * confidentiality: 3,integrity: 2,availability: 1,...
+* disaster\_recovery\_objectives
+  * rto: 1h01m01s,rpo: 2h01m01s,mtd: 3h
+* labels
+* is\_business\_function (either true/yes or false/no)
+
+### Special considerations
+
+* type will default to `supporting` if the column does not exist
+
+
+
+## Applied controls
+
+### Template
+
+{% file src="../.gitbook/assets/applied_controls_sample (2).xlsx" %}
+
+### Supported fields
+
+* ref\_id
+* name\*
+* description
+* domain
+* status
+  * `to_do`
+  * `in_progress`
+  * `on_hold`
+  * `active`
+  * `deprecated`
+* category
+  * `policy`
+  * `process`
+  * `technical`
+  * `physical`
+  * `procedure`
+* priority
+  * integer from `1 to 4`
+* csf\_function
+  * `govern`
+  * `identify`
+  * `protect`
+  * `detect`
+  * `respond`
+  * `recover`
+* effort — size estimate
+  * `XS`
+  * `S`
+  * `M`
+  * `L`
+  * `XL`
+  * full names also accepted, e.g. `Extra Small`
+* control\_impact - integer 1–5; also accepted as `impact`
+* start\_date - date (YYYY-MM-DD)
+* eta - estimated completion date (YYYY-MM-DD)
+* expiry\_date - expiry date (YYYY-MM-DD)
+* link - URL
+* observation - free-text observation
+* filtering\_labels - pipe- or comma-separated label names (created if missing)
+* reference\_control - lookup by `ref_id`; also accepted as `reference_control_ref_id`
+* owner
+* cost\_amortization\_period - integer (1–50), defaults to 1
+* cost\_build\_fixe - number, defaults to 0
+* cost\_build\_people\_days - number, defaults to 0
+* cost\_run\_fixed - number, defaults to 0
+* cost\_run\_people\_days - number, defaults to 0
+
+### Special considerations
+
+* status will default to `to_do`
+* csf\_function will default to `govern`
+* The `owner` field resolves against existing users (by email) and teams (by name). Ensure any referenced users and teams are created before importing. Unresolved entries are skipped with a warning and will not block the import.
+
+
+
+## Perimeters
+
+### Template
+
+{% file src="../.gitbook/assets/sample003.xlsx" %}
+
+### Supported fields
+
+* ref\_id
+* name\*
+* description
+* domain
+* status
+  * `undefined`
+  * `in_design`
+  * `in_dev`
+  * `in_prod`
+  * `eol`
+  * `dropped`
+* default\_assignee
+  * User email or team name, semicolon-separated
+
+### Special considerations
+
+* If the default\_assignee column is present and  empty, the import would end up cleaning existing assignee.
+
+## Audits
+
+### Template
+
+{% hint style="info" %}
+To avoid any mixup on the expected fields and the requirements reference, you can get a  template for the expected framework by going into `Catalog/Frameworks`
+{% endhint %}
+
+The framework needs to be loaded and when clicking on it, you'll see a button to get the excel file.
+
+### Supported fields
+
+
+
+* urn\*
+* assessable
+* ref\_id\*
+* name
+* description&#x20;
+* compliance\_result
+  * `not_assessed`
+  * `partially_compliant`
+  * `non_compliant`
+  * `compliant`
+  * `not_applicable`
+* requirement\_progress
+  * `to_do`
+  * `in_progress`
+  * `in_review`
+  * `done`
+* score
+  * integer within the requirement's effective scale — the audit's `min_score`/`max_score`, or the requirement's own bounds when it overrides them. Out-of-range values are rejected.
+* is\_score\_overridden
+  * text: `true`, `yes`, `y`, `1`, `oui`, `vrai`, `x` for true — `false`, `no`, `n`, `0`, `non`, `faux` for false. Any other text is rejected and the row fails, so a typo can't silently clear an existing override.
+  * numbers: only `0` (false) and `1` (true) are accepted; any other number is rejected.
+  * Only meaningful on requirements that carry questions: it decides whether the imported score is pinned or recomputed from the answers. Leave the cell blank (or the column out entirely) and any imported score on a question-driven requirement is pinned automatically.
+* observations
+* applied\_controls\
+  Pipe-, newline-, semicolon- or comma-separated control names or ref\_ids, looked up in the audit's domain (ref\_id first, then name). Missing controls are auto-created there with the status `to_do`, provided you may add controls — otherwise the name is reported as a warning on the row. `controls` is accepted as an alias.
+
+### Special considerations
+
+* The wizard will attempt to match based on the ref\_id and fallback to the urn otherwise. If none could be used, the row will be skipped.
+* A filled `applied_controls` cell replaces the controls linked to the requirement; a blank cell leaves them untouched. Controls from other domains are not matched, so a name that only exists elsewhere creates a new control in the audit's domain.
+* The audit's Excel export includes the `applied_controls` column, so it can be re-imported as is.
+* name and description columns are not used but serve as an anchor point for reference.
+* Assessable will fallback to false
+* Unassessable rows are skipped.
+
+
+
+## Findings followup (eg. pentest)
+
+### Template
+
+{% file src="../.gitbook/assets/sample004.xlsx" %}
+
+### Supported fields
+
+* **ref\_id**
+* **name**<mark style="color:red;">\*</mark>
+* **description**
+* **severity**
+  * `low`
+  * `medium`
+  * `high`
+  * `critical`
+* **status**
+  * `identified`
+  * `confirmed`
+  * `dismissed`
+  * `assigned`
+  * `in_progress`
+  * `mitigated`
+  * `resolved`
+  * `deprecated`
+* **filtering\_labels**\
+  you can add multiple labels for one finding separating them with `|` ( e.g. interna&#x6C;**|**&#x70;entes&#x74;**|**...)
+* **priority** -integer 1–4
+* **eta** - estimated resolution date (YYYY-MM-DD)
+* **due\_date** - due date (YYYY-MM-DD)
+* **observation**&#x20;
+* **vulnerabilities**\
+  Pipe or comma-separated vulnerability names
+* **asset**\
+  Name or ref\_id of a single asset, looked up in the domain folder. A finding carries one asset, so if the cell holds several names only the first is linked and the row is reported as a warning. A missing asset is created in the domain folder with the default type Support, provided you may add assets there.
+* **applied\_controls**\
+  Pipe-, newline-, semicolon- or comma-separated control names or ref\_ids, looked up in the domain folder. Missing controls are auto-created there, provided you may add controls — otherwise the name is reported as a warning on the row.
+* **owner**\
+  Semicolon-separated list of user emails and/or team names. Resolved case-insensitively: first by user email, then by team name. Unresolved entries are skipped with a warning and will not block the import.
+
+
+
+## Users
+
+### Template
+
+{% file src="../.gitbook/assets/sample005.xlsx" %}
+
+### **Supported fields**
+
+
+
+* email\*
+* first\_name
+* last\_name
+
+
+
+## Risk assessment&#x20;
+
+The risk assessment is an advanced object that needs special considerations. Make sure to pick the matrix that will be used to map your labels to the values on CISO Assistant. If you have a specific matrix, you should start by including it as a custom library.
+
+inherent\_level, current\_level and residual\_level are kept on the excel sample just for visual aid. The application computes them based on impact and probability  to ensure consistency with the matrix definition.
+
+Controls are created on picked based on the perimeter's domain. Line breaks are used as seperator.
+
+### Template:
+
+{% file src="../.gitbook/assets/risk_assessment_template.xlsx" %}
+
+### Supported fields:
+
+* **ref\_id**: String
+* **name**<mark style="color:red;">\*</mark>: String
+* **description**: String
+* **inherent\_impact**: String<sup>1</sup>
+* **inherent\_proba**: String<sup>1</sup>
+* _**existing\_controls**:_ String\
+  Newline-, semicolon- or comma-separated control names.
+* **current\_impact**: String<sup>1</sup>
+* **current\_proba**: String<sup>1</sup>
+* _**additional\_controls**:_ String\
+  Newline-, semicolon- or comma-separated control names.
+* **residual\_impact**: String<sup>1</sup>
+* **residual\_proba**: String<sup>1</sup>
+* **treatment**: String
+  * `open`
+  * `mitigate`
+  * `accept`
+  * `avoid`
+  * `transfer`
+* **assets**\
+  Newline-, semicolon- or comma-separated asset names or ref\_ids. Missing assets are auto-created in the domain folder with the default type Support, provided you may add assets there — otherwise the name is reported as a warning on the row.
+* **threats**\
+  Pipe-, newline-, semicolon- or comma-separated threat ref\_ids or names (ref\_id first, then name), matched among the threats you can view in the risk assessment's domain and its parent domains, up to the global domain where library threats live. Threats are only linked, never created: an unknown threat is reported as a warning on the row. `threat` is accepted as an alias.
+* **justification**: String
+
+1: The string must be the name of a level of the chosen risk matrix, or one of its translations. Matching ignores case and surrounding spaces. Use `--` to mark a level as not rated. An empty cell leaves the level untouched. A value that matches no level is reported as a warning on the row and leaves the level untouched. Untouched levels are unrated on a new scenario and keep their current rating when updating an existing one.
+
+### Special considerations
+
+* When the same threat ref\_id or name exists at several levels, the threat of the nearest domain wins. Several matches within the same domain are ambiguous: none of them is linked and the row is reported as a warning.
+* Threats from other domains, sibling or sub-domains, are not matched.
+* On update, a filled `threats` cell replaces the threats linked to the scenario with the ones it resolves; a blank cell, or one where no threat resolves, leaves them untouched.
+* The risk assessment's CSV and XLSX exports write threats as ref\_ids (the name when a threat has none), so the `threats` column can be re-imported as is. Give a ref\_id to any threat whose name contains a pipe, a semicolon or a comma: its name would be split on re-import.
+* The template's threats (`ICT-001` to `ICT-003`) come from the INTUITEM Common Catalog library, which must be loaded for them to be linked.
+
+
+
+## Business Impact Analysis
+
+The BIA export/import uses a **multi-sheet Excel file**:
+
+* **Summary** sheet - one row per BIA
+* **\<BIA name>** sheet - one row per asset assessment for that BIA
+* **\<BIA name> - thresholds** sheet - one row per escalation threshold for that BIA
+
+### Template
+
+{% file src="../.gitbook/assets/sample_business_impact_analysis (1).xlsx" %}
+
+***
+
+### Summary sheet
+
+#### Supported fields
+
+* `name`\*
+* `description`
+* `perimeter` - name of the perimeter
+* `perimeter_ref_id` - ref\_id of the perimeter
+* `risk_matrix` - name of the risk matrix
+* `risk_matrix_ref_id` - ref\_id of the risk matrix&#x20;
+* `folder` - domain/folder name
+* `version`
+* `status`
+  * `planned`
+  * `in_progress`
+  * `in_review`
+  * `done`
+  * `deprecated`
+* `eta` - estimated completion date
+* `due_date`
+* `observation`
+* `authors` - comma-separated list of user emails
+* `reviewers` - comma-separated list of user emails
+
+Special considerations
+
+* `status` defaults to `planned` if not provided
+* `perimeter` and `risk_matrix` are resolved by UUID, ref\_id, or name (in that order)
+* `authors` and `reviewers` are matched by email address
+
+***
+
+### Asset assessment sheets (\<BIA name>)
+
+One sheet per BIA, named after the BIA. Each row is an asset assessment.
+
+Supported fields
+
+* `bia_name`\* - name of the parent BIA (injected automatically on re-import)
+* `asset`\* - name of the asset
+* `asset_ref_id` - ref\_id of the asset (alternative lookup)
+* `recovery_documented` - `true` / `false`
+* `recovery_tested` - `true` / `false`
+* `recovery_targets_met` - `true` / `false`
+* `dependencies` - comma-separated list of asset names or ref\_ids
+* `associated_controls` - comma-separated list of applied control names or ref\_ids
+* `evidences` - comma-separated list of evidence names
+* `observation`
+
+Special considerations
+
+* `asset` is resolved by UUID, ref\_id, or name (in that order)
+* Boolean fields accept `true/false`, `yes/no`, `1/0`
+* Multiple values (dependencies, controls, evidences) use comma separation
+
+***
+
+### Threshold sheets (\<BIA name> - thresholds)
+
+One sheet per BIA, named `<BIA name> - thresholds`. Each row is an escalation threshold.
+
+#### Supported fields
+
+* `bia_name`\* - name of the parent BIA
+* `asset`\* - name of the asset (used to resolve the asset assessment)
+* `asset_ref_id` - ref\_id of the asset (alternative lookup)
+* `point_in_time`\* - integer (time horizon in hours/days depending on your matrix)
+* `quali_impact` - integer qualitative impact level (-1 = not set)
+* `quanti_impact` - decimal quantitative impact value
+* `quanti_impact_unit` - unit for quantitative impact (e.g. `currency`)
+* `qualifications` - comma-separated list of qualification names
+* `justification`
+
+Special considerations
+
+* The asset assessment is resolved by matching `(bia_name, asset)` — both must already exist before thresholds are imported
+* `point_in_time` combined with the asset assessment forms the unique key for update/deduplication
+* `quali_impact` defaults to `-1` (not set) if blank
+* `quanti_impact` defaults to `0` if blank
+
+## Elementary actions
+
+Elementary actions are useful to model a killchain during the 4th workshop of an EBIOS RM study.&#x20;
+
+### Supported fields:
+
+* ref\_id
+* name\*
+* description&#x20;
+* attack\_stage\*
+  * (in English)
+    * know
+    * enter
+    * _discover_
+    * _exploit_
+  * (in F&#x72;_&#x65;nch)_
+    * _connaitre_
+    * _entrer_
+    * _trouver_
+    * _exploiter_
+* icon
+  * _server_
+  * _computer_
+  * _cloud_
+  * _file_
+  * _diamond_
+  * _phone_
+  * _cube_
+  * _blocks_
+  * _shapes_
+  * _network_
+  * _database_
+  * _key_
+  * _search_
+  * _carrot_
+  * _money_
+  * _skull_
+  * _globe_
+  * _usb_
+* domain
+
+{% file src="../.gitbook/assets/sample007.xlsx" %}
+
+
+
+## CyFun self-assessment
+
+The official self-assessment Excel workbook published by Belgium's Centre for Cybersecurity for the **CyFun 2025** framework — BASIC, IMPORTANT, and ESSENTIAL editions are all accepted. The import creates a new audit, loads the CyFun 2025 framework automatically if needed, sets the implementation group from the detected assurance level, and carries over documentation/implementation scores, `N/A` markers, and comments. See [CCB CyFun](../features/framework-specific/cyfun.md) for details.
+
+Selected in the wizard as **CyFun self-assessment**; on the CLI: `import-cyfun-assessment`.
+
+## EBIOS RM Studies
+
+Importing a full EBIOS RM study creates the study itself plus the objects across workshops 1–4 (assets, feared events, RO/TO couples, stakeholders, strategic and operational scenarios, attack paths, elementary actions, operating modes). Three input formats are supported. All three require a **risk matrix** to be selected in the wizard — the probability and impact labels in the source are resolved against that matrix.
+
+### Agile Risk Manager (ARM) — Excel
+
+The Excel export produced by [Agile Risk Manager](https://www.all4tec.com/agile-risk-manager/) (All4Tec). The file contains 91 sheets organised by EBIOS workshop. Both French and English ARM exports are accepted; sheet and column names are matched against known variants.
+
+Selected in the wizard as **EBIOS RM Study (ARM)**.
+
+### CISO Assistant — Excel
+
+The Excel format produced by CISO Assistant's own EBIOS RM study export — sheets prefixed `1.1 Study`, `1.3 Feared Events`, `2.1 RO/TO`, and so on. This is the round-trip format: export, edit, re-import.
+
+Selected in the wizard as **EBIOS RM Study (Excel)**.
+
+### Egerie Suite — XML
+
+The XML export produced by the [Egerie Suite](https://www.egerie.eu/) risk-management platform. The only XML target supported by the wizard; everything else accepts Excel or CSV. Egerie's internal cross-references (`PA_`, `SA_`, `FE_`, `RS_`, …) are resolved automatically.
+
+Selected in the wizard as **EBIOS RM study (Egerie XML format)**.
+
+
+
+## Reference controls
+
+\
+Reference controls are templates of the controls to apply.&#x20;
+
+### Supported fields:
+
+* ref\_id
+* name
+* description&#x20;
+* category
+* function
+* domain
+
+{% file src="../.gitbook/assets/sample_reference_controls.xlsx" %}
+
+Reference controls can be bundled also as a library.
+
+
+
+## Threats
+
+
+
+* ref\_id
+* name
+* description&#x20;
+* domain
+
+{% file src="../.gitbook/assets/sample_threats.xlsx" %}
+
+
+
+## Third parties ecosystems
+
+Adding entities, solutions and contracts go through the same file to be able to keep consistent relationships. Each concept needs to be on a separate tab of the excel sheet.<br>
+
+{% file src="../.gitbook/assets/third_parties_ecosystem_template.xlsx" %}
+
+The file has to be divided into 3 sheets namely "Entities", "Solutions" and "Contracts"
+
+### Supported fields
+
+<mark style="color:$danger;">\*</mark><mark style="color:$info;">:  Required fields</mark>
+
+#### Entities
+
+* `ref_id`&#x20;
+* `name` <mark style="color:$danger;">\*</mark>
+* `description`
+* `mission`
+* `country` (Country code [https://en.wikipedia.org/wiki/ISO\_3166-1\_alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2))
+* `currency`  (ISO 4217 format [https://en.wikipedia.org/wiki/ISO\_4217](https://en.wikipedia.org/wiki/ISO_4217))
+* `parent_entity_id`
+* `dependency`(Integer in \[0,4])
+* `penetration` (Integer in \[0,4])
+* `maturity`  (Integer in \[1,4])
+* `trust`  (Interger in \[1,4])
+* `domain` <mark style="color:$danger;">\*</mark>
+
+> [!NOTE]
+> Conflict detection: by `name` + `folder`
+
+#### Solutions
+
+* `ref_id`
+* `name` <mark style="color:$danger;">\*</mark>
+* `description`
+* `provider_entity_ref_id` - one of `provider_entity_ref_id` or `provider_entity_name` is required
+* `provider_entity_name` - lookup by entity name, used only when `provider_entity_ref_id` is not provided (a provided but unknown ref_id fails the row)
+* `criticality`  (Integer in \[1,4])
+
+> [!NOTE]
+> Conflict detection: by `name` + `folder`
+
+#### Contracts
+
+* `ref_id`
+* `name` <mark style="color:$danger;">\*</mark>
+* `description`
+* `provider_entity_ref_id` - one of `provider_entity_ref_id` or `provider_entity_name` is required
+* `provider_entity_name` - lookup by entity name, used only when `provider_entity_ref_id` is not provided (a provided but unknown ref_id fails the row)
+* `solution_ref_id` accepts multiple solution references (newline/pipe/comma)
+* `status`  can be `draft` , `active`,`expired` or `terminated`
+* `start_date` (YYYY-MM-DD format [https://en.wikipedia.org/wiki/ISO\_8601](https://en.wikipedia.org/wiki/ISO_8601))
+* `end_date` (YYYY-MM-DD format [https://en.wikipedia.org/wiki/ISO\_8601](https://en.wikipedia.org/wiki/ISO_8601))
+* `annual_expense`
+* `currency` (ISO 4217 format [https://en.wikipedia.org/wiki/ISO\_4217](https://en.wikipedia.org/wiki/ISO_4217))
+* `domain`
+* `lei`
+* `euid`
+* `vat`
+* `duns`
+
+> [!NOTE]
+> Conflict detection: by `name` + `folder`
+
+#### Entity assessments
+
+* `name` <mark style="color:$danger;">\*</mark>
+* `entity_ref_id` - one of `entity_ref_id` or `entity_name` is required
+* `entity_name` - lookup by entity name, used only when `entity_ref_id` is not provided (a provided but unknown ref_id fails the row)
+* `description`
+* `domain`
+* `perimeter` or `perimeter_ref_id`
+* `due_date` (YYYY-MM-DD format)
+* `criticality` (Integer in \[1,4])
+* `solution_ref_id` accepts multiple solution references (newline/pipe/comma)
+* `audit_ref_id` - links the assessment to an existing audit, resolved by `ref_id`
+* `audit_name` - lookup by audit name, used only when `audit_ref_id` is not provided (a provided but unknown ref_id fails the row)
+
+> [!NOTE]
+> Conflict detection: by `entity` + `name` + `folder`
+
+> [!NOTE]
+> Linking to an existing audit always **moves** it: the audit is relocated into the entity assessment's dedicated enclave folder, and its perimeter is cleared (enclave audits carry no perimeter).
+
+> [!NOTE]
+> **Recommended workflow for importing entity assessments with audits:** the EntityAssessments sheet links to audits, it does not create them. First import or create the audits, for example in a temporary domain created for the import. Each row matches its audit by `audit_ref_id` when provided, otherwise by `audit_name`; a ref_id on the audit is optional, but is the recommended identifier when several audits could share a name. The importing user must have edit rights on the audits — audits the user cannot modify are reported as *not found*. Each matched audit is moved out of the temporary domain into the entity assessment's enclave, so once the import succeeds that domain no longer contains them and can be deleted.
+
+#### Representatives
+
+* `email` <mark style="color:$danger;">\*</mark>
+* `first_name`
+* `last_name`
+* `description`
+* `phone`
+* `role`
+* `provider_entity_ref_id` - one of `provider_entity_ref_id` or `provider_entity_name` is required
+* `provider_entity_name` - lookup by entity name, used only when `provider_entity_ref_id` is not provided (a provided but unknown ref_id fails the row)
+
+> [!NOTE]
+> Conflict detection: by `email`
+
+## Processings
+
+Two file layouts are accepted for privacy processings:
+
+* a **flat sheet** (or CSV) with one row per processing — useful for bulk-creating register entries
+* a **multi-sheet workbook** that carries one processing together with its sub-objects (purposes, personal data, data subjects, data recipients, contractors, transfers)
+
+The multi-sheet workbook is the same format produced by the **Export XLSX** button on a processing's detail page, so a register entry can be exported, edited or moved, and re-imported as-is — sub-objects included. On the CLI, both layouts go through the same `import-processings` command.
+
+### Flat list
+
+#### Template
+
+{% file src="../.gitbook/assets/sample-processings (1).xlsx" %}
+
+#### Supported fields
+
+* ref\_id
+* name\*
+* description
+* domain
+* status - raw key (e.g. `privacy_draft`) or label
+  * Draft
+  * In review
+  * Approved
+  * Deprecated
+* processing\_nature - comma-separated processing nature names
+* information\_channel
+* usage\_channel
+* role - GDPR role, raw key (e.g. `privacy_data_processor`) or label; `Controller` when blank
+  * Controller
+  * Joint Controller
+  * Data Processor
+* controllers - names of existing third-party entities, one per line or comma-separated: the co-controllers of a joint controller processing, or the clients of a processor one
+* assigned\_to - comma-separated user emails
+* labels - comma-separated label names (created if missing)
+* dpia\_required
+  * FALSE
+  * TRUE
+* dpia\_reference
+
+> [!NOTE]
+> Conflict detection: by `ref_id` + `domain`, falling back to `name` + `domain`
+
+### Multi-sheet workbook
+
+#### Template
+
+{% file src="../.gitbook/assets/sample_processing_workbook.xlsx" %}
+
+The workbook contains a **Processing** sheet (same columns as the flat list, one row) plus one optional sheet per sub-object type: **Purposes**, **Personal data**, **Data subjects**, **Data recipients**, **Contractors** and **Transfers**. Sheet names are matched case-insensitively; empty sheets are simply skipped.
+
+An export also carries a **Controllers** sheet (each client's name, country and contacts) and a **Security measures** sheet (the processing's applied controls). Both are there to be read, and the import ignores them.
+
+Every choice column accepts either the raw key (e.g. `privacy_contract`) or its English label (e.g. `Performance of a Contract`), case-insensitively.
+
+#### Purposes sheet
+
+* name
+* description
+* legal\_basis - GDPR Article 6 lawful basis; defaults to `privacy_consent` when blank
+* article\_9\_condition - GDPR Article 9(2) condition, optional
+
+#### Personal data sheet
+
+* name
+* description
+* category\* - name of a personal-data category from the terminology (e.g. `privacy_health_data`)
+* retention
+* deletion\_policy
+* is\_sensitive - `true` / `false`; forced to `true` automatically for GDPR Article 9/10 categories
+* assets - comma-separated asset names; the assets must already exist
+
+#### Data subjects sheet
+
+* name
+* description
+* category\* - e.g. `privacy_employee`, `privacy_customer`
+
+#### Data recipients sheet
+
+* name
+* description
+* category\* - e.g. `privacy_data_processor`, `privacy_regulatory_authority`
+
+#### Contractors sheet
+
+* name
+* description
+* entity - name of an existing third-party entity, optional
+* relationship\_type\* - e.g. `privacy_data_processor`, `privacy_joint_controller`
+* country\* - ISO 3166-1 alpha-2 code (e.g. `FR`) or country name
+* documentation\_link - URL
+
+#### Transfers sheet
+
+* name
+* description
+* entity - name of an existing third-party entity, optional
+* country\* - ISO 3166-1 alpha-2 code or country name
+* transfer\_mechanism - GDPR Chapter V mechanism, optional
+* guarantees
+* documentation\_link - URL
+
+#### Special considerations
+
+* Sub-objects are attached to the processing described on the **Processing** sheet. A `processing` column (name, ref\_id or UUID) on a sub-object row overrides this when present.
+* Sub-objects always land in the same domain as their parent processing.
+* If the `domain` column is filled on the Processing sheet, it takes precedence over the domain selected in the wizard — importing an unedited export therefore restores the processing into its original domain. Clear or change the cell to import elsewhere.
+* Referenced records (entities, assets, terminology categories) are matched by name and must already exist; an unresolved reference fails that row without blocking the rest.
+* Conflict resolution applies to sub-objects too: re-importing the same workbook with **Skip** creates no duplicates, and **Update** refreshes sub-objects whose identifying fields (e.g. name and category, within the same processing) still match; a row whose identifying fields changed is treated as a new record.
+
+
+
+## Policies
+
+{% file src="../.gitbook/assets/policies_template.xlsx" %}
+
+### Supported fields
+
+* ref\_id
+* name
+* description
+* domain
+* status
+* link
+* `csf_function` - defaults to `govern`
+  * `govern`
+  * `identify`
+  * `protect`
+  * `detect`
+  * `respond`
+  * `recover`
+* `priority`&#x20;
+  * integer 1–4
+* `effort`&#x20;
+  * size estimate: `XS`, `S`, `M`, `L`, `XL`
+* `eta`&#x20;
+  * estimated completion date (YYYY-MM-DD)
+* `expiry_date`&#x20;
+  * expiry date (YYYY-MM-DD)
+* `filtering_labels`&#x20;
+  * pipe- or comma-separated label names (created if missing
+
+## Exceptions
+
+{% file src="../.gitbook/assets/exceptions_template.xlsx" %}
+
+### Supported fields
+
+* ref\_id
+* name
+* description
+* domain
+* status
+  * draft, in\_review, approved, resolved, expired, deprecated
+* severity
+  * undefined, info, low, medium, high, critical
+* expiration\_date
+  * YYYY-MM-DD
+* observation
+
+## Incidents
+
+{% file src="../.gitbook/assets/incidents_template.xlsx" %}
+
+### Supported fields
+
+* ref\_id
+* name
+* description
+* domain
+* status
+  * new, ongoing, resolved, closed, dismissed
+* severity
+  * critical/sev1(1), major/sev2(2), moderate/sev3(3), minor/sev4(4), low/sev5(5), unknown(6)
+* detection
+  * internal/internally\_detected, external/externally\_detected
+* reported\_at
+  * DateTime
+* `link`&#x20;
+  * URL reference
+* `filtering_labels`&#x20;
+  * pipe- or comma-separated label names (created if missing)
+
+
+
+## Vulnerability
+
+###
+
+{% file src="../.gitbook/assets/template_vulnerabilities.xlsx" %}
+
+### Supported fields
+
+* **ref\_id** - e.g. a CVE identifier
+* **name**<mark style="color:red;">\*</mark>
+* **description**
+* **observation** - how the vulnerability is handled (Markdown)
+* **status** - case-insensitive; any other value reads as undefined
+  * `potential`
+  * `exploitable`
+  * `mitigated`
+  * `fixed`
+  * `not exploitable`
+  * `unaffected`
+* **severity** - case-insensitive, or the number `0`–`4`; any other value reads as undefined
+  * `info`
+  * `low`
+  * `medium`
+  * `high`
+  * `critical`
+* **detected\_at** - detection date (YYYY-MM-DD). Left empty, it is set to the import day while the [vulnerability SLA](settings/vulnerability-sla.md) is on
+* **due\_date** - due date (YYYY-MM-DD). Left empty, it is computed from the [vulnerability SLA policy](settings/vulnerability-sla.md) while the SLA is on
+* **remediated\_at** - remediation date (YYYY-MM-DD). Left empty, a resolved status (mitigated, fixed, not exploitable, unaffected) sets it to the import day
+* **owner**\
+  Semicolon-separated list of user emails and/or team names, shown as **Assigned to**. Resolved case-insensitively: first by user email, then by team name. Unresolved entries are skipped with a warning and will not block the import. This column isn't in the template: add it when you need it.
+* **assets**\
+  Names or ref\_ids separated by `|`, commas or new lines, looked up in the domain folder. A name that matches nothing rejects the row.
+* **applied\_controls**\
+  Names or ref\_ids separated by `|`, commas or new lines, looked up in the domain folder. A name that matches nothing rejects the row.
+* **security\_exceptions**\
+  Names or ref\_ids separated by `|`, commas or new lines, looked up in the domain folder. A name that matches nothing rejects the row.
+* **filtering\_labels**\
+  Label names separated by `|`, commas or new lines; missing labels are created.
+
+In update mode, an existing vulnerability is matched by **ref\_id**, then by **name**, in the domain folder. Empty cells leave its fields as they are, except **owner**: an empty owner cell removes the owners.
+
+
+
+## Folders
+
+Folders (domains) are the top-level organisational units in CISO Assistant. Importing them lets you pre-populate a domain hierarchy before importing other objects.
+
+#### Supported fields
+
+* `internal_id` - id of an existing folder, filled in by the domains export; used to match the row in update mode, even if the folder was renamed
+* `name`\*
+* `description`
+* `domain` - name of the parent folder, must match exactly one existing folder name (case-insensitive)
+* `labels` - pipe- or comma-separated label names (created if missing); also accepted as `label` or `filtering_labels`
+* `create_iam_groups` - whether the domain gets its IAM groups (true/false, yes/no or 1/0)
+
+### Template
+
+{% file src="../.gitbook/assets/sample_folders.xlsx" %}
+
+#### Special considerations
+
+* Conflict detection is performed by `internal_id` when present, otherwise by `name` + parent folder.
+* When `domain` is left blank the folder is attached to the root of the tenant.
+* `domain` is looked up among domains and the root folder (enclaves and personal folders are ignored). An error is returned if it matches more than one, unless the row's `internal_id` points to a domain whose current parent has that name.
+* Label names may only contain letters, digits, `_` or `-` (36 characters at most); a row with an invalid label is rejected. Creating a label that does not exist yet requires the permission to add labels.
+* Setting `create_iam_groups` to true creates the domain's IAM groups. Setting it to false on an existing domain removes them, which is refused while users are assigned to them.
+* The domains list can be exported to Excel or CSV with the same columns, so an export can be edited and re-imported with the **Update** strategy. In update mode, a blank cell leaves the field untouched.
+
+***
+
+## Evidences
+
+The import creates evidence **definitions**: what is expected, who owns it, and when it expires. The document itself is not imported - a file or a link belongs to a **revision**, which is filed against the evidence afterwards (through the UI, or with `upload-attachment` on the CLI). An evidence imported this way therefore starts with no revision at all.
+
+### Template
+
+{% file src="../.gitbook/assets/evidences_template.xlsx" %}
+
+### Supported fields
+
+* `name`\*
+* `description`
+* `domain` - domain name; falls back to the domain selected in the wizard
+* `status`
+  * `draft` (default)
+  * `missing`
+  * `in_review`
+  * `approved`
+  * `rejected`
+  * `expired`
+* `expiry_date` - date (YYYY-MM-DD)
+* `owner` - semicolon-separated list of user emails and/or team names
+* `filtering_labels` - comma- or pipe-separated label names; labels that do not exist are created
+
+### Special considerations
+
+* **Conflict detection is by name + domain.** The same name in two different domains gives two distinct evidences.
+* **Status accepts either form.** The stored key (`in_review`) and the displayed label (`In review`) are both understood; an unrecognised value fails the row rather than falling back silently.
+* **Tasks can create evidences too.** Naming an evidence in the `evidences` column of a task import creates it in the task's domain when it does not exist - see [#tasks](#tasks). Import evidences first when you want to control their status, owner or expiry.
+
+## Tasks
+
+Tasks in CISO Assistant are modelled as **TaskTemplates** (definitions) with **TaskNodes** (individual occurrences). A non-recurrent task has one node; recurrent tasks generate one node per scheduled occurrence.
+
+The wizard imports both in a single multi-sheet Excel file: a **Summary** sheet for the templates, plus one sheet per template that contains its past occurrences. A flat CSV upload is also accepted and imports templates only. On the CLI, the corresponding command is `import-tasks`.
+
+#### Template
+
+{% file src="../.gitbook/assets/sample_task-templates.xlsx" %}
+
+#### Supported fields — Summary sheet
+
+* `ref_id` — reference identifier; used as the primary conflict-detection key when present
+* `name`\*
+* `description`
+* `folder` — folder name; falls back to the domain selected in the wizard
+* `is_recurrent`
+  * `true` / `yes` / `1`
+  * `false` / `no` / `0`
+* `enabled`
+  * `true` / `yes` / `1` (default)
+  * `false` / `no` / `0`
+* `link` - URL
+* `task_date`  (YYYY-MM-DD)
+* `assigned_to` - comma- or semicolon-separated list of user emails and/or team names
+* `assets` - comma-separated asset names or ref\_ids
+* `applied_controls` - comma-separated control names or ref\_ids
+* `evidences` - comma-, pipe- or newline-separated evidence names; a name the task's domain does not have yet is created there as an expected evidence and linked
+* `compliance_assessments` - comma-separated assessment names or ref\_ids
+* `risk_assessments` - comma-separated assessment names or ref\_ids; the `name - version` format produced by the export is accepted
+* `findings_assessment` - comma-separated findings assessment names or ref\_ids
+* `status` - non-recurrent only; sets the status of the single task node
+  * `pending`
+  * `in_progress`
+  * `completed`
+  * `cancelled`
+* `observation` - free-text; non-recurrent only
+* `schedule_frequency` - recurrent only; must be provided together with `schedule_interval`
+  * `DAILY`
+  * `WEEKLY`
+  * `MONTHLY`
+  * `YEARLY`
+* `schedule_interval` - integer; repeat every N periods (recurrent only); must be provided together with `schedule_frequency`
+* `schedule_days_of_week` - comma-separated integers 1–7 (Mon=1, Sun=7), WEEKLY only
+* `schedule_weeks_of_month` - comma-separated integers -1–4 (1=first, -1=last)
+* `schedule_months_of_year` - comma-separated integers 1–12, YEARLY only
+* `schedule_end_date` - date (YYYY-MM-DD)
+* `schedule_occurrences` - integer; stop after N occurrences
+* `schedule_overdue_behavior`
+  * `DELAY_NEXT`
+  * `NO_IMPACT`
+
+#### Supported fields - per-template node sheets
+
+Each sheet is named `N-template name` (truncated to 31 characters) and contains one row per past occurrence.
+
+* `due_date`\* - date (YYYY-MM-DD); rows with a future date are skipped automatically, rows with an invalid date are reported as errors
+* `scheduled_date` - date (YYYY-MM-DD); defaults to `due_date` when blank
+* `status`
+  * `pending`
+  * `in_progress`
+  * `completed`
+  * `cancelled`
+* `observation`&#x20;
+
+#### Special considerations
+
+* **Folder is a fallback.** Each row's `folder` column is resolved first; the domain selected in the wizard is only used when a row has no folder.
+* **Linked records are resolved within your accessible domains.** `assigned_to`, `assets`, `applied_controls` and the assessment columns are matched by ref\_id or name inside the domains you can access; an exact ref\_id match wins, then an object in the row's own domain. Unresolved entries are skipped and reported as warnings, they will not block the import.
+* **Expected evidence is created, not skipped.** `evidences` is the exception: a name is matched case-insensitively, preferring the task's own domain, and an evidence is created there when nothing matches. The new evidence holds only a name and a domain - the document itself is filed later as a revision against each occurrence.
+* **Future nodes are skipped.** Rows whose `due_date` is after today are ignored - those occurrences are regenerated from the schedule instead.
+* **Upcoming occurrences appear after the import, not during it.** The import writes the templates; the occurrences are materialised the first time something asks for them - saving the task, opening its edit form, or browsing the calendar over that period. Viewing a task's detail page does not generate them, and a disabled task never generates any.
+* **Round-trip safe.** Importing a fresh export works with the default **Stop** mode: the node auto-created for a non-recurrent task is updated by its node sheet instead of raising a conflict. Re-importing with **Update** mode overwrites existing task nodes and templates without creating duplicates. With **Skip** mode, existing records are left unchanged.
+* **Clearing relationships.** In **Update** mode, leaving a relation column (e.g. `assigned_to`, `assets`) blank in the file clears the existing links on the template.
+* **Older exports.** Files exported by previous versions numbered the node sheets differently; the importer re-matches those sheets by name and adds a warning when the sheet number and name disagree.
+* **CSV upload.** A CSV file is accepted and imports the Summary sheet fields only; no task nodes are processed. The delimiter is detected automatically (comma, semicolon, tab or pipe).

@@ -1,0 +1,399 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "ciso-assistant.fullname" . }}-backend
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ciso-assistant.labels" (dict "context" . "component" "backend") | nindent 4 }}
+  {{- with .Values.backend.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  replicas: {{ .Values.backend.replicas }}
+  selector:
+    matchLabels:
+      {{- include "ciso-assistant.selectorLabels" (dict "context" . "component" "backend") | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/secret-backend: {{ include (print $.Template.BasePath "/backend/secret.yaml") . | sha256sum }}
+        {{- with .Values.backend.config.oidcProvider.privateKey }}
+        checksum/oidc-private-key: {{ . | sha256sum }}
+        {{- end }}
+        {{- with .Values.backend.podAnnotations }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "ciso-assistant.labels" (dict "context" . "component" "backend") | nindent 8 }}
+    spec:
+      {{- with .Values.backend.imagePullSecrets | default .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if or .Values.serviceAccount.create .Values.serviceAccount.name }}
+      serviceAccountName: {{ include "ciso-assistant.serviceAccountName" . }}
+      {{- end }}
+      {{- with .Values.global.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if .Values.global.extraCerts.enabled }}
+      initContainers:
+        {{- include "ciso-assistant.extraCerts.initContainer" (dict
+            "context" .
+            "image" (printf "%s/%s:%s" (default .Values.global.image.registry .Values.backend.image.registry) .Values.backend.image.repository (default (include "ciso-assistant.defaultTag" .) .Values.backend.image.tag))
+            "imagePullPolicy" (default .Values.global.image.imagePullPolicy .Values.backend.image.imagePullPolicy)
+            "securityContext" .Values.backend.containerSecurityContext) | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: {{ .Values.backend.name }}
+        image: {{ default .Values.global.image.registry .Values.backend.image.registry }}/{{ .Values.backend.image.repository }}:{{ default (include "ciso-assistant.defaultTag" .) .Values.backend.image.tag }}
+        imagePullPolicy: {{ default .Values.global.image.imagePullPolicy .Values.backend.image.imagePullPolicy }}
+        {{- with .Values.backend.command }}
+        command:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.backend.args }}
+        args:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        env:
+          {{- with .Values.backend.env }}
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- if and (eq .Values.backend.config.databaseType "sqlite") .Values.backend.persistence.sqlite.enabled }}
+          - name: SQLITE_FILE
+            value: /ciso/db/ciso-assistant.sqlite3
+          {{- else if eq .Values.backend.config.databaseType "pgsql" }}
+          - name: DB_HOST
+            value: {{ template "ciso-assistant.fullname" . }}-postgresql
+          - name: DB_PORT
+            value: "5432"
+          - name: POSTGRES_NAME
+            value: {{ .Values.postgresql.global.postgresql.auth.database | quote }}
+          - name: POSTGRES_USER
+            value: {{ .Values.postgresql.global.postgresql.auth.username }}
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                  name: {{ include "ciso-assistant.fullname" . }}-postgresql
+                  key: password
+          {{- else if eq .Values.backend.config.databaseType "externalPgsql" }}
+          - name: DB_HOST
+            value: {{ .Values.externalPgsql.host | quote }}
+          - name: DB_PORT
+            value: {{ .Values.externalPgsql.port | quote }}
+          - name: POSTGRES_NAME
+            value: {{ .Values.externalPgsql.database | quote }}
+          - name: POSTGRES_USER
+            value: {{ .Values.externalPgsql.user | quote }}
+          {{- if .Values.externalPgsql.existingSecret }}
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                  name: {{ .Values.externalPgsql.existingSecret }}
+                  key: password
+          {{- else }}
+          - name: POSTGRES_PASSWORD
+            value: {{ .Values.externalPgsql.password | quote }}
+          {{- end }}
+          {{- else }}
+          - name: SQLITE_FILE
+            value: /tmp/ciso-assistant.sqlite3
+          {{- end }}
+          - name: HUEY_FILE_PATH
+            value: /tmp/huey.db
+          {{- if .Values.backend.persistence.localStorage.enabled }}
+          - name: LOCAL_STORAGE_DIRECTORY
+            value: /ciso/localStorage
+          {{- end }}
+          - name: DJANGO_DEBUG
+            value: {{ ternary "True" "False" .Values.backend.config.djangoDebug | quote }}
+          - name: DJANGO_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                {{- if .Values.backend.config.djangoExistingSecretKey }}
+                name: {{ .Values.backend.config.djangoExistingSecretKey }}
+                {{- else }}
+                name: {{ include "ciso-assistant.fullname" . }}-backend
+                {{- end }}
+                key: django-secret-key
+          {{- if not (include "ciso-assistant.definesEnv" (dict "env" .Values.backend.env "names" (list "IDP_OIDC_PRIVATE_KEY" "IDP_OIDC_PRIVATE_KEY_FILE"))) }}
+          - name: IDP_OIDC_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "ciso-assistant.idpOidcSecretName" . }}
+                key: idp-oidc-private-key
+          {{- end }}
+          - name: CISO_ASSISTANT_SUPERUSER_EMAIL
+            value: {{ .Values.backend.config.emailAdmin }}
+          - name: CISO_ASSISTANT_URL
+            value: {{ template "ciso-assistant.url" . }}
+          - name: ALLOWED_HOSTS
+            value: localhost,127.0.0.1,{{ include "ciso-assistant.fullname" . }}-backend,{{ .Values.global.domain }}{{ if .Values.global.extraAllowedHosts }},{{ .Values.global.extraAllowedHosts }}{{ end }}
+          - name: DEFAULT_FROM_EMAIL
+            value: {{ .Values.backend.config.smtp.defaultFrom | quote }}
+          - name: EMAIL_HOST
+            value: {{ .Values.backend.config.smtp.host | quote }}
+          - name: EMAIL_PORT
+            value: {{ .Values.backend.config.smtp.port | quote }}
+          {{- if .Values.backend.config.smtp.useSsl }}
+          - name: EMAIL_USE_SSL
+            value: "True"
+          {{- else if .Values.backend.config.smtp.useTls }}
+          - name: EMAIL_USE_TLS
+            value: "True"
+          {{- end }}
+          {{- if .Values.backend.config.smtp.username }}
+          - name: EMAIL_HOST_USER
+            value: {{ .Values.backend.config.smtp.username | quote }}
+          {{- end }}
+          {{- if .Values.backend.config.smtp.existingSecret }}
+          - name: EMAIL_HOST_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.backend.config.smtp.existingSecret }}
+                key: email-primary-password
+          {{- else if .Values.backend.config.smtp.password }}
+          - name: EMAIL_HOST_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "ciso-assistant.fullname" . }}-backend
+                key: email-primary-password
+          {{- end }}
+          {{- if .Values.backend.config.chat.enabled }}
+          - name: ENABLE_CHAT
+            value: "True"
+          {{- end }}
+          {{- if .Values.qdrant.enabled }}
+          - name: QDRANT_URL
+            value: {{ include "ciso-assistant.qdrantUrl" . }}
+          {{- end }}
+          {{- include "ciso-assistant.extraCerts.pythonEnv" . | nindent 10 }}
+        ports:
+          - name: http
+            containerPort: 8000
+            protocol: TCP
+        volumeMounts:
+          - name: tmp-data
+            mountPath: /tmp
+          {{- if and (eq .Values.backend.config.databaseType "sqlite") .Values.backend.persistence.sqlite.enabled }}
+          - name: sqlite-data
+            mountPath: /ciso/db
+          {{- end }}
+          {{- if .Values.backend.persistence.localStorage.enabled }}
+          - name: localstorage-data
+            mountPath: /ciso/localStorage
+          {{- end }}
+          {{- if and .Values.backend.extraVolumeMounts (not .Values.backend.extraVolumes) }}
+            {{- fail "backend.extraVolumeMounts can't be set without backend.extraVolumes" }}
+          {{- end }}
+          {{- include "ciso-assistant.extraCerts.backendVolumeMount" . | nindent 10 }}
+          {{- with .Values.backend.extraVolumeMounts }}
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+        {{- if .Values.backend.resources }}
+        resources:
+          {{- toYaml .Values.backend.resources | nindent 10 }}
+        {{- end }}
+        {{- with .Values.backend.containerSecurityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      - name: {{ .Values.backend.huey.name }}
+        image: {{ default .Values.global.image.registry .Values.backend.image.registry }}/{{ .Values.backend.image.repository }}:{{ default (include "ciso-assistant.defaultTag" .) .Values.backend.image.tag }}
+        imagePullPolicy: {{ default .Values.global.image.imagePullPolicy .Values.backend.image.imagePullPolicy }}
+        {{- with .Values.backend.huey.command }}
+        command:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.backend.huey.args }}
+        args:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        env:
+          {{- with .Values.backend.huey.env }}
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+          {{- if .Values.backend.persistence.sqlite.enabled }}
+          - name: HUEY_FILE_PATH
+            value: /ciso/db/huey.db
+          {{- if eq .Values.backend.config.databaseType "sqlite" }}
+          - name: SQLITE_FILE
+            value: /ciso/db/ciso-assistant.sqlite3
+          {{- end }}
+          {{- else if eq .Values.backend.config.databaseType "sqlite" }}
+          - name: SQLITE_FILE
+            value: /tmp/ciso-assistant.sqlite3
+          - name: HUEY_FILE_PATH
+            value: /tmp/huey.db
+          {{- else }}
+          - name: HUEY_FILE_PATH
+            value: /tmp/huey.db
+          {{- end }}
+          {{- if .Values.backend.persistence.localStorage.enabled }}
+          - name: LOCAL_STORAGE_DIRECTORY
+            value: /ciso/localStorage
+          {{- end }}
+          {{- if eq .Values.backend.config.databaseType "pgsql" }}
+          - name: DB_HOST
+            value: {{ template "ciso-assistant.fullname" . }}-postgresql
+          - name: DB_PORT
+            value: "5432"
+          - name: POSTGRES_NAME
+            value: {{ .Values.postgresql.global.postgresql.auth.database | quote }}
+          - name: POSTGRES_USER
+            value: {{ .Values.postgresql.global.postgresql.auth.username }}
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                  name: {{ include "ciso-assistant.fullname" . }}-postgresql
+                  key: password
+          {{- else if eq .Values.backend.config.databaseType "externalPgsql" }}
+          - name: DB_HOST
+            value: {{ .Values.externalPgsql.host | quote }}
+          - name: DB_PORT
+            value: {{ .Values.externalPgsql.port | quote }}
+          - name: POSTGRES_NAME
+            value: {{ .Values.externalPgsql.database | quote }}
+          - name: POSTGRES_USER
+            value: {{ .Values.externalPgsql.user | quote }}
+          {{- if .Values.externalPgsql.existingSecret }}
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                  name: {{ .Values.externalPgsql.existingSecret }}
+                  key: password
+          {{- else }}
+          - name: POSTGRES_PASSWORD
+            value: {{ .Values.externalPgsql.password | quote }}
+          {{- end }}
+          {{- end }}
+          - name: DJANGO_DEBUG
+            value: {{ ternary "True" "False" .Values.backend.config.djangoDebug | quote }}
+          - name: DJANGO_SECRET_KEY
+            valueFrom:
+              secretKeyRef:
+                {{- if .Values.backend.config.djangoExistingSecretKey }}
+                name: {{ .Values.backend.config.djangoExistingSecretKey }}
+                {{- else }}
+                name: {{ include "ciso-assistant.fullname" . }}-backend
+                {{- end }}
+                key: django-secret-key
+          {{- if not (include "ciso-assistant.definesEnv" (dict "env" .Values.backend.huey.env "names" (list "IDP_OIDC_PRIVATE_KEY" "IDP_OIDC_PRIVATE_KEY_FILE"))) }}
+          - name: IDP_OIDC_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "ciso-assistant.idpOidcSecretName" . }}
+                key: idp-oidc-private-key
+          {{- end }}
+          - name: CISO_ASSISTANT_SUPERUSER_EMAIL
+            value: {{ .Values.backend.config.emailAdmin }}
+          - name: CISO_ASSISTANT_URL
+            value: {{ template "ciso-assistant.url" . }}
+          - name: ALLOWED_HOSTS
+            value: localhost,127.0.0.1,{{ include "ciso-assistant.fullname" . }}-backend,{{ .Values.global.domain }}{{ if .Values.global.extraAllowedHosts }},{{ .Values.global.extraAllowedHosts }}{{ end }}
+          - name: DEFAULT_FROM_EMAIL
+            value: {{ .Values.backend.config.smtp.defaultFrom | quote }}
+          - name: EMAIL_HOST
+            value: {{ .Values.backend.config.smtp.host | quote }}
+          - name: EMAIL_PORT
+            value: {{ .Values.backend.config.smtp.port | quote }}
+          {{- if .Values.backend.config.smtp.useSsl }}
+          - name: EMAIL_USE_SSL
+            value: "True"
+          {{- else if .Values.backend.config.smtp.useTls }}
+          - name: EMAIL_USE_TLS
+            value: "True"
+          {{- end }}
+          {{- if .Values.backend.config.smtp.username }}
+          - name: EMAIL_HOST_USER
+            value: {{ .Values.backend.config.smtp.username | quote }}
+          {{- end }}
+          {{- if .Values.backend.config.smtp.existingSecret }}
+          - name: EMAIL_HOST_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.backend.config.smtp.existingSecret }}
+                key: email-primary-password
+          {{- else if .Values.backend.config.smtp.password }}
+          - name: EMAIL_HOST_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: {{ include "ciso-assistant.fullname" . }}-backend
+                key: email-primary-password
+          {{- end }}
+          {{- if .Values.backend.config.chat.enabled }}
+          - name: ENABLE_CHAT
+            value: "True"
+          {{- end }}
+          {{- if .Values.qdrant.enabled }}
+          - name: QDRANT_URL
+            value: {{ include "ciso-assistant.qdrantUrl" . }}
+          {{- end }}
+          {{- include "ciso-assistant.extraCerts.pythonEnv" . | nindent 10 }}
+        volumeMounts:
+          - name: tmp-data
+            mountPath: /tmp
+          {{- if .Values.backend.persistence.sqlite.enabled }}
+          - name: sqlite-data
+            mountPath: /ciso/db
+          {{- end }}
+          {{- if .Values.backend.persistence.localStorage.enabled }}
+          - name: localstorage-data
+            mountPath: /ciso/localStorage
+          {{- end }}
+          {{- if and .Values.backend.huey.extraVolumeMounts (not .Values.backend.extraVolumes) }}
+            {{- fail "backend.huey.extraVolumeMounts can't be set without backend.extraVolumes" }}
+          {{- end }}
+          {{- include "ciso-assistant.extraCerts.backendVolumeMount" . | nindent 10 }}
+          {{- with .Values.backend.huey.extraVolumeMounts }}
+            {{- toYaml . | nindent 10 }}
+          {{- end }}
+        {{- if .Values.backend.huey.resources }}
+        resources:
+          {{- toYaml .Values.backend.huey.resources | nindent 10 }}
+        {{- end }}
+        {{- with .Values.backend.containerSecurityContext }}
+        securityContext:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+      {{- with .Values.backend.nodeSelector | default .Values.global.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.tolerations | default .Values.global.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.backend.affinity | default .Values.global.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: tmp-data
+          emptyDir:
+            sizeLimit: 256Mi
+        {{- if .Values.backend.persistence.sqlite.enabled }}
+        - name: sqlite-data
+          persistentVolumeClaim:
+            {{- if .Values.backend.persistence.sqlite.existingClaim }}
+            claimName: {{ .Values.backend.persistence.sqlite.existingClaim }}
+            {{- else }}
+            claimName: {{ include "ciso-assistant.fullname" . }}-sqlite
+            {{- end }}
+        {{- end }}
+        {{- if .Values.backend.persistence.localStorage.enabled }}
+        - name: localstorage-data
+          persistentVolumeClaim:
+            {{- if .Values.backend.persistence.localStorage.existingClaim }}
+            claimName: {{ .Values.backend.persistence.localStorage.existingClaim }}
+            {{- else }}
+            claimName: {{ include "ciso-assistant.fullname" . }}-localstorage
+            {{- end }}
+        {{- end }}
+        {{- include "ciso-assistant.extraCerts.backendVolumes" . | nindent 8 }}
+        {{- with .Values.backend.extraVolumes }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}

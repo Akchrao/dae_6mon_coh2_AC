@@ -1,0 +1,213 @@
+<script lang="ts">
+	import Select from '../Select.svelte';
+	import AutocompleteSelect from '../AutocompleteSelect.svelte';
+	import type { SuperValidated } from 'sveltekit-superforms';
+	import type { ModelInfo, CacheLock } from '#lib/utils/types.js';
+	import TextField from '#lib/components/Forms/TextField.svelte';
+	import MarkdownField from '#lib/components/Forms/MarkdownField.svelte';
+	import * as m from '#paraglide/messages.js';
+	import { safeTranslate } from '#lib/utils/i18n.js';
+
+	import Dropdown from '#lib/components/Dropdown/Dropdown.svelte';
+	interface Props {
+		form: SuperValidated<any>;
+		model: ModelInfo;
+		duplicate?: boolean;
+		cacheLocks?: Record<string, CacheLock>;
+		formDataCache?: Record<string, any>;
+		schema?: any;
+		initialData?: Record<string, any>;
+	}
+
+	let {
+		form,
+		model,
+		duplicate = false,
+		cacheLocks = {},
+		formDataCache = $bindable({}),
+		schema = {},
+		initialData = {}
+	}: Props = $props();
+	const disableDoubleDash = true;
+</script>
+
+<TextField
+	type="datetime-local"
+	step="1"
+	{form}
+	field="reported_at"
+	label={m.reportedAt()}
+	cacheLock={cacheLocks['reported_at']}
+	bind:cachedValue={formDataCache['reported_at']}
+/>
+<TextField
+	type="datetime-local"
+	step="1"
+	{form}
+	field="occurred_at"
+	label={m.occurredAt()}
+	cacheLock={cacheLocks['occurred_at']}
+	bind:cachedValue={formDataCache['occurred_at']}
+/>
+<TextField
+	type="datetime-local"
+	step="1"
+	{form}
+	field="resolved_at"
+	label={m.resolvedAt()}
+	cacheLock={cacheLocks['resolved_at']}
+	bind:cachedValue={formDataCache['resolved_at']}
+/>
+
+<Select
+	{form}
+	{disableDoubleDash}
+	field="detection"
+	label={m.detectedBy()}
+	options={model.selectOptions['detection']}
+	cacheLock={cacheLocks['detection']}
+	bind:cachedValue={formDataCache['detection']}
+/>
+<Select
+	{form}
+	{disableDoubleDash}
+	field="status"
+	label={m.status()}
+	options={model.selectOptions['status']}
+	cacheLock={cacheLocks['status']}
+	bind:cachedValue={formDataCache['status']}
+/>
+<Select
+	{form}
+	{disableDoubleDash}
+	options={[
+		{ label: m.unknown(), value: 6 },
+		{ label: m.critical(), value: 1 },
+		{ label: m.major(), value: 2 },
+		{ label: m.moderate(), value: 3 },
+		{ label: m.minor(), value: 4 },
+		{ label: m.low(), value: 5 }
+	]}
+	field="severity"
+	label={m.severity()}
+	cacheLock={cacheLocks['severity']}
+	bind:cachedValue={formDataCache['severity']}
+/>
+<TextField
+	{form}
+	field="link"
+	label={m.link()}
+	helpText={m.linkHelpText()}
+	cacheLock={cacheLocks['link']}
+	bind:cachedValue={formDataCache['link']}
+/>
+<Dropdown open={false} style="hover:text-primary-700" icon="fa-solid fa-list" header={m.more()}>
+	<AutocompleteSelect
+		multiple
+		lazy
+		{form}
+		optionsEndpoint="applied-controls"
+		optionsLabelField="auto"
+		optionsExtraFields={[['folder', 'str']]}
+		optionsInfoFields={{
+			fields: [{ field: 'category', translate: true }],
+			position: 'prefix'
+		}}
+		field="applied_controls"
+		label={m.appliedControls()}
+	/>
+	<AutocompleteSelect
+		multiple
+		lazy
+		{form}
+		optionsEndpoint="task-templates"
+		optionsLabelField="auto"
+		optionsExtraFields={[['folder', 'str']]}
+		field="task_templates"
+		label={m.taskTemplates()}
+	/>
+	<AutocompleteSelect
+		multiple
+		{form}
+		optionsEndpoint="terminologies?field_path=qualifications&is_visible=true"
+		field="qualifications"
+		optionsLabelField="translated_name"
+		label={safeTranslate('qualifications')}
+	/>
+	<AutocompleteSelect
+		multiple
+		lazy
+		{form}
+		optionsEndpoint="assets"
+		optionsLabelField="auto"
+		optionsExtraFields={[['folder', 'str']]}
+		optionsInfoFields={{
+			fields: [
+				{
+					field: 'type'
+				}
+			],
+			classes: 'text-blue-500'
+		}}
+		field="assets"
+		label={m.assets()}
+	/>
+	<AutocompleteSelect
+		{form}
+		multiple
+		optionsEndpoint="threats"
+		field="threats"
+		cacheLock={cacheLocks['threats']}
+		bind:cachedValue={formDataCache['threats']}
+		label={m.threats()}
+	/>
+	<AutocompleteSelect
+		{form}
+		multiple
+		optionsEndpoint="actors"
+		lazy
+		optionsLabelField="str"
+		optionsInfoFields={{
+			fields: [{ field: 'type', translate: true }],
+			position: 'prefix'
+		}}
+		field="owners"
+		cacheLock={cacheLocks['owners']}
+		bind:cachedValue={formDataCache['owners']}
+		label={m.owners()}
+	/>
+	<AutocompleteSelect
+		{form}
+		multiple
+		optionsEndpoint="entities"
+		optionsExtraFields={[['folder', 'str']]}
+		field="entities"
+		cacheLock={cacheLocks['entities']}
+		bind:cachedValue={formDataCache['entities']}
+		label={m.entities()}
+	/>
+	<AutocompleteSelect
+		multiple
+		{form}
+		createFromSelection={true}
+		optionsEndpoint="filtering-labels"
+		optionsLabelField="label"
+		field="filtering_labels"
+		helpText={m.labelsHelpText()}
+		label={m.labels()}
+		translateOptions={false}
+		allowUserOptions="append"
+	/>
+	<Select
+		{form}
+		options={[
+			{ label: m.yes(), value: true },
+			{ label: m.no(), value: false }
+		]}
+		field="is_bcp_activated"
+		label={m.isBcpActivated()}
+		cacheLock={cacheLocks['is_bcp_activated']}
+		bind:cachedValue={formDataCache['is_bcp_activated']}
+	/>
+	<MarkdownField {form} field="resolution" label={m.resolution()} />
+</Dropdown>

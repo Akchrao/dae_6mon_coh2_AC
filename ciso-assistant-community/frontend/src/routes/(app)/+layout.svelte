@@ -1,0 +1,261 @@
+<script lang="ts">
+	import { run } from 'svelte/legacy';
+
+	// Most of your app wide CSS should be put in this file
+	import '../../app.css';
+
+	import { AppBar } from '@skeletonlabs/skeleton-svelte';
+	import { safeTranslate, setUseRiskCategoryLabel } from '#lib/utils/i18n.js';
+
+	import SideBar from '#lib/components/SideBar/SideBar.svelte';
+	import Breadcrumbs from '#lib/components/Breadcrumbs/Breadcrumbs.svelte';
+	import {
+		pageTitle,
+		modelName,
+		modelDescription,
+		clientSideToast,
+		getStartedTrigger
+	} from '#lib/utils/stores.js';
+	import { getCookie, deleteCookie } from '#lib/utils/cookies.js';
+	import { browser } from '$app/env';
+	import { page } from '$app/state';
+	import { m } from '#paraglide/messages.js';
+
+	import type { LayoutData, ActionData } from './$types';
+	import { getSidebarVisibleItems } from '#lib/utils/sidebar-config.js';
+	import { getModalStore, type ModalStore } from '#lib/components/Modals/stores.js';
+
+	import CommandPalette from '#lib/components/CommandPalette/CommandPalette.svelte';
+	import ThemeToggle from '#lib/components/ThemeToggle/ThemeToggle.svelte';
+	import NotificationBell from '#lib/components/NotificationBell/NotificationBell.svelte';
+	import ChatWidget from '#lib/components/ChatWidget/ChatWidget.svelte';
+	import {
+		interceptExternalLinks,
+		setGlobalModalStore,
+		setShowWarningExternalLinks
+	} from '#lib/utils/external-links.js';
+	import { onMount } from 'svelte';
+	import { initThemeFromUser } from '#lib/utils/theme.js';
+
+	const isMac = browser && navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+	const modifierKey = isMac ? '⌘' : 'Ctrl';
+
+	let commandPalette: ReturnType<typeof CommandPalette> | undefined = $state();
+
+	let sidebarOpen = $state(true);
+
+	let classesSidebarOpen = $derived((open: boolean) => (open ? 'ml-64' : 'ml-7'));
+
+	interface Props {
+		data: LayoutData;
+		form: ActionData;
+		sideBarVisibleItems?: any;
+		children?: import('svelte').Snippet;
+	}
+
+	let {
+		data,
+		form,
+		sideBarVisibleItems = getSidebarVisibleItems(data?.featureflags),
+		children
+	}: Props = $props();
+
+	const modalStore: ModalStore = getModalStore();
+
+	// Sync the qualification/risk-category wording flag before children render
+	// (hydration would otherwise flip labels back), then keep it in sync when
+	// settings are invalidated.
+	setUseRiskCategoryLabel(data?.settings?.use_risk_category_label);
+	$effect.pre(() => {
+		setUseRiskCategoryLabel(data?.settings?.use_risk_category_label);
+	});
+
+	// Display title, model name, and description from either page data or manual store setting
+	const displayTitle = $derived(page.data?.title || $pageTitle);
+
+	// Auto-detect model from URL for list pages
+	// Match pattern: /model-name or /model-name/ (but not /model-name/uuid or /model-name/something)
+	const urlModel = $derived(() => {
+		const path = page.url.pathname;
+		const match = path.match(/^\/([a-z-]+)\/?$/);
+		return match ? match[1] : null;
+	});
+
+	// Generate description key from URL model: "risk-matrices" → "riskMatricesDescription"
+	const urlDescriptionKey = $derived(() => {
+		const model = urlModel();
+		if (!model) return null;
+
+		const camelCase = model
+			.split('-')
+			.map((word, index) => (index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)))
+			.join('');
+
+		return `${camelCase}Description`;
+	});
+
+	// Determine if we're on a list page vs detail page
+	// List page: URL matches /model-name pattern (e.g., /risk-assessments)
+	// Detail page: has an object title from loadDetail (e.g., /risk-assessments/uuid)
+	const matchesListUrl = $derived(!!urlModel());
+	const hasObjectTitle = $derived(!!page.data?.title);
+
+	// For list pages: show description subtitle
+	// For detail pages: show model name subtitle
+	const displayModelName = $derived(
+		hasObjectTitle ? page.data?.modelVerboseName || $modelName : ''
+	);
+
+	const displayModelDescription = $derived(
+		(() => {
+			// Only show description on list pages (not on detail pages with object titles)
+			// Exception: pages that explicitly provide a modelDescriptionKey
+			if (hasObjectTitle && !page.data?.modelDescriptionKey) return '';
+
+			if (!matchesListUrl && !page.data?.modelDescriptionKey) return '';
+
+			// List pages: get description from i18n
+			const descKey = page.data?.modelDescriptionKey || urlDescriptionKey();
+			if (descKey && m[descKey]) {
+				return m[descKey]();
+			}
+
+			// Fallback to manual store
+			return $modelDescription;
+		})()
+	);
+
+	// Initialize external link interceptor
+	$effect(() => {
+		if (browser) {
+			setGlobalModalStore(modalStore);
+			// Set the warning preference from settings (default to true if not set)
+			const showWarning = data?.settings?.show_warning_external_links ?? true;
+			setShowWarningExternalLinks(showWarning);
+			interceptExternalLinks();
+		}
+	});
+
+	// Apply the theme persisted in the user's server-side preferences (ui.theme).
+	// Falls back to localStorage / system preference when no server value is set.
+	onMount(() => {
+		initThemeFromUser(data.user?.preferences);
+	});
+
+	// Handle login-specific logic
+	run(() => {
+		if (browser) {
+			const fromLogin = getCookie('from_login');
+			if (fromLogin === 'true') {
+				deleteCookie('from_login');
+				fetch('/fe-api/waiting-risk-acceptances').then(async (res) => {
+					const data = await res.json();
+					const number = data.count ?? 0;
+					if (number <= 0) return;
+				});
+			}
+		}
+	});
+
+	// $inspect(data);
+</script>
+
+<svelte:head>
+	<title>CISO Assistant | {safeTranslate(displayTitle)}</title>
+</svelte:head>
+
+<!-- App Shell -->
+<!-- min-height and background live here (not on <main>) so appbar + main can
+     add up to exactly one viewport; min-h-screen on <main> alone always overflowed. -->
+
+<div class="overflow-x-clip min-h-dvh bg-linear-to-br from-surface-200-800 to-surface-150-850">
+	<SideBar bind:open={sidebarOpen} {sideBarVisibleItems} />
+
+	<AppBar
+		class="sticky top-0 z-50 border-b border-surface-200-800 transition-all duration-300 bg-surface-50-950 w-auto pb-2 px-4 {classesSidebarOpen(
+			sidebarOpen
+		)}"
+	>
+		<div class="flex items-start justify-between px-4">
+			<div>
+				<div
+					class="text-2xl font-bold pb-1 bg-linear-to-r from-pink-500 to-violet-600 bg-clip-text text-transparent"
+					id="page-title"
+				>
+					{safeTranslate(displayTitle)}
+				</div>
+				{#if displayModelName}
+					<div class="text-sm text-surface-600-400 font-medium">
+						{safeTranslate(displayModelName)}
+					</div>
+				{/if}
+				{#if displayModelDescription}
+					<div class="text-xs text-surface-600-400 italic">
+						{safeTranslate(displayModelDescription)}
+					</div>
+				{/if}
+			</div>
+			<div class="flex items-center gap-2">
+				{#if sideBarVisibleItems.notifications && !data?.user?.is_third_party}
+					<NotificationBell />
+				{/if}
+				<ThemeToggle />
+				{#if data?.featureflags?.custom_portals && !data?.user?.is_third_party}
+					<a
+						href="/portal"
+						class="flex items-center gap-2 shrink-0 rounded-lg border border-surface-200-800 bg-surface-100-900/80 px-3 py-1.5
+			text-xs text-surface-600-400 hover:bg-surface-200-800 hover:border-surface-300-700 hover:text-surface-700-300
+			transition-all duration-150"
+					>
+						<i class="fa-solid fa-table-cells-large text-surface-500"></i>
+						<span class="hidden sm:inline">{m.portals()}</span>
+					</a>
+				{/if}
+				{#if !data?.user?.is_third_party}
+					<button
+						onclick={() => commandPalette?.toggle()}
+						aria-label={m.search()}
+						data-testid="command-palette-trigger"
+						class="flex items-center gap-2 shrink-0 rounded-lg border border-surface-200-800 bg-surface-100-900/80 px-3 py-1.5
+			text-xs text-surface-600-400 hover:bg-surface-200-800 hover:border-surface-300-700 hover:text-surface-700-300
+			transition-all duration-150 cursor-pointer"
+					>
+						<i class="fa-solid fa-magnifying-glass text-surface-500"></i>
+						<span class="hidden sm:inline text-surface-500">{m.searchEllipsis()}</span>
+						<kbd
+							class="hidden sm:inline-flex items-center rounded border border-surface-200-800 bg-surface-50-950 px-1.5 py-0.5
+				font-mono text-[10px] text-surface-500">{modifierKey}K</kbd
+						>
+					</button>
+				{/if}
+				{#if data?.user?.is_admin && data?.settings?.show_get_started !== false}
+					<button
+						onclick={() => getStartedTrigger.set(true)}
+						class="shrink-0 px-3 py-1.5 rounded-full bg-violet-500 dark:bg-violet-600 text-white text-xs font-semibold shadow-lg
+			ring-2 ring-violet-400 ring-offset-2 transition-all duration-300 hover:bg-violet-600
+			hover:ring-violet-300 hover:ring-offset-violet-100 hover:shadow-violet-500/50
+			focus:outline-hidden focus:ring-violet-500 cursor-pointer"
+					>
+						<i class="fa-solid fa-rocket mr-1"></i>
+						{m.getStarted()}
+					</button>
+				{/if}
+			</div>
+		</div>
+		<div class="px-4">
+			<hr class="my-1" />
+			<Breadcrumbs />
+		</div>
+	</AppBar>
+	<!-- Router Slot -->
+	{#if !data?.user?.is_third_party}
+		<CommandPalette bind:this={commandPalette} />
+	{/if}
+	{#if page.data.featureflags?.chat_mode}
+		<ChatWidget />
+	{/if}
+	<main class="p-8 transition-all duration-300 {classesSidebarOpen(sidebarOpen)}">
+		{@render children?.()}
+	</main>
+	<!-- ---- / ---- -->
+</div>

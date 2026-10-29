@@ -1,0 +1,15 @@
+import { getModelInfo } from '#lib/utils/crud.js';
+import { loadDetail } from '#lib/utils/load.js';
+import type { LayoutServerLoad } from './$types';
+
+export const load: LayoutServerLoad = async (event) => {
+	const modelInfo = getModelInfo('reference-controls');
+
+	const data = await loadDetail({
+		event,
+		model: modelInfo,
+		id: event.params.id
+	});
+
+	return data;
+};

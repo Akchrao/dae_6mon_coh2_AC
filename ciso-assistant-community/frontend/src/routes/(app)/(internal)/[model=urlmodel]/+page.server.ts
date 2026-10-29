@@ -1,0 +1,193 @@
+import { defaultDeleteFormAction, defaultWriteFormAction } from '#lib/utils/actions.js';
+import { BASE_API_URL } from '#lib/utils/constants.js';
+import {
+	getModelInfo,
+	urlParamModelForeignKeyFields,
+	urlParamModelSelectFields
+} from '#lib/utils/crud.js';
+import { formatSelectFieldData } from '#lib/utils/load.js';
+import { modelSchema, WorkflowImportSchema } from '#lib/utils/schemas.js';
+import type { ModelInfo } from '#lib/utils/types.js';
+import { type Actions, redirect } from '@sveltejs/kit';
+import { fail, superValidate, withFiles, setError, message } from 'sveltekit-superforms';
+import { zod4 as zod } from 'sveltekit-superforms/adapters';
+import { z } from 'zod';
+import type { PageServerLoad } from './$types';
+import { setFlash } from 'sveltekit-flash-message/server';
+import { m } from '#paraglide/messages.js';
+import { safeTranslate } from '#lib/utils/i18n.js';
+
+export const load: PageServerLoad = async ({ params, fetch, url }) => {
+	const schema = z.object({ id: z.string().uuid() });
+	const deleteForm = await superValidate(zod(schema));
+	const URLModel = params.model!;
+	const createSchema = modelSchema(params.model!);
+	const createForm = await superValidate(zod(createSchema));
+	const model: ModelInfo = getModelInfo(params.model!);
+	const selectFields = urlParamModelSelectFields(params.model);
+
+	const selectOptions: Record<string, any> = {};
+
+	for (const selectField of selectFields) {
+		if (selectField.detail) continue;
+		const url = model.endpointUrl
+			? `${BASE_API_URL}/${model.endpointUrl}/${selectField.field}/`
+			: `${BASE_API_URL}/${params.model}/${selectField.field}/`;
+
+		const response = await fetch(url);
+		if (response.ok) {
+			const responseData = await response.json();
+			selectOptions[selectField.field] = formatSelectFieldData(responseData, selectField);
+		} else {
+			console.error(`Failed to fetch data for ${selectField.field}: ${response.statusText}`);
+		}
+	}
+
+	model['selectOptions'] = selectOptions;
+
+	if (model.urlModel === 'folders') {
+		const folderImportForm = await superValidate(zod(modelSchema('folders-import')), {
+			errors: false
+		});
+		model['folderImportForm'] = folderImportForm;
+		model['folderImportModel'] = { urlModel: 'folders-import' };
+	}
+
+	if (model.urlModel === 'workflows') {
+		model['workflowImportForm'] = await superValidate(zod(WorkflowImportSchema), {
+			errors: false
+		});
+	}
+
+	// Reading `url` re-runs this load on query change; the table is keyed on it
+	// because its filter state is seeded once at creation.
+	return { createForm, deleteForm, model, URLModel, urlSearch: url.search };
+};
+
+export const actions: Actions = {
+	create: async (event) => {
+		const redirectToWrittenObject = Boolean(
+			event.params.model === 'entity-assessments' ||
+			event.params.model === 'quantitative-risk-hypotheses' ||
+			event.params.model === 'quantitative-risk-studies' ||
+			event.params.model === 'quantitative-risk-scenarios' ||
+			event.params.model === 'risk-assessments' ||
+			event.params.model === 'document-containers'
+		);
+		return defaultWriteFormAction({
+			event,
+			urlModel: event.params.model!,
+			action: 'create',
+			redirectToWrittenObject: redirectToWrittenObject
+		});
+	},
+	delete: async (event) => {
+		return defaultDeleteFormAction({ event, urlModel: event.params.model! });
+	},
+	importFolder: async (event) => {
+		const formData = await event.request.formData();
+		if (!formData) return fail(400, { error: 'No form data' });
+
+		const form = await superValidate(formData, zod(modelSchema('folders-import')));
+		if (!form.valid) {
+			return fail(400, withFiles({ form }));
+		}
+
+		const { file } = Object.fromEntries(formData) as { file: File };
+
+		const importParams = new URLSearchParams();
+		if (form.data.load_missing_libraries) importParams.set('load_missing_libraries', 'true');
+		if (form.data.create_missing_asset_classes)
+			importParams.set('create_missing_asset_classes', 'true');
+		const query = importParams.toString();
+		const endpoint = `${BASE_API_URL}/folders/import/${query ? `?${query}` : ''}`;
+
+		const response = await event.fetch(endpoint, {
+			method: 'POST',
+			headers: {
+				'Content-Disposition': `attachment; filename="${file.name}"`,
+				'Content-Type': file.type,
+				'X-CISOAssistantDomainName': form.data.name
+			},
+			body: file
+		});
+		const res = await response.json();
+
+		if (!response.ok && res.missing_libraries) {
+			setError(form, 'file', m.missingLibrariesInImport());
+			for (let i = 0; i < res.missing_libraries.length; i += 2) {
+				const urn = res.missing_libraries[i];
+				const version = res.missing_libraries[i + 1];
+				setError(form, 'non_field_errors', `${urn} v${version}`);
+			}
+			return message(form, { status: response.status });
+		}
+
+		if (!response.ok) {
+			if (res.error) {
+				setFlash({ type: 'error', message: safeTranslate(res.error) }, event);
+				return withFiles({ form });
+			}
+			Object.entries(res).forEach(([key, value]) => {
+				setError(form, key, safeTranslate(value));
+			});
+			return fail(400, withFiles({ form }));
+		}
+
+		setFlash(
+			{
+				type: 'success',
+				message: m.successfullyImportedFolder()
+			},
+			event
+		);
+
+		return withFiles({ form });
+	},
+	importWorkflow: async (event) => {
+		const formData = await event.request.formData();
+		if (!formData) return fail(400, { error: 'No form data' });
+
+		const form = await superValidate(formData, zod(WorkflowImportSchema));
+		if (!form.valid) {
+			return fail(400, withFiles({ form }));
+		}
+
+		const { file } = Object.fromEntries(formData) as { file: File };
+		const body = new FormData();
+		body.append('file', file, file.name);
+		if (form.data.folder) body.append('folder', form.data.folder);
+		if (form.data.secrets) body.append('secrets', form.data.secrets);
+
+		const response = await event.fetch(`${BASE_API_URL}/workflows/workflows/import-yaml/`, {
+			method: 'POST',
+			body
+		});
+		// A non-JSON error body (proxy HTML page) must not crash the action.
+		const res = await response.json().catch(() => ({}));
+
+		if (!response.ok) {
+			setFlash(
+				{
+					type: 'error',
+					message: res.error ? safeTranslate(res.error) : m.workflowImportFailed()
+				},
+				event
+			);
+			return fail(response.status, withFiles({ form }));
+		}
+
+		const warnings: string[] = res.warnings ?? [];
+		setFlash(
+			{
+				type: warnings.length ? 'warning' : 'success',
+				message: warnings.length
+					? `${m.workflowImportedWithWarnings({ name: res.name })}\n${warnings.join('\n')}`
+					: m.workflowImported({ name: res.name }),
+				timeout: warnings.length ? 20000 : 5000
+			},
+			event
+		);
+		redirect(302, `/workflows/${res.id}`);
+	}
+};

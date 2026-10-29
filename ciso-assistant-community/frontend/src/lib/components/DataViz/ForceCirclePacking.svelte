@@ -1,0 +1,283 @@
+<script lang="ts">
+	import { escapeHtml } from '#lib/utils/helpers.js';
+	import { onMount } from 'svelte';
+
+	import { mountThemeAwareChart } from '#lib/utils/echartsTheme.js';
+	import { safeTranslate } from '#lib/utils/i18n.js';
+	import type * as echarts from 'echarts';
+	const symbolSizeOffset = 10;
+	interface Props {
+		width?: string;
+		height?: string;
+		classesContainer?: string;
+		title?: string;
+		layout?: string;
+		initLayout?: string;
+		name?: string;
+		data: any;
+		color?: any;
+	}
+
+	let {
+		width = '',
+		height = 'h-full',
+		classesContainer = '',
+		title = '',
+		layout = 'force',
+		initLayout = 'circular',
+		name = 'graph',
+		data,
+		color = [
+			'#fc8452',
+			'#ee6666',
+			'#5470c6',
+			'#91cc75',
+			'#fac858',
+			'#73c0de',
+			'#3ba272',
+			'#9a60b4',
+			'#ea7ccc'
+		]
+	}: Props = $props();
+
+	let searchQuery = $state('');
+	let chart: echarts.ECharts;
+	let currentEmphasisNodeId: number | null = null;
+	const chart_id = `${name}_div`;
+	let resizeTimeout: ReturnType<typeof setTimeout>;
+
+	// Translate node names
+	const translatedData = $derived({
+		...data,
+		nodes: (data.nodes ?? []).map((node: any) => ({
+			...node,
+			name: safeTranslate(node.name)
+		}))
+	});
+
+	const getChartOptions = () => ({
+		tooltip: {
+			formatter: function (params: any) {
+				const data = params.data;
+				let tooltipContent = `<div style="font-style:italic; font-weight: bold;">${escapeHtml(data.name)}</div>`;
+
+				if (data.items && Array.isArray(data.items)) {
+					const formattedItems = data.items
+						.map((item: any) =>
+							typeof item === 'object'
+								? `${escapeHtml(item.name)} (${escapeHtml(safeTranslate(item.result))})`
+								: escapeHtml(String(item))
+						)
+						.join('<br>');
+					tooltipContent += `<div style="margin-top: 5px; border-top: 1px solid #ddd; padding-top: 5px;">
+						<strong>${escapeHtml(safeTranslate('resultingFrom'))}:</strong>
+						<div style="white-space: pre-line; margin-top: 3px;">${formattedItems}</div>
+					</div>`;
+				}
+
+				return tooltipContent;
+			},
+			enterable: false,
+			triggerOn: 'mousemove',
+			backgroundColor: 'rgba(255, 255, 255, 0.95)',
+			borderColor: '#ccc',
+			borderWidth: 1,
+			extraCssText: 'box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);',
+			textStyle: {
+				color: '#333'
+			}
+		},
+		title: {
+			text: title,
+			top: '30',
+			left: 'right'
+		},
+		color: color,
+		series: [
+			{
+				type: 'graph',
+				layout: layout,
+				animation: false,
+				zoom: 10,
+				symbolSize: function (value, params) {
+					// Calculate symbolSize based on node value (if exists) + symbolSizeOffset
+					return (params.data.value ? params.data.value : 0) + symbolSizeOffset;
+				},
+				animationDurationUpdate: 1500,
+				animationEasingUpdate: 'quinticInOut',
+				edgeSymbol: ['circle', 'arrow'],
+				label: {
+					position: 'right',
+					formatter: '{b}',
+					show: true,
+					fontSize: 11,
+					color: document.documentElement.classList.contains('dark') ? '#e5e7eb' : '#374151'
+				},
+				draggable: true,
+				roam: true,
+				data: translatedData.nodes.map(function (node, idx) {
+					node.id = idx;
+					return node;
+				}),
+				emphasis: {
+					focus: 'adjacency',
+					label: {
+						position: 'right',
+						show: true
+					}
+				},
+				selectedMode: 'series',
+				select: {
+					itemStyle: {
+						borderColor: '#666',
+						borderWidth: 2
+					},
+					label: {
+						show: true
+					}
+				},
+				force: {
+					layoutAnimation: true,
+					initLayout: initLayout,
+					gravity: 0.5,
+					repulsion: 120,
+					friction: 0.2
+				},
+				labelLayout: {
+					hideOverlap: true
+				}
+			}
+		]
+	});
+
+	const handleNodeEmphasis = (nodeId: number | null) => {
+		if (!chart) return;
+
+		if (currentEmphasisNodeId !== null) {
+			chart.dispatchAction({
+				type: 'downplay',
+				dataIndex: currentEmphasisNodeId
+			});
+		}
+
+		if (nodeId !== null && nodeId !== currentEmphasisNodeId) {
+			chart.dispatchAction({
+				type: 'highlight',
+				dataIndex: nodeId
+			});
+		}
+
+		currentEmphasisNodeId = nodeId !== currentEmphasisNodeId ? nodeId : null;
+	};
+
+	// Search function, maybe we can improve it later for fuzzy search?
+	const searchNode = (query: string) => {
+		if (!query.trim()) return;
+
+		const normalizedQuery = query.toLowerCase().trim();
+		const node = translatedData.nodes.find((n: any) =>
+			n.name.toLowerCase().includes(normalizedQuery)
+		);
+
+		if (node && node.id !== undefined) {
+			handleNodeEmphasis(node.id);
+			chart?.dispatchAction({
+				type: 'focusNodeAdjacency',
+				dataIndex: node.id
+			});
+		} else {
+			alert('No matching nodes found');
+		}
+	};
+
+	onMount(() => {
+		let dispose: (() => void) | undefined;
+		let active = true;
+		(async () => {
+			const echarts = await import('echarts');
+			if (!active) return;
+			const element = document.getElementById(chart_id);
+
+			if (!element) {
+				console.error(`Element with id ${chart_id} not found`);
+				return;
+			}
+
+			const disposeChart = mountThemeAwareChart(echarts, element, () => getChartOptions(), {
+				rendererOpts: {}, // canvas: this layout is too heavy for svg
+				manageResize: false, // the debounced handler below owns resizing
+				onChart: (c: any) => {
+					chart = c;
+					c.on('click', (params: any) => {
+						if (params.dataType === 'node') {
+							handleNodeEmphasis(params.data.id);
+						} else {
+							handleNodeEmphasis(null);
+						}
+					});
+				}
+			});
+
+			const handleResize = () => {
+				clearTimeout(resizeTimeout);
+				resizeTimeout = setTimeout(() => {
+					chart?.resize();
+				}, 250);
+			};
+
+			window.addEventListener('resize', handleResize);
+
+			dispose = () => {
+				window.removeEventListener('resize', handleResize);
+				clearTimeout(resizeTimeout);
+				disposeChart();
+			};
+		})();
+		return () => {
+			active = false;
+			dispose?.();
+		};
+	});
+
+	const handleKeyDown = (event: KeyboardEvent) => {
+		if (event.key === 'Enter') {
+			searchNode(searchQuery);
+		}
+	};
+</script>
+
+<div class="relative p-2">
+	<label for="graph-search" class="sr-only">Search</label>
+	<input
+		id="graph-search"
+		type="text"
+		class="w-full rounded-md border-surface-200-800 py-2.5 pe-10 shadow-xs"
+		bind:value={searchQuery}
+		onkeydown={handleKeyDown}
+		placeholder="Find a node ..."
+	/>
+	<span class="absolute inset-y-0 end-0 grid w-10 place-content-center">
+		<button
+			type="button"
+			class="text-surface-600-400 hover:text-surface-700-300"
+			onclick={() => searchNode(searchQuery)}
+			aria-label="Search"
+		>
+			<svg
+				xmlns="http://www.w3.org/2000/svg"
+				fill="none"
+				viewBox="0 0 24 24"
+				stroke-width="1.5"
+				stroke="currentColor"
+				class="size-4"
+			>
+				<path
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+				/>
+			</svg>
+		</button>
+	</span>
+</div>
+<div id={chart_id} class="{width} {height} {classesContainer} p-8" role="presentation"></div>

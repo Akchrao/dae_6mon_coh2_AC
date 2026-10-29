@@ -1,0 +1,88 @@
+import { MailContent } from './mail-content.js';
+import { expect, type Locator, type Page } from './test-utils.js';
+
+class Email {
+	readonly email: Locator;
+	readonly from: Locator;
+	readonly to: Locator;
+	readonly subject: Locator;
+
+	constructor(email: Locator) {
+		this.email = email;
+		this.from = email.locator('b[title^="From:"]');
+		this.to = email.locator('.privacy').filter({ hasText: /^\s*To:/ });
+		this.subject = email.locator('.subject');
+	}
+
+	async hasWelcomeEmailDetails() {
+		expect.soft(await this.getFrom()).toEqual('ciso-assistant@tests.net');
+		expect.soft(await this.getSubject()).toEqual('Welcome to CISO Assistant!');
+	}
+
+	async hasResetPasswordEmailDetails() {
+		expect.soft(await this.getFrom()).toEqual('ciso-assistant@tests.net');
+		expect.soft(await this.getSubject()).toEqual('CISO Assistant: Password Reset');
+	}
+
+	async hasEmailRecipient(recipient: string) {
+		expect.soft(await this.getTo()).toEqual(recipient);
+	}
+
+	async getFrom() {
+		return (await this.from.innerText()).trim();
+	}
+
+	async getTo() {
+		return (await this.to.innerText()).replace(/^\s*To:\s*/, '').trim();
+	}
+
+	async getSubject() {
+		return (await this.subject.innerText()).trim();
+	}
+
+	async open() {
+		await this.email.click();
+	}
+}
+
+export class Mailer {
+	readonly url: string;
+	readonly emailContent: MailContent;
+	private readonly emails: Locator;
+
+	constructor(public readonly page: Page) {
+		this.url = 'http://localhost:' + (process.env.MAILER_WEB_SERVER_PORT || 8025);
+		this.emailContent = new MailContent(page);
+		this.emails = this.page.locator('a.message');
+	}
+
+	async goto() {
+		await this.page.goto(this.url);
+		await this.page.waitForURL(this.url);
+	}
+
+	async hasUrl() {
+		await expect(this.page).toHaveURL(this.url);
+	}
+
+	async getEmails() {
+		const emailElements = await this.emails.all();
+		const emails: Email[] = [];
+		emailElements.forEach((email) => {
+			emails.push(new Email(email));
+		});
+
+		return emails;
+	}
+
+	async getLastEmail() {
+		await expect(this.emails.first()).toBeVisible();
+		return new Email(this.emails.first());
+	}
+
+	async getEmailBySubject(subject: string) {
+		const email = this.emails.filter({ hasText: subject }).first();
+		await expect(email).toBeVisible();
+		return new Email(email);
+	}
+}

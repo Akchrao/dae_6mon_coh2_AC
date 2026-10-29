@@ -1,0 +1,740 @@
+<script lang="ts">
+	import { run } from 'svelte/legacy';
+
+	import DetailView from '#lib/components/DetailView/DetailView.svelte';
+	import type { PageData, ActionData } from './$types';
+	import SuperForm from '#lib/components/Forms/Form.svelte';
+	import { superForm } from 'sveltekit-superforms';
+	import { zod4 as zod } from 'sveltekit-superforms/adapters';
+	import { modelSchema } from '#lib/utils/schemas.js';
+	import * as m from '#paraglide/messages.js';
+	import { onMount } from 'svelte';
+	import { ensureSelectOptions } from '#lib/utils/select-options.js';
+	import { safeTranslate } from '#lib/utils/i18n.js';
+	import { createModalCache } from '#lib/utils/stores.js';
+	import { DataHandler, type State } from '@vincjo/datatables/remote';
+	import { loadTableData } from '#lib/components/ModelTable/handler.js';
+	import Search from '#lib/components/ModelTable/Search.svelte';
+	import RowsPerPage from '#lib/components/ModelTable/RowsPerPage.svelte';
+	import RowCount from '#lib/components/ModelTable/RowCount.svelte';
+	import Pagination from '#lib/components/ModelTable/Pagination.svelte';
+	import { listViewFields } from '#lib/utils/table.js';
+	import { goto as _goto } from '$app/navigation';
+	import { page } from '$app/state';
+	import { formatDateOrDateTime } from '#lib/utils/datetime.js';
+	import { getLocale } from '#paraglide/runtime.js';
+	import TableRowActions from '#lib/components/TableRowActions/TableRowActions.svelte';
+	import Select from '#lib/components/Forms/Select.svelte';
+	import AutocompleteSelect from '#lib/components/Forms/AutocompleteSelect.svelte';
+	import TextField from '#lib/components/Forms/TextField.svelte';
+	import CreateModal from '#lib/components/Modals/CreateModal.svelte';
+	import PromptConfirmModal from '#lib/components/Modals/PromptConfirmModal.svelte';
+	import SelectExistingModal from '#lib/components/Modals/SelectExistingModal.svelte';
+	import ExportModal, { type ExportGroup } from '#lib/components/Modals/ExportModal.svelte';
+	import MarkdownField from '#lib/components/Forms/MarkdownField.svelte';
+	import MarkdownRenderer from '#lib/components/MarkdownRenderer.svelte';
+	import ModelTable from '#lib/components/ModelTable/ModelTable.svelte';
+	import { getListViewFields } from '#lib/utils/table.js';
+	import type { ReverseForeignKeyField } from '#lib/utils/crud.js';
+	import { countMasked } from '#lib/utils/related-visibility.js';
+
+	import { canPerformAction } from '#lib/utils/access-control.js';
+	import {
+		getModalStore,
+		type ModalComponent,
+		type ModalSettings,
+		type ModalStore
+	} from '#lib/components/Modals/stores.js';
+	import { getToastStore } from '#lib/components/Toast/stores.js';
+	import type { TableSource } from '#lib/components/ModelTable/types.js';
+	import { Tabs } from '@skeletonlabs/skeleton-svelte';
+
+	interface Props {
+		data: PageData;
+		form: ActionData;
+		[key: string]: any;
+	}
+
+	let { data, form }: Props = $props();
+
+	const invalidateAll = true;
+	const formAction = '?/create';
+	const timelineForm = data.relatedModels['timeline-entries'].createForm;
+	const model = data.relatedModels['timeline-entries'];
+	let entryTypeOptions = $state(model.selectOptions['entry_type'] ?? []);
+	onMount(async () => {
+		await ensureSelectOptions(model);
+		entryTypeOptions = model.selectOptions['entry_type'] ?? [];
+	});
+	const schema = modelSchema('timeline-entries');
+
+	const _form = superForm(timelineForm, {
+		dataType: 'json',
+		enctype: 'application/x-www-form-urlencoded',
+		invalidateAll,
+		applyAction: true,
+		resetForm: true,
+		validators: zod(schema),
+		taintedMessage: false,
+		validationMethod: 'auto',
+		onUpdated: () => {
+			createModalCache.deleteCache(model.urlModel);
+			_form.form.update((current) => ({
+				...current,
+				evidences: undefined,
+				timestamp: new Date().toISOString()
+			}));
+			refreshKey = !refreshKey;
+		}
+	});
+
+	const source = data.relatedModels['timeline-entries'].table;
+	const pagination = true;
+	const numberRowsPerPage = 10;
+
+	const handler = new DataHandler(
+		source.body.map((item: Record<string, any>, index: number) => {
+			return {
+				...item,
+				meta: source.meta
+					? source.meta.results
+						? { ...source.meta.results[index] }
+						: { ...source.meta[index] }
+					: undefined
+			};
+		}),
+		{
+			rowsPerPage: pagination ? numberRowsPerPage : undefined,
+			totalRows: source.meta.count
+		}
+	);
+	const rows = handler.getRows();
+	const toastStore = getToastStore();
+	const field = data.model.reverseForeignKeyFields.find(
+		(item) => item.urlModel === 'timeline-entries'
+	);
+	handler.onChange((state: State) =>
+		loadTableData({
+			state,
+			URLModel: 'timeline-entries',
+			endpoint: `/timeline-entries?incident=${data.data.id}`,
+			fields: listViewFields['timeline-entries'].body.filter((v) => v !== field.field),
+			onError: (error) => {
+				console.error(error);
+				toastStore.trigger({ message: m.anErrorOccurred(), preset: 'error' });
+			}
+		})
+	);
+
+	let invalidateTable = $state(true);
+
+	$effect(() => {
+		if (page.form?.form?.posted && page.form?.form?.valid) {
+			handler.invalidate();
+		}
+	});
+
+	$effect(() => {
+		if (invalidateTable) {
+			handler.invalidate();
+			_goto(page.url.href);
+			invalidateTable = false;
+		}
+	});
+
+	const preventDelete = (row: TableSource) =>
+		['severity_changed', 'status_changed'].includes(row.meta.entry_type);
+
+	const modalStore: ModalStore = getModalStore();
+
+	function modalEvidenceCreateForm(): void {
+		const modalComponent: ModalComponent = {
+			ref: CreateModal,
+			props: {
+				form: data.evidenceCreateForm,
+				formAction: '?/createEvidence',
+				model: data.evidenceModel,
+				debug: false
+			}
+		};
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			// Data
+			title: safeTranslate('add-' + data.evidenceModel.localName)
+		};
+		modalStore.trigger(modal);
+	}
+
+	let refreshKey = $state(false);
+
+	let resetForm = $state(true);
+
+	let formStore = $derived(_form.form);
+
+	run(() => {
+		if (form?.newEvidence) {
+			refreshKey = !refreshKey;
+			resetForm = false;
+			_form.form.update(
+				(current: Record<string, any>) => ({
+					...current,
+					evidences: current.evidences
+						? [...current.evidences, form?.newEvidence]
+						: [form?.newEvidence]
+				}),
+				{ taint: false }
+			);
+			form.newEvidence = undefined;
+			console.debug('formStore', $formStore);
+		}
+	});
+
+	const user = page.data.user;
+	const canEditObject: boolean = canPerformAction({
+		user,
+		action: 'change',
+		model: data.model.name,
+		domain:
+			data.model.name === 'folder'
+				? data.data.id
+				: (data.data.folder?.id ?? data.data.folder ?? user.root_folder_id)
+	});
+
+	const doraEnabled = $derived(!!page.data?.featureflags?.dora);
+
+	function buildExportGroups(): ExportGroup[] {
+		const id = data.data.id;
+		return [
+			{
+				titleKey: 'incident',
+				options: [
+					{
+						titleKey: 'exportIncidentReport',
+						descriptionKey: 'exportIncidentReportDesc',
+						format: 'MD',
+						href: `/incidents/${id}/export/md`,
+						testId: 'export-option-md'
+					},
+					{
+						titleKey: 'exportIncidentReportPrintable',
+						descriptionKey: 'exportIncidentReportPrintableDesc',
+						format: 'PDF',
+						href: `/incidents/${id}/export/pdf`,
+						testId: 'export-option-pdf'
+					}
+				]
+			},
+			...(doraEnabled
+				? [
+						{
+							titleKey: 'doraIncidentReports',
+							options: [
+								{
+									titleKey: 'generateDoraReport',
+									descriptionKey: 'generateDoraReportDesc',
+									format: 'JSON',
+									href: `/dora-incident-reports/new?incident=${id}`,
+									kind: 'navigate',
+									testId: 'export-option-dora'
+								}
+							]
+						}
+					]
+				: [])
+		];
+	}
+
+	function modalExport(): void {
+		const modalComponent: ModalComponent = {
+			ref: ExportModal,
+			props: {
+				title: m.exportOptionsTitle(),
+				groups: buildExportGroups()
+			}
+		};
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent
+		};
+		modalStore.trigger(modal);
+	}
+
+	function modalDeleteDoraReport(reportId: string, reportName: string): void {
+		const modalComponent: ModalComponent = {
+			ref: PromptConfirmModal,
+			props: {
+				_form: { id: reportId, urlmodel: 'dora-incident-reports' },
+				id: reportId,
+				URLModel: 'dora-incident-reports',
+				formAction: '?/deleteDoraReport',
+				bodyComponent: undefined
+			}
+		};
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			title: m.confirmModalTitle(),
+			body: `${m.confirmModalMessage()}: ${reportName}?`
+		};
+		modalStore.trigger(modal);
+	}
+
+	let activeTab = $state('timeline');
+
+	function modalLinkedCreateForm(relatedModel: Record<string, any>): void {
+		const modalComponent: ModalComponent = {
+			ref: CreateModal,
+			props: {
+				form: relatedModel.createForm,
+				model: relatedModel,
+				debug: false,
+				additionalInitialData: relatedModel.initialData,
+				formAction: `/${relatedModel.urlModel}?/create`
+			}
+		};
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			title: safeTranslate('add-' + relatedModel.info.localName)
+		};
+		modalStore.trigger(modal);
+	}
+
+	function modalSelectExisting(field: ReverseForeignKeyField): void {
+		if (!field.addExisting || !data.updateForm) return;
+		const addExisting = field.addExisting;
+		const modalComponent: ModalComponent = {
+			ref: SelectExistingModal,
+			props: {
+				form: data.updateForm,
+				urlModel: data.urlModel,
+				field: addExisting.parentField,
+				optionsEndpoint: addExisting.optionsEndpoint ?? field.endpointUrl ?? field.urlModel,
+				label: addExisting.label,
+				lazy: addExisting.lazy
+			}
+		};
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			title: safeTranslate(addExisting.label ?? 'selectExisting')
+		};
+		modalStore.trigger(modal);
+	}
+
+	const linkedPanels: { tabValue: string; urlmodel: string; icon: string; labelKey: string }[] = [
+		{
+			tabValue: 'applied-controls',
+			urlmodel: 'applied-controls',
+			icon: 'fa-solid fa-shield-halved',
+			labelKey: 'appliedControls'
+		},
+		{
+			tabValue: 'task-templates',
+			urlmodel: 'task-templates',
+			icon: 'fa-solid fa-list-check',
+			labelKey: 'taskTemplates'
+		},
+		{
+			tabValue: 'risk-scenarios',
+			urlmodel: 'risk-scenarios',
+			icon: 'fa-solid fa-triangle-exclamation',
+			labelKey: 'riskScenarios'
+		},
+		{
+			tabValue: 'vulnerabilities',
+			urlmodel: 'vulnerabilities',
+			icon: 'fa-solid fa-bug',
+			labelKey: 'vulnerabilities'
+		}
+	];
+
+	// DORA reports fetched server-side, sorted by creation date (newest first)
+	const doraRows: any[] = $derived(
+		[...(doraEnabled ? (data.doraReports ?? []) : [])].sort(
+			(a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+		)
+	);
+</script>
+
+<div class="flex flex-col space-y-2">
+	<DetailView {data} displayModelTable={false}>
+		{#snippet actions()}
+			<div class="flex flex-col space-y-2">
+				<button
+					type="button"
+					class="btn preset-filled-primary-500 w-full"
+					data-testid="export-button"
+					onclick={modalExport}
+				>
+					<i class="fa-solid fa-download mr-2"></i>{m.exportButton()}
+				</button>
+			</div>
+		{/snippet}
+		{#snippet widgets()}
+			<div
+				class="shadow-xl border-l border-t p-4 rounded-sm bg-linear-to-tl from-slate-50 to-white dark:from-surface-900 dark:to-surface-950"
+				hidden={!canEditObject}
+			>
+				{#if canEditObject}
+					<!-- new record form -->
+					<h1 class="text-xl font-bold mb-1">{m.addTimelineEntry()}</h1>
+					<SuperForm
+						class="flex flex-col space-y-3"
+						action={formAction}
+						dataType={'json'}
+						enctype={'application/x-www-form-urlencoded'}
+						data={timelineForm}
+						{_form}
+						{invalidateAll}
+						validators={zod(schema)}
+					>
+						{#snippet children({ form, data, initialData })}
+							<AutocompleteSelect
+								{form}
+								optionsEndpoint="incidents"
+								field="incident"
+								label={m.incident()}
+								hidden={initialData.incident}
+							/>
+							<Select
+								{form}
+								disableDoubleDash={true}
+								options={entryTypeOptions}
+								disabled={entryTypeOptions.length === 0}
+								field="entry_type"
+								label={m.entryType()}
+							/>
+							{#key refreshKey}
+								<TextField
+									type="datetime-local"
+									step="1"
+									{form}
+									field="timestamp"
+									label={m.timestamp()}
+								/>
+							{/key}
+							<TextField {form} field="entry" label={m.entry()} data-focusindex="0" />
+							<MarkdownField {form} field="observation" label={m.observation()} />
+
+							{#key refreshKey}
+								<div class="flex items-end justify-center">
+									<div class="w-full mr-2">
+										<AutocompleteSelect
+											{form}
+											multiple
+											optionsEndpoint="evidences"
+											lazy
+											optionsDetailedUrlParameters={[
+												['scope_folder_id', page.data.data?.folder?.id]
+											]}
+											field="evidences"
+											{resetForm}
+											label={m.evidences()}
+										/>
+									</div>
+									<button
+										class="btn bg-surface-300-700 h-11 w-10"
+										onclick={(_) => modalEvidenceCreateForm()}
+										type="button"
+										data-testid="add-button-evidence"
+										><i class="fa-solid fa-plus text-sm"></i></button
+									>
+								</div>
+							{/key}
+							<div class="flex flex-row justify-between space-x-4">
+								<button
+									class="btn preset-filled-tertiary-500 font-semibold w-full"
+									data-testid="reset-button"
+									type="button"
+									onclick={() => {
+										_form.reset();
+										_form.form.update((current) => ({
+											...current,
+											evidences: undefined,
+											timestamp: new Date().toISOString()
+										}));
+										refreshKey = !refreshKey;
+										resetForm = true;
+									}}>{m.cancel()}</button
+								>
+								<button
+									class="btn preset-filled-primary-500 font-semibold w-full"
+									data-testid="save-button-event"
+									type="submit"
+									onclick={() => {
+										resetForm = true;
+									}}>{m.save()}</button
+								>
+							</div>
+						{/snippet}
+					</SuperForm>
+				{/if}
+			</div>
+		{/snippet}
+	</DetailView>
+
+	<div class="card shadow-lg bg-surface-50-950 p-4 space-y-2">
+		<Tabs value={activeTab} onValueChange={(e) => (activeTab = e.value)}>
+			<Tabs.List>
+				<Tabs.Trigger value="timeline">
+					<i class="fa-solid fa-timeline mr-2"></i>{m.timeline()}
+				</Tabs.Trigger>
+				{#if doraEnabled}
+					<Tabs.Trigger value="dora-reports">
+						<i class="fa-solid fa-file-shield mr-2"></i>{m.doraIncidentReports()}
+						{#if doraRows.length > 0}
+							<span
+								class="ml-2 rounded-full px-2 py-0.5 text-xs preset-tonal-secondary text-surface-700-300"
+							>
+								{doraRows.length}
+							</span>
+						{/if}
+					</Tabs.Trigger>
+				{/if}
+				{#each linkedPanels as panel}
+					{@const related = data.relatedModels?.[panel.urlmodel]}
+					{#if related}
+						<Tabs.Trigger value={panel.tabValue}>
+							<i class="{panel.icon} mr-2"></i>{safeTranslate(panel.labelKey)}
+							{#if related.count !== undefined && related.count > 0}
+								<span
+									class="ml-2 rounded-full px-2 py-0.5 text-xs preset-tonal-secondary text-surface-700-300"
+								>
+									{related.count}
+								</span>
+							{/if}
+						</Tabs.Trigger>
+					{/if}
+				{/each}
+				<Tabs.Indicator />
+			</Tabs.List>
+
+			<Tabs.Content value="timeline" class="pt-4">
+				<div class="flex flex-row justify-between items-center mb-4">
+					<Search {handler} />
+					<RowsPerPage {handler} />
+				</div>
+				<ol class="relative border-s border-primary-500 dark:border-primary-700">
+					{#each $rows as row, rowIndex}
+						{@const meta = row?.meta ?? row}
+						{@const actionsURLModel = 'timeline-entries'}
+						<li class="ms-4">
+							<div
+								class="absolute w-3 h-3 bg-primary-500 rounded-full mt-1.5 -start-1.5 border border-white dark:border-primary-900 dark:bg-primary-700"
+							></div>
+							<div class="flex flex-col">
+								<div class="flex flex-row items-center space-x-3 mb-1">
+									<time
+										class="text-sm font-normal leading-none text-surface-600-400 dark:text-surface-800-200"
+									>
+										{formatDateOrDateTime(meta.timestamp, getLocale())} - {#if meta.author}{meta
+												?.author?.str}{:else}{m.unknownOrDeletedUser()}{/if}</time
+									>
+									<TableRowActions
+										baseClass="space-x-2 whitespace-nowrap flex flex-row items-center text-sm text-surface-700"
+										deleteForm={data.relatedModels['timeline-entries'].deleteForm}
+										model={model.info}
+										URLModel={actionsURLModel}
+										detailURL={`/${actionsURLModel}/${meta.id}`}
+										editURL={`/${actionsURLModel}/${meta.id}/edit?next=${encodeURIComponent(page.url.pathname + page.url.search)}`}
+										{row}
+										identifierField={'id'}
+										preventDelete={preventDelete(row)}
+									></TableRowActions>
+									{#if formatDateOrDateTime(meta.updated_at, getLocale()) !== formatDateOrDateTime(meta.created_at, getLocale())}
+										<span class="text-xs italic text-surface-600-400 dark:text-surface-400-600">
+											({m.edited()})
+										</span>
+									{/if}
+								</div>
+								<div class="flex mb-2">
+									<span class="text-xs font-mono bg-violet-700 text-white py-1 px-2 rounded-sm mr-1"
+										>{safeTranslate(meta.entry_type)}</span
+									>
+									<a
+										href={`/${actionsURLModel}/${meta.id}`}
+										class="font-semibold"
+										data-testid="name-entry-{rowIndex}">{safeTranslate(meta.entry)}</a
+									>
+								</div>
+								<div class="py-1 mb-2">
+									{#if meta.observation}
+										<MarkdownRenderer
+											content={meta.observation}
+											class="bg-primary-50 dark:bg-surface-800 rounded-lg p-2"
+										/>
+									{:else}
+										<p class="italic text-surface-600-400 dark:text-surface-400-600">
+											{m.noObservation()}
+										</p>
+									{/if}
+								</div>
+								{#if meta.evidences && meta.evidences.length > 0}
+									<div class="mb-2">
+										<p class="text-xs font-medium text-surface-700-300 mb-1">
+											{m.associatedEvidences()}:
+										</p>
+										<div class="flex flex-wrap gap-1">
+											{#each meta.evidences as evidence}
+												<a
+													href={`/evidences/${evidence.id}`}
+													class="inline-flex items-center px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors max-w-50"
+													title={evidence.str}
+												>
+													<i class="fa-solid fa-paperclip mr-1 flex-shrink-0"></i>
+													<span class="truncate">{evidence.str}</span>
+												</a>
+											{/each}
+										</div>
+									</div>
+								{/if}
+							</div>
+						</li>
+					{/each}
+				</ol>
+				<footer class="flex justify-between items-center space-x-8 p-2">
+					{#if pagination}
+						<RowCount {handler} />
+					{/if}
+					{#if pagination}
+						<Pagination {handler} />
+					{/if}
+				</footer>
+			</Tabs.Content>
+
+			{#each linkedPanels as panel}
+				{@const related = data.relatedModels?.[panel.urlmodel]}
+				{#if related}
+					{@const field = data.model.reverseForeignKeyFields.find(
+						(f) => f.urlModel === panel.urlmodel
+					)}
+					{@const fieldsToUse =
+						field?.tableFields ||
+						getListViewFields({
+							key: panel.urlmodel,
+							featureFlags: page.data?.featureflags
+						}).body.filter((v) => v !== field.field)}
+					<Tabs.Content value={panel.tabValue} class="pt-4">
+						{#if related.table}
+							<ModelTable
+								baseEndpoint={`/${panel.urlmodel}?${field.field}=${data.data.id}`}
+								source={related.table}
+								disableCreate={!field?.addExisting}
+								disableEdit={true}
+								disableDelete={true}
+								deleteForm={related.deleteForm}
+								URLModel={panel.urlmodel}
+								expectedCount={countMasked(data.data?.[field.field])}
+								fields={fieldsToUse}
+							>
+								{#snippet addButton()}
+									{#if canEditObject && field?.addExisting}
+										<span
+											class="inline-flex overflow-hidden rounded-md border bg-surface-50-950 shadow-xs"
+										>
+											<button
+												class="inline-block p-3 btn-mini-secondary w-12 focus:relative"
+												data-testid="select-existing-{panel.urlmodel}"
+												title={safeTranslate(field.addExisting.label ?? 'selectExisting')}
+												onclick={() => modalSelectExisting(field)}
+												type="button"
+											>
+												<i class="fa-solid fa-hand-pointer"></i>
+											</button>
+										</span>
+										<span
+											class="inline-flex overflow-hidden rounded-md border bg-surface-50-950 shadow-xs"
+										>
+											<button
+												class="inline-block border-e p-3 btn-mini-primary w-12 focus:relative"
+												data-testid="add-button-{panel.urlmodel}"
+												title={safeTranslate('add-' + related.info.localName)}
+												onclick={() => modalLinkedCreateForm(related)}
+												type="button"
+											>
+												<i class="fa-solid fa-file-circle-plus"></i>
+											</button>
+										</span>
+									{/if}
+								{/snippet}
+							</ModelTable>
+						{/if}
+					</Tabs.Content>
+				{/if}
+			{/each}
+
+			{#if doraEnabled}
+				<Tabs.Content value="dora-reports" class="pt-4">
+					{#if doraRows.length > 0}
+						<table class="w-full text-sm">
+							<thead>
+								<tr class="border-b text-left text-surface-600-400">
+									<th class="py-2 px-3">{m.incidentSubmission()}</th>
+									<th class="py-2 px-3">{safeTranslate('createdAt')}</th>
+									<th class="py-2 px-3">{safeTranslate('updatedAt')}</th>
+									<th class="py-2 px-3"></th>
+								</tr>
+							</thead>
+							<tbody>
+								{#each doraRows as report}
+									<tr
+										class="border-b hover:bg-surface-100-900 cursor-pointer"
+										onclick={(e) => {
+											if (!(e.target as HTMLElement).closest('button')) {
+												window.location.href = `/dora-incident-reports/${report.id}`;
+											}
+										}}
+									>
+										<td class="py-2 px-3">
+											<span
+												class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs px-2 py-1 rounded"
+											>
+												{safeTranslate(report.incident_submission)}
+											</span>
+											{#if report.is_submitted}
+												<span
+													class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs px-2 py-1 rounded ml-1"
+												>
+													<i class="fa-solid fa-lock text-xs mr-1"></i>{m.submitted()}
+												</span>
+											{:else}
+												<span
+													class="bg-surface-200-800 text-surface-600-400 text-xs px-2 py-1 rounded ml-1"
+												>
+													{m.draft()}
+												</span>
+											{/if}
+										</td>
+										<td class="py-2 px-3">{formatDateOrDateTime(report.created_at, getLocale())}</td
+										>
+										<td class="py-2 px-3">{formatDateOrDateTime(report.updated_at, getLocale())}</td
+										>
+										<td class="py-2 px-3 text-right">
+											{#if !report.is_submitted}
+												<button
+													type="button"
+													class="text-red-500 hover:text-red-700 text-sm"
+													onclick={() =>
+														modalDeleteDoraReport(
+															report.id,
+															safeTranslate(report.incident_submission)
+														)}
+												>
+													<i class="fa-solid fa-trash"></i>
+												</button>
+											{/if}
+										</td>
+									</tr>
+								{/each}
+							</tbody>
+						</table>
+					{:else}
+						<p class="text-surface-600-400 text-sm italic py-4">{m.noResultFound()}</p>
+					{/if}
+				</Tabs.Content>
+			{/if}
+		</Tabs>
+	</div>
+</div>

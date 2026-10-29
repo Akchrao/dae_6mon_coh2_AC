@@ -1,0 +1,209 @@
+import uuid
+from auditlog.registry import auditlog
+from django.db import models
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from core.base_models import NameDescriptionMixin
+from core.models import Actor
+from core.net_safety import BlockedRequestError, assert_public_url
+from iam.models import Folder, FolderMixin
+
+
+class WebhookEventType(models.Model):
+    """
+    Represents a single, subscribable event type (e.g., "appliedcontrol.created").
+    """
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="The event type string, e.g., 'appliedcontrol.created'",
+    )
+
+    IAM_SCOPE_FIELD = Folder.IAM_NOT_IMPLEMENTED
+
+    def __str__(self):
+        return self.name
+
+
+class WebhookEndpoint(NameDescriptionMixin, FolderMixin):
+    """
+    Represents a single consumer endpoint for receiving webhooks.
+    """
+
+    class PayloadFormats(models.TextChoices):
+        THIN = "thin", "Thin"
+        FULL = "full", "Full"
+
+    class Kind(models.TextChoices):
+        INTEGRATION = "integration", "Integration"
+        AUDIT_SINK = "audit_sink", "Audit sink"
+
+    class Transport(models.TextChoices):
+        HTTP = "http", "HTTP"
+        KAFKA = "kafka", "Kafka"
+
+    class BodyFormat(models.TextChoices):
+        CISO_NATIVE = "ciso_native", "CISO Assistant (HMAC-signed)"
+        OCSF = "ocsf", "OCSF"
+        RAW = "raw", "Raw LogEntry"
+
+    class AuthType(models.TextChoices):
+        STATIC = "static", "Static headers"
+        OAUTH2_CC = "oauth2_client_credentials", "OAuth 2.0 client credentials"
+
+    class BodyWrapper(models.TextChoices):
+        NONE = "none", "None"
+        ARRAY = "array", "JSON array"
+
+    payload_format = models.CharField(
+        verbose_name="Payload Format",
+        max_length=10,
+        choices=PayloadFormats.choices,
+        default=PayloadFormats.FULL,
+        help_text="The format of the webhook payload sent to this endpoint.",
+    )
+
+    # An "audit_sink" forwards the audit log (LogEntry stream) to an external
+    # SIEM; an "integration" is the user-facing model-event webhook. Audit sinks
+    # are admin/org-managed and hidden from the user webhook list.
+    kind = models.CharField(
+        max_length=20,
+        choices=Kind.choices,
+        default=Kind.INTEGRATION,
+    )
+    transport = models.CharField(
+        max_length=10,
+        choices=Transport.choices,
+        default=Transport.HTTP,
+        help_text="Delivery transport (audit sinks only).",
+    )
+    body_format = models.CharField(
+        max_length=20,
+        choices=BodyFormat.choices,
+        default=BodyFormat.OCSF,
+        help_text="Canonical event schema for audit sinks.",
+    )
+    headers = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Static headers added to each request, e.g. "
+        '{"Authorization": "Splunk <token>"}. Used for audit-sink auth.',
+    )
+    # Static headers are merged either way; OAUTH2_CC additionally acquires a
+    # bearer token and renews it before expiry (Sentinel, Chronicle, gateways).
+    auth_type = models.CharField(
+        max_length=32,
+        choices=AuthType.choices,
+        default=AuthType.STATIC,
+        help_text="Authentication for HTTP audit sinks.",
+    )
+    oauth_config = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="OAuth2 client credentials: "
+        "{token_url, client_id, client_secret, scope, extra_params}.",
+    )
+    body_wrapper = models.CharField(
+        max_length=10,
+        choices=BodyWrapper.choices,
+        default=BodyWrapper.NONE,
+        help_text="Envelope applied to the HTTP body. "
+        "Azure Monitor Logs Ingestion requires an array.",
+    )
+
+    owner = models.ForeignKey(
+        Actor,
+        related_name="webhook_endpoints",
+        on_delete=models.CASCADE,
+        help_text="The actor that owns this endpoint.",
+        blank=True,
+        null=True,
+    )
+
+    url = models.URLField(
+        max_length=2048,
+        blank=True,
+        default="",
+        help_text="Consumer URL (HTTP transport).",
+    )
+
+    kafka_config = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Kafka transport: {bootstrap_servers, topic, config:{...}}.",
+    )
+
+    secret = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        help_text="HMAC signing secret (integration webhooks only).",
+    )
+
+    event_types = models.ManyToManyField(
+        WebhookEventType,
+        blank=True,
+        help_text="A list of event types this endpoint subscribes to.",
+    )
+
+    target_folders = models.ManyToManyField(
+        Folder,
+        blank=True,
+        help_text="Folders to which this webhook endpoint is scoped. If empty, the endpoint applies to all folders the owner has access to.",
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Global toggle to enable/disable sending events to this endpoint.",
+    )
+
+    def __str__(self):
+        return f"{self.owner} - {self.url}"
+
+    def clean(self):
+        super().clean()
+        if self.transport != self.Transport.HTTP:
+            return
+        if self.auth_type == self.AuthType.OAUTH2_CC:
+            from .oauth import is_tls_or_loopback
+
+            if not is_tls_or_loopback(self.url):
+                raise ValidationError({"url": "OAuth sinks require an HTTPS URL."})
+            if not is_tls_or_loopback((self.oauth_config or {}).get("token_url")):
+                raise ValidationError({"oauth_config": "Token URL must use HTTPS."})
+        if getattr(settings, "ALLOW_PRIVATE_NETWORK_REQUESTS", False):
+            return
+        try:
+            assert_public_url(self.url, allowed_schemes=("http", "https"))
+        except BlockedRequestError:
+            raise ValidationError(
+                {
+                    "url": "URL must point to a public host "
+                    "(no private, loopback, or internal addresses)."
+                }
+            )
+        if self.auth_type == self.AuthType.OAUTH2_CC:
+            try:
+                assert_public_url((self.oauth_config or {}).get("token_url") or "")
+            except BlockedRequestError:
+                raise ValidationError(
+                    {"oauth_config": "Token URL must be a public HTTPS endpoint."}
+                )
+
+    def save(self, *args, **kwargs):
+        """Run full model validation (clean + field checks) before persisting."""
+        self.full_clean()
+        super().save(*args, **kwargs)
+
+
+# secret, headers (SIEM token), kafka_config (SASL password) and oauth_config
+# (client secret) are redacted.
+auditlog.register(
+    WebhookEndpoint,
+    exclude_fields=["created_at", "updated_at"],
+    mask_fields=["headers", "kafka_config", "oauth_config", "secret"],
+    mask_callable="global_settings.utils.redact_secret_value",
+    m2m_fields={"event_types", "target_folders"},
+)

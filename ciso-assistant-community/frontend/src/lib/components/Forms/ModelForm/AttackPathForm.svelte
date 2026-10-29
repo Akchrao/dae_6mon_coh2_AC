@@ -1,0 +1,68 @@
+<script lang="ts">
+	import AutocompleteSelect from '#lib/components/Forms/AutocompleteSelect.svelte';
+	import type { CacheLock, ModelInfo } from '#lib/utils/types.js';
+	import { m } from '#paraglide/messages.js';
+	import type { SuperForm } from 'sveltekit-superforms';
+	import Checkbox from '../Checkbox.svelte';
+	import MarkdownField from '#lib/components/Forms/MarkdownField.svelte';
+	import TextField from '#lib/components/Forms/TextField.svelte';
+
+	interface Props {
+		form: SuperForm<any>;
+		model: ModelInfo;
+		cacheLocks?: Record<string, CacheLock>;
+		formDataCache?: Record<string, any>;
+		initialData?: Record<string, any>;
+		additionalInitialData?: Record<string, any>;
+	}
+
+	let {
+		form,
+		model,
+		cacheLocks = {},
+		formDataCache = $bindable({}),
+		initialData = {},
+		additionalInitialData = {}
+	}: Props = $props();
+
+	const formStore = form.form;
+</script>
+
+<AutocompleteSelect
+	{form}
+	optionsEndpoint="strategic-scenarios"
+	optionsDetailedUrlParameters={[['ebios_rm_study', additionalInitialData.ebios_rm_study]]}
+	field="strategic_scenario"
+	cacheLock={cacheLocks['strategic_scenario']}
+	bind:cachedValue={formDataCache['strategic_scenario']}
+	label={m.strategicScenario()}
+	hidden={initialData['strategic_scenario']}
+/>
+<AutocompleteSelect
+	{form}
+	multiple
+	optionsEndpoint="stakeholders"
+	optionsDetailedUrlParameters={$formStore.ebios_rm_study
+		? [['ebios_rm_study', $formStore.ebios_rm_study]]
+		: undefined}
+	optionsLabelField="str"
+	field="stakeholders"
+	cacheLock={cacheLocks['stakeholders']}
+	bind:cachedValue={formDataCache['stakeholders']}
+	label={m.stakeholders()}
+	helpText={m.attackPathStakeholdersHelpText()}
+/>
+
+<Checkbox
+	{form}
+	field="is_selected"
+	label={m.selected()}
+	helpText={m.attackPathIsSelectedHelpText()}
+/>
+<MarkdownField
+	{form}
+	field="justification"
+	label={m.justification()}
+	cacheLock={cacheLocks['justification']}
+	bind:cachedValue={formDataCache['justification']}
+/>

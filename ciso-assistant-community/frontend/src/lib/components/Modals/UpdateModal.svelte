@@ -1,0 +1,81 @@
+<script lang="ts">
+	import * as m from '#paraglide/messages.js';
+	import ModelForm from '#lib/components/Forms/ModelForm.svelte';
+	import type { SuperValidated } from 'sveltekit-superforms';
+	import type { FormDataShape } from '#lib/utils/schemas.js';
+	import { getModalStore, type ModalStore } from './stores';
+	import type { ModelInfo } from '#lib/utils/types.js';
+
+	const modalStore: ModalStore = getModalStore();
+
+	let closeModal = true;
+
+	// Base Classes
+	const cBase = 'card bg-surface-100-900 border border-surface-500 p-4 w-modal shadow-xl space-y-4';
+	const cHeader = 'text-2xl font-bold';
+
+	interface Props {
+		/** Exposes parent props to this component. */
+		parent: any;
+		form: SuperValidated<FormDataShape>;
+		model: ModelInfo;
+		invalidateAll?: boolean; // set to false to keep form data using muliple forms on a page
+		formAction?: string;
+		context?: string;
+		object?: Record<string, any>;
+		suggestions?: { [key: string]: any };
+		selectOptions?: Record<string, any>;
+		debug?: boolean;
+		customNameDescription?: boolean;
+		customFolder?: boolean;
+	}
+
+	let {
+		parent,
+		form,
+		model,
+		invalidateAll = true,
+		formAction = '?/update',
+		context = 'default',
+		object = {},
+		suggestions = {},
+		selectOptions = {},
+		debug = false,
+		customNameDescription = true,
+		customFolder = false
+	}: Props = $props();
+</script>
+
+{#if $modalStore[0]}
+	<div class="modal-example-form {cBase}">
+		<div class="flex items-center justify-between">
+			<header class={cHeader} data-testid="modal-title">
+				{$modalStore[0].title ?? '(title missing)'}
+			</header>
+			<button
+				type="button"
+				aria-label={m.close()}
+				class="flex items-center hover:text-primary-500 cursor-pointer"
+				onclick={parent.onClose}
+			>
+				<i class="fa-solid fa-xmark"></i>
+			</button>
+		</div>
+		<ModelForm
+			{customNameDescription}
+			{customFolder}
+			{form}
+			{object}
+			{suggestions}
+			{parent}
+			action={formAction}
+			{invalidateAll}
+			{model}
+			{closeModal}
+			{context}
+			caching={true}
+			{selectOptions}
+			{debug}
+		/>
+	</div>
+{/if}

@@ -1,0 +1,32 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-yaml
+        # pnpm 12 lockfiles open with a separate packageManagerDependencies document
+        args: [--allow-multiple-documents]
+      - id: end-of-file-fixer
+        # Vendored, generated bundle (ncc output) must stay byte-exact so it
+        # remains reproducible from src and passes cla-assistant-dist-check.
+        exclude: ^\.github/actions/cla-assistant/dist/
+      - id: trailing-whitespace
+        # ncc emits boilerplate with trailing tabs; stripping it breaks the
+        # reproducible build hash (see .github/actions/cla-assistant/README.md).
+        exclude: ^\.github/actions/cla-assistant/dist/
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.17
+    hooks:
+      # Run the linter.
+      # - id: ruff
+      #   args: [--fix, backend]
+      # Run the formatter.
+      - id: ruff-format
+        args: [backend]
+        exclude: (migrations)
+  - repo: local
+    hooks:
+      - id: format-frontend
+        name: format-frontend
+        files: ^frontend/.$
+        language: system
+        entry: sh -c "npm run format --prefix frontend"

@@ -1,0 +1,56 @@
+{
+  "name": "@intuitem/n8n-nodes-ciso-assistant",
+  "version": "1.0.1",
+  "description": "n8n community node for the CISO Assistant GRC platform",
+  "license": "MIT",
+  "homepage": "https://github.com/intuitem/ciso-assistant-community/tree/main/automation/n8n/n8n-nodes-ca",
+  "keywords": [
+    "n8n-community-node-package",
+    "ciso-assistant",
+    "grc",
+    "compliance",
+    "security"
+  ],
+  "author": {
+    "name": "intuitem",
+    "email": "contact@intuitem.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/intuitem/ciso-assistant-community.git",
+    "directory": "automation/n8n/n8n-nodes-ca"
+  },
+  "scripts": {
+    "build": "n8n-node build",
+    "build:watch": "tsc --watch",
+    "dev": "n8n-node dev",
+    "lint": "n8n-node lint",
+    "lint:fix": "n8n-node lint --fix",
+    "format": "prettier nodes credentials --write",
+    "test": "vitest run",
+    "prepublishOnly": "n8n-node prerelease"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "strict": true,
+    "credentials": [
+      "dist/credentials/CisoAssistantApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/CisoAssistantService/CisoAssistantService.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@n8n/node-cli": "0.54.3",
+    "eslint": "9.39.4",
+    "prettier": "3.9.10",
+    "typescript": "5.9.3",
+    "vitest": "4.1.12"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}

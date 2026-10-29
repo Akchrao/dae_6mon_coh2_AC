@@ -1,0 +1,336 @@
+<script lang="ts">
+	import { tableSourceMapper } from '#lib/utils/table.js';
+	import { applyAction, deserialize, enhance, type ActionResult } from '$app/forms';
+	import { refreshAll } from '$app/navigation';
+	import { page } from '$app/state';
+	import Dropdown from '#lib/components/Dropdown/Dropdown.svelte';
+	import ModelTable from '#lib/components/ModelTable/ModelTable.svelte';
+	import type { TableSource } from '#lib/components/ModelTable/types.js';
+	import RiskMatrix from '#lib/components/RiskMatrix/RiskMatrix.svelte';
+	import RecursiveTreeView from '#lib/components/TreeView/RecursiveTreeView.svelte';
+	import { formatDateOrDateTime } from '#lib/utils/datetime.js';
+	import { m } from '#paraglide/messages.js';
+	import { getLocale } from '#paraglide/runtime.js';
+	import { Progress } from '@skeletonlabs/skeleton-svelte';
+	import TreeViewItemContent from '../../frameworks/[id=uuid]/TreeViewItemContent.svelte';
+	import TreeExpandCollapseToggle from '#lib/components/TreeView/TreeExpandCollapseToggle.svelte';
+	import MarkdownRenderer from '#lib/components/MarkdownRenderer.svelte';
+	import InstantiateWorkflows from '#lib/components/Libraries/InstantiateWorkflows.svelte';
+
+	let { data } = $props();
+	let loading = $state({ form: false, library: '' });
+	let expandedNodes: string[] = $state([]);
+	const showRisks = true;
+
+	// The instantiate action lives on the LOADED counterpart.
+	// Two data shapes reach this page: stored data (loaded_library holds the
+	// counterpart id, null when not loaded) and, for exclusively-loaded
+	// libraries, the loader already swapped to loaded data (its id differs
+	// from the route param).
+	const loadedLibraryId = $derived(
+		data.library.loaded_library ?? (data.library.id !== page.params.id ? data.library.id : null)
+	);
+	const workflowCount = $derived(data.library.objects_meta?.workflows ?? 0);
+
+	interface LibraryObjects {
+		[key: string]: any;
+	}
+
+	// Derived, not plain consts: previewing another library reuses the component, so
+	// a captured value would show the previous one.
+	const libraryObjects: LibraryObjects = $derived(data?.library?.objects ?? {});
+	const riskMatrices = $derived(
+		libraryObjects['risk_matrix'] ?? libraryObjects['risk_matrices'] ?? []
+	);
+	const referenceControls = $derived(libraryObjects['reference_controls'] ?? []);
+	const threats = $derived(libraryObjects['threats'] ?? []);
+	const metricDefinitions = $derived(libraryObjects['metric_definitions'] ?? []);
+	const framework = $derived(libraryObjects['framework'] ?? libraryObjects['frameworks']?.[0]);
+
+	function transformToTreeView(nodes) {
+		return nodes.map(([id, node]) => {
+			return {
+				id,
+				content: TreeViewItemContent,
+				contentProps: node,
+				children: node.children ? transformToTreeView(Object.entries(node.children)) : []
+			};
+		});
+	}
+
+	const riskMatricesTable: TableSource = $derived({
+		head: { name: 'name', description: 'description' },
+		body: tableSourceMapper(riskMatrices, ['name', 'description']),
+		meta: { count: riskMatrices.length }
+	});
+
+	const referenceControlsTable: TableSource = $derived({
+		head: {
+			ref_id: 'ref',
+			name: 'name',
+			description: 'description',
+			category: 'category',
+			csf_function: 'csfFunction'
+		},
+		body: tableSourceMapper(referenceControls, [
+			'ref_id',
+			'name',
+			'description',
+			'category',
+			'csf_function'
+		]),
+		meta: { count: referenceControls.length }
+	});
+
+	const threatsTable: TableSource = $derived({
+		head: { ref_id: 'ref', name: 'name', description: 'description' },
+		body: tableSourceMapper(threats, ['ref_id', 'name', 'description']),
+		meta: { count: threats.length }
+	});
+
+	const metricDefinitionsTable: TableSource = $derived({
+		head: {
+			ref_id: 'ref',
+			name: 'name',
+			description: 'description',
+			category: 'category',
+			unit: 'unit'
+		},
+		body: tableSourceMapper(metricDefinitions, [
+			'ref_id',
+			'name',
+			'description',
+			'category',
+			'unit'
+		]),
+		meta: { count: metricDefinitions.length }
+	});
+
+	function riskMatricesPreview(riskMatrices: []) {
+		let riskMatricesDumps = [];
+		for (const riskMatrix of riskMatrices) {
+			const riskMatrixDump = {
+				json_definition: JSON.stringify(riskMatrix)
+			};
+			riskMatricesDumps.push(riskMatrixDump);
+		}
+		return riskMatricesDumps;
+	}
+
+	async function handleSubmit(event: { currentTarget: EventTarget & HTMLFormElement }) {
+		const data = new FormData(event.currentTarget);
+
+		const response = await fetch(event.currentTarget.action, {
+			method: 'POST',
+			body: data
+		});
+
+		const result: ActionResult = deserialize(await response.text());
+
+		if (result.type === 'success') {
+			await refreshAll();
+		}
+		applyAction(result);
+	}
+
+	let displayImportButton = $derived(
+		!(
+			data.library?.is_loaded ||
+			data.library?.objects?.requirement_mapping_set ||
+			data.library?.objects?.requirement_mapping_sets
+		)
+	);
+</script>
+
+<div class="card bg-surface-50-950 p-4 shadow-sm space-y-4">
+	<div class="flex flex-col space-y-2">
+		<span class="w-full flex flex-row justify-between">
+			<h1 class="font-medium text-xl">{data.library.name}</h1>
+			<div>
+				{#if displayImportButton}
+					{#if loading.form}
+						<Progress value={null}>
+							<Progress.Circle class="[--size:--spacing(6)]">
+								<Progress.CircleTrack />
+								<Progress.CircleRange class="stroke-primary-500" />
+							</Progress.Circle>
+						</Progress>
+					{:else}
+						<form
+							method="post"
+							action="?/load"
+							use:enhance={() => {
+								loading.form = true;
+								loading.library = data.library.urn;
+								return async ({ update }) => {
+									loading.form = false;
+									loading.library = '';
+									update({ navigate: false });
+								};
+							}}
+							onsubmit={handleSubmit}
+						>
+							{#if page.data.user.is_admin}
+								<button
+									type="submit"
+									class="p-1 btn text-xl hover:text-primary-500"
+									aria-label="load library"
+								>
+									<i class="fa-solid fa-file-import"></i>
+								</button>
+							{/if}
+						</form>
+					{/if}
+				{/if}
+			</div>
+		</span>
+		<div class="space-y-1">
+			<p class="text-md leading-5 text-surface-700-300">
+				<strong>{m.description()}</strong>:
+			</p>
+			<MarkdownRenderer content={data.library.description} />
+
+			<p class="text-md leading-5 text-surface-700-300">
+				<strong>{m.provider()}</strong>: {data.library.provider}
+			</p>
+
+			<p class="text-md leading-5 text-surface-700-300">
+				<strong>{m.packager()}</strong>: {data.library.packager}
+			</p>
+
+			<p class="text-md leading-5 text-surface-700-300">
+				<strong>{m.version()}</strong>: {data.library.version}
+			</p>
+
+			{#if data.library.publication_date}
+				<p class="text-md leading-5 text-surface-700-300">
+					<strong>{m.publicationDate()}</strong>: {formatDateOrDateTime(
+						data.library.publication_date,
+						getLocale()
+					)}
+				</p>
+			{/if}
+			{#if data.library.dependencies}
+				<p class="text-md leading-5 text-surface-700-300">
+					<strong>{m.dependencies()}</strong>:
+				</p>
+				<ul class="list-disc list-inside">
+					{#each data.library.dependencies as dependency}
+						<li>{dependency.name}</li>
+					{/each}
+				</ul>
+			{/if}
+			{#if data.library.copyright}
+				<p class="text-md leading-5 text-surface-700-300">
+					<strong>{m.copyright()}</strong>:
+				</p>
+				<MarkdownRenderer content={data.library.copyright} />
+			{/if}
+			{#if data.library.filtering_labels && data.library.filtering_labels.length > 0}
+				<p class="text-md leading-5 text-surface-700-300">
+					<strong>{m.labels()}</strong>:
+				</p>
+				<ul class="list-disc list-inside">
+					{#each data.library.filtering_labels as label}
+						<li>{label.label}</li>
+					{/each}
+				</ul>
+			{/if}
+		</div>
+	</div>
+
+	{#if loadedLibraryId}
+		<InstantiateWorkflows {loadedLibraryId} count={workflowCount} />
+	{/if}
+
+	{#if riskMatrices.length > 0}
+		<Dropdown
+			open={riskMatrices.length == 1}
+			style="hover:text-indigo-700"
+			icon="fa-solid fa-table-cells-large"
+			header="{riskMatrices.length} {m.riskMatrices()}"
+		>
+			<ModelTable
+				source={riskMatricesTable}
+				displayActions={false}
+				pagination={false}
+				rowCount={false}
+				rowsPerPage={false}
+				search={false}
+				interactive={false}
+			/>
+			{#each riskMatricesPreview(riskMatrices) as riskMatrix}
+				<RiskMatrix {riskMatrix} showLegend={showRisks} wrapperClass="mt-8" />
+			{/each}
+		</Dropdown>
+	{/if}
+
+	{#if referenceControls.length > 0}
+		<Dropdown
+			style="hover:text-indigo-700"
+			icon="fa-solid fa-gears"
+			header="{referenceControls.length} {m.referenceControls()}"
+		>
+			<ModelTable
+				source={referenceControlsTable}
+				displayActions={false}
+				pagination={false}
+				rowCount={false}
+				rowsPerPage={false}
+				search={false}
+				interactive={false}
+			/>
+		</Dropdown>
+	{/if}
+
+	{#if threats.length > 0}
+		<Dropdown
+			style="hover:text-indigo-700"
+			icon="fa-solid fa-biohazard"
+			header="{threats.length} {m.threats()}"
+		>
+			<ModelTable
+				source={threatsTable}
+				displayActions={false}
+				pagination={false}
+				rowCount={false}
+				rowsPerPage={false}
+				search={false}
+				interactive={false}
+			/>
+		</Dropdown>
+	{/if}
+
+	{#if metricDefinitions.length > 0}
+		<Dropdown
+			style="hover:text-indigo-700"
+			icon="fa-solid fa-chart-line"
+			header="{metricDefinitions.length} {m.metricDefinitions()}"
+		>
+			<ModelTable
+				source={metricDefinitionsTable}
+				displayActions={false}
+				pagination={false}
+				rowCount={false}
+				rowsPerPage={false}
+				search={false}
+				interactive={false}
+			/>
+		</Dropdown>
+	{/if}
+
+	{#if framework}
+		{#await data.tree}
+			<span data-testid="loading-field">
+				{m.loading()}...
+			</span>
+		{:then tree}
+			{@const treeViewNodes = transformToTreeView(Object.entries(tree))}
+			<div class="flex items-center justify-between">
+				<h4 class="h4 font-medium">{m.framework()}</h4>
+				<TreeExpandCollapseToggle nodes={treeViewNodes} bind:expandedNodes />
+			</div>
+			<RecursiveTreeView nodes={treeViewNodes} bind:expandedNodes hover="hover:bg-initial" />
+		{/await}
+	{/if}
+</div>

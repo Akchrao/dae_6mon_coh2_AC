@@ -1,0 +1,320 @@
+import type { z } from 'zod';
+import type { ModelMapEntry } from './crud';
+import type { RiskScenarioSchema } from './schemas';
+import type { ThemeMode } from './theme';
+
+export interface User {
+	id: string;
+	actor_id: string;
+	all_actor_ids: string[];
+	email: string;
+	first_name: string;
+	last_name: string;
+	is_active: boolean;
+	keep_local_login: boolean;
+	date_joined: string;
+	user_groups: Record<string, any>[];
+	/** Role names — `User.get_roles()` serialises `roleassignment__role__name`, not objects. */
+	roles: string[];
+	is_third_party: boolean;
+	is_auditee: boolean;
+	is_admin: boolean;
+	is_local: boolean;
+	is_sso: boolean;
+	is_superuser: boolean;
+	has_mfa_enabled: boolean;
+	accessible_domains: string[];
+	/** Distinct codename sets, each sent once; `domain_permissions` points into it. */
+	permission_sets: string[][];
+	/** Folder ID → index in `permission_sets` of the codenames the user holds there. */
+	domain_permissions: Record<string, number>;
+	root_folder_id: string;
+	preferences: {
+		lang?: string;
+		ui?: { theme?: ThemeMode };
+	};
+}
+
+export interface GlobalSettings {
+	name: string;
+	settings: Record<string, any>;
+}
+
+export interface LoginRequestBody {
+	email: string;
+	password: string;
+}
+
+export const URL_MODEL = [
+	'notifications',
+	'folders',
+	'perimeters',
+	'risk-matrices',
+	'risk-assessments',
+	'threats',
+	'ttp-catalogs',
+	'tactics',
+	'techniques',
+	'threat-models',
+	'risk-scenarios',
+	'applied-controls',
+	'policies',
+	'risk-acceptances',
+	'validation-flows',
+	'reference-controls',
+	'assets',
+	'actors',
+	'teams',
+	'users',
+	'user-groups',
+	'idp-groups',
+	'service-accounts',
+	'roles',
+	'role-assignments',
+	'compliance-assessments',
+	'quick-forms',
+	'quick-form-responses',
+	'quick-form-publications',
+	'evidences',
+	'evidence-revisions',
+	'frameworks',
+	'requirements',
+	'requirement-assessments',
+	'stored-libraries',
+	'loaded-libraries',
+	'libraries',
+	'sso-settings',
+	'general-settings',
+	'feature-flags',
+	'requirement-mapping-sets',
+	'entities',
+	'entity-assessments',
+	'solutions',
+	'contracts',
+	'custom-fields',
+	'entity-scores',
+	'tiers',
+	'entity-tier-changes',
+	'solution-tier-changes',
+	'representatives',
+	'vulnerabilities',
+	'security-advisories',
+	'cwes',
+	'filtering-labels',
+	'library-filtering-labels',
+	// 'ebios-rm',
+	'feared-events',
+	'ro-to',
+	'stakeholders',
+	'strategic-scenarios',
+	'attack-paths',
+	'operational-scenarios',
+	'elementary-actions',
+	'operating-modes',
+	'kill-chains',
+	'processings',
+	'security-exceptions',
+	'findings',
+	'commitments',
+	'findings-assessments',
+	'posture-assessments',
+	// privacy,
+	'processings',
+	'right-requests',
+	'data-breaches',
+	'dpia-requirement-changes',
+	'purposes',
+	'personal-data',
+	'data-subjects',
+	'data-recipients',
+	'data-contractors',
+	'data-transfers',
+	// incidents,
+	'incidents',
+	'timeline-entries',
+	// tasks,
+	'task-templates',
+	'task-nodes',
+	// resilience,
+	'business-impact-analysis',
+	'escalation-thresholds',
+	'asset-assessments',
+	'dora-incident-reports',
+	'asset-class',
+	'asset-capabilities',
+	// campaigns,
+	'campaigns',
+	// iso,
+	'organisation-issues',
+	'organisation-objectives',
+	// crq,
+	'quantitative-risk-studies',
+	'quantitative-risk-scenarios',
+	'quantitative-risk-hypotheses',
+	// terminologies
+	'terminologies',
+	// classifications
+	'object-classifications',
+	'classification-levels',
+	// roles,
+	'roles',
+	'permissions',
+	// pmbok
+	'generic-collections',
+	'accreditations',
+	'projects',
+	'responsibility-roles',
+	'responsibility-matrices',
+	'responsibility-matrix-activities',
+	'responsibility-matrix-actors',
+	'responsibility-assignments',
+	// workflows
+	'workflows',
+	'workflow-versions',
+	// metrology
+	'metric-definitions',
+	'metric-instances',
+	'custom-metric-samples',
+	'dashboards',
+	'dashboard-widgets',
+	'dashboard-text-widgets',
+	'dashboard-builtin-widgets',
+	// document management
+	'document-containers',
+	'document-templates',
+	'managed-documents',
+	'document-revisions',
+	// presets/journeys
+	'presets',
+	'journeys'
+] as const;
+
+export const THIRD_PARTY_URL_MODEL = [
+	'compliance-assessments',
+	'evidences',
+	'evidence-revisions'
+] as const;
+
+export type urlModel = (typeof URL_MODEL)[number];
+
+export type thirdPartyUrlModel = (typeof THIRD_PARTY_URL_MODEL)[number];
+
+export type ModelInfo = ModelMapEntry;
+
+interface ProbabilityImpactItem {
+	abbreviation: string;
+	name: string;
+	description: string;
+}
+
+interface RiskItem extends ProbabilityImpactItem {
+	hexcolor: string;
+}
+
+export interface RiskMatrixJsonDefinition {
+	name: string;
+	description: string;
+	probability: ProbabilityImpactItem[];
+	impact: ProbabilityImpactItem[];
+	risk: RiskItem[];
+	grid: number[][];
+}
+
+export interface RiskMatrix {
+	locale?: string; // optional, defaults en english.
+	name: string;
+	description: string;
+	format_version?: string;
+	json_definition: string; // stringified
+}
+
+export interface Perimeter {
+	id: string;
+	folder: Record<string, any>;
+	lc_status: string;
+	created_at: string;
+	updated_at: string;
+	name: string;
+	description?: string;
+	ref_id?: string;
+	compliance_assessments: Record<string, any>[];
+}
+
+export type RiskScenario = z.infer<typeof RiskScenarioSchema>;
+
+interface LibraryObject {
+	type: 'risk_matrix' | 'reference_control' | 'threat';
+	fields: Record<string, any>;
+}
+
+export interface Library {
+	name: string;
+	urn: string;
+	id?: string;
+	dependencies: string[];
+	description: string;
+	locale: 'en' | 'fr';
+	format_version: string;
+	objects: LibraryObject[];
+	copyright: string;
+	provider: string;
+	packager: string;
+}
+
+export interface RiskLevel {
+	current: string[];
+	residual: string[];
+}
+
+export interface StrengthOfKnowledgeEntry {
+	name: string;
+	description: string;
+	symbol: string;
+}
+
+export interface AggregatedData {
+	names: string[];
+}
+
+export interface AppliedControlStatus {
+	localLables: string[];
+	labels: any[];
+	values: any[]; // Set these types later on
+}
+
+export interface AppliedControlImpact {
+	localLables: string[];
+	labels: any[];
+	values: any[]; // Set these types later on
+}
+
+export interface CacheLock {
+	promise: Promise<any>;
+	resolve: (_: any) => any;
+}
+
+/** A DOM event with `currentTarget` narrowed to the element the handler is bound to. */
+export type SvelteEvent<E extends Event = Event, T extends EventTarget = Element> = E & {
+	currentTarget: EventTarget & T;
+};
+
+/** The questionnaire's compliance split and global score, as the audit page shows them. */
+export interface ComplianceOverview {
+	donut: {
+		values: {
+			name: string;
+			localName: string;
+			value: number;
+			itemStyle: { color: string };
+		}[];
+	};
+	global_score: {
+		maturity_score: number;
+		min_score: number | null;
+		max_score: number | null;
+		total_max_score: number | null;
+		score_calculation_method: string;
+	};
+	show_result: boolean;
+	show_score: boolean;
+}

@@ -1,0 +1,187 @@
+import { writable, derived } from 'svelte/store';
+import { browser } from '$app/env';
+import { persisted, type Persisted } from 'svelte-persisted-store';
+import type { Driver } from 'driver.js';
+import { DataHandler } from '@vincjo/datatables/remote';
+
+// Focus mode
+export interface FocusModeState {
+	id: string | null;
+	name: string | null;
+}
+export const focusMode: Persisted<FocusModeState> = persisted('focusMode', {
+	id: null,
+	name: null
+});
+export function setFocusMode(folderId: string, folderName: string) {
+	focusMode.set({ id: folderId, name: folderName });
+	if (browser) {
+		const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+		document.cookie = `focus_folder_id=${folderId}; path=/; SameSite=Lax${secure}`;
+	}
+}
+export function clearFocusMode() {
+	focusMode.set({ id: null, name: null });
+	if (browser) {
+		const secure = window.location.protocol === 'https:' ? '; Secure' : '';
+		document.cookie = `focus_folder_id=; path=/; SameSite=Lax${secure}; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+	}
+}
+
+export const showNotification = writable(
+	(browser && localStorage.getItem('showNotification')) || 'false'
+);
+
+showNotification.subscribe((val) => {
+	if (browser) return (localStorage.showNotification = val);
+});
+
+export const getStartedTrigger = writable(false);
+
+export const pageTitle = writable('');
+export const modelName = writable('');
+export const modelDescription = writable('');
+export const clientSideToast = writable(undefined);
+
+const requirementAssessmentsList: string[] = [];
+
+export const hideSuggestions = persisted('hideSuggestions', requirementAssessmentsList, {
+	storage: 'session'
+});
+
+export const showAllEvents = persisted('showAllEvents', true, {
+	storage: 'session'
+});
+
+export const lastAccordionItem = persisted('lastAccordionItem', ['']);
+
+const expandedNodes: string[] = [];
+
+export const expandedNodesState = persisted('expandedNodes', expandedNodes, {
+	storage: 'session'
+});
+
+export const createModalCache = {
+	_urlModel: '',
+	_cacheToDelete: new Set(),
+	data: {},
+	deleteCache(cacheName: any) {
+		this._cacheToDelete.add(cacheName);
+	},
+	garbageCollect() {
+		for (const cacheName of this._cacheToDelete) {
+			delete this.data[cacheName];
+		}
+		this._cacheToDelete.clear();
+	},
+	clear() {
+		for (const cacheName of Object.keys(this.data)) {
+			delete this.data[cacheName];
+		}
+	},
+	setModelName(urlModelFromPage: string) {
+		if (this._urlModel !== urlModelFromPage) this.clear();
+		this._urlModel = urlModelFromPage;
+	}
+};
+
+export const driverInstance = writable<Driver | null>(null);
+
+export const tableHandlers = writable<Record<string, DataHandler>>({});
+// Promise-returning refetch per table endpoint: DataHandler.invalidate() itself
+// returns void, so callers that need to wait for the rows use this instead.
+export const tableRefreshers = writable<Record<string, () => Promise<unknown>>>({});
+
+export const tableStates: Persisted<Record<string, { pageNumber: number; rowsPerPage: number }>> =
+	persisted('tableStates', {});
+
+// Persisted table filters per model path (e.g. "/applied-controls" -> { folder: [{value: "uuid"}], status: [{value: "active"}] })
+export const tableFilterStates: Persisted<Record<string, Record<string, { value: string }[]>>> =
+	persisted('tableFilterStates', {});
+
+export const tableSortStates: Persisted<
+	Record<string, { orderBy: string; direction: 'asc' | 'desc' }>
+> = persisted('tableSortStates', {});
+
+// Persisted visible columns per URLModel, in display order (e.g. "applied-controls" -> ["ref_id", "name"]). Absent = defaults.
+export const tableColumnStates: Persisted<Record<string, string[]>> = persisted(
+	'tableColumnStates',
+	{}
+);
+
+function createPersistedAuditFilters() {
+	const stored = browser ? localStorage.getItem('auditFilters') : null;
+	const initial = stored ? JSON.parse(stored) : {};
+
+	const { subscribe, set, update } = writable(initial);
+
+	if (browser) {
+		subscribe((value) => {
+			localStorage.setItem('auditFilters', JSON.stringify(value));
+		});
+	}
+
+	return {
+		subscribe,
+		set,
+		update,
+		setStatus(id, statusArray) {
+			update((filters) => {
+				if (!filters[id]) filters[id] = {};
+				filters[id].selectedStatus = statusArray;
+				return filters;
+			});
+		},
+		setResults(id, resultsArray) {
+			update((filters) => {
+				if (!filters[id]) filters[id] = {};
+				filters[id].selectedResults = resultsArray;
+				return filters;
+			});
+		},
+		setExtendedResults(id, extendedResultsArray) {
+			update((filters) => {
+				if (!filters[id]) filters[id] = {};
+				filters[id].selectedExtendedResults = extendedResultsArray;
+				return filters;
+			});
+		},
+		setControlCoverage(id, coverageArray) {
+			update((filters) => {
+				if (!filters[id]) filters[id] = {};
+				filters[id].selectedControlCoverage = coverageArray;
+				return filters;
+			});
+		},
+		setEvidenceCoverage(id, coverageArray) {
+			update((filters) => {
+				if (!filters[id]) filters[id] = {};
+				filters[id].selectedEvidenceCoverage = coverageArray;
+				return filters;
+			});
+		},
+		setDisplayOnlyAssessableNodes(id, displayOnlyAssessableNodes) {
+			update((filters) => {
+				if (!filters[id]) filters[id] = {};
+				filters[id].displayOnlyAssessableNodes = displayOnlyAssessableNodes;
+				return filters;
+			});
+		}
+	};
+}
+
+export const auditFiltersStore = createPersistedAuditFilters();
+
+// Unread notification count, shared between the app-bar bell and whatever changes it.
+// The bell's poll covers changes made elsewhere, but marking rows read inside the inbox
+// never navigates, so the mutation endpoints answer with the new count instead.
+export const unreadNotificationCount = writable<number>(0);
+
+/**
+ * Update the badge from any mutation response that reports a count. Shaped as "if the
+ * response mentions it, use it" so the generic callers stay model-agnostic.
+ */
+export function applyUnreadCount(payload: unknown): void {
+	const count = (payload as { unread_count?: unknown } | null)?.unread_count;
+	if (typeof count === 'number') unreadNotificationCount.set(count);
+}

@@ -1,0 +1,158 @@
+<script lang="ts">
+	import type { SuperValidated } from 'sveltekit-superforms';
+	import type { ModelInfo, CacheLock } from '#lib/utils/types.js';
+	import Checkbox from '#lib/components/Forms/Checkbox.svelte';
+	import AutocompleteSelect from '#lib/components/Forms/AutocompleteSelect.svelte';
+	import { m } from '#paraglide/messages.js';
+	import MarkdownField from '#lib/components/Forms/MarkdownField.svelte';
+	import Select from '../Select.svelte';
+	import { page } from '$app/state';
+	import TextField from '../TextField.svelte';
+
+	interface Props {
+		form: SuperValidated<any>;
+		model: ModelInfo;
+		cacheLocks?: Record<string, CacheLock>;
+		formDataCache?: Record<string, any>;
+		initialData?: Record<string, any>;
+		context: string;
+		object?: any; // Optional object for additional data
+	}
+
+	let {
+		form,
+		model,
+		cacheLocks = {},
+		formDataCache = $bindable({}),
+		initialData = {},
+		context,
+		object = null // Optional object for additional data
+	}: Props = $props();
+
+	const activityBackground = context === 'edit' ? 'bg-surface-50-950' : 'bg-surface-100-900';
+
+	let activeActivity: string | null = $state(null);
+	page.url.searchParams.forEach((value, key) => {
+		if (key === 'activity' && value === 'one') {
+			activeActivity = 'one';
+		} else if (key === 'activity' && value === 'two') {
+			activeActivity = 'two';
+		} else if (key === 'activity' && value === 'three') {
+			activeActivity = 'three';
+		}
+	});
+</script>
+
+<AutocompleteSelect
+	{form}
+	field="ebios_rm_study"
+	cacheLock={cacheLocks['ebios_rm_study']}
+	bind:cachedValue={formDataCache['ebios_rm_study']}
+	label={m.ebiosRmStudy()}
+	hidden={initialData.ebios_rm_study}
+/>
+<div
+	class="relative p-2 space-y-2 rounded-md {activeActivity === 'one'
+		? 'border-2 border-primary-500'
+		: 'border-2 border-surface-300-700 border-dashed'}"
+>
+	<p
+		class="absolute -top-3 {activityBackground} font-bold {activeActivity === 'one'
+			? 'text-primary-500'
+			: 'text-surface-600-400'}"
+	>
+		{m.activityOne()}
+	</p>
+	{#if context !== 'edit'}
+		<AutocompleteSelect
+			{form}
+			optionsEndpoint="attack-paths?is_selected=true&used=false"
+			optionsDetailedUrlParameters={[['ebios_rm_study', initialData.ebios_rm_study]]}
+			optionsLabelField="form_display_name"
+			field="attack_path"
+			label={m.attackPath() + ` (${m.strategicScenario()})`}
+		/>
+	{/if}
+	<AutocompleteSelect
+		{form}
+		multiple
+		optionsEndpoint="threats"
+		optionsExtraFields={[['folder', 'str']]}
+		optionsLabelField="auto"
+		field="threats"
+		cacheLock={cacheLocks['threats']}
+		bind:cachedValue={formDataCache['threats']}
+		label={m.threats()}
+		helpText={m.operationalScenarioThreatsHelpText()}
+	/>
+	{#if page.data.featureflags?.ttps}
+		<AutocompleteSelect
+			{form}
+			multiple
+			lazy
+			optionsEndpoint="techniques"
+			optionsLabelField="str"
+			field="techniques"
+			cacheLock={cacheLocks['techniques']}
+			bind:cachedValue={formDataCache['techniques']}
+			label={m.techniques()}
+			helpText={m.operationalScenarioTechniquesHelpText()}
+		/>
+	{/if}
+	<MarkdownField
+		{form}
+		field="operating_modes_description"
+		label={m.operatingModesDescription()}
+		cacheLock={cacheLocks['operating_modes_description']}
+		bind:cachedValue={formDataCache['operating_modes_description']}
+		data-focusindex="1"
+		helpText={m.operatingModesDescriptionHelpText()}
+	/>
+</div>
+<div
+	class="relative p-2 space-y-2 rounded-md {activeActivity === 'two'
+		? 'border-2 border-primary-500'
+		: 'border-2 border-surface-300-700 border-dashed'}"
+>
+	<p
+		class="absolute -top-3 {activityBackground} font-bold {activeActivity === 'two'
+			? 'text-primary-500'
+			: 'text-surface-600-400'}"
+	>
+		{m.activityTwo()}
+	</p>
+	{#if object.quotation_method === 'manual'}
+		<Select
+			{form}
+			options={model.selectOptions['likelihood']}
+			field="likelihood"
+			label={m.likelihood()}
+			cacheLock={cacheLocks['likelihood']}
+			bind:cachedValue={formDataCache['likelihood']}
+			helpText={m.likelihoodHelpText()}
+		/>
+	{:else if object.quotation_method}
+		<Select
+			{form}
+			options={(model.selectOptions?.['likelihood'] ?? []).filter((o) => o.value !== -1)}
+			field="likelihood_forced"
+			label={m.forcedLikelihood()}
+			helpText={m.forcedLikelihoodHelpText()}
+			cacheLock={cacheLocks['likelihood_forced']}
+			bind:cachedValue={formDataCache['likelihood_forced']}
+		/>
+	{/if}
+	<MarkdownField
+		{form}
+		field="justification"
+		label={m.justification()}
+		cacheLock={cacheLocks['justification']}
+		bind:cachedValue={formDataCache['justification']}
+	/>
+</div>
+<Checkbox
+	{form}
+	field="is_selected"
+	label={m.isSelected()}
+	helpText={m.operationalScenarioIsSelectedHelpText()}
+/>

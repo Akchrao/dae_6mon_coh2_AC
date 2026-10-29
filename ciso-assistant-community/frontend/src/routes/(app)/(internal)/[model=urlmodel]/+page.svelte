@@ -1,0 +1,719 @@
+<script lang="ts">
+	import { handlers } from 'svelte/legacy';
+	import { page } from '$app/state';
+
+	import CreateModal from '#lib/components/Modals/CreateModal.svelte';
+	import ChoiceCardsModal from '#lib/components/Modals/ChoiceCardsModal.svelte';
+	import ImportWorkflowModal from '#lib/components/Modals/ImportWorkflowModal.svelte';
+	import ComposeMetricModal from '#lib/components/Modals/ComposeMetricModal.svelte';
+	import ExportModal, {
+		type ExportGroup,
+		type ExportOption
+	} from '#lib/components/Modals/ExportModal.svelte';
+	import ModelTable from '#lib/components/ModelTable/ModelTable.svelte';
+	import { buildCustomFieldFilters, listViewFields, quickFilterPresets } from '#lib/utils/table.js';
+	import { NON_CREATABLE_URL_MODELS } from '#lib/utils/crud.js';
+	import { consumeCreateIntent } from '#lib/utils/create-intent.js';
+	import { safeTranslate } from '#lib/utils/i18n.js';
+	import { driverInstance, tableRefreshers } from '#lib/utils/stores.js';
+	import { m } from '#paraglide/messages.js';
+	import type { ActionData, PageData } from './$types';
+	import Anchor from '#lib/components/Anchor/Anchor.svelte';
+	import { onMount } from 'svelte';
+	import {
+		getModalStore,
+		type ModalComponent,
+		type ModalSettings,
+		type ModalStore
+	} from '#lib/components/Modals/stores.js';
+	import { getToastStore } from '#lib/components/Toast/stores.js';
+	import { refreshAll } from '$app/navigation';
+
+	interface Props {
+		data: PageData;
+		form: ActionData;
+	}
+
+	let { data, form }: Props = $props();
+	const toastStore = getToastStore();
+	let URLModel = $derived(data.URLModel);
+	// Models with an analytics page. The link carries the table's current filters,
+	// so the page aggregates exactly the rows the user is looking at.
+	const ANALYTICS_LABELS: Record<string, () => string> = {
+		'applied-controls': m.appliedControlsAnalytics,
+		'task-templates': m.taskTemplatesAnalytics
+	};
+	// Static (per-model) filters merged with dynamic custom-field filters.
+	const tableFilters = $derived({
+		...listViewFields[URLModel]?.filters,
+		...buildCustomFieldFilters(data.customFields ?? [])
+	});
+	let pullCatalogOpen = $state(false);
+	let currentFilterSearch = $state(page.url.search);
+	// The page survives a query-string navigation (only the table is keyed), so the
+	// value captured at creation would keep the previous filters. In-place filter
+	// changes still assign to it below.
+	$effect(() => {
+		currentFilterSearch = data.urlSearch;
+	});
+
+	// These actions run synchronously in the request (catalog pulls, bulk
+	// updates), so the page holds a single in-flight slot: a second click would
+	// start a second import. Every button is disabled while the slot is taken;
+	// the loading bar and placeholder rows only show on the model the action
+	// belongs to, so navigating to another list does not carry them along.
+	const remoteActions = {
+		kev: {
+			model: 'security-advisories',
+			endpoint: '/security-advisories/sync-kev',
+			failed: m.syncKevFailed
+		},
+		euvd: {
+			model: 'security-advisories',
+			endpoint: '/security-advisories/sync-euvd',
+			failed: m.syncEuvdFailed
+		},
+		cwe: { model: 'cwes', endpoint: '/cwes/sync-catalog', failed: m.syncCweCatalogFailed },
+		'refresh-due-dates': {
+			model: 'vulnerabilities',
+			endpoint: '/vulnerabilities/refresh-due-dates',
+			failed: m.refreshDueDatesFailed
+		}
+	} as const;
+	type RemoteAction = keyof typeof remoteActions;
+	let runningAction = $state<RemoteAction | null>(null);
+	const isBusy = $derived(runningAction !== null);
+	const slaEnabled = $derived(Boolean(page.data?.featureflags?.vulnerability_sla));
+	const isSyncing = $derived(
+		runningAction !== null && remoteActions[runningAction].model === URLModel
+	);
+
+	async function runRemoteAction(action: RemoteAction) {
+		if (runningAction) return;
+		runningAction = action;
+		const { model, endpoint, failed } = remoteActions[action];
+		try {
+			const res = await fetch(endpoint, { method: 'POST' });
+			// A gateway error or a crashed passthrough does not carry the
+			// backend's detail/error shape, so fall back to a real message.
+			const result = await res.json().catch(() => ({}));
+			toastStore.trigger({
+				message:
+					result.detail ||
+					(result.error && safeTranslate(result.error)) ||
+					(res.ok ? m.done() : failed()),
+				preset: res.ok ? 'success' : 'error'
+			});
+			if (res.ok) {
+				// Refetch the rows of the table the action belongs to (the user may
+				// have navigated away since) and wait for them, so the slot only
+				// frees once the new rows are on screen.
+				const refresh = $tableRefreshers[`/${model}`];
+				if (refresh) await refresh().catch(() => {});
+				else await refreshAll().catch(() => {});
+			}
+		} catch {
+			toastStore.trigger({ message: failed(), preset: 'error' });
+		} finally {
+			runningAction = null;
+		}
+	}
+
+	function confirmRemoteAction(action: RemoteAction, title: string, body: string) {
+		modalStore.trigger({
+			type: 'confirm',
+			title,
+			body,
+			response: (confirmed: boolean) => {
+				if (confirmed) runRemoteAction(action);
+			}
+		});
+	}
+
+	function handleFilterChange(filters: Record<string, any>) {
+		const params = new URLSearchParams();
+		for (const [field, values] of Object.entries(filters)) {
+			if (Array.isArray(values)) {
+				for (const v of values) {
+					if (v?.value) params.append(v.param ?? field, v.value);
+				}
+			}
+		}
+		const search = params.toString();
+		currentFilterSearch = search ? `?${search}` : '';
+	}
+
+	let currentSearch = $state('');
+	const exportFilterSearch = $derived.by(() => {
+		const params = new URLSearchParams(currentFilterSearch);
+		if (currentSearch) params.set('search', currentSearch);
+		else params.delete('search');
+		const search = params.toString();
+		return search ? `?${search}` : '';
+	});
+
+	// The list is already scoped to one kind (the menu links carry it, and the filter
+	// chip keeps it current), so creating from here inherits it instead of asking again.
+	const campaignKinds = $derived(
+		new URLSearchParams(currentFilterSearch.replace(/^\?/, '')).getAll('kind')
+	);
+
+	const modalStore: ModalStore = getModalStore();
+
+	function buildTableExportOptions(filterSearch: string): ExportOption[] {
+		const opts: ExportOption[] = [
+			{
+				titleKey: 'exportTableCsv',
+				descriptionKey: 'exportTableCsvDesc',
+				format: 'CSV',
+				href: `${URLModel}/export/${filterSearch}`,
+				testId: filterSearch ? 'export-option-csv-filtered' : 'export-option-csv-all'
+			},
+			{
+				titleKey: 'exportTableXlsx',
+				descriptionKey: 'exportTableXlsxDesc',
+				format: 'XLSX',
+				href: `${URLModel}/export/xlsx/${filterSearch}`,
+				testId: filterSearch ? 'export-option-xlsx-filtered' : 'export-option-xlsx-all'
+			}
+		];
+		if (URLModel === 'entities') {
+			opts.push({
+				titleKey: 'exportTableEcosystem',
+				descriptionKey: 'exportTableEcosystemDesc',
+				format: 'XLSX',
+				href: `/entities/export/ecosystem/${filterSearch}`,
+				testId: filterSearch ? 'export-option-ecosystem-filtered' : 'export-option-ecosystem-all'
+			});
+		}
+		if (URLModel === 'applied-controls') {
+			opts.push({
+				titleKey: 'exportTableMss',
+				descriptionKey: 'exportTableMssDesc',
+				format: 'XLSX',
+				href: `/applied-controls/export/mss-xlsx/${filterSearch}`,
+				testId: filterSearch ? 'export-option-mss-filtered' : 'export-option-mss-all'
+			});
+		}
+		return opts;
+	}
+
+	function modalExport(): void {
+		const hasFilters = exportFilterSearch.length > 0;
+		const groups: ExportGroup[] = hasFilters
+			? [
+					{
+						titleKey: 'exportGroupCurrentView',
+						options: buildTableExportOptions(exportFilterSearch)
+					},
+					{ titleKey: 'exportGroupEntireTable', options: buildTableExportOptions('') }
+				]
+			: [{ titleKey: '', options: buildTableExportOptions('') }];
+
+		const modalComponent: ModalComponent = {
+			ref: ExportModal,
+			props: {
+				title: m.exportOptionsTitle(),
+				groups
+			}
+		};
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent
+		};
+		modalStore.trigger(modal);
+	}
+
+	function modalCreateForm(additionalInitialData: Record<string, any> = {}): void {
+		let modalComponent: ModalComponent = {
+			ref: CreateModal,
+			props: {
+				form: data.createForm,
+				model: data.model,
+				additionalInitialData
+			}
+		};
+		let modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			// Data
+			title: safeTranslate('add-' + data.model.localName)
+		};
+		modalStore.trigger(modal);
+	}
+
+	function modalCampaignKind(): void {
+		let modalComponent: ModalComponent = {
+			ref: ChoiceCardsModal,
+			props: {
+				title: m.newCampaign(),
+				choices: [
+					{
+						icon: 'fa-building-shield',
+						iconClass: 'text-emerald-500',
+						label: m.internalCampaign(),
+						description: m.internalCampaignDescription(),
+						testId: 'internal-campaign-card',
+						action: () => modalCreateForm({ kind: 'internal' })
+					},
+					{
+						icon: 'fa-handshake',
+						iconClass: 'text-indigo-500',
+						label: m.thirdPartyCampaign(),
+						description: m.thirdPartyCampaignDescription(),
+						testId: 'third-party-campaign-card',
+						action: () => modalCreateForm({ kind: 'third_party' })
+					}
+				]
+			}
+		};
+		modalStore.trigger({ type: 'component', component: modalComponent });
+	}
+
+	function modalAddForm(): void {
+		if (URLModel === 'campaigns') {
+			// Only ask when the list spans both kinds and the choice is genuinely open.
+			if (campaignKinds.length === 1) return modalCreateForm({ kind: campaignKinds[0] });
+			return modalCampaignKind();
+		}
+		if (URLModel === 'processings') {
+			// Opened from the processor register: new entries start as processor ones.
+			const roles = new URLSearchParams(currentFilterSearch.replace(/^\?/, '')).getAll('role');
+			if (roles.length && roles.every((r) => r === 'privacy_data_processor'))
+				return modalCreateForm({ role: 'privacy_data_processor' });
+		}
+		modalCreateForm();
+	}
+
+	function modalComposeMetric(): void {
+		modalStore.trigger({
+			type: 'component',
+			component: { ref: ComposeMetricModal, props: {} }
+		});
+	}
+
+	function modalWorkflowImportForm(): void {
+		let modalComponent: ModalComponent = {
+			ref: ImportWorkflowModal,
+			props: {
+				form: data.model['workflowImportForm']
+			}
+		};
+		let modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			title: safeTranslate('importWorkflow')
+		};
+		modalStore.trigger(modal);
+	}
+
+	function modalFolderImportForm(): void {
+		let modalComponent: ModalComponent = {
+			ref: CreateModal,
+			props: {
+				form: data.model['folderImportForm'],
+				model: data.model['folderImportModel'],
+				importFolder: true,
+				formAction: '?/importFolder',
+				enctype: 'multipart/form-data',
+				dataType: 'form'
+			}
+		};
+		let modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			// Data
+			title: safeTranslate('importFolder')
+		};
+		modalStore.trigger(modal);
+	}
+
+	function handleKeyDown(event: KeyboardEvent) {
+		if (event.metaKey || event.ctrlKey) return;
+		if (document.activeElement?.tagName !== 'BODY') return;
+
+		// Check if 'c' is pressed and no input fields are currently focused
+		if (
+			event.key.toLowerCase() === 'c' &&
+			document.activeElement?.tagName !== 'INPUT' &&
+			document.activeElement?.tagName !== 'TEXTAREA'
+		) {
+			// Prevent default 'c' key behavior
+			event.preventDefault();
+
+			// Same gate as the add button, or `c` opens a form the button deliberately hides.
+			if (!NON_CREATABLE_URL_MODELS.includes(URLModel)) {
+				modalAddForm();
+			}
+		}
+	}
+
+	function handleClickForGT() {
+		setTimeout(() => {
+			$driverInstance?.moveNext();
+		}, 300);
+	}
+	$effect(() => {
+		consumeCreateIntent({ urlModel: URLModel, modelName: data.model.name, open: modalAddForm });
+	});
+
+	onMount(() => {
+		// Add event listener when component mounts
+		window.addEventListener('keydown', handleKeyDown);
+
+		// Cleanup event listener when component is destroyed
+		return () => {
+			window.removeEventListener('keydown', handleKeyDown);
+		};
+	});
+</script>
+
+{#if data?.table}
+	{#if isSyncing}
+		<div
+			class="h-1 w-full overflow-hidden bg-surface-200-800"
+			role="status"
+			aria-label={m.loading()}
+			data-testid="sync-loading-bar"
+		>
+			<div class="h-full w-full animate-pulse bg-primary-500"></div>
+		</div>
+	{/if}
+	{#if URLModel === 'quick-forms'}
+		<!-- Create is suppressed here (LIBRARY_MANAGED_URL_MODELS): forms come from
+		     libraries, so point at the one place that can author them. -->
+		<div
+			class="mb-2 flex flex-wrap items-center gap-2 rounded-md bg-surface-50-950 px-3 py-2 text-sm text-surface-600-400 shadow-xs"
+		>
+			<i class="fa-solid fa-circle-info text-primary-500"></i>
+			<span>{m.quickFormsAuthoredInBuilder()}</span>
+			<a
+				href="/experimental/library-builder"
+				class="btn btn-sm preset-outlined-primary-500 ml-auto"
+			>
+				<i class="fa-solid fa-shapes mr-1"></i>{m.lbListLibraryBuilder()}
+			</a>
+		</div>
+	{/if}
+	{#if URLModel === 'quick-form-responses'}
+		<!-- Requests are owned by whoever filed them. One created here has no requester,
+		     so nobody can submit it — say where they actually come from. -->
+		<div
+			class="mb-2 flex items-center gap-2 rounded-md bg-surface-50-950 px-3 py-2 text-sm text-surface-600-400 shadow-xs"
+		>
+			<i class="fa-solid fa-circle-info text-primary-500"></i>
+			<span>{m.quickFormResponsesOrigin()}</span>
+		</div>
+	{/if}
+	<div class="shadow-lg">
+		<!-- `urlSearch` comes from the load, so it only changes on a real navigation:
+		     the table's own in-place rewrites of the query string never remount it. -->
+		{#key `${URLModel}${data.urlSearch ?? ''}`}
+			<ModelTable
+				source={data.table}
+				{tableFilters}
+				deleteForm={data.deleteForm}
+				{URLModel}
+				disableEdit={['user-groups', 'validation-flows', 'commitments', 'notifications'].includes(
+					URLModel
+				)}
+				disableDelete={['user-groups', 'commitments'].includes(URLModel)}
+				disableView={['notifications'].includes(URLModel)}
+				disableBatchEdit={URLModel === 'notifications' ? false : undefined}
+				numberRowsPerPage={URLModel === 'notifications' ? 50 : undefined}
+				loading={isSyncing}
+				onFilterChange={handleFilterChange}
+				onQueryChange={(query) => (currentSearch = new URLSearchParams(query).get('search') ?? '')}
+			>
+				{#snippet quickFilters(filterValues)}
+					{#if quickFilterPresets[URLModel]}
+						<div class="flex flex-wrap gap-2 px-3 pb-2">
+							{#each quickFilterPresets[URLModel] as preset}
+								{@const current = (filterValues[preset.field] ?? []).map((f) => f.value).sort()}
+								{@const selected = current.join() === [...preset.values].sort().join()}
+								<button
+									type="button"
+									class="btn btn-sm {selected
+										? 'preset-filled-primary-500'
+										: 'preset-tonal-surface'}"
+									aria-pressed={selected}
+									onclick={() =>
+										(filterValues[preset.field] = selected
+											? []
+											: preset.values.map((value) => ({ value })))}
+								>
+									<i class="fa-solid {preset.icon}"></i>
+									{safeTranslate(preset.label)}
+								</button>
+							{/each}
+						</div>
+					{/if}
+				{/snippet}
+				{#snippet addButton()}
+					<div class="relative">
+						<div class="inline-flex overflow-hidden rounded-md border bg-surface-50-950 shadow-xs">
+							{#if URLModel === 'document-containers'}
+								<a
+									href="/documents/new"
+									class="inline-block p-3 btn-mini-primary w-12 focus:relative"
+									data-testid="add-button"
+									title={safeTranslate('add-' + data.model.localName)}
+									aria-label={safeTranslate('add-' + data.model.localName)}
+									><i class="fa-solid fa-file-circle-plus"></i>
+								</a>
+							{:else if !NON_CREATABLE_URL_MODELS.includes(URLModel)}
+								<button
+									class="inline-block p-3 btn-mini-primary w-12 focus:relative"
+									data-testid="add-button"
+									id="add-button"
+									title={safeTranslate('add-' + data.model.localName)}
+									aria-label={safeTranslate('add-' + data.model.localName)}
+									onclick={handlers(modalAddForm, handleClickForGT)}
+									><i class="fa-solid fa-file-circle-plus"></i>
+								</button>
+								{#if ['applied-controls', 'assets', 'incidents', 'security-exceptions', 'risk-scenarios', 'processings', 'task-templates', 'entities', 'solutions', 'contracts', 'representatives', 'entity-assessments', 'folders'].includes(URLModel)}
+									<button
+										class="inline-block p-3 btn-mini-tertiary w-12 focus:relative"
+										title={m.exportButton()}
+										data-testid="export-button"
+										onclick={modalExport}
+									>
+										<i class="fa-solid fa-download"></i>
+									</button>
+								{/if}
+								{#if URLModel === 'metric-instances'}
+									<button
+										class="inline-block p-3 btn-mini-secondary w-12 focus:relative"
+										title={m.newComputedMetric()}
+										aria-label={m.newComputedMetric()}
+										data-testid="new-computed-metric-button"
+										onclick={modalComposeMetric}
+									>
+										<i class="fa-solid fa-calculator"></i>
+									</button>
+								{/if}
+								{#if URLModel === 'workflows'}
+									<button
+										class="inline-block p-3 btn-mini-tertiary w-12 focus:relative"
+										title={m.importWorkflow()}
+										aria-label={m.importWorkflow()}
+										data-testid="import-workflow-button"
+										onclick={modalWorkflowImportForm}
+									>
+										<i class="fa-solid fa-file-import"></i>
+									</button>
+								{/if}
+								{#if URLModel === 'vulnerabilities'}
+									<button
+										class="inline-block p-3 btn-mini-tertiary w-12 focus:relative disabled:opacity-50 disabled:cursor-not-allowed"
+										title={slaEnabled ? m.refreshDueDates() : m.vulnerabilitySlaDisabledHint()}
+										aria-label={m.refreshDueDates()}
+										data-testid="refresh-due-dates-button"
+										disabled={isBusy || !slaEnabled}
+										onclick={() =>
+											confirmRemoteAction(
+												'refresh-due-dates',
+												m.refreshDueDates(),
+												m.refreshDueDatesConfirm()
+											)}
+									>
+										{#if runningAction === 'refresh-due-dates'}
+											<i class="fa-solid fa-spinner animate-spin"></i>
+										{:else}
+											<i class="fa-solid fa-clock-rotate-left"></i>
+										{/if}
+									</button>
+								{/if}
+								{#if URLModel === 'applied-controls'}
+									<a
+										href="{URLModel}/flash-mode/{currentFilterSearch}"
+										class="inline-block p-3 btn-mini-secondary w-12 focus:relative"
+										title={m.flashMode()}
+										aria-label={m.flashMode()}
+										data-testid="flash-mode-button"><i class="fa-solid fa-bolt mr-2"></i></a
+									>
+									<a
+										href="{URLModel}/kanban-mode/{currentFilterSearch}"
+										class="inline-block p-3 btn-mini-quaternary w-12 focus:relative"
+										title={m.kanbanMode()}
+										aria-label={m.kanbanMode()}
+										data-testid="kanban-mode-button"><i class="fa-solid fa-table-columns"></i></a
+									>
+								{/if}
+								{#if ANALYTICS_LABELS[URLModel]}
+									{@const analyticsLabel = ANALYTICS_LABELS[URLModel]()}
+									<a
+										href="{URLModel}/analytics/{currentFilterSearch}"
+										class="inline-block p-3 btn-mini-secondary w-12 focus:relative"
+										title={analyticsLabel}
+										aria-label={analyticsLabel}
+										data-testid="analytics-button"><i class="fa-solid fa-chart-pie"></i></a
+									>
+								{/if}
+								{#if URLModel === 'security-advisories'}
+									<button
+										class="inline-block p-3 w-12 focus:relative bg-blue-100 hover:bg-blue-200 dark:bg-blue-500/20 dark:hover:bg-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+										title={m.syncKev()}
+										aria-label={m.syncKev()}
+										data-testid="sync-kev-button"
+										disabled={isBusy}
+										onclick={() => confirmRemoteAction('kev', m.pullCatalog(), m.syncKev())}
+									>
+										{#if runningAction === 'kev'}
+											<i class="fa-solid fa-spinner animate-spin"></i>
+										{:else}
+											🇺🇸
+										{/if}
+									</button>
+									<button
+										class="inline-block p-3 w-12 focus:relative bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-500/20 dark:hover:bg-yellow-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+										title={m.syncEuvd()}
+										aria-label={m.syncEuvd()}
+										data-testid="sync-euvd-button"
+										disabled={isBusy}
+										onclick={() => confirmRemoteAction('euvd', m.pullCatalog(), m.syncEuvd())}
+									>
+										{#if runningAction === 'euvd'}
+											<i class="fa-solid fa-spinner animate-spin"></i>
+										{:else}
+											🇪🇺
+										{/if}
+									</button>
+								{/if}
+								{#if URLModel === 'document-templates'}
+									<a
+										href="{URLModel}/import"
+										class="inline-block p-3 btn-mini-secondary w-12 focus:relative"
+										title={m.importTemplates()}
+										aria-label={m.importTemplates()}
+										data-testid="import-templates-button"><i class="fa-solid fa-file-import"></i></a
+									>
+								{/if}
+								{#if URLModel === 'cwes'}
+									<button
+										class="inline-block p-3 btn-mini-tertiary w-12 focus:relative disabled:opacity-50 disabled:cursor-not-allowed"
+										title={m.syncCweCatalog()}
+										aria-label={m.syncCweCatalog()}
+										data-testid="sync-cwe-button"
+										disabled={isBusy}
+										onclick={() => runRemoteAction('cwe')}
+									>
+										{#if runningAction === 'cwe'}
+											<i class="fa-solid fa-spinner animate-spin"></i>
+										{:else}
+											<i class="fa-solid fa-satellite-dish"></i>
+										{/if}
+									</button>
+								{/if}
+								{#if ['threats', 'reference-controls', 'metric-definitions'].includes(URLModel)}
+									{@const title =
+										URLModel === 'threats'
+											? m.importThreats()
+											: URLModel === 'reference-controls'
+												? m.importReferenceControls()
+												: m.importMetricDefinitions()}
+									<Anchor
+										href={`/libraries?object_type=${URLModel.replace(/-/g, '_')}`}
+										label={m.libraries()}
+										class="inline-block p-3 btn-mini-tertiary w-12 focus:relative"
+										data-testid="import-button"
+										id="import-button"
+										{title}><i class="fa-solid fa-file-import mr-2"></i></Anchor
+									>
+								{/if}
+								{#if URLModel === 'assets'}
+									<Anchor
+										href="assets/tree/"
+										class="inline-block p-3 btn-mini-quaternary w-12 focus:relative"
+										title={m.assetsTree()}
+										label={m.assetsTree()}
+										data-testid="tree-button"><i class="fa-solid fa-sitemap"></i></Anchor
+									>
+									<Anchor
+										href="assets/graph/"
+										class="inline-block p-3 btn-mini-secondary w-12 focus:relative"
+										title={m.exploreButton()}
+										label={m.inspect()}
+										data-testid="viz-button"><i class="fa-solid fa-diagram-project"></i></Anchor
+									>
+								{/if}
+								{#if URLModel === 'entities'}
+									<Anchor
+										href="entities/graph/"
+										class="inline-block p-3 btn-mini-secondary w-12 focus:relative"
+										title={m.exploreButton()}
+										label={m.inspect()}
+										data-testid="viz-button"><i class="fa-solid fa-diagram-project"></i></Anchor
+									>
+								{/if}
+								{#if URLModel === 'folders'}
+									<button
+										class="text-white inline-block border-e p-3 bg-sky-400 hover:bg-sky-300 w-12 focus:relative"
+										data-testid="import-button"
+										title={safeTranslate('importFolder')}
+										aria-label={safeTranslate('importFolder')}
+										onclick={modalFolderImportForm}
+										><i class="fa-solid fa-file-import"></i>
+									</button>
+									<Anchor
+										href="x-rays/inspect"
+										class="inline-block p-3 btn-mini-secondary w-12 focus:relative"
+										title={m.exploreButton()}
+										label={m.inspect()}
+										data-testid="viz-button"><i class="fa-solid fa-diagram-project"></i></Anchor
+									>
+								{/if}
+								{#if URLModel === 'vulnerabilities'}
+									<Anchor
+										href="vulnerabilities/treemap/"
+										class="inline-block p-3 btn-mini-secondary w-12 focus:relative"
+										title={m.visualizeButton()}
+										label={m.visualize()}
+										data-testid="viz-button"><i class="fa-solid fa-chart-pie"></i></Anchor
+									>
+								{/if}
+							{:else if ['risk-matrices', 'frameworks', 'requirement-mapping-sets'].includes(URLModel)}
+								{@const href = `/libraries?object_type=${URLModel.replace(/-/g, '_')}`}
+								{@const title =
+									URLModel === 'risk-matrices'
+										? m.importMatrices()
+										: URLModel === 'frameworks'
+											? m.importFrameworks()
+											: m.importMappings()}
+								<Anchor
+									{href}
+									onclick={handleClickForGT}
+									label={m.libraries()}
+									class="inline-block p-3 btn-mini-tertiary w-12 focus:relative"
+									data-testid="import-button"
+									id="add-button"
+									{title}><i class="fa-solid fa-file-import mr-2"></i></Anchor
+								>
+								{#if URLModel === 'requirement-mapping-sets'}
+									<Anchor
+										href="requirement-mapping-sets/graph/"
+										class="inline-block p-3 btn-mini-secondary w-12 focus:relative"
+										title={m.exploreButton()}
+										label={m.inspect()}
+										data-testid="viz-button"><i class="fa-solid fa-diagram-project"></i></Anchor
+									>
+								{/if}
+							{/if}
+						</div>
+					</div>
+				{/snippet}
+				{#snippet badge(key, row)}
+					{#if URLModel === 'risk-assessments'}
+						{#if key === 'perimeter' && row.meta.ebios_rm_study}
+							<span
+								class="badge inline-block bg-amber-100 text-amber-800 text-xs px-2 py-0.5 rounded-md border border-amber-200 rotate-[-6deg] font-semibold uppercase tracking-wide"
+								>ebios-rm</span
+							>
+						{/if}
+					{/if}
+				{/snippet}
+				{#if URLModel === 'risk-assessments'}{/if}
+			</ModelTable>
+		{/key}
+	</div>
+{/if}

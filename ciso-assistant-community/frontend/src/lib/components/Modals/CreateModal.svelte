@@ -1,0 +1,114 @@
+<script lang="ts">
+	// Stores
+	import * as m from '#paraglide/messages.js';
+	import type { ModelInfo } from '#lib/utils/types.js';
+	const modalStore: ModalStore = getModalStore();
+
+	let closeModal = true;
+
+	// Base Classes
+	const cBase =
+		'card bg-surface-100-900 border border-surface-500 p-4 w-fit max-w-4xl shadow-xl space-y-4';
+	const cHeader = 'text-2xl font-bold whitespace-pre-line';
+
+	import ModelForm from '#lib/components/Forms/ModelForm.svelte';
+	import type { SuperValidated } from 'sveltekit-superforms';
+	import type { FormDataShape } from '#lib/utils/schemas.js';
+	import { getModalStore, type ModalStore } from './stores';
+	import { ensureSelectOptions } from '#lib/utils/select-options.js';
+	import { onMount, tick } from 'svelte';
+	interface Props {
+		/** Exposes parent props to this component. */
+		parent: any;
+		form: SuperValidated<FormDataShape>;
+		customNameDescription?: boolean;
+		importFolder?: boolean;
+		model: ModelInfo;
+		duplicate?: boolean;
+		invalidateAll?: boolean; // set to false to keep form data using muliple forms on a page
+		formAction?: string;
+		context?: string;
+		origin?: string | null;
+		additionalInitialData?: any;
+		suggestions?: { [key: string]: any };
+		taintedMessage?: string | boolean;
+		debug?: boolean;
+		[key: string]: any;
+	}
+
+	let {
+		parent,
+		form,
+		importFolder = false,
+		model,
+		customNameDescription = model?.customNameDescription ??
+			model?.info?.customNameDescription ??
+			false,
+		duplicate = false,
+		invalidateAll = true,
+		formAction = '?/create',
+		context = 'create',
+		origin = null,
+		additionalInitialData = {},
+		suggestions = {},
+		taintedMessage = false,
+		debug = false,
+		...rest
+	}: Props = $props();
+
+	// ModelForm reads model.selectOptions[...] expecting it to be there.
+	let optionsReady = $state(false);
+
+	onMount(async () => {
+		try {
+			await ensureSelectOptions(model, additionalInitialData);
+		} finally {
+			// Empty dropdowns beat no form.
+			optionsReady = true;
+		}
+		await tick(); // Wait for DOM to render
+		const firstField = document.querySelector('input[data-focusindex="0"]');
+		if (firstField instanceof HTMLElement) {
+			firstField.focus();
+		}
+	});
+</script>
+
+{#if $modalStore[0]}
+	<div class="modal-example-form {cBase}">
+		<div class="flex items-center justify-between">
+			<header class={cHeader} data-testid="modal-title">
+				{$modalStore[0].title ?? '(title missing)'}
+			</header>
+			<button
+				type="button"
+				aria-label={m.close()}
+				class="flex items-center hover:text-primary-500 cursor-pointer"
+				onclick={parent.onClose}
+			>
+				<i class="fa-solid fa-xmark"></i>
+			</button>
+		</div>
+		{#if optionsReady}
+			<ModelForm
+				{form}
+				{customNameDescription}
+				{importFolder}
+				{additionalInitialData}
+				{suggestions}
+				{parent}
+				{invalidateAll}
+				{model}
+				{closeModal}
+				{context}
+				{origin}
+				{duplicate}
+				{taintedMessage}
+				caching={true}
+				action={formAction}
+				{debug}
+				{...rest}
+			/>
+		{/if}
+	</div>
+{/if}

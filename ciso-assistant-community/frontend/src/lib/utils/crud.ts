@@ -1,0 +1,4628 @@
+// define the content of forms
+
+import EvidenceFileName from '#lib/components/ModelTable/field/EvidenceFileName.svelte';
+import NotificationTitle from '#lib/components/ModelTable/field/NotificationTitle.svelte';
+import CommitmentTarget from '#lib/components/ModelTable/field/CommitmentTarget.svelte';
+import ScheduleDisplay from '#lib/components/ModelTable/field/ScheduleDisplay.svelte';
+import LanguageDisplay from '#lib/components/ModelTable/field/LanguageDisplay.svelte';
+import FrameworkName from '#lib/components/ModelTable/field/FrameworkName.svelte';
+import LibraryActions from '#lib/components/ModelTable/field/LibraryActions.svelte';
+import UserGroupNameDisplay from '#lib/components/ModelTable/field/UserGroupNameDisplay.svelte';
+import LecChartPreview from '#lib/components/ModelTable/field/LecChartPreview.svelte';
+import TriggerTypesDisplay from '#lib/components/ModelTable/field/TriggerTypesDisplay.svelte';
+import TierBadge from '#lib/components/ModelTable/field/TierBadge.svelte';
+import TierSource from '#lib/components/ModelTable/field/TierSource.svelte';
+import DpiaRequirementSource from '#lib/components/ModelTable/field/DpiaRequirementSource.svelte';
+import DpiaRequiredBadge from '#lib/components/ModelTable/field/DpiaRequiredBadge.svelte';
+import VulnerabilitySlaState from '#lib/components/ModelTable/field/VulnerabilitySlaState.svelte';
+import { listViewFields } from './table';
+import type { TableBatchAction } from './table';
+import type { urlModel } from './types';
+import LibraryOverview from '#lib/components/ModelTable/field/LibraryOverview.svelte';
+import MarkdownDescription from '#lib/components/ModelTable/field/MarkdownDescription.svelte';
+
+type GetOptionsParams = {
+	objects: any[];
+	suggestions?: any[];
+	label?: string;
+	value?: string;
+	extra_fields: string[];
+	self?: Record<string, any>;
+	selfSelect?: boolean;
+};
+
+function getValue(object: { [key: string]: any }, keys: string | string[]) {
+	if (typeof keys === 'string') {
+		return object[keys];
+	}
+	let finalValue = object;
+	for (const key of keys) {
+		finalValue = finalValue[key];
+	}
+	return finalValue;
+}
+
+export const getOptions = ({
+	objects,
+	suggestions,
+	label = 'name',
+	value = 'id',
+	extra_fields = [],
+	self = undefined,
+	selfSelect = false
+}: GetOptionsParams): {
+	label: string;
+	value: string;
+	suggested: boolean;
+	self?: Record<string, any>;
+	selfSelect?: boolean;
+}[] => {
+	const append = (x, y) => (!y ? x : !x || x == '' ? y : x + ' - ' + y);
+	const options = objects
+		.map((object) => {
+			const my_label =
+				label != 'auto'
+					? (object[label] ?? '')
+					: (append(object['ref_id'], object['name'] ? object['name'] : object['description']) ??
+						'');
+			return {
+				label:
+					extra_fields.length > 0
+						? extra_fields
+								.map((field) => getValue(object, field))
+								.map((string) => `${string}`)
+								.join('/') +
+							'/' +
+							my_label
+						: my_label,
+				value: object[value],
+				suggested: false
+			};
+		})
+		.filter((option) => {
+			if (selfSelect) {
+				return true;
+			}
+			return option.value !== self?.id;
+		});
+
+	if (suggestions) {
+		const suggestedIds = suggestions.map((suggestion) => suggestion[value]);
+
+		const filteredOptions = options.filter((option) => {
+			const isSuggested = suggestedIds.includes(option.value);
+			if (isSuggested) {
+				option.suggested = true;
+			}
+			return !isSuggested;
+		});
+
+		const suggestedOptions = options.filter((option) => option.suggested);
+		const reorderedOptions = suggestedOptions.concat(filteredOptions);
+
+		return reorderedOptions;
+	}
+
+	return options;
+};
+
+export interface ForeignKeyField {
+	field: string;
+	urlModel: urlModel;
+	endpointUrl?: string;
+	urlParams?: string;
+	tableFields?: string[];
+}
+
+export interface ReverseForeignKeyField extends ForeignKeyField {
+	detail?: boolean;
+	detailUrlParams?: string[]; // To prepare possible fetch for foreign keys with detail in generic views
+	disableCreate?: boolean;
+	disableDelete?: boolean;
+	disableEdit?: boolean;
+	folderPermsNeeded?: { action: 'add' | 'view' | 'change' | 'delete'; model: string }[]; // Permissions needed on the folder to display this reverse foreign key field
+	featureFlag?: FeatureFlag; // Tab only renders when this feature flag is on
+	defaultFilters?: { [key: string]: any[] }; // Default filters to initialize the table with (user can change/remove them)
+	expectedCountField?: string; // Field on parent payload that holds related items (for masked count)
+	// Offer the column picker on this nested table, and widen its head to the model's
+	// optional columns so there is something to pick.
+	columnSelector?: boolean;
+	addExisting?: {
+		parentField: string; // M2M field name on the parent model (e.g., 'elementary_actions')
+		optionsEndpoint?: string; // Defaults to the reverse FK's urlModel
+		label?: string; // i18n key for modal title (defaults to 'selectExisting')
+		optionsInfoFields?: {
+			// Optional info fields for autocomplete display
+			fields: { field: string; translate?: boolean }[];
+			position?: 'suffix' | 'prefix';
+			classes?: string;
+		};
+		lazy?: boolean; // Defaults to true; set false to load every option up front
+	};
+	batchCreate?: {
+		label?: string; // i18n key for button title (defaults to 'batchCreate')
+	};
+	// Extra batch actions for this reverse-FK table only, merged into the batch
+	// bar next to the child model's global batchActions. Pre-gated by the
+	// embedding view: DetailView only passes them when the user can change the
+	// parent object (so `parent_action` entries never leak to list pages nor to
+	// users without change on the parent). See TableBatchAction in table.ts for
+	// the row-operation vs parent-mutation decision rule.
+	tableBatchActions?: TableBatchAction[];
+}
+
+interface Field {
+	keyNameOverride?: string;
+	field: string;
+	type?: 'date' | 'datetime';
+	tooltip?: string;
+}
+
+export interface SelectField {
+	field: string;
+	detail?: boolean;
+	valueType?: 'string' | 'number';
+	endpointUrl?: string;
+	formNestedField?: string;
+}
+
+export interface SelectFieldData {
+	label: string;
+	value: string | number;
+}
+
+type FeatureFlag = string;
+
+/** Models behind a feature flag: their reverse-FK tabs disappear with it.
+ *  A `featureFlag` on the reverse FK itself overrides this map. */
+export const MODEL_FEATURE_FLAGS: Record<string, FeatureFlag> = {
+	'asset-assessments': 'bia',
+	'business-impact-analysis': 'bia',
+	'escalation-thresholds': 'bia',
+	campaigns: 'campaigns',
+	contracts: 'contracts',
+	'data-breaches': 'data_breaches',
+	'document-containers': 'document_management',
+	'document-revisions': 'document_management',
+	'managed-documents': 'document_management',
+	'dora-incident-reports': 'dora',
+	'attack-paths': 'ebiosrm',
+	'ebios-rm': 'ebiosrm',
+	'operating-modes': 'ebiosrm',
+	entities: 'tprm',
+	'entity-assessments': 'tprm',
+	'entity-scores': 'external_ratings',
+	tiers: 'tprm',
+	'entity-tier-changes': 'tprm',
+	'solution-tier-changes': 'tprm',
+	representatives: 'tprm',
+	solutions: 'tprm',
+	findings: 'follow_up',
+	'findings-assessments': 'follow_up',
+	incidents: 'incidents',
+	'custom-metric-samples': 'metrology',
+	'dashboard-widgets': 'metrology',
+	dashboards: 'metrology',
+	'metric-instances': 'metrology',
+	'organisation-objectives': 'organisation_objectives',
+	'personal-data': 'personal_data',
+	policies: 'policy_documents',
+	processings: 'privacy',
+	purposes: 'purposes',
+	'quantitative-risk-hypotheses': 'quantitative_risk_studies',
+	'quantitative-risk-scenarios': 'quantitative_risk_studies',
+	'quantitative-risk-studies': 'quantitative_risk_studies',
+	'right-requests': 'right_requests',
+	'security-exceptions': 'exceptions',
+	'task-nodes': 'tasks',
+	'task-templates': 'tasks',
+	techniques: 'ttps',
+	vulnerabilities: 'vulnerabilities'
+};
+
+// Models never created from their list page: library-managed content, membership rows
+// written elsewhere, or records that only exist as a child of something else.
+export const NON_CREATABLE_URL_MODELS = [
+	// System-generated: written by producers, never by a user.
+	'notifications',
+	'risk-matrices',
+	'frameworks',
+	'requirement-mapping-sets',
+	'user-groups',
+	'role-assignments',
+	'qualifications',
+	'commitments',
+	'quick-form-responses',
+	'quick-forms',
+	// Own a list route with no create affordance on it.
+	'presets',
+	'ttp-catalogs'
+];
+
+// Models whose creation is a page, not a modal on the list.
+export const CREATE_ROUTE_OVERRIDES: Record<string, string> = {
+	'document-containers': '/documents/new'
+};
+
+export interface ModelMapEntry {
+	name: string;
+	localName: string;
+	localNamePlural: string;
+	verboseName: string;
+	verboseNamePlural?: string;
+	urlModel?: urlModel;
+	listViewUrlParams?: string;
+	flaggedFields?: Record<string, FeatureFlag | FeatureFlag[]>;
+	detailViewFields?: Field[];
+	foreignKeyFields?: ForeignKeyField[];
+	reverseForeignKeyFields?: ReverseForeignKeyField[];
+	hideEmptyReverseTabs?: boolean;
+	reverseCountsEndpoint?: string;
+	selectFields?: SelectField[];
+	selectOptions?: Record<string, SelectFieldData[]>;
+	fileFields?: string[];
+	filters?: SelectField[];
+	path?: string;
+	endpointUrl?: string;
+	customNameDescription?: boolean;
+	/**
+	 * Fields (in addition to `DEFAULT_MARKDOWN_FIELDS`) whose content is edited and
+	 * rendered as Markdown for this model.
+	 */
+	markdownFields?: string[];
+	/**
+	 * Columns the list header must not offer to sort. Mostly values this model
+	 * computes in Python rather than storing, so there is no column for the
+	 * backend to ORDER BY: DRF drops the term and the header click does nothing.
+	 * Also stored values whose database order means nothing to the reader, like
+	 * the `schedule` JSON shown as a frequency on task templates. Listed per
+	 * model because the same name can be a stored column elsewhere, as
+	 * `progress` is on projects.
+	 */
+	unsortableColumns?: string[];
+}
+
+// A field can name one flag or several, and shows when any of them is on. Indexing
+// `featureFlags` with the raw value stringifies a list into a key nothing matches.
+export function isFieldFlagEnabled(
+	flags: FeatureFlag | FeatureFlag[] | undefined,
+	featureFlags: Record<string, boolean> = {}
+): boolean {
+	if (!flags) return true;
+	return ([] as string[]).concat(flags as string | string[]).some((flag) => featureFlags[flag]);
+}
+
+type ModelMap = {
+	[key: string]: ModelMapEntry;
+};
+
+export const URL_MODEL_MAP: ModelMap = {
+	notifications: {
+		name: 'notification',
+		localName: 'notification',
+		localNamePlural: 'notifications',
+		verboseName: 'Notification',
+		verboseNamePlural: 'Notifications'
+		// No `foreignKeyFields`: the domain is the derived `target_folder`, and linking it
+		// would 404 for a recipient holding no role there -- which is the normal case (ADR
+		// notification-recipient-scoped-access).
+	},
+	folders: {
+		name: 'folder',
+		localName: 'domain',
+		localNamePlural: 'domains',
+		verboseName: 'Domain',
+		verboseNamePlural: 'Domains',
+		listViewUrlParams: '?content_type=DO&content_type=GL',
+		foreignKeyFields: [
+			{ field: 'parent_folder', urlModel: 'folders' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'default_role', urlModel: 'roles' }
+		],
+		reverseForeignKeyFields: [
+			{ field: 'folder', urlModel: 'perimeters' },
+			{ field: 'folder', urlModel: 'compliance-assessments' },
+			{ field: 'folder', urlModel: 'risk-assessments' },
+			{ field: 'folder', urlModel: 'findings-assessments' },
+			{ field: 'folder', urlModel: 'accreditations' },
+			{ field: 'folder', urlModel: 'entities' },
+			{ field: 'folder', urlModel: 'assets' },
+			{ field: 'folder', urlModel: 'applied-controls' },
+			{ field: 'folder', urlModel: 'evidences' },
+			{ field: 'folder', urlModel: 'task-templates' },
+			{ field: 'folder', urlModel: 'processings' },
+			{
+				field: 'folder',
+				urlModel: 'users',
+				detail: true,
+				disableCreate: true,
+				disableDelete: true,
+				endpointUrl: './users',
+				folderPermsNeeded: [{ model: 'folder', action: 'change' }],
+				tableFields: ['email', 'first_name', 'last_name', 'is_active', 'roles']
+			}
+		]
+	},
+	perimeters: {
+		name: 'perimeter',
+		localName: 'perimeter',
+		localNamePlural: 'perimeters',
+		verboseName: 'Perimeter',
+		verboseNamePlural: 'Perimeters',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'default_assignee', urlModel: 'actors' }
+		],
+		selectFields: [{ field: 'lc_status' }],
+		reverseForeignKeyFields: [
+			{ field: 'perimeter', urlModel: 'compliance-assessments' },
+			{ field: 'perimeter', urlModel: 'risk-assessments' },
+			{ field: 'perimeter', urlModel: 'findings-assessments' },
+			{ field: 'perimeter', urlModel: 'business-impact-analysis' },
+			{ field: 'perimeter', urlModel: 'entity-assessments' },
+			{ field: 'perimeters', urlModel: 'campaigns' },
+			{ field: 'perimeters', urlModel: 'processings' }
+		],
+		filters: [{ field: 'lc_status' }, { field: 'folder' }, { field: 'campaigns' }]
+	},
+	'risk-matrices': {
+		name: 'riskmatrix',
+		localName: 'riskMatrix',
+		localNamePlural: 'riskMatrices',
+		verboseName: 'Risk matrix',
+		verboseNamePlural: 'Risk matrices',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'library', urlModel: 'libraries' }
+		]
+	},
+	'risk-assessments': {
+		name: 'riskassessment',
+		localName: 'riskAssessment',
+		localNamePlural: 'riskAssessments',
+		verboseName: 'Risk assessment',
+		verboseNamePlural: 'Risk assessments',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'perimeter', urlModel: 'perimeters' },
+			{ field: 'authors', urlModel: 'actors' },
+			{ field: 'reviewers', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'risk_matrix', urlModel: 'risk-matrices' },
+			{ field: 'risk_scenarios', urlModel: 'risk-scenarios' },
+			{ field: 'ebios_rm_study', urlModel: 'ebios-rm' },
+			{ field: 'validation_flows', urlModel: 'validation-flows' }
+		],
+		reverseForeignKeyFields: [{ field: 'risk_assessment', urlModel: 'risk-scenarios' }],
+		selectFields: [{ field: 'status' }],
+		filters: [{ field: 'perimeter' }, { field: 'auditor' }, { field: 'status' }]
+	},
+	'risk-assessment_duplicate': {
+		name: 'riskassessment',
+		localName: 'riskAssessment',
+		localNamePlural: 'riskAssessments',
+		verboseName: 'Risk assessment',
+		verboseNamePlural: 'Risk assessments',
+		foreignKeyFields: [{ field: 'perimeter', urlModel: 'perimeters' }]
+	},
+	threats: {
+		name: 'threat',
+		localName: 'threat',
+		localNamePlural: 'threats',
+		verboseName: 'Threat',
+		verboseNamePlural: 'Threats',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'library', urlModel: 'loaded-libraries' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		]
+	},
+	'ttp-catalogs': {
+		name: 'ttpcatalog',
+		localName: 'ttpCatalog',
+		localNamePlural: 'ttpCatalogs',
+		verboseName: 'TTP catalog',
+		verboseNamePlural: 'TTP catalogs',
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'annotation' },
+			{ field: 'description' },
+			{ field: 'provider' },
+			{ field: 'folder' },
+			{ field: 'library' }
+		],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'library', urlModel: 'loaded-libraries' }
+		],
+		reverseForeignKeyFields: [
+			{ field: 'catalog', urlModel: 'techniques', disableCreate: true, disableDelete: true }
+		]
+	},
+	tactics: {
+		name: 'tactic',
+		localName: 'tactic',
+		localNamePlural: 'tactics',
+		verboseName: 'Tactic',
+		verboseNamePlural: 'Tactics',
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'catalog' },
+			{ field: 'folder' },
+			{ field: 'library' }
+		],
+		foreignKeyFields: [
+			{ field: 'catalog', urlModel: 'ttp-catalogs' },
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'library', urlModel: 'loaded-libraries' }
+		]
+	},
+	'threat-models': {
+		name: 'threatmodel',
+		localName: 'threatModel',
+		localNamePlural: 'threatModels',
+		verboseName: 'Threat model',
+		verboseNamePlural: 'Threat models',
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'catalog' },
+			{ field: 'folder' }
+		],
+		foreignKeyFields: [
+			{ field: 'catalog', urlModel: 'ttp-catalogs' },
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' }
+		]
+	},
+	techniques: {
+		name: 'technique',
+		localName: 'technique',
+		localNamePlural: 'techniques',
+		verboseName: 'Technique',
+		verboseNamePlural: 'Techniques',
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'annotation' },
+			{ field: 'description' },
+			{ field: 'catalog' },
+			{ field: 'tactics' },
+			{ field: 'parent' },
+			{ field: 'reference_controls' },
+			{ field: 'groups' },
+			{ field: 'is_deprecated' },
+			{ field: 'provider' },
+			{ field: 'folder' },
+			{ field: 'filtering_labels' },
+			{ field: 'library' }
+		],
+		foreignKeyFields: [
+			{ field: 'catalog', urlModel: 'ttp-catalogs' },
+			{ field: 'tactics', urlModel: 'tactics' },
+			{ field: 'parent', urlModel: 'techniques' },
+			{ field: 'reference_controls', urlModel: 'reference-controls' },
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'library', urlModel: 'loaded-libraries' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		]
+	},
+	'security-advisories': {
+		name: 'securityadvisory',
+		localName: 'securityAdvisory',
+		localNamePlural: 'securityAdvisories',
+		verboseName: 'Security advisory',
+		verboseNamePlural: 'Security advisories',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'library', urlModel: 'loaded-libraries' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		],
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'source' },
+			{ field: 'aliases' },
+			{ field: 'description' },
+			{ field: 'cvss_base_score' },
+			{ field: 'cvss_vector' },
+			{ field: 'epss_score' },
+			{ field: 'epss_percentile' },
+			{ field: 'is_actively_exploited' },
+			{ field: 'exploited_date_added', type: 'date' },
+			{ field: 'published_date', type: 'date' },
+			{ field: 'references' },
+			{ field: 'provider' },
+			{ field: 'folder' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'security_advisories',
+				urlModel: 'vulnerabilities',
+				disableCreate: true,
+				disableDelete: true
+			}
+		]
+	},
+	cwes: {
+		name: 'cwe',
+		localName: 'cwe',
+		localNamePlural: 'cwes',
+		verboseName: 'CWE',
+		verboseNamePlural: 'CWEs',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'library', urlModel: 'loaded-libraries' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'cwes',
+				urlModel: 'vulnerabilities',
+				disableCreate: true,
+				disableDelete: true
+			}
+		]
+	},
+	'risk-scenarios': {
+		name: 'riskscenario',
+		localName: 'riskScenario',
+		localNamePlural: 'riskScenarios',
+		verboseName: 'Risk scenario',
+		verboseNamePlural: 'Risk scenarios',
+		flaggedFields: {
+			inherent_proba: 'inherent_risk',
+			inherent_impact: 'inherent_risk',
+			inherent_level: 'inherent_risk'
+		},
+		foreignKeyFields: [
+			{ field: 'threats', urlModel: 'threats' },
+			{ field: 'threat_models', urlModel: 'threat-models' },
+			{ field: 'risk_assessment', urlModel: 'risk-assessments' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'vulnerabilities', urlModel: 'vulnerabilities' },
+			{ field: 'incidents', urlModel: 'incidents' },
+			{ field: 'applied_controls', urlModel: 'applied-controls' },
+			{ field: 'existing_applied_controls', urlModel: 'applied-controls' },
+			{ field: 'perimeter', urlModel: 'perimeters' },
+			{ field: 'risk_matrix', urlModel: 'risk-matrices' },
+			{ field: 'auditor', urlModel: 'users' },
+			{ field: 'owner', urlModel: 'actors' },
+			{ field: 'security_exceptions', urlModel: 'security-exceptions' },
+			{ field: 'qualifications', urlModel: 'terminologies' },
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'operational_scenario', urlModel: 'operational-scenarios' },
+			{ field: 'risk_origin', urlModel: 'terminologies' },
+			{ field: 'antecedent_scenarios', urlModel: 'risk-scenarios' }
+		],
+		filters: [{ field: 'threats' }, { field: 'risk_assessment' }, { field: 'owner' }]
+	},
+	'applied-controls': {
+		name: 'appliedcontrol',
+		localName: 'appliedControl',
+		localNamePlural: 'appliedControls',
+		verboseName: 'Applied control',
+		verboseNamePlural: 'Applied controls',
+		flaggedFields: {
+			commitment_state: 'commitment_management',
+			committed_eta: 'commitment_management',
+			committed_by: 'commitment_management',
+			commitment_notes: 'commitment_management'
+		},
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'folder' },
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'reference_control' },
+			{ field: 'category' },
+			{ field: 'status' },
+			{ field: 'priority' },
+			{ field: 'effort' },
+			{ field: 'control_impact' },
+			{ field: 'annual_cost_display' },
+			{ field: 'csf_function' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' },
+			{ field: 'eta', type: 'date' },
+			{ field: 'owner' },
+			{ field: 'expiry_date', type: 'date' },
+			{ field: 'link' },
+			{ field: 'progress_field' },
+			{ field: 'observation' },
+			{ field: 'security_exceptions', urlModel: 'security-exceptions' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'sync_mappings' }
+		],
+		foreignKeyFields: [
+			{ field: 'reference_control', urlModel: 'reference-controls' },
+			{
+				field: 'folder',
+				urlModel: 'folders',
+				urlParams: 'content_type=DO&content_type=GL&content_type=EN'
+			},
+			{ field: 'evidences', urlModel: 'evidences' },
+			{ field: 'metric_instances', urlModel: 'metric-instances' },
+			{ field: 'objectives', urlModel: 'organisation-objectives' },
+			{ field: 'owner', urlModel: 'actors' },
+			{ field: 'security_exceptions', urlModel: 'security-exceptions' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'requirement_assessments', urlModel: 'requirement-assessments' },
+			{ field: 'risk_scenarios', urlModel: 'risk-scenarios' },
+			{ field: 'quantitative_risk_scenarios', urlModel: 'quantitative-risk-scenarios' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'task_templates', urlModel: 'task-templates' },
+			{ field: 'findings', urlModel: 'findings' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'applied_controls',
+				urlModel: 'document-containers',
+				addExisting: {
+					parentField: 'control_documents'
+				}
+			},
+			{
+				field: 'applied_controls',
+				urlModel: 'evidences',
+				addExisting: {
+					parentField: 'evidences'
+				}
+			},
+			{
+				field: 'applied_controls',
+				urlModel: 'task-templates',
+				addExisting: {
+					parentField: 'task_templates'
+				}
+			},
+			{
+				field: 'applied_controls',
+				urlModel: 'metric-instances',
+				addExisting: {
+					parentField: 'metric_instances'
+				}
+			},
+			{
+				field: 'applied_controls',
+				urlModel: 'requirement-assessments',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'applied_controls',
+				urlModel: 'risk-scenarios',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'applied_controls',
+				urlModel: 'findings',
+				disableDelete: true,
+				addExisting: {
+					parentField: 'findings'
+				}
+			},
+			{
+				field: 'applied_controls',
+				urlModel: 'assets',
+				disableDelete: true,
+				addExisting: {
+					parentField: 'assets'
+				}
+			},
+			{
+				field: 'applied_controls',
+				urlModel: 'vulnerabilities',
+				disableDelete: true
+			},
+			{
+				field: 'applied_controls',
+				urlModel: 'incidents',
+				disableDelete: true,
+				addExisting: {
+					parentField: 'incidents'
+				}
+			},
+			{
+				// Linked through the threat model's graph nodes, so edited there.
+				field: 'applied_controls',
+				urlModel: 'threat-models',
+				featureFlag: 'threat_modeling',
+				disableCreate: true,
+				disableDelete: true
+			}
+		],
+		selectFields: [
+			{ field: 'status' },
+			{ field: 'category' },
+			{ field: 'csf_function' },
+			{ field: 'effort' },
+			{ field: 'control_impact', valueType: 'number' },
+			{ field: 'priority' }
+		],
+		filters: [
+			{ field: 'reference_control' },
+			{ field: 'status' },
+			{ field: 'category' },
+			{ field: 'csf_function' },
+			{ field: 'effort' },
+			{ field: 'control_impact' },
+			{ field: 'folder' },
+			{ field: 'owner' },
+			{ field: 'priority' }
+		]
+	},
+	'applied-controls_duplicate': {
+		name: 'appliedcontrol',
+		localName: 'appliedControl',
+		localNamePlural: 'appliedControls',
+		verboseName: 'Applied control',
+		verboseNamePlural: 'Applied controls',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' }
+		]
+	},
+	policies: {
+		name: 'appliedcontrol',
+		localName: 'policy',
+		localNamePlural: 'policies',
+		verboseName: 'Policy',
+		verboseNamePlural: 'Policies',
+		foreignKeyFields: [
+			{ field: 'reference_control', urlModel: 'reference-controls', urlParams: 'category=policy' },
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'evidences', urlModel: 'evidences' },
+			{ field: 'owner', urlModel: 'actors' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		],
+		detailViewFields: [
+			{ field: 'folder' },
+			{ field: 'id' },
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'priority' },
+			{ field: 'effort' },
+			{ field: 'control_impact' },
+			{ field: 'status' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' },
+			{ field: 'eta', type: 'date' },
+			{ field: 'owner' },
+			{ field: 'expiry_date', type: 'date' },
+			{ field: 'link' },
+			{ field: 'progress_field' },
+			{ field: 'observation' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'sync_mappings' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'policies',
+				urlModel: 'document-containers'
+			},
+			{
+				field: 'applied_controls',
+				urlModel: 'evidences',
+				addExisting: {
+					parentField: 'evidences'
+				}
+			},
+			{
+				field: 'applied_controls',
+				urlModel: 'requirement-assessments',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'applied_controls',
+				urlModel: 'risk-scenarios',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'applied_controls',
+				urlModel: 'findings',
+				disableCreate: true,
+				disableDelete: true
+			}
+		],
+		selectFields: [
+			{ field: 'status' },
+			{ field: 'csf_function' },
+			{ field: 'effort' },
+			{ field: 'control_impact', valueType: 'number' },
+			{ field: 'priority' }
+		],
+		filters: [
+			{ field: 'reference_control' },
+			{ field: 'status' },
+			{ field: 'csf_function' },
+			{ field: 'effort' },
+			{ field: 'control_impact' },
+			{ field: 'folder' },
+			{ field: 'owner' },
+			{ field: 'priority' }
+		]
+	},
+	vulnerabilities: {
+		name: 'vulnerability',
+		localName: 'vulnerability',
+		localNamePlural: 'vulnerabilities',
+		verboseName: 'Vulnerability',
+		verboseNamePlural: 'Vulnerabilities',
+		flaggedFields: { state: 'vulnerability_sla' },
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'severity' },
+			{ field: 'status' },
+			{ field: 'state' },
+			{ field: 'owner' },
+			{ field: 'folder' },
+			{ field: 'observation' },
+			{ field: 'detected_at', type: 'date' },
+			{ field: 'due_date', type: 'date' },
+			{ field: 'eta', type: 'date' },
+			{ field: 'remediated_at', type: 'date' },
+			{ field: 'published_date', type: 'date' },
+			{ field: 'security_advisories' },
+			{ field: 'cwes' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' }
+		],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'owner', urlModel: 'actors' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'applied_controls', urlModel: 'applied-controls' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'security_exceptions', urlModel: 'security-exceptions' },
+			{ field: 'security_advisories', urlModel: 'security-advisories' },
+			{ field: 'cwes', urlModel: 'cwes' },
+			{ field: 'detected_at', type: 'date' },
+			{ field: 'eta', type: 'date' },
+			{ field: 'due_date', type: 'date' },
+			{ field: 'remediated_at', type: 'date' }
+		],
+		selectFields: [{ field: 'severity', valueType: 'number' }, { field: 'status' }],
+		filters: [
+			{ field: 'folder' },
+			{ field: 'filtering_labels' },
+			{ field: 'security_advisories' },
+			{ field: 'cwes' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'vulnerabilities',
+				urlModel: 'assets',
+				disableDelete: true,
+				addExisting: {
+					parentField: 'assets'
+				}
+			},
+			{
+				field: 'vulnerabilities',
+				urlModel: 'applied-controls',
+				disableDelete: true,
+				addExisting: {
+					parentField: 'applied_controls'
+				}
+			},
+			{
+				field: 'vulnerabilities',
+				urlModel: 'security-exceptions',
+				disableDelete: true,
+				addExisting: {
+					parentField: 'security_exceptions'
+				}
+			},
+			{
+				field: 'vulnerabilities',
+				urlModel: 'evidences',
+				disableDelete: true,
+				addExisting: {
+					parentField: 'evidences'
+				}
+			},
+			{
+				field: 'vulnerabilities',
+				urlModel: 'task-templates',
+				disableDelete: true,
+				addExisting: {
+					parentField: 'task_templates'
+				}
+			},
+			{
+				field: 'vulnerabilities',
+				urlModel: 'incidents',
+				disableDelete: true,
+				addExisting: {
+					parentField: 'incidents'
+				}
+			},
+			{
+				field: 'vulnerabilities',
+				urlModel: 'risk-scenarios',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'vulnerabilities',
+				urlModel: 'quantitative-risk-scenarios',
+				endpointUrl: 'crq/quantitative-risk-scenarios',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				// Linked through the threat model's graph nodes, so edited there.
+				field: 'vulnerabilities',
+				urlModel: 'threat-models',
+				featureFlag: 'threat_modeling',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'vulnerabilities',
+				urlModel: 'findings',
+				disableCreate: true,
+				disableDelete: true
+			}
+		]
+	},
+	'filtering-labels': {
+		name: 'filteringlabel',
+		localName: 'label',
+		localNamePlural: 'labels',
+		verboseName: 'Label',
+		verboseNamePlural: 'Labels',
+		foreignKeyFields: [{ field: 'folder', urlModel: 'folders' }],
+		detailViewFields: [{ field: 'label' }, { field: 'created_at' }, { field: 'updated_at' }],
+		hideEmptyReverseTabs: true,
+		reverseCountsEndpoint: 'usage',
+		reverseForeignKeyFields: (
+			[
+				'applied-controls',
+				'risk-scenarios',
+				'assets',
+				'compliance-assessments',
+				'risk-assessments',
+				'ebios-rm',
+				'quantitative-risk-studies',
+				'business-impact-analysis',
+				'entity-assessments',
+				'threat-models',
+				'evidences',
+				'findings',
+				'findings-assessments',
+				'incidents',
+				'vulnerabilities',
+				'threats',
+				'reference-controls',
+				'task-templates',
+				'validation-flows',
+				'document-containers',
+				'entities',
+				'solutions',
+				'contracts',
+				'representatives',
+				'entity-scores',
+				'processings',
+				'projects',
+				'accreditations',
+				'generic-collections',
+				'responsibility-matrices',
+				'metric-definitions',
+				'metric-instances',
+				'dashboards',
+				'workflows',
+				'quantitative-risk-hypotheses',
+				'security-advisories',
+				'cwes',
+				'techniques',
+				'folders'
+			] as urlModel[]
+		).map((urlModel) => ({
+			field: 'filtering_labels',
+			urlModel,
+			disableCreate: true,
+			disableDelete: true
+		}))
+	},
+	'risk-acceptances': {
+		name: 'riskacceptance',
+		localName: 'riskAcceptance',
+		localNamePlural: 'riskAcceptances',
+		verboseName: 'Risk acceptance',
+		verboseNamePlural: 'Risk acceptances',
+		foreignKeyFields: [
+			{
+				field: 'risk_scenarios',
+				urlModel: 'risk-scenarios',
+				urlParams: '/acceptable'
+			},
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'approver', urlModel: 'users', urlParams: 'is_approver=true' }
+		],
+		filters: [{ field: 'risk_scenarios' }, { field: 'folder' }, { field: 'approver' }]
+	},
+	'validation-flows': {
+		name: 'validationflow',
+		localName: 'validationFlow',
+		localNamePlural: 'validationFlows',
+		verboseName: 'Validation flow',
+		verboseNamePlural: 'Validation flows',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'approver', urlModel: 'users', urlParams: 'is_approver=true&exclude_current=true' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'compliance_assessments', urlModel: 'compliance-assessments' },
+			{ field: 'risk_assessments', urlModel: 'risk-assessments' },
+			{ field: 'business_impact_analysis', urlModel: 'business-impact-analysis' },
+			{ field: 'crq_studies', urlModel: 'quantitative-risk-studies' },
+			{ field: 'ebios_studies', urlModel: 'ebios-rm' },
+			{ field: 'entity_assessments', urlModel: 'entity-assessments' },
+			{ field: 'findings_assessments', urlModel: 'findings-assessments' },
+			{ field: 'evidences', urlModel: 'evidences' },
+			{ field: 'security_exceptions', urlModel: 'security-exceptions' },
+			{ field: 'policies', urlModel: 'policies' },
+			{ field: 'processings', urlModel: 'processings' },
+			{ field: 'accreditations', urlModel: 'accreditations' },
+			{ field: 'contracts', urlModel: 'contracts' },
+			{ field: 'requester', urlModel: 'users' }
+		],
+		selectFields: [{ field: 'status' }],
+		filters: [
+			{ field: 'folder' },
+			{ field: 'status' },
+			{ field: 'requester' },
+			{ field: 'approver' },
+			{ field: 'linked_models' },
+			{ field: 'filtering_labels' }
+		]
+	},
+	'reference-controls': {
+		name: 'referencecontrol',
+		localName: 'referenceControl',
+		localNamePlural: 'referenceControls',
+		verboseName: 'Reference control',
+		verboseNamePlural: 'Reference controls',
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'annotation' },
+			{ field: 'description' },
+			{ field: 'category' },
+			{ field: 'csf_function' },
+			{ field: 'folder' },
+			{ field: 'filtering_labels' }
+		],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'reference_control',
+				urlModel: 'applied-controls',
+				disableCreate: true,
+				disableDelete: true
+			}
+		],
+		selectFields: [{ field: 'category' }, { field: 'csf_function' }],
+		filters: [{ field: 'folder' }]
+	},
+	assets: {
+		name: 'asset',
+		localName: 'asset',
+		localNamePlural: 'assets',
+		verboseName: 'Asset',
+		verboseNamePlural: 'Assets',
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'folder' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'ref_id' },
+			{ field: 'type' },
+			{ field: 'asset_class' },
+			{ field: 'parent_assets' },
+			{ field: 'support_assets' },
+			{ field: 'children_assets' },
+			{ field: 'owner' },
+			{ field: 'is_critical' },
+			{ field: 'filtering_labels' },
+			{ field: 'security_objectives', tooltip: 'securityObjectivesTooltip' },
+			{ field: 'disaster_recovery_objectives', tooltip: 'disasterRecoveryObjectivesTooltip' },
+			{ field: 'security_capabilities', tooltip: 'securityCapabilitiesTooltip' },
+			{ field: 'recovery_capabilities', tooltip: 'recoveryCapabilitiesTooltip' },
+			{ field: 'reference_link' },
+			{ field: 'security_exceptions' },
+			{ field: 'solutions' },
+			{ field: 'observation' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'assets',
+				urlModel: 'document-containers',
+				addExisting: {
+					parentField: 'documents'
+				}
+			},
+			{
+				field: 'assets',
+				urlModel: 'compliance-assessments',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{ field: 'asset', urlModel: 'findings', disableDelete: true },
+			{ field: 'asset', urlModel: 'asset-assessments' },
+			{
+				field: 'assets',
+				urlModel: 'vulnerabilities',
+				disableDelete: true,
+				addExisting: {
+					parentField: 'vulnerabilities'
+				}
+			},
+			{ field: 'assets', urlModel: 'ebios-rm', disableCreate: true, disableDelete: true },
+			{ field: 'assets', urlModel: 'risk-scenarios', disableDelete: true },
+			{
+				field: 'assets',
+				urlModel: 'quantitative-risk-scenarios',
+				disableDelete: true
+			},
+			{
+				field: 'assets',
+				urlModel: 'solutions',
+				disableDelete: true,
+				addExisting: {
+					parentField: 'solutions'
+				}
+			},
+			{ field: 'assets', urlModel: 'personal-data', disableCreate: true, disableDelete: true },
+			{
+				field: 'assets',
+				urlModel: 'incidents',
+				addExisting: {
+					parentField: 'incidents'
+				}
+			},
+			{
+				field: 'assets',
+				urlModel: 'applied-controls',
+				disableDelete: true,
+				addExisting: {
+					parentField: 'applied_controls',
+					optionsInfoFields: {
+						fields: [{ field: 'category', translate: true }],
+						position: 'prefix'
+					}
+				}
+			},
+			{
+				// Linked through the threat model's graph nodes, so edited there.
+				field: 'assets',
+				urlModel: 'threat-models',
+				featureFlag: 'threat_modeling',
+				disableCreate: true,
+				disableDelete: true
+			}
+		],
+		foreignKeyFields: [
+			{ field: 'parent_assets', urlModel: 'assets' },
+			{ field: 'support_assets', urlModel: 'assets' },
+			{ field: 'children_assets', urlModel: 'assets' },
+			{ field: 'owner', urlModel: 'actors' },
+			{ field: 'asset_class', urlModel: 'asset-class' },
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'ebios_rm_studies', urlModel: 'ebios-rm', endpointUrl: 'ebios-rm/studies' },
+			{ field: 'security_exceptions', urlModel: 'security-exceptions' },
+			{ field: 'overridden_children_capabilities', urlModel: 'asset-capabilities' },
+			{ field: 'solutions', urlModel: 'solutions' },
+			{ field: 'vulnerabilities', urlModel: 'vulnerabilities' },
+			{ field: 'incidents', urlModel: 'incidents' },
+			{ field: 'applied_controls', urlModel: 'applied-controls' }
+		],
+		selectFields: [
+			{ field: 'type' },
+			{ field: 'asset_class' },
+			{ field: 'dora_licenced_activity' },
+			{ field: 'dora_criticality_assessment' },
+			{ field: 'dora_discontinuing_impact' }
+		],
+		filters: [
+			{ field: 'parent_assets' },
+			{ field: 'folder' },
+			{ field: 'asset_class' },
+			{ field: 'type' },
+			{ field: 'owner' },
+			{ field: 'filtering_labels' }
+		]
+	},
+	'asset-class': {
+		endpointUrl: 'asset-class',
+		// Django model name: codenames are built as `${action}_${name}`.
+		name: 'assetclass',
+		localName: 'assetClass',
+		localNamePlural: 'assetClasses',
+		verboseName: 'assetclass',
+		verboseNamePlural: 'assetclasses',
+		customNameDescription: true,
+		foreignKeyFields: [{ field: 'parent', urlModel: 'asset-class' }],
+		reverseForeignKeyFields: [{ field: 'parent', urlModel: 'asset-class' }],
+		detailViewFields: [
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'parent' },
+			{ field: 'builtin' },
+			{ field: 'is_visible' }
+		]
+	},
+	'asset-capabilities': {
+		endpointUrl: 'asset-capabilities',
+		name: 'asset-capability',
+		localName: 'assetCapability',
+		localNamePlural: 'assetCapabilities',
+		verboseName: 'Asset capability',
+		verboseNamePlural: 'Asset capabilities'
+	},
+	users: {
+		name: 'user',
+		localName: 'user',
+		localNamePlural: 'users',
+		verboseName: 'User',
+		verboseNamePlural: 'Users',
+		flaggedFields: {
+			idp_groups: ['idp_groups', 'jit_provisioning']
+		},
+		selectFields: [{ field: 'language' }],
+		foreignKeyFields: [
+			{ field: 'user_groups', urlModel: 'user-groups' },
+			{ field: 'idp_groups', urlModel: 'idp-groups' },
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		filters: []
+	},
+	teams: {
+		name: 'team',
+		localName: 'team',
+		localNamePlural: 'teams',
+		verboseName: 'Team',
+		verboseNamePlural: 'Teams',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'leader', urlModel: 'users' },
+			{ field: 'deputies', urlModel: 'users' },
+			{ field: 'members', urlModel: 'users' }
+		]
+	},
+	'user-groups': {
+		name: 'usergroup',
+		localName: 'userGroup',
+		localNamePlural: 'userGroups',
+
+		verboseName: 'User group',
+		verboseNamePlural: 'User groups',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'user_groups',
+				urlModel: 'users',
+				disableCreate: true,
+				disableDelete: true,
+				folderPermsNeeded: [{ model: 'folder', action: 'change' }],
+				// Select members in the table and remove them from the group. Routes to
+				// the group's change_usergroup-gated endpoint, so a domain manager can
+				// remove members without write access on the (Global) User object.
+				tableBatchActions: [
+					{
+						type: 'parent_action',
+						action: 'remove-members',
+						payloadField: 'users',
+						label: 'removeFromGroup',
+						icon: 'fa-solid fa-user-minus',
+						successMessage: 'membersRemoved'
+					}
+				]
+			}
+		],
+		filters: []
+	},
+	'idp-groups': {
+		name: 'idpgroup',
+		localName: 'idpGroup',
+		localNamePlural: 'idpGroups',
+		verboseName: 'IdP group',
+		verboseNamePlural: 'IdP groups',
+		foreignKeyFields: [
+			{ field: 'user_groups', urlModel: 'user-groups' },
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		reverseForeignKeyFields: [
+			{ field: 'idp_groups', urlModel: 'users', disableCreate: true, disableDelete: true }
+		],
+		filters: []
+	},
+	'service-accounts': {
+		endpointUrl: 'iam/service-accounts',
+		name: 'serviceaccount',
+		localName: 'serviceAccount',
+		localNamePlural: 'serviceAccounts',
+		verboseName: 'Service account',
+		verboseNamePlural: 'Service accounts',
+		foreignKeyFields: [
+			{ field: 'folders', urlModel: 'folders' },
+			{ field: 'created_by', urlModel: 'users' }
+		],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'client_id' },
+			{ field: 'secret_preview' },
+			{ field: 'is_active' },
+			{ field: 'expiry_date', type: 'date' },
+			{ field: 'is_recursive' },
+			{ field: 'folders' },
+			{ field: 'created_by' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' }
+		],
+		filters: []
+	},
+	'role-assignments': {
+		name: 'roleassignment',
+		localName: 'roleAssignment',
+		localNamePlural: 'roleAssignments',
+		verboseName: 'Role assignment',
+		verboseNamePlural: 'Role assignments',
+		foreignKeyFields: [],
+		filters: []
+	},
+	frameworks: {
+		name: 'framework',
+		localName: 'framework',
+		localNamePlural: 'frameworks',
+		verboseName: 'Framework',
+		verboseNamePlural: 'Frameworks',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'library', urlModel: 'loaded-libraries' },
+			{ field: 'reference_controls', urlModel: 'reference-controls' }
+		]
+	},
+	'quick-forms': {
+		name: 'quickform',
+		localName: 'quickForm',
+		localNamePlural: 'quickForms',
+		verboseName: 'Quick form',
+		verboseNamePlural: 'Quick forms',
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'provider' },
+			{ field: 'folder' },
+			{ field: 'library' },
+			{ field: 'pages_count' },
+			{ field: 'responses_count' },
+			{ field: 'always_review' }
+		],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'library', urlModel: 'loaded-libraries' }
+		],
+		reverseForeignKeyFields: [
+			{ field: 'quick_form', urlModel: 'quick-form-publications' },
+			{ field: 'quick_form', urlModel: 'quick-form-responses', disableCreate: true }
+		]
+	},
+	'quick-form-publications': {
+		name: 'quickformpublication',
+		customNameDescription: true,
+		localName: 'quickFormPublication',
+		localNamePlural: 'quickFormPublications',
+		verboseName: 'Quick form publication',
+		verboseNamePlural: 'Quick form publications',
+		detailViewFields: [
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'quick_form' },
+			{ field: 'folder' },
+			{ field: 'submission_folder' },
+			{ field: 'enabled' },
+			{ field: 'audience_groups' },
+			{ field: 'default_reviewers' },
+			{ field: 'allow_multiple_drafts' },
+			{ field: 'responses_count' }
+		],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{
+				field: 'submission_folder',
+				urlModel: 'folders',
+				urlParams: 'content_type=DO&content_type=GL'
+			},
+			{ field: 'quick_form', urlModel: 'quick-forms' },
+			{ field: 'audience_groups', urlModel: 'user-groups' },
+			{ field: 'default_reviewers', urlModel: 'actors', urlParams: 'is_third_party=false' }
+		],
+		reverseForeignKeyFields: [
+			{ field: 'publication', urlModel: 'quick-form-responses', disableCreate: true }
+		]
+	},
+	'quick-form-responses': {
+		name: 'quickformresponse',
+		localName: 'quickFormResponse',
+		localNamePlural: 'quickFormResponses',
+		verboseName: 'Quick form response',
+		verboseNamePlural: 'Quick form responses',
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'quick_form' },
+			{ field: 'folder' },
+			{ field: 'status' },
+			{ field: 'respondents' },
+			{ field: 'reviewers' },
+			{ field: 'submitted_by' },
+			{ field: 'eta', type: 'date' },
+			{ field: 'due_date', type: 'date' },
+			{ field: 'score' },
+			{ field: 'observation' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' }
+		],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'quick_form', urlModel: 'quick-forms' },
+			{ field: 'respondents', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'reviewers', urlModel: 'actors', urlParams: 'is_third_party=false' }
+		],
+		selectFields: [{ field: 'status' }]
+	},
+	evidences: {
+		name: 'evidence',
+		localName: 'evidence',
+		localNamePlural: 'evidences',
+		verboseName: 'Evidence',
+		verboseNamePlural: 'Evidences',
+		fileFields: ['attachment'],
+		foreignKeyFields: [
+			{
+				field: 'folder',
+				urlModel: 'folders',
+				urlParams: 'content_type=DO&content_type=GL&content_type=EN'
+			},
+			{ field: 'applied_controls', urlModel: 'applied-controls' },
+			{ field: 'requirement_assessments', urlModel: 'requirement-assessments' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'findings', urlModel: 'findings' },
+			{ field: 'findings_assessments', urlModel: 'findings-assessments' },
+			{ field: 'owner', urlModel: 'actors' }
+		],
+		reverseForeignKeyFields: [
+			{ field: 'evidence', urlModel: 'evidence-revisions' },
+			{
+				field: 'evidences',
+				urlModel: 'applied-controls',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'evidences',
+				urlModel: 'compliance-assessments',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'evidences',
+				urlModel: 'requirement-assessments',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'evidences',
+				urlModel: 'findings-assessments',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{ field: 'evidences', urlModel: 'findings', disableCreate: true, disableDelete: true },
+			{ field: 'evidences', urlModel: 'task-templates', disableCreate: true, disableDelete: true },
+			{ field: 'evidences', urlModel: 'data-breaches', disableCreate: true, disableDelete: true },
+			{
+				field: 'evidences',
+				urlModel: 'security-exceptions',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{ field: 'evidences', urlModel: 'vulnerabilities', disableCreate: true, disableDelete: true }
+		],
+		selectFields: [{ field: 'status' }],
+		detailViewFields: [
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'folder' },
+			{ field: 'owner' },
+			{ field: 'status' },
+			{ field: 'link' },
+			{ field: 'expiry_date' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' },
+			{ field: 'filtering_labels' }
+		]
+	},
+	'evidence-revisions': {
+		name: 'evidencerevision',
+		localName: 'evidenceRevision',
+		localNamePlural: 'evidenceRevisions',
+		verboseName: 'Evidence revision',
+		verboseNamePlural: 'Evidence revisions',
+		fileFields: ['attachment'],
+		foreignKeyFields: [
+			{ field: 'evidence', urlModel: 'evidences' },
+			{ field: 'task_node', urlModel: 'task-nodes' },
+			{ field: 'folder', urlModel: 'folders' }
+		]
+	},
+	'document-containers': {
+		name: 'documentcontainer',
+		localName: 'documentContainer',
+		localNamePlural: 'documentContainers',
+		verboseName: 'Document',
+		verboseNamePlural: 'Documents',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'policies', urlModel: 'policies' },
+			{ field: 'applied_controls', urlModel: 'applied-controls' },
+			{ field: 'task_templates', urlModel: 'task-templates' },
+			{ field: 'processings', urlModel: 'processings' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'reviewers', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'classification', urlModel: 'classification-levels' }
+		],
+		reverseForeignKeyFields: [{ field: 'container', urlModel: 'managed-documents' }],
+		selectFields: [{ field: 'document_type' }],
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'document_type' },
+			{ field: 'folder' },
+			{ field: 'classification' },
+			{ field: 'reviewers' },
+			{ field: 'policies' },
+			{ field: 'applied_controls' },
+			{ field: 'task_templates' },
+			{ field: 'processings' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' }
+		],
+		// Read off the default document's current revision, not the container.
+		unsortableColumns: ['progress', 'status', 'source']
+	},
+	'document-templates': {
+		name: 'documenttemplate',
+		localName: 'documentTemplate',
+		localNamePlural: 'documentTemplates',
+		verboseName: 'Document template',
+		verboseNamePlural: 'Document templates',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' }
+		],
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'provider' },
+			{ field: 'document_type' },
+			{ field: 'locale' },
+			{ field: 'folder' },
+			{ field: 'builtin' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' }
+		]
+	},
+	'managed-documents': {
+		name: 'manageddocument',
+		localName: 'managedDocument',
+		localNamePlural: 'managedDocuments',
+		verboseName: 'Managed document',
+		verboseNamePlural: 'Managed documents',
+		foreignKeyFields: [
+			{ field: 'policy', urlModel: 'policies' },
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' }
+		],
+		reverseForeignKeyFields: [{ field: 'document', urlModel: 'document-revisions' }],
+		selectFields: [{ field: 'document_type' }],
+		detailViewFields: [
+			{ field: 'name' },
+			{ field: 'document_type' },
+			{ field: 'policy' },
+			{ field: 'folder' },
+			{ field: 'template_used' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' }
+		]
+	},
+	'document-revisions': {
+		name: 'documentrevision',
+		localName: 'documentRevision',
+		localNamePlural: 'documentRevisions',
+		verboseName: 'Document revision',
+		verboseNamePlural: 'Document revisions',
+		foreignKeyFields: [
+			{ field: 'document', urlModel: 'managed-documents' },
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'author', urlModel: 'users' },
+			{ field: 'reviewer', urlModel: 'users' }
+		],
+		selectFields: [{ field: 'status' }],
+		detailViewFields: [
+			{ field: 'document' },
+			{ field: 'version_number' },
+			{ field: 'status' },
+			{ field: 'author' },
+			{ field: 'reviewer' },
+			{ field: 'change_summary' },
+			{ field: 'reviewer_comments' },
+			{ field: 'published_at', type: 'datetime' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' }
+		]
+	},
+	'compliance-assessments': {
+		name: 'complianceassessment',
+		localName: 'complianceAssessment',
+		localNamePlural: 'complianceAssessments',
+		verboseName: 'Compliance assessment',
+		verboseNamePlural: 'Compliance assessments',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'perimeter', urlModel: 'perimeters' },
+			{ field: 'campaign', urlModel: 'campaigns', endpointUrl: 'campaigns' },
+			{ field: 'framework', urlModel: 'frameworks' },
+			{ field: 'authors', urlModel: 'actors' },
+			{ field: 'reviewers', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'baseline', urlModel: 'compliance-assessments' },
+			{ field: 'ebios_rm_studies', urlModel: 'ebios-rm' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'evidences', urlModel: 'evidences' },
+			{ field: 'validation_flows', urlModel: 'validation-flows' }
+		],
+		// The audit's findings are reachable through the binder raised from its
+		// requirements — no second list to build.
+		reverseForeignKeyFields: [
+			{ field: 'compliance_assessment', urlModel: 'findings-assessments', disableCreate: true }
+		],
+		selectFields: [{ field: 'status' }, { field: 'score_calculation_method' }],
+		filters: [{ field: 'status' }],
+		unsortableColumns: ['progress']
+	},
+	requirements: {
+		name: 'requirement',
+		localName: 'requirement',
+		localNamePlural: 'requirements',
+		verboseName: 'Requirement',
+		verboseNamePlural: 'Requirements'
+	},
+	'requirement-assessments': {
+		name: 'requirementassessment',
+		localName: 'requirementAssessment',
+		localNamePlural: 'requirementAssessments',
+		verboseName: 'Requirement assessment',
+		verboseNamePlural: 'Requirement assessments',
+		selectFields: [{ field: 'status' }, { field: 'result' }, { field: 'extended_result' }],
+		foreignKeyFields: [
+			{ field: 'applied_controls', urlModel: 'applied-controls' },
+			{ field: 'task_templates', urlModel: 'task-templates' },
+			{ field: 'evidences', urlModel: 'evidences' },
+			{ field: 'compliance_assessment', urlModel: 'compliance-assessments' },
+			{ field: 'perimeter', urlModel: 'perimeters' },
+			{ field: 'security_exceptions', urlModel: 'security-exceptions' }
+		]
+	},
+	'stored-libraries': {
+		name: 'storedlibrary',
+		localName: 'storedLibrary',
+		localNamePlural: 'storedLibraries',
+		verboseName: 'stored Library',
+		verboseNamePlural: 'stored Libraries'
+	},
+	'loaded-libraries': {
+		name: 'loadedlibrary',
+		localName: 'loadedLibrary',
+		localNamePlural: 'loadedLibraries',
+		verboseName: 'loaded Library',
+		verboseNamePlural: 'loaded Libraries',
+		foreignKeyFields: [{ field: 'dependencies', urlModel: 'loaded-libraries' }]
+	},
+	'sso-settings': {
+		name: 'ssoSettings',
+		localName: 'ssoSettings',
+		localNamePlural: 'ssoSettings',
+		verboseName: 'SSO settings',
+		verboseNamePlural: 'SSO settings',
+		selectFields: [{ field: 'provider' }]
+	},
+	'general-settings': {
+		name: 'generalSettings',
+		localName: 'generalSettings',
+		localNamePlural: 'generalSettings',
+		verboseName: 'General settings',
+		verboseNamePlural: 'General settings',
+		selectFields: [{ field: 'security_objective_scale' }, { field: 'default_language' }]
+	},
+	'feature-flags': {
+		name: 'featureFlags',
+		localName: 'featureFlags',
+		localNamePlural: 'featureFlags',
+		verboseName: 'Feature flag',
+		verboseNamePlural: 'Feature flags'
+	},
+	'vulnerability-sla': {
+		name: 'vulnerabilitySla',
+		localName: 'vulnerabilitySla',
+		localNamePlural: 'vulnerabilitySla',
+		verboseName: 'Vulnerability SLA',
+		verboseNamePlural: 'Vulnerability SLA'
+	},
+	'sec-intel-feeds': {
+		name: 'secIntelFeeds',
+		localName: 'secIntelFeeds',
+		localNamePlural: 'secIntelFeeds',
+		verboseName: 'Vulnerability Feeds',
+		verboseNamePlural: 'Vulnerability Feeds'
+	},
+	'requirement-mapping-sets': {
+		name: 'requirementmappingset',
+		localName: 'requirementMappingSet',
+		localNamePlural: 'requirementMappingSets',
+		verboseName: 'Requirement mapping set',
+		verboseNamePlural: 'Requirement mapping sets',
+		foreignKeyFields: [
+			{ field: 'source_framework', urlModel: 'frameworks' },
+			{ field: 'target_framework', urlModel: 'frameworks' },
+			{ field: 'library', urlModel: 'libraries' }
+		]
+	},
+	entities: {
+		name: 'entity',
+		localName: 'entity',
+		localNamePlural: 'entities',
+		verboseName: 'Entity',
+		verboseNamePlural: 'Entities',
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'mission' },
+			{ field: 'parent_entity' },
+			{ field: 'relationship' },
+			{ field: 'legal_identifiers' },
+			{ field: 'branches' },
+			{ field: 'reference_link' }
+		],
+		reverseForeignKeyFields: [
+			{ field: 'entity', urlModel: 'entity-assessments' },
+			{ field: 'entity', urlModel: 'representatives' },
+			{ field: 'provider_entity', urlModel: 'solutions' },
+			{ field: 'provider_entity', urlModel: 'contracts' },
+			{ field: 'entity', urlModel: 'entity-scores' },
+			{
+				field: 'entity',
+				urlModel: 'entity-tier-changes',
+				disableCreate: true,
+				disableDelete: true
+			}
+		],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'owned_folders', urlModel: 'folders', urlParams: 'owned=false' },
+			{ field: 'parent_entity', urlModel: 'entities' },
+			{ field: 'branches', urlModel: 'entities' },
+			{
+				field: 'relationship',
+				urlModel: 'terminologies',
+				urlParams: 'field_path=entity.relationship'
+			},
+			{ field: 'tier', urlModel: 'tiers', urlParams: 'is_visible=true' }
+		],
+		selectFields: [
+			{ field: 'country' },
+			{ field: 'currency' },
+			{ field: 'dora_entity_type' },
+			{ field: 'dora_entity_hierarchy' },
+			{ field: 'dora_provider_person_type' }
+		]
+	},
+	'entity-assessments': {
+		name: 'entityassessment',
+		localName: 'entityAssessment',
+		localNamePlural: 'entityAssessments',
+		verboseName: 'Entity assessment',
+		verboseNamePlural: 'Entity assessments',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'perimeter', urlModel: 'perimeters' },
+			{ field: 'entity', urlModel: 'entities' },
+			{ field: 'solutions', urlModel: 'solutions' },
+			{ field: 'framework', urlModel: 'frameworks' },
+			{ field: 'authors', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'representatives', urlModel: 'users', urlParams: 'is_third_party=true' },
+			{ field: 'reviewers', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'evidence', urlModel: 'evidences' },
+			{ field: 'compliance_assessment', urlModel: 'compliance-assessments' },
+			{ field: 'validation_flows', urlModel: 'validation-flows' }
+		],
+		selectFields: [{ field: 'status' }, { field: 'conclusion' }],
+		// The first ten show without expanding, so they carry what an analyst reads
+		// first. Progress lives in the widget beside them, not in a row.
+		detailViewFields: [
+			{ field: 'name' },
+			{ field: 'entity' },
+			{ field: 'status' },
+			{ field: 'conclusion' },
+			{ field: 'due_date', type: 'date' },
+			{ field: 'representatives' },
+			{ field: 'reviewers' },
+			{ field: 'compliance_assessment' },
+			{ field: 'solutions' },
+			{ field: 'folder' },
+			{ field: 'perimeter' },
+			{ field: 'version' },
+			{ field: 'eta', type: 'date' },
+			{ field: 'authors' },
+			{ field: 'description' },
+			{ field: 'observation' },
+			{ field: 'reference_link' },
+			{ field: 'evidence' },
+			{ field: 'is_locked' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' }
+		],
+		filters: [{ field: 'status' }],
+		unsortableColumns: ['completion', 'review_progress']
+	},
+	solutions: {
+		name: 'solution',
+		localName: 'solution',
+		localNamePlural: 'solutions',
+		verboseName: 'Solution',
+		verboseNamePlural: 'Solutions',
+		flaggedFields: {
+			dora_ict_service_type: 'dora',
+			storage_of_data: 'dora',
+			data_location_storage: 'dora',
+			data_location_processing: 'dora',
+			dora_data_sensitiveness: 'dora',
+			dora_reliance_level: 'dora',
+			dora_substitutability: 'dora',
+			dora_non_substitutability_reason: 'dora',
+			dora_has_exit_plan: 'dora',
+			dora_reintegration_possibility: 'dora',
+			dora_discontinuing_impact: 'dora',
+			dora_alternative_providers_identified: 'dora',
+			dora_alternative_providers: 'dora'
+		},
+		reverseForeignKeyFields: [
+			{ field: 'solutions', urlModel: 'contracts', disableDelete: true },
+			{
+				field: 'solution',
+				urlModel: 'solution-tier-changes',
+				disableCreate: true,
+				disableDelete: true
+			}
+		],
+		foreignKeyFields: [
+			{ field: 'provider_entity', urlModel: 'entities' },
+			{ field: 'recipient_entity', urlModel: 'entities' },
+			{ field: 'owner', urlModel: 'actors' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		],
+		selectFields: [
+			{ field: 'dora_ict_service_type' },
+			{ field: 'data_location_storage' },
+			{ field: 'data_location_processing' },
+			{ field: 'dora_data_sensitiveness' },
+			{ field: 'dora_reliance_level' },
+			{ field: 'dora_substitutability' },
+			{ field: 'dora_non_substitutability_reason' },
+			{ field: 'dora_has_exit_plan' },
+			{ field: 'dora_reintegration_possibility' },
+			{ field: 'dora_discontinuing_impact' },
+			{ field: 'dora_alternative_providers_identified' }
+		],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'name' },
+			{ field: 'ref_id' },
+			{ field: 'description' },
+			{ field: 'provider_entity' },
+			{ field: 'recipient_entity' },
+			{ field: 'is_active' },
+			{ field: 'owner' },
+			{ field: 'assets' },
+			{ field: 'dora_ict_service_type' },
+			{ field: 'storage_of_data' },
+			{ field: 'data_location_storage' },
+			{ field: 'data_location_processing' },
+			{ field: 'dora_data_sensitiveness' },
+			{ field: 'dora_reliance_level' },
+			{ field: 'dora_substitutability' },
+			{ field: 'dora_non_substitutability_reason' },
+			{ field: 'dora_has_exit_plan' },
+			{ field: 'dora_reintegration_possibility' },
+			{ field: 'dora_discontinuing_impact' },
+			{ field: 'dora_alternative_providers_identified' },
+			{ field: 'dora_alternative_providers' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' },
+			{ field: 'filtering_labels' }
+		],
+		filters: [{ field: 'owner' }, { field: 'filtering_labels' }]
+	},
+	contracts: {
+		name: 'contract',
+		localName: 'contract',
+		localNamePlural: 'contracts',
+		verboseName: 'Contract',
+		verboseNamePlural: 'Contracts',
+		flaggedFields: {
+			dora_contractual_arrangement: 'dora'
+		},
+		reverseForeignKeyFields: [
+			{ field: 'contracts', urlModel: 'evidences', disableDelete: true },
+			{ field: 'contracts', urlModel: 'solutions', disableDelete: true, disableCreate: true }
+		],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'owner', urlModel: 'actors' },
+			{ field: 'provider_entity', urlModel: 'entities' },
+			{ field: 'beneficiary_entity', urlModel: 'entities' },
+			{ field: 'evidences', urlModel: 'evidences' },
+			{ field: 'solutions', urlModel: 'solutions' },
+			{ field: 'overarching_contract', urlModel: 'contracts' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		],
+		selectFields: [
+			{ field: 'status' },
+			{ field: 'currency' },
+			{ field: 'dora_contractual_arrangement' },
+			{ field: 'termination_reason' },
+			{ field: 'governing_law_country' }
+		],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'name' },
+			{ field: 'ref_id' },
+			{ field: 'description' },
+			{ field: 'folder' },
+			{ field: 'owner' },
+			{ field: 'status' },
+			{ field: 'provider_entity' },
+			{ field: 'beneficiary_entity' },
+			{ field: 'start_date' },
+			{ field: 'end_date' },
+			{ field: 'overarching_contract' },
+			{ field: 'annual_expense' },
+			{ field: 'currency' },
+			{ field: 'dora_contractual_arrangement' },
+			{ field: 'governing_law_country' },
+			{ field: 'notice_period_entity' },
+			{ field: 'notice_period_provider' },
+			{ field: 'is_intragroup' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' },
+			{ field: 'filtering_labels' }
+		]
+	},
+	tiers: {
+		name: 'tier',
+		localName: 'tier',
+		localNamePlural: 'tiers',
+		verboseName: 'Tier',
+		verboseNamePlural: 'Tiers',
+		detailViewFields: [
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'rank' },
+			{ field: 'hexcolor' },
+			{ field: 'is_visible' },
+			{ field: 'entities_count' }
+		],
+		reverseForeignKeyFields: [
+			{ field: 'tier', urlModel: 'entities', disableCreate: true, disableDelete: true }
+		]
+	},
+	'entity-tier-changes': {
+		name: 'entitytierchange',
+		localName: 'entityTierChange',
+		localNamePlural: 'entityTierChanges',
+		verboseName: 'Entity tier change',
+		verboseNamePlural: 'Entity tier changes',
+		foreignKeyFields: [
+			{ field: 'entity', urlModel: 'entities' },
+			{ field: 'tier', urlModel: 'tiers' },
+			{ field: 'previous_tier', urlModel: 'tiers' },
+			{ field: 'response', urlModel: 'quick-form-responses' },
+			{ field: 'changed_by', urlModel: 'users' },
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		selectFields: [{ field: 'source' }]
+	},
+	'solution-tier-changes': {
+		name: 'solutiontierchange',
+		localName: 'solutionTierChange',
+		localNamePlural: 'solutionTierChanges',
+		verboseName: 'Solution tier change',
+		verboseNamePlural: 'Solution tier changes',
+		foreignKeyFields: [
+			{ field: 'solution', urlModel: 'solutions' },
+			{ field: 'tier', urlModel: 'tiers' },
+			{ field: 'previous_tier', urlModel: 'tiers' },
+			{ field: 'response', urlModel: 'quick-form-responses' },
+			{ field: 'changed_by', urlModel: 'users' },
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		selectFields: [{ field: 'source' }]
+	},
+	'entity-scores': {
+		name: 'entityscore',
+		localName: 'entityScore',
+		localNamePlural: 'entityScores',
+		verboseName: 'Entity score',
+		verboseNamePlural: 'Entity scores',
+		foreignKeyFields: [
+			{ field: 'entity', urlModel: 'entities' },
+			{
+				field: 'provider',
+				urlModel: 'terminologies',
+				urlParams: 'field_path=entity_score.provider'
+			},
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		],
+		selectFields: [{ field: 'provider', detail: true }],
+		detailViewFields: [
+			{ field: 'entity' },
+			{ field: 'provider' },
+			{ field: 'score' },
+			{ field: 'scale_max' },
+			{ field: 'normalized_score' },
+			{ field: 'grade' },
+			{ field: 'as_of', type: 'date' },
+			{ field: 'url' },
+			{ field: 'observation' },
+			{ field: 'folder' },
+			{ field: 'filtering_labels' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' }
+		],
+		filters: [{ field: 'provider' }, { field: 'entity' }]
+	},
+	representatives: {
+		name: 'representative',
+		localName: 'representative',
+		localNamePlural: 'representatives',
+		verboseName: 'Representative',
+		verboseNamePlural: 'Representatives',
+		selectFields: [{ field: 'language' }],
+		foreignKeyFields: [
+			{ field: 'entity', urlModel: 'entities' },
+			{ field: 'user', urlModel: 'users' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'folder', urlModel: 'folders' }
+		]
+	},
+	'business-impact-analysis': {
+		endpointUrl: 'resilience/business-impact-analysis',
+		name: 'businessimpactanalysis',
+		localName: 'businessImpactAnalysis',
+		localNamePlural: 'businessImpactAnalysis',
+		verboseName: 'businessimpactanalysis',
+		verboseNamePlural: 'businessimpactanalysis',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'perimeter', urlModel: 'perimeters' },
+			{ field: 'authors', urlModel: 'actors' },
+			{ field: 'reviewers', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'risk_matrix', urlModel: 'risk-matrices' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'bia',
+				urlModel: 'asset-assessments',
+				batchCreate: {
+					label: 'batchAddAssets'
+				}
+			}
+		],
+		selectFields: [{ field: 'status' }],
+		filters: [{ field: 'perimeter' }, { field: 'auditor' }, { field: 'status' }],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'folder' },
+			{ field: 'name' },
+			{ field: 'perimeter' },
+			{ field: 'risk_matrix' },
+			{ field: 'authors' },
+			{ field: 'reviewers' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' },
+			{ field: 'description' },
+			{ field: 'version' },
+			{ field: 'is_locked' },
+			{ field: 'observation' }
+		]
+	},
+	'asset-assessments': {
+		endpointUrl: 'resilience/asset-assessments',
+		name: 'assetassessment',
+		localName: 'assetAssessment',
+		localNamePlural: 'assetAssessments',
+		verboseName: 'assetassessment',
+		verboseNamePlural: 'assetassessments',
+		reverseForeignKeyFields: [{ field: 'asset_assessment', urlModel: 'escalation-thresholds' }],
+		foreignKeyFields: [
+			{ field: 'asset', urlModel: 'assets' },
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'asset_folder', urlModel: 'folders' },
+			{ field: 'children_assets', urlModel: 'assets' },
+			{ field: 'dependencies', urlModel: 'assets' },
+			{ field: 'associated_controls', urlModel: 'applied-controls' },
+			{
+				field: 'bia',
+				urlModel: 'business-impact-analysis',
+				endpointUrl: 'business-impact-analysis'
+			},
+			{ field: 'evidences', urlModel: 'evidences' }
+		]
+	},
+	'escalation-thresholds': {
+		endpointUrl: 'resilience/escalation-thresholds',
+		name: 'escalationthreshold',
+		localName: 'escalationThreshold',
+		localNamePlural: 'escalationThresholds',
+		verboseName: 'escalationthreshold',
+		verboseNamePlural: 'escalationthresholds',
+		selectFields: [
+			{ field: 'quant_unit' },
+			{
+				field: 'quali_impact',
+				valueType: 'number',
+				detail: true,
+				endpointUrl: 'resilience/asset-assessments',
+				formNestedField: 'asset_assessment'
+			} //this is for edit only
+		],
+		foreignKeyFields: [
+			{
+				field: 'asset_assessment',
+				urlModel: 'asset-assessments',
+				endpointUrl: 'asset-assessments'
+			},
+			{ field: 'qualifications', urlModel: 'terminologies' }
+		],
+		detailViewFields: [
+			{ field: 'asset_assessment' },
+			{ field: 'get_human_pit' },
+			{ field: 'qualifications' },
+			{ field: 'quali_impact' },
+			{ field: 'justification' },
+			{ field: 'created_at' },
+			{ field: 'updated_at' }
+		]
+	},
+	'dora-incident-reports': {
+		endpointUrl: 'resilience/dora-incident-reports',
+		name: 'doraincidentreport',
+		localName: 'doraIncidentReport',
+		localNamePlural: 'doraIncidentReports',
+		verboseName: 'DORA incident report',
+		verboseNamePlural: 'DORA incident reports',
+		foreignKeyFields: [
+			{
+				field: 'folder',
+				urlModel: 'folders',
+				urlParams: 'content_type=DO&content_type=GL'
+			},
+			{ field: 'incident', urlModel: 'incidents' },
+			{ field: 'submitting_entity', urlModel: 'entities' },
+			{ field: 'ultimate_parent_entity', urlModel: 'entities' },
+			{ field: 'affected_entities', urlModel: 'entities' }
+		],
+		selectFields: [
+			{ field: 'incident_submission' },
+			{ field: 'report_currency' },
+			{ field: 'incident_discovery' }
+		],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'incident' },
+			{ field: 'incident_submission' },
+			{ field: 'report_currency' },
+			{ field: 'submitting_entity' },
+			{ field: 'affected_entities' },
+			{ field: 'ultimate_parent_entity' },
+			{ field: 'primary_contact_name' },
+			{ field: 'primary_contact_email' },
+			{ field: 'primary_contact_phone' },
+			{ field: 'secondary_contact_name' },
+			{ field: 'secondary_contact_email' },
+			{ field: 'secondary_contact_phone' },
+			{ field: 'financial_entity_code' },
+			{ field: 'detection_date_time' },
+			{ field: 'classification_date_time' },
+			{ field: 'incident_description' },
+			{ field: 'incident_discovery' },
+			{ field: 'competent_authority_code' },
+			{ field: 'incident_duration' },
+			{ field: 'folder' },
+			{ field: 'created_at' },
+			{ field: 'updated_at' }
+		]
+	},
+	processings: {
+		endpointUrl: 'privacy/processings',
+		name: 'processing',
+		localName: 'processing',
+		localNamePlural: 'processings',
+		verboseName: 'processing',
+		verboseNamePlural: 'processings',
+		selectFields: [{ field: 'status' }, { field: 'role' }],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'purposes', urlModel: 'purposes' },
+			{ field: 'nature', urlModel: 'terminologies' },
+			{ field: 'controllers', urlModel: 'entities' },
+			{ field: 'assigned_to', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'perimeters', urlModel: 'perimeters' },
+			{ field: 'associated_controls', urlModel: 'applied-controls' },
+			{ field: 'evidences', urlModel: 'evidences' }
+		],
+		detailViewFields: [
+			{ field: 'folder' },
+			{ field: 'perimeters' },
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'nature' },
+			{ field: 'status' },
+			{ field: 'role' },
+			{ field: 'controllers' },
+			{ field: 'purposes' },
+			{ field: 'assigned_to' },
+			{ field: 'dpia_required' },
+			{ field: 'dpia_reference' },
+			{ field: 'has_sensitive_personal_data' },
+			{ field: 'associated_controls' },
+			{ field: 'evidences' },
+			{ field: 'filtering_labels' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'processings',
+				urlModel: 'document-containers'
+			},
+			{
+				field: 'processing',
+				urlModel: 'personal-data',
+				batchCreate: {
+					label: 'batchCreatePersonalData'
+				}
+			},
+			{ field: 'processing', urlModel: 'data-subjects' },
+			{ field: 'processing', urlModel: 'purposes' },
+			{ field: 'processing', urlModel: 'data-recipients' },
+			{ field: 'processing', urlModel: 'data-contractors' },
+			{ field: 'processing', urlModel: 'data-transfers' },
+			{
+				field: 'processing',
+				urlModel: 'dpia-requirement-changes',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'processings',
+				urlModel: 'right-requests',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'processings',
+				urlModel: 'applied-controls',
+				disableDelete: true,
+				addExisting: {
+					parentField: 'associated_controls',
+					optionsInfoFields: {
+						fields: [{ field: 'category', translate: true }],
+						position: 'prefix'
+					}
+				}
+			},
+			{
+				field: 'processings',
+				urlModel: 'evidences',
+				disableDelete: true,
+				addExisting: {
+					parentField: 'evidences'
+				}
+			}
+		]
+	},
+	'right-requests': {
+		endpointUrl: 'privacy/right-requests',
+		name: 'rightrequest',
+		localName: 'rightRequest',
+		localNamePlural: 'rightRequests',
+		verboseName: 'right request',
+		verboseNamePlural: 'right requests',
+		selectFields: [{ field: 'request_type' }, { field: 'status' }],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'owner', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'processings', urlModel: 'processings', endpointUrl: 'processings' }
+		],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'ref_id' },
+			{ field: 'owner' },
+			{ field: 'requested_on', type: 'date' },
+			{ field: 'due_date', type: 'date' },
+			{ field: 'request_type' },
+			{ field: 'status' },
+			{ field: 'observation' },
+			{ field: 'processings' },
+			{ field: 'folder' },
+			{ field: 'updated_at', type: 'datetime' }
+		]
+	},
+	'data-breaches': {
+		endpointUrl: 'privacy/data-breaches',
+		name: 'databreach',
+		localName: 'dataBreach',
+		localNamePlural: 'dataBreaches',
+		verboseName: 'data breach',
+		verboseNamePlural: 'data breaches',
+		markdownFields: ['potential_consequences'],
+		selectFields: [{ field: 'breach_type' }, { field: 'risk_level' }, { field: 'status' }],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'assigned_to', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'affected_processings', urlModel: 'processings' },
+			{ field: 'affected_personal_data', urlModel: 'personal-data' },
+			{ field: 'authorities', urlModel: 'entities' },
+			{ field: 'remediation_measures', urlModel: 'applied-controls' },
+			{ field: 'evidences', urlModel: 'evidences' },
+			{ field: 'incident', urlModel: 'incidents' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'data_breaches',
+				urlModel: 'evidences',
+				addExisting: {
+					parentField: 'evidences'
+				}
+			}
+		],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'ref_id' },
+			{ field: 'assigned_to' },
+			{ field: 'discovered_on', type: 'datetime' },
+			{ field: 'breach_type' },
+			{ field: 'risk_level' },
+			{ field: 'status' },
+			{ field: 'affected_subjects_count' },
+			{ field: 'affected_processings' },
+			{ field: 'affected_personal_data' },
+			{ field: 'affected_personal_data_count' },
+			{ field: 'authorities' },
+			{ field: 'authority_notified_on', type: 'datetime' },
+			{ field: 'authority_notification_ref' },
+			{ field: 'subjects_notified_on', type: 'datetime' },
+			{ field: 'potential_consequences' },
+			{ field: 'remediation_measures' },
+			{ field: 'evidences' },
+			{ field: 'incident' },
+			{ field: 'reference_link' },
+			{ field: 'observation' },
+			{ field: 'folder' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' }
+		]
+	},
+	'dpia-requirement-changes': {
+		endpointUrl: 'privacy/dpia-requirement-changes',
+		name: 'dpiarequirementchange',
+		localName: 'dpiaRequirementChange',
+		localNamePlural: 'dpiaRequirementChanges',
+		verboseName: 'DPIA requirement change',
+		verboseNamePlural: 'DPIA requirement changes',
+		foreignKeyFields: [
+			{ field: 'processing', urlModel: 'processings' },
+			{ field: 'response', urlModel: 'quick-form-responses' }
+		],
+		selectFields: [{ field: 'source' }]
+	},
+	purposes: {
+		endpointUrl: 'privacy/purposes',
+		name: 'purpose',
+		localName: 'purpose',
+		localNamePlural: 'purposes',
+		verboseName: 'purpose',
+		verboseNamePlural: 'purposes',
+		customNameDescription: true,
+		selectFields: [{ field: 'legal_basis' }, { field: 'article_9_condition' }],
+		foreignKeyFields: [
+			{ field: 'processing', urlModel: 'processings', endpointUrl: 'processings' },
+			{ field: 'folder', urlModel: 'folders' }
+		]
+	},
+	'personal-data': {
+		endpointUrl: 'privacy/personal-data',
+		name: 'personaldata',
+		localName: 'personalData',
+		localNamePlural: 'personalData',
+		verboseName: 'personal data',
+		verboseNamePlural: 'personal data',
+		customNameDescription: true,
+		foreignKeyFields: [
+			{ field: 'processing', urlModel: 'processings', endpointUrl: 'processings' },
+			{ field: 'category', urlModel: 'terminologies' },
+			{ field: 'assets', urlModel: 'assets', endpointUrl: 'assets' },
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		reverseForeignKeyFields: [
+			{ field: 'personal_data', urlModel: 'assets', disableCreate: true, disableDelete: true }
+		],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'category' },
+			{ field: 'retention' },
+			{ field: 'deletion_policy' },
+			{ field: 'is_sensitive' },
+			{ field: 'processing' },
+			{ field: 'folder' },
+			{ field: 'created_at' },
+			{ field: 'updated_at' }
+		],
+		selectFields: [{ field: 'deletion_policy' }],
+		filters: [{ field: 'processing' }, { field: 'category' }, { field: 'assets' }]
+	},
+	'data-subjects': {
+		endpointUrl: 'privacy/data-subjects',
+		name: 'datasubject',
+		localName: 'dataSubject',
+		localNamePlural: 'dataSubjects',
+		verboseName: 'data subject',
+		verboseNamePlural: 'data subjects',
+		customNameDescription: true,
+		foreignKeyFields: [
+			{ field: 'processing', urlModel: 'processings' },
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		selectFields: [{ field: 'category' }]
+	},
+	'data-recipients': {
+		endpointUrl: 'privacy/data-recipients',
+		name: 'datarecipient',
+		localName: 'dataRecipient',
+		localNamePlural: 'dataRecipients',
+		verboseName: 'data recipient',
+		verboseNamePlural: 'data recipients',
+		customNameDescription: true,
+		foreignKeyFields: [
+			{ field: 'processing', urlModel: 'processings' },
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		selectFields: [{ field: 'category' }]
+	},
+	'data-contractors': {
+		endpointUrl: 'privacy/data-contractors',
+		name: 'datacontractor',
+		localName: 'dataContractor',
+		localNamePlural: 'dataContractors',
+		verboseName: 'data contractor',
+		verboseNamePlural: 'data contractors',
+		customNameDescription: true,
+		foreignKeyFields: [
+			{ field: 'processing', urlModel: 'processings' },
+			{ field: 'entity', urlModel: 'entities' },
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		selectFields: [{ field: 'relationship_type' }, { field: 'country' }]
+	},
+	'data-transfers': {
+		endpointUrl: 'privacy/data-transfers',
+		name: 'datatransfer',
+		localName: 'dataTransfer',
+		localNamePlural: 'dataTransfers',
+		verboseName: 'data transfer',
+		verboseNamePlural: 'data transfers',
+		foreignKeyFields: [
+			{ field: 'processing', urlModel: 'processings' },
+			{ field: 'entity', urlModel: 'entities' },
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		selectFields: [{ field: 'transfer_mechanism' }, { field: 'country' }],
+		customNameDescription: true
+	},
+	'ebios-rm': {
+		endpointUrl: 'ebios-rm/studies',
+		name: 'ebiosrmstudy',
+		localName: 'ebiosRmStudy',
+		localNamePlural: 'ebiosRmStudies',
+		verboseName: 'Ebios RM study',
+		verboseNamePlural: 'Ebios RM study',
+		foreignKeyFields: [
+			{ field: 'risk_matrix', urlModel: 'risk-matrices' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'authors', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'reviewers', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'compliance_assessments', urlModel: 'compliance-assessments' },
+			{ field: 'reference_entity', urlModel: 'entities' },
+			{ field: 'classification', urlModel: 'classification-levels' },
+			{ field: 'responsibility_matrix', urlModel: 'responsibility-matrices' },
+			{ field: 'risk_assessments', urlModel: 'risk-assessments' },
+			{ field: 'last_risk_assessment', urlModel: 'risk-assessments' },
+			{ field: 'validation_flows', urlModel: 'validation-flows' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'ebios_rm_studies',
+				urlModel: 'assets',
+				addExisting: {
+					parentField: 'assets'
+				}
+			}
+		],
+		selectFields: [{ field: 'status' }, { field: 'quotation_method' }]
+	},
+	'feared-events': {
+		endpointUrl: 'ebios-rm/feared-events',
+		name: 'fearedevent',
+		localName: 'fearedEvent',
+		localNamePlural: 'fearedEvents',
+		verboseName: 'Feared event',
+		verboseNamePlural: 'Feared events',
+		foreignKeyFields: [
+			{ field: 'ebios_rm_study', urlModel: 'ebios-rm', endpointUrl: 'ebios-rm/studies' },
+			{ field: 'assets', urlModel: 'assets', urlParams: 'type=PR&ebios_rm_studies=', detail: true },
+			{ field: 'qualifications', urlModel: 'terminologies' },
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		selectFields: [{ field: 'gravity', valueType: 'number', detail: true }]
+	},
+	'ro-to': {
+		endpointUrl: 'ebios-rm/ro-to',
+		name: 'roto',
+		localName: 'roto',
+		localNamePlural: 'roto',
+		verboseName: 'Ro to',
+		verboseNamePlural: 'Ro to',
+		foreignKeyFields: [
+			{ field: 'ebios_rm_study', urlModel: 'ebios-rm', endpointUrl: 'ebios-rm/studies' },
+			{
+				field: 'feared_events',
+				urlModel: 'feared-events',
+				endpointUrl: 'ebios-rm/feared-events',
+				urlParams: 'is_selected=true&ebios_rm_study=',
+				detail: true
+			},
+			{
+				field: 'risk_origin',
+				urlModel: 'terminologies',
+				urlParams: 'field_path=ro_to.risk_origin&is_visible=true'
+			},
+			{
+				field: 'target_objective_category',
+				urlModel: 'terminologies',
+				urlParams: 'field_path=ro_to.target_objective_category&is_visible=true'
+			},
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		selectFields: [
+			...['motivation', 'resources', 'activity'].map((field) => ({
+				field,
+				valueType: 'number' as const,
+				detail: true,
+				endpointUrl: 'ebios-rm/studies',
+				formNestedField: 'ebios_rm_study'
+			}))
+		]
+	},
+	stakeholders: {
+		endpointUrl: 'ebios-rm/stakeholders',
+		name: 'stakeholder',
+		localName: 'stakeholder',
+		localNamePlural: 'stakeholders',
+		verboseName: 'Stakeholder',
+		verboseNamePlural: 'Stakeholders',
+		// Criteria and criticality are shown by StakeholderCriticalityWidget.
+		detailViewFields: [
+			{ field: 'ebios_rm_study' },
+			{ field: 'entity' },
+			{ field: 'category' },
+			{ field: 'is_selected' },
+			{ field: 'applied_controls' },
+			{ field: 'justification' },
+			{ field: 'folder' },
+			{ field: 'created_at' },
+			{ field: 'updated_at' }
+		],
+		foreignKeyFields: [
+			{ field: 'entity', urlModel: 'entities' },
+			{ field: 'applied_controls', urlModel: 'applied-controls' },
+			{ field: 'ebios_rm_study', urlModel: 'ebios-rm', endpointUrl: 'ebios-rm/studies' },
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{
+				field: 'category',
+				urlModel: 'terminologies',
+				urlParams: 'field_path=entity.relationship&is_visible=true'
+			}
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'stakeholders',
+				urlModel: 'applied-controls'
+			}
+		]
+	},
+	'strategic-scenarios': {
+		endpointUrl: 'ebios-rm/strategic-scenarios',
+		name: 'strategicscenario',
+		localName: 'strategicScenario',
+		localNamePlural: 'strategicScenarios',
+		verboseName: 'Strategic scenario',
+		verboseNamePlural: 'Strategic scenarios',
+		foreignKeyFields: [
+			{ field: 'ebios_rm_study', urlModel: 'ebios-rm', endpointUrl: 'ebios-rm/studies' },
+			{ field: 'feared_events', urlModel: 'feared-events' },
+			{
+				field: 'ro_to_couple',
+				urlModel: 'ro-to',
+				endpointUrl: 'ebios-rm/ro-to',
+				urlParams: 'is_selected=true&used=false&ebios_rm_study=',
+				detail: true
+			},
+			{
+				field: 'focused_feared_event',
+				urlModel: 'feared-events',
+				endpointUrl: 'ebios-rm/feared-events',
+				detail: true
+			},
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{
+				field: 'attack_paths',
+				urlModel: 'attack-paths',
+				endpointUrl: 'ebios-rm/attack-paths'
+			}
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'strategic_scenario',
+				urlModel: 'attack-paths',
+				endpointUrl: 'ebios-rm/attack-paths'
+			}
+		],
+		selectFields: [
+			{
+				field: 'gravity',
+				valueType: 'number',
+				detail: true,
+				endpointUrl: 'ebios-rm/studies',
+				formNestedField: 'ebios_rm_study'
+			}
+		],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'feared_events', urlModel: 'feared-events' },
+			{ field: 'ro_to_couple' },
+			{ field: 'focused_feared_event', urlModel: 'feared-events' },
+			{ field: 'gravity' },
+			{ field: 'updated_at', type: 'datetime' },
+			{ field: 'ebios_rm_study' }
+		]
+	},
+	'attack-paths': {
+		endpointUrl: 'ebios-rm/attack-paths',
+		name: 'attackpath',
+		localName: 'attackPath',
+		localNamePlural: 'attackPaths',
+		verboseName: 'Attack path',
+		verboseNamePlural: 'Attack paths',
+		foreignKeyFields: [
+			{
+				field: 'stakeholders',
+				urlModel: 'stakeholders',
+				endpointUrl: 'ebios-rm/stakeholders',
+				urlParams: 'is_selected=true&ebios_rm_study=',
+				detail: true
+			},
+			{ field: 'ebios_rm_study', urlModel: 'ebios-rm', endpointUrl: 'ebios-rm/studies' },
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'ro_to_couple', urlModel: 'ro-to' },
+			{
+				field: 'strategic_scenario',
+				urlModel: 'strategic-scenarios',
+				endpointUrl: 'ebios-rm/strategic-scenarios',
+				urlParams: 'ebios_rm_study=',
+				detail: true
+			}
+		],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'strategic_scenario' },
+			{ field: 'ro_to_couple' },
+			{ field: 'is_selected' },
+			{ field: 'justification' },
+			{ field: 'stakeholders' },
+			{ field: 'updated_at', type: 'datetime' },
+			{ field: 'ebios_rm_study' }
+		]
+	},
+	'operational-scenarios': {
+		endpointUrl: 'ebios-rm/operational-scenarios',
+		name: 'operationalscenario',
+		localName: 'operationalScenario',
+		localNamePlural: 'operationalScenarios',
+		verboseName: 'Operational scenario',
+		verboseNamePlural: 'Operational scenarios',
+		markdownFields: ['operating_modes_description'],
+		flaggedFields: {
+			techniques: 'ttps'
+		},
+		foreignKeyFields: [
+			{ field: 'ebios_rm_study', urlModel: 'ebios-rm' },
+			{ field: 'threats', urlModel: 'threats' },
+			{ field: 'techniques', urlModel: 'techniques' },
+			{
+				field: 'attack_path',
+				urlModel: 'attack-paths',
+				endpointUrl: 'ebios-rm/attack-paths',
+				urlParams: 'is_selected=true&used=false&ebios_rm_study=',
+				detail: true
+			},
+			{
+				field: 'strategic_scenario',
+				urlModel: 'strategic-scenarios',
+				endpointUrl: 'ebios-rm/strategic-scenarios'
+			},
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'stakeholders', urlModel: 'stakeholders' },
+			{ field: 'ro_to', urlModel: 'ro-to' },
+			{ field: 'operating_modes', urlModel: 'operating-modes' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'operational_scenario',
+				urlModel: 'operating-modes',
+				endpointUrl: 'ebios-rm/operating-modes'
+			}
+		],
+		selectFields: [
+			{
+				field: 'likelihood',
+				valueType: 'number',
+				detail: true,
+				endpointUrl: 'ebios-rm/studies',
+				formNestedField: 'ebios_rm_study'
+			}
+		]
+	},
+	'elementary-actions': {
+		endpointUrl: 'ebios-rm/elementary-actions',
+		name: 'elementaryaction',
+		localName: 'elementaryAction',
+		localNamePlural: 'elementaryActions',
+		verboseName: 'Elementary action',
+		verboseNamePlural: 'Elementary actions',
+		foreignKeyFields: [
+			{ field: 'threat', urlModel: 'threats' },
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		selectFields: [{ field: 'attack_stage', valueType: 'number' }, { field: 'icon' }],
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'threat' },
+			{ field: 'icon' },
+			{ field: 'attack_stage' },
+			{ field: 'folder' },
+			{ field: 'created_at' },
+			{ field: 'updated_at' }
+		]
+	},
+	'operating-modes': {
+		endpointUrl: 'ebios-rm/operating-modes',
+		name: 'operatingmode',
+		localName: 'operatingMode',
+		localNamePlural: 'operatingModes',
+		verboseName: 'Operating mode',
+		verboseNamePlural: 'Operating modes',
+		foreignKeyFields: [
+			{ field: 'operational_scenario', urlModel: 'operational-scenarios' },
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		selectFields: [
+			{
+				field: 'likelihood',
+				valueType: 'number',
+				detail: true,
+				endpointUrl: 'ebios-rm/studies',
+				formNestedField: 'ebios_rm_study'
+			}
+		],
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'operational_scenario' },
+			{ field: 'likelihood' },
+			{ field: 'created_at' },
+			{ field: 'updated_at' }
+		]
+	},
+	'kill-chains': {
+		endpointUrl: 'ebios-rm/kill-chains',
+		name: 'killchain',
+		localName: 'killChain',
+		localNamePlural: 'killChains',
+		verboseName: 'Kill chain',
+		verboseNamePlural: 'Kill chains',
+		foreignKeyFields: [
+			{ field: 'operating_mode', urlModel: 'operating-modes' },
+			{ field: 'elementary_action', urlModel: 'elementary-actions' },
+			{ field: 'antecedents', urlModel: 'kill-chains' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		selectFields: [{ field: 'logic_operator' }]
+	},
+	'security-exceptions': {
+		name: 'securityexception',
+		localName: 'securityException',
+		localNamePlural: 'securityExceptions',
+		verboseName: 'Security exception',
+		verboseNamePlural: 'Security exceptions',
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'folder' },
+			{ field: 'severity' },
+			{ field: 'status' },
+			{ field: 'expiration_date', type: 'date' },
+			{ field: 'owners' },
+			{ field: 'approver' },
+			{ field: 'observation' },
+			{ field: 'link' },
+			// Where this record came from, when automation produced it. Rendered by the
+			// generic `produced_from` branch, which routes per entry rather than per field.
+			{ field: 'produced_from' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' }
+		],
+		foreignKeyFields: [
+			{ field: 'owners', urlModel: 'actors' },
+			{ field: 'approver', urlModel: 'users', urlParams: 'is_approver=true' },
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'evidences', urlModel: 'evidences' }
+		],
+		selectFields: [{ field: 'severity', valueType: 'number' }, { field: 'status' }],
+		reverseForeignKeyFields: [
+			{
+				field: 'security_exceptions',
+				urlModel: 'evidences',
+				disableDelete: false,
+				addExisting: {
+					parentField: 'evidences'
+				}
+			},
+			{
+				field: 'security_exceptions',
+				urlModel: 'applied-controls',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'security_exceptions',
+				urlModel: 'assets',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'security_exceptions',
+				urlModel: 'vulnerabilities',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'security_exceptions',
+				urlModel: 'requirement-assessments',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'security_exceptions',
+				urlModel: 'risk-scenarios',
+				disableCreate: true,
+				disableDelete: true
+			}
+		]
+	},
+	'findings-assessments': {
+		name: 'findingsassessment',
+		localName: 'findingsAssessment',
+		localNamePlural: 'findingsAssessments',
+		verboseName: 'Findings assessment',
+		verboseNamePlural: 'Findings assessments',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'perimeter', urlModel: 'perimeters' },
+			{ field: 'authors', urlModel: 'actors' },
+			{ field: 'reviewers', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'owner', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'compliance_assessment', urlModel: 'compliance-assessments' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		],
+		reverseForeignKeyFields: [
+			{ field: 'findings_assessment', urlModel: 'findings', columnSelector: true },
+			{
+				field: 'findings_assessments',
+				urlModel: 'evidences',
+				disableDelete: false,
+				addExisting: {
+					parentField: 'evidences'
+				}
+			}
+		],
+		selectFields: [{ field: 'status' }, { field: 'category' }],
+		markdownFields: ['objectives'],
+		// DetailView shows ten rows before "show all", so the bookkeeping sits below
+		// the fold.
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'folder' },
+			{ field: 'perimeter' },
+			{ field: 'category' },
+			{ field: 'status' },
+			{ field: 'compliance_assessment' },
+			{ field: 'objectives' },
+			{ field: 'description' },
+			{ field: 'authors' },
+			{ field: 'due_date', type: 'date' },
+			{ field: 'reviewers' },
+			{ field: 'start_date', type: 'date' },
+			{ field: 'eta', type: 'date' },
+			{ field: 'reported_at', type: 'date' },
+			{ field: 'budget' },
+			{ field: 'expenses' },
+			{ field: 'reference_link' },
+			{ field: 'observation' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'version' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' },
+			{ field: 'is_locked' },
+			{ field: 'id' }
+		]
+	},
+	'posture-assessments': {
+		name: 'postureassessment',
+		localName: 'postureAssessment',
+		localNamePlural: 'postureAssessments',
+		verboseName: 'Technical posture',
+		verboseNamePlural: 'Technical postures',
+		endpointUrl: 'automation/posture-assessments',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'perimeter', urlModel: 'perimeters' },
+			{ field: 'framework', urlModel: 'frameworks' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'authors', urlModel: 'actors' },
+			{ field: 'follow_up_assessment', urlModel: 'findings-assessments' }
+		],
+		selectFields: [{ field: 'status' }],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'folder' },
+			{ field: 'perimeter' },
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'framework' },
+			{ field: 'follow_up_assessment' },
+			{ field: 'history_depth' },
+			{ field: 'authors' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' },
+			{ field: 'status' },
+			{ field: 'observation' }
+		]
+	},
+	commitments: {
+		name: 'commitment',
+		localName: 'commitment',
+		localNamePlural: 'commitments',
+		verboseName: 'Commitment',
+		verboseNamePlural: 'Commitments',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'committed_by', urlModel: 'actors' }
+		]
+	},
+	findings: {
+		name: 'finding',
+		localName: 'finding',
+		localNamePlural: 'findings',
+		verboseName: 'Finding',
+		verboseNamePlural: 'Findings',
+		markdownFields: ['recommendation'],
+		foreignKeyFields: [
+			{ field: 'findings_assessment', urlModel: 'findings-assessments' },
+			{ field: 'asset', urlModel: 'assets' },
+			{ field: 'owner', urlModel: 'actors' },
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'perimeter', urlModel: 'perimeters' },
+			{ field: 'vulnerabilities', urlModel: 'vulnerabilities' },
+			{ field: 'threats', urlModel: 'threats' },
+			{ field: 'reference_controls', urlModel: 'reference-controls' },
+			{ field: 'applied_controls', urlModel: 'applied-controls' },
+			{ field: 'task_templates', urlModel: 'task-templates' },
+			{ field: 'requirement_assessment', urlModel: 'requirement-assessments' },
+			{ field: 'evidences', urlModel: 'evidences' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'findings',
+				urlModel: 'vulnerabilities',
+				addExisting: {
+					parentField: 'vulnerabilities'
+				}
+			},
+			{
+				field: 'findings',
+				urlModel: 'applied-controls',
+				addExisting: {
+					parentField: 'applied_controls',
+					optionsInfoFields: {
+						fields: [{ field: 'category', translate: true }],
+						position: 'prefix'
+					}
+				}
+			},
+			{
+				field: 'findings',
+				urlModel: 'evidences',
+				addExisting: {
+					parentField: 'evidences'
+				}
+			},
+			{
+				field: 'findings',
+				urlModel: 'threats',
+				addExisting: {
+					parentField: 'threats'
+				}
+			},
+			{
+				field: 'findings',
+				urlModel: 'reference-controls',
+				addExisting: {
+					parentField: 'reference_controls',
+					optionsInfoFields: {
+						fields: [{ field: 'category', translate: true }],
+						position: 'prefix'
+					}
+				}
+			},
+			{
+				field: 'findings',
+				urlModel: 'task-templates',
+				addExisting: {
+					parentField: 'task_templates'
+				}
+			}
+		],
+		// DetailView shows ten rows before "show all": identity and triage first, links
+		// next, bookkeeping last. `path` and `is_published` are internal.
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'severity' },
+			{ field: 'status' },
+			{ field: 'priority' },
+			{ field: 'owner' },
+			{ field: 'findings_assessment' },
+			{ field: 'requirement_assessment' },
+			{ field: 'due_date', type: 'date' },
+			{ field: 'folder' },
+			{ field: 'description' },
+			{ field: 'observation' },
+			{ field: 'recommendation' },
+			{ field: 'eta', type: 'date' },
+			{ field: 'asset' },
+			{ field: 'applied_controls' },
+			{ field: 'task_templates' },
+			{ field: 'evidences' },
+			{ field: 'threats' },
+			{ field: 'vulnerabilities' },
+			{ field: 'reference_controls' },
+			{ field: 'requirement_node' },
+			{ field: 'perimeter' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' },
+			{ field: 'id' }
+		],
+		selectFields: [
+			{ field: 'severity', valueType: 'number' },
+			{ field: 'status' },
+			{ field: 'priority', valueType: 'number' }
+		],
+		filters: [
+			{ field: 'owner' },
+			{ field: 'folder' },
+			{ field: 'status' },
+			{ field: 'severity' },
+			{ field: 'priority' },
+			{ field: 'findings_assessment' },
+			{ field: 'filtering_labels' },
+			{ field: 'applied_controls' },
+			{ field: 'evidences' }
+		]
+	},
+	incidents: {
+		name: 'incident',
+		localName: 'incident',
+		localNamePlural: 'incidents',
+		verboseName: 'Incident',
+		verboseNamePlural: 'Incidents',
+		markdownFields: ['resolution'],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'threats', urlModel: 'threats' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'perimeter', urlModel: 'perimeters' },
+			{ field: 'owners', urlModel: 'actors', urlParams: 'is_third_party=false' },
+			{ field: 'qualifications', urlModel: 'terminologies' },
+			{ field: 'entities', urlModel: 'entities' },
+			{ field: 'applied_controls', urlModel: 'applied-controls' },
+			{ field: 'task_templates', urlModel: 'task-templates' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'risk_scenarios', urlModel: 'risk-scenarios' }
+		],
+		reverseForeignKeyFields: [
+			{ field: 'incident', urlModel: 'timeline-entries' },
+			{ field: 'incident', urlModel: 'dora-incident-reports' },
+			{
+				field: 'incidents',
+				urlModel: 'applied-controls',
+				disableCreate: true,
+				disableDelete: true,
+				addExisting: {
+					parentField: 'applied_controls',
+					optionsInfoFields: {
+						fields: [{ field: 'category', translate: true }],
+						position: 'prefix'
+					}
+				}
+			},
+			{
+				field: 'incidents',
+				urlModel: 'task-templates',
+				disableCreate: true,
+				disableDelete: true,
+				addExisting: {
+					parentField: 'task_templates'
+				}
+			},
+			{
+				field: 'incidents',
+				urlModel: 'risk-scenarios',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'incidents',
+				urlModel: 'vulnerabilities',
+				disableCreate: true,
+				disableDelete: true,
+				addExisting: {
+					parentField: 'vulnerabilities'
+				}
+			}
+		],
+		selectFields: [
+			{ field: 'severity', valueType: 'number' },
+			{ field: 'status' },
+			{ field: 'detection' }
+		],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'folder' },
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'reported_at' },
+			{ field: 'qualifications' },
+			{ field: 'status' },
+			{ field: 'severity' },
+			{ field: 'detection' },
+			{ field: 'assets' },
+			{ field: 'owners' },
+			{ field: 'entities' },
+			{ field: 'occurred_at' },
+			{ field: 'resolved_at' },
+			{ field: 'resolution' },
+			{ field: 'is_bcp_activated' },
+			{ field: 'applied_controls' },
+			{ field: 'task_templates' },
+			{ field: 'risk_scenarios' },
+			{ field: 'created_at' },
+			{ field: 'updated_at' },
+			{ field: 'link' },
+			{ field: 'filtering_labels' }
+		]
+	},
+	'timeline-entries': {
+		name: 'timelineentry',
+		localName: 'timelineEntry',
+		localNamePlural: 'timelineEntries',
+		verboseName: 'Timeline entry',
+		verboseNamePlural: 'Timeline entries',
+		foreignKeyFields: [
+			{ field: 'incident', urlModel: 'incidents' },
+			{ field: 'author', urlModel: 'actors' },
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'evidences', urlModel: 'evidences' }
+		],
+		selectFields: [{ field: 'entry_type' }],
+		reverseForeignKeyFields: [{ field: 'timeline_entries', urlModel: 'evidences' }]
+	},
+	'task-templates': {
+		name: 'tasktemplate',
+		localName: 'taskTemplate',
+		localNamePlural: 'taskTemplates',
+		verboseName: 'Task template',
+		verboseNamePlural: 'Task templates',
+		flaggedFields: {
+			commitment_state: 'commitment_management',
+			committed_eta: 'commitment_management',
+			committed_by: 'commitment_management',
+			commitment_notes: 'commitment_management'
+		},
+		selectFields: [{ field: 'status' }],
+		// Without this the API's own field order wins, which puts a dozen mostly-empty
+		// relations above the fold and pushes ref_id, name and description past the
+		// 10-row cutoff. Identity first, then ownership and cadence, then relations.
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'folder' },
+			{ field: 'assigned_to' },
+			{ field: 'is_recurrent' },
+			{ field: 'enabled' },
+			{ field: 'task_date' },
+			{ field: 'status' },
+			{ field: 'observation' },
+			{ field: 'link' },
+			{ field: 'filtering_labels' },
+			{ field: 'evidences' },
+			{ field: 'applied_controls' },
+			{ field: 'assets' },
+			{ field: 'compliance_assessments' },
+			{ field: 'requirement_assessments' },
+			{ field: 'risk_assessments' },
+			{ field: 'findings_assessment' },
+			{ field: 'findings' },
+			{ field: 'incidents' },
+			{ field: 'next_occurrence' },
+			{ field: 'next_occurrence_status' },
+			{ field: 'last_occurrence_status' },
+			{ field: 'created_at' },
+			{ field: 'updated_at' }
+		],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'evidences', urlModel: 'evidences' },
+			{ field: 'assigned_to', urlModel: 'actors' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'applied_controls', urlModel: 'applied-controls' },
+			{ field: 'compliance_assessments', urlModel: 'compliance-assessments' },
+			{ field: 'risk_assessments', urlModel: 'risk-assessments' },
+			{ field: 'findings_assessment', urlModel: 'findings-assessments' },
+			{ field: 'findings', urlModel: 'findings' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'incidents', urlModel: 'incidents' },
+			{ field: 'requirement_assessments', urlModel: 'requirement-assessments' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'task_templates',
+				urlModel: 'evidences',
+				disableCreate: false,
+				disableDelete: true,
+				disableEdit: true,
+				addExisting: {
+					parentField: 'evidences'
+				}
+			},
+			{
+				field: 'task_templates',
+				urlModel: 'document-containers'
+			},
+			{
+				field: 'task_templates',
+				urlModel: 'incidents',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'task_templates',
+				urlModel: 'findings',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'task_templates',
+				urlModel: 'vulnerabilities',
+				disableCreate: true,
+				disableDelete: true
+			}
+		],
+		unsortableColumns: ['schedule']
+	},
+	'task-nodes': {
+		name: 'tasknode',
+		localName: 'taskNode',
+		localNamePlural: 'taskNodes',
+		verboseName: 'Task node',
+		verboseNamePlural: 'Task nodes',
+		selectFields: [{ field: 'status' }],
+		foreignKeyFields: [
+			{ field: 'task_template', urlModel: 'task-templates' },
+			{ field: 'evidences', urlModel: 'evidences' },
+			{ field: 'expected_evidence', urlModel: 'evidences' },
+			{ field: 'assigned_to', urlModel: 'actors' },
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'applied_controls', urlModel: 'applied-controls' },
+			{ field: 'compliance_assessments', urlModel: 'compliance-assessments' },
+			{ field: 'risk_assessments', urlModel: 'risk-assessments' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'findings_assessment', urlModel: 'findings-assessments' }
+		],
+		detailViewFields: [
+			{ field: 'task_template' },
+			{ field: 'folder' },
+			{ field: 'name' },
+			{ field: 'assigned_to' },
+			{ field: 'evidences', tooltip: 'taskNodeLegacyEvidence' },
+			{ field: 'is_recurrent' },
+			{ field: 'expected_evidence', tooltip: 'taskNodeNewEvidence' },
+			{ field: 'applied_controls' },
+			{ field: 'compliance_assessments' },
+			{ field: 'assets' },
+			{ field: 'risk_assessments' },
+			{ field: 'findings_assessment' },
+			{ field: 'created_at' },
+			{ field: 'updated_at' },
+			{ field: 'scheduled_date' },
+			{ field: 'due_date' },
+			{ field: 'status' },
+			{ field: 'observation' }
+		]
+	},
+	campaigns: {
+		name: 'campaign',
+		localName: 'campaign',
+		localNamePlural: 'campaigns',
+		verboseName: 'Campaign',
+		verboseNamePlural: 'Campaigns',
+		selectFields: [{ field: 'status' }, { field: 'kind' }],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'frameworks', urlModel: 'frameworks' },
+			{ field: 'perimeters', urlModel: 'perimeters' },
+			{ field: 'entities', urlModel: 'entities' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'campaign',
+				urlModel: 'compliance-assessments',
+				disableCreate: true,
+				disableDelete: true
+			},
+			{
+				field: 'compliance_assessment__campaign',
+				urlModel: 'entity-assessments',
+				disableCreate: true,
+				disableDelete: true
+			}
+		],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'kind' },
+			{ field: 'frameworks' },
+			{ field: 'perimeters' },
+			{ field: 'entities' },
+			{ field: 'status' },
+			{ field: 'start_date' },
+			{ field: 'due_date' },
+			{ field: 'folder' },
+			{ field: 'created_at' },
+			{ field: 'updated_at' }
+		],
+		filters: [
+			{ field: 'status' },
+			{ field: 'frameworks' },
+			{ field: 'folder' },
+			{ field: 'perimeters' }
+		]
+	},
+	'organisation-objectives': {
+		name: 'organisationobjective',
+		localName: 'organisationObjective',
+		localNamePlural: 'organisationObjectives',
+		verboseName: 'Organisation objective',
+		verboseNamePlural: 'Organisation objectives',
+		selectFields: [{ field: 'status' }, { field: 'health' }],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'issues', urlModel: 'organisation-issues' },
+			{ field: 'tasks', urlModel: 'task-templates' },
+			{ field: 'metrics', urlModel: 'metric-instances' },
+			{ field: 'assigned_to', urlModel: 'actors' },
+			{ field: 'applied_controls', urlModel: 'applied-controls' }
+		],
+		detailViewFields: [
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'folder' },
+			{ field: 'status' },
+			{ field: 'health' },
+			{ field: 'is_active' },
+			{ field: 'start_date', type: 'date' },
+			{ field: 'eta', type: 'date' },
+			{ field: 'due_date', type: 'date' },
+			{ field: 'closing_date', type: 'date' },
+			{ field: 'observation' },
+			{ field: 'assigned_to' },
+			{ field: 'issues' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'objectives',
+				urlModel: 'applied-controls',
+				disableCreate: false,
+				disableDelete: true,
+				addExisting: {
+					parentField: 'applied_controls',
+					optionsInfoFields: {
+						fields: [{ field: 'category', translate: true }],
+						position: 'prefix'
+					}
+				}
+			},
+			{
+				field: 'objectives',
+				urlModel: 'task-templates',
+				disableCreate: false,
+				disableDelete: true,
+				addExisting: {
+					parentField: 'tasks'
+				}
+			},
+			{
+				field: 'organisation_objectives',
+				urlModel: 'assets',
+				disableCreate: false,
+				disableDelete: true,
+				addExisting: {
+					parentField: 'assets'
+				}
+			},
+			{
+				field: 'organisation_objectives',
+				urlModel: 'metric-instances',
+				disableCreate: false,
+				disableDelete: true,
+				addExisting: {
+					parentField: 'metrics'
+				}
+			}
+		],
+		filters: [{ field: 'folder' }]
+	},
+	'organisation-issues': {
+		name: 'organisationissue',
+		localName: 'organisationIssue',
+		localNamePlural: 'organisationIssues',
+		verboseName: 'Organisation issue',
+		verboseNamePlural: 'Organisation issues',
+		selectFields: [{ field: 'category' }, { field: 'origin' }, { field: 'status' }],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'objectives', urlModel: 'organisation-objectives' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'issues',
+				urlModel: 'organisation-objectives',
+				disableCreate: false,
+				disableDelete: true,
+				addExisting: {
+					parentField: 'objectives'
+				}
+			}
+		],
+		filters: [{ field: 'folder' }]
+	},
+	'quantitative-risk-studies': {
+		name: 'quantitativeriskstudy',
+		localName: 'quantitativeRiskStudy',
+		localNamePlural: 'quantitativeRiskStudies',
+		verboseName: 'Quantitative Risk Study',
+		verboseNamePlural: 'Quantitative Risk Studies',
+		endpointUrl: 'crq/quantitative-risk-studies',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'authors', urlModel: 'actors' },
+			{ field: 'reviewers', urlModel: 'actors', urlParams: 'is_third_party=false' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'quantitative_risk_study',
+				urlModel: 'quantitative-risk-scenarios',
+				endpointUrl: 'crq/quantitative-risk-scenarios'
+			}
+		],
+		selectFields: [
+			{ field: 'status', endpointUrl: 'crq/quantitative-risk-studies' },
+			{ field: 'distribution_model', endpointUrl: 'crq/quantitative-risk-studies' }
+		],
+		filters: [{ field: 'folder' }, { field: 'status' }],
+		detailViewFields: [
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'id' },
+			{ field: 'status' },
+			{ field: 'authors' },
+			{ field: 'reviewers' },
+			{ field: 'eta', type: 'date' },
+			{ field: 'due_date', type: 'date' },
+			{ field: 'risk_tolerance_display' },
+			{ field: 'loss_threshold_display' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' },
+			{ field: 'folder' },
+			{ field: 'observation' }
+		]
+	},
+	'quantitative-risk-scenarios': {
+		name: 'quantitativeriskscenario',
+		localName: 'quantitativeRiskScenario',
+		localNamePlural: 'quantitativeRiskScenarios',
+		verboseName: 'Quantitative Risk Scenario',
+		verboseNamePlural: 'Quantitative Risk Scenarios',
+		endpointUrl: 'crq/quantitative-risk-scenarios',
+		foreignKeyFields: [
+			{
+				field: 'quantitative_risk_study',
+				urlModel: 'quantitative-risk-studies',
+				endpointUrl: 'crq/quantitative-risk-studies'
+			},
+			{ field: 'assets', urlModel: 'assets' },
+			{ field: 'owner', urlModel: 'actors' },
+			{ field: 'vulnerabilities', urlModel: 'vulnerabilities' },
+			{ field: 'threats', urlModel: 'threats' },
+			{ field: 'threat_models', urlModel: 'threat-models' },
+			{ field: 'qualifications', urlModel: 'qualifications' },
+			{ field: 'folder', urlModel: 'folders' }
+		],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'name' },
+			{ field: 'ref_id' },
+			{ field: 'quantitative_risk_study' },
+			{ field: 'description' },
+			{ field: 'priority' },
+			{ field: 'current_ale_display' },
+			{ field: 'status' },
+			{ field: 'assets' },
+			{ field: 'threats' },
+			{ field: 'vulnerabilities' },
+			{ field: 'qualifications' },
+			{ field: 'folder' },
+			{ field: 'observation' },
+			{ field: 'is_selected' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'quantitative_risk_scenario',
+				urlModel: 'quantitative-risk-hypotheses',
+				endpointUrl: 'crq/quantitative-risk-hypotheses'
+			}
+		],
+		selectFields: [
+			{ field: 'status', endpointUrl: 'crq/quantitative-risk-scenarios' },
+			{ field: 'priority', endpointUrl: 'crq/quantitative-risk-scenarios' }
+		],
+		filters: [{ field: 'quantitative_risk_study' }, { field: 'status' }, { field: 'priority' }]
+	},
+	'quantitative-risk-hypotheses': {
+		name: 'quantitativeriskhypothesis',
+		localName: 'quantitativeRiskHypothesis',
+		localNamePlural: 'quantitativeRiskHypotheses',
+		verboseName: 'Quantitative Risk Hypothesis',
+		verboseNamePlural: 'Quantitative Risk Hypotheses',
+		endpointUrl: 'crq/quantitative-risk-hypotheses',
+		foreignKeyFields: [
+			{
+				field: 'quantitative_risk_scenario',
+				urlModel: 'quantitative-risk-scenarios',
+				endpointUrl: 'crq/quantitative-risk-scenarios'
+			},
+			{ field: 'existing_applied_controls', urlModel: 'applied-controls' },
+			{ field: 'added_applied_controls', urlModel: 'applied-controls' },
+			{ field: 'removed_applied_controls', urlModel: 'applied-controls' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		],
+		selectFields: [{ field: 'risk_stage', endpointUrl: 'crq/quantitative-risk-hypotheses' }],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'ref_id' },
+			{ field: 'quantitative_risk_scenario' },
+			{ field: 'simulation_parameters_display' },
+			{ field: 'is_simulation_fresh' },
+			{ field: 'ale_display' },
+			{ field: 'treatment_cost_display' },
+			{ field: 'roc_display' },
+			{ field: 'roc_calculation_explanation' },
+			{ field: 'risk_stage' },
+			{ field: 'existing_applied_controls' },
+			{ field: 'added_applied_controls' },
+			{ field: 'removed_applied_controls' },
+			{ field: 'observation' },
+			{ field: 'is_selected' }
+		]
+	},
+	'custom-fields': {
+		name: 'customfielddefinition',
+		localName: 'customField',
+		localNamePlural: 'customFields',
+		verboseName: 'Custom field',
+		verboseNamePlural: 'Custom fields',
+		selectFields: [{ field: 'field_type' }],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' }
+		],
+		detailViewFields: [
+			{ field: 'model_label' },
+			{ field: 'key' },
+			{ field: 'label' },
+			{ field: 'field_type' },
+			{ field: 'required' },
+			{ field: 'visible' },
+			{ field: 'searchable' },
+			{ field: 'filterable' },
+			{ field: 'order' },
+			{ field: 'folder' },
+			{ field: 'help_text' }
+		]
+	},
+	terminologies: {
+		name: 'terminology',
+		localName: 'terminology',
+		localNamePlural: 'terminologies',
+		verboseName: 'Terminology',
+		verboseNamePlural: 'Terminologies',
+		selectFields: [{ field: 'field_path' }],
+		customNameDescription: true,
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'field_path' },
+			{ field: 'created_at' },
+			{ field: 'updated_at' },
+			{ field: 'builtin' },
+			{ field: 'is_visible' },
+			{ field: 'translations' }
+		]
+	},
+	'object-classifications': {
+		name: 'objectclassification',
+		localName: 'objectClassification',
+		localNamePlural: 'objectClassifications',
+		verboseName: 'Object classification',
+		verboseNamePlural: 'Object classifications',
+		customNameDescription: true,
+		reverseForeignKeyFields: [
+			{ field: 'object_classification', urlModel: 'classification-levels' }
+		],
+		detailViewFields: [
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'ref_id' },
+			{ field: 'builtin' },
+			{ field: 'is_visible' }
+		]
+	},
+	'classification-levels': {
+		name: 'classificationlevel',
+		localName: 'classificationLevel',
+		localNamePlural: 'classificationLevels',
+		verboseName: 'Classification level',
+		verboseNamePlural: 'Classification levels',
+		customNameDescription: true,
+		foreignKeyFields: [{ field: 'object_classification', urlModel: 'object-classifications' }],
+		detailViewFields: [
+			{ field: 'abbreviation' },
+			{ field: 'name' },
+			{ field: 'rank' },
+			{ field: 'hexcolor' },
+			{ field: 'object_classification' },
+			{ field: 'builtin' },
+			{ field: 'is_visible' }
+		]
+	},
+	roles: {
+		endpointUrl: 'roles',
+		name: 'role',
+		localName: 'role',
+		localNamePlural: 'roles',
+		verboseName: 'Role',
+		verboseNamePlural: 'Roles',
+		foreignKeyFields: [{ field: 'folder', urlModel: 'folders' }],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'builtin' },
+			{ field: 'permissions' },
+			{ field: 'created_at' },
+			{ field: 'updated_at' }
+		]
+	},
+	permissions: {
+		endpointUrl: 'permissions',
+		name: 'permission',
+		localName: 'permission',
+		localNamePlural: 'permissions',
+		verboseName: 'Permission',
+		verboseNamePlural: 'Permissions'
+	},
+	'generic-collections': {
+		name: 'genericcollection',
+		localName: 'genericCollection',
+		localNamePlural: 'genericCollections',
+		verboseName: 'Generic Collection',
+		verboseNamePlural: 'Generic Collections',
+		endpointUrl: 'pmbok/generic-collections',
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'folder' },
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'projects' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'projects', urlModel: 'projects' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'genericcollection',
+				urlModel: 'compliance-assessments',
+				addExisting: { parentField: 'compliance_assessments' }
+			},
+			{
+				field: 'genericcollection',
+				urlModel: 'risk-assessments',
+				addExisting: { parentField: 'risk_assessments' }
+			},
+			{
+				field: 'genericcollection',
+				urlModel: 'quantitative-risk-studies',
+				addExisting: { parentField: 'crq_studies' }
+			},
+			{
+				field: 'genericcollection',
+				urlModel: 'ebios-rm',
+				addExisting: { parentField: 'ebios_studies' }
+			},
+			{
+				field: 'genericcollection',
+				urlModel: 'entity-assessments',
+				addExisting: { parentField: 'entity_assessments' }
+			},
+			{
+				field: 'genericcollection',
+				urlModel: 'findings-assessments',
+				addExisting: { parentField: 'findings_assessments' }
+			},
+			{
+				field: 'genericcollection',
+				urlModel: 'evidences',
+				addExisting: {
+					parentField: 'documents'
+				}
+			},
+			{
+				field: 'genericcollection',
+				urlModel: 'security-exceptions',
+				addExisting: { parentField: 'security_exceptions' }
+			},
+			{
+				field: 'genericcollection',
+				urlModel: 'policies',
+				addExisting: { parentField: 'policies' }
+			}
+		],
+		selectFields: [{ field: 'folder' }, { field: 'ref_id' }]
+	},
+	accreditations: {
+		name: 'accreditation',
+		localName: 'accreditation',
+		localNamePlural: 'accreditations',
+		verboseName: 'Accreditation',
+		verboseNamePlural: 'Accreditations',
+		endpointUrl: 'pmbok/accreditations',
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'folder' },
+			{ field: 'linked_collection', urlModel: 'generic-collections' },
+			{ field: 'checklist', urlModel: 'compliance-assessments' },
+			{ field: 'commission_date', type: 'date' },
+			{ field: 'duration_months' },
+			{ field: 'expiry_date', type: 'date' },
+			{ field: 'updated_at', type: 'datetime' }
+		],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'author', urlModel: 'actors' },
+			{ field: 'checklist', urlModel: 'compliance-assessments' },
+			{ field: 'linked_collection', urlModel: 'generic-collections' },
+			{ field: 'authority', urlModel: 'entities' },
+			{ field: 'decision_evidence', urlModel: 'evidences' }
+		],
+		selectFields: [
+			{ field: 'folder' },
+			{ field: 'ref_id' },
+			{ field: 'status', endpointUrl: 'pmbok/accreditations' },
+			{ field: 'category', endpointUrl: 'pmbok/accreditations' }
+		],
+		filters: [
+			{ field: 'folder' },
+			{ field: 'status' },
+			{ field: 'category' },
+			{ field: 'author' },
+			{ field: 'linked_collection' },
+			{ field: 'checklist' },
+			{ field: 'filtering_labels' }
+		]
+	},
+	projects: {
+		name: 'project',
+		localName: 'project',
+		localNamePlural: 'projects',
+		verboseName: 'Project',
+		verboseNamePlural: 'Projects',
+		endpointUrl: 'pmbok/projects',
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'folder' },
+			{ field: 'ref_id' },
+			{ field: 'ref_link' },
+			{ field: 'owner' },
+			{ field: 'sponsor' },
+			{ field: 'status' },
+			{ field: 'priority' },
+			{ field: 'health' },
+			{ field: 'start_date', type: 'date' },
+			{ field: 'end_date', type: 'date' },
+			{ field: 'eta', type: 'date' },
+			{ field: 'closed_at', type: 'date' },
+			{ field: 'progress' },
+			{ field: 'budget' },
+			{ field: 'currency' },
+			{ field: 'linked_collection', urlModel: 'generic-collections' },
+			{ field: 'parent_project', urlModel: 'projects' },
+			{ field: 'updated_at', type: 'datetime' }
+		],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'owner', urlModel: 'actors' },
+			{ field: 'sponsor', urlModel: 'actors' },
+			{ field: 'linked_collection', urlModel: 'generic-collections' },
+			{ field: 'parent_project', urlModel: 'projects' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'status', urlModel: 'terminologies' },
+			{ field: 'health', urlModel: 'terminologies' }
+		],
+		selectFields: [
+			{ field: 'folder' },
+			{ field: 'ref_id' },
+			{ field: 'kind', endpointUrl: 'pmbok/projects' },
+			{ field: 'priority', endpointUrl: 'pmbok/projects' }
+		],
+		filters: [
+			{ field: 'folder' },
+			{ field: 'kind' },
+			{ field: 'status' },
+			{ field: 'priority' },
+			{ field: 'health' },
+			{ field: 'owner' },
+			{ field: 'sponsor' },
+			{ field: 'parent_project' },
+			{ field: 'linked_collection' },
+			{ field: 'filtering_labels' }
+		]
+	},
+	'responsibility-roles': {
+		name: 'responsibilityrole',
+		localName: 'responsibilityRole',
+		localNamePlural: 'responsibilityRoles',
+		verboseName: 'Responsibility role',
+		verboseNamePlural: 'Responsibility roles',
+		endpointUrl: 'pmbok/responsibility-roles',
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'folder' },
+			{ field: 'code' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'taxonomy' },
+			{ field: 'color' },
+			{ field: 'order' },
+			{ field: 'builtin' },
+			{ field: 'is_visible' }
+		],
+		foreignKeyFields: [{ field: 'folder', urlModel: 'folders' }],
+		selectFields: [{ field: 'taxonomy', endpointUrl: 'pmbok/responsibility-roles' }],
+		filters: [{ field: 'folder' }, { field: 'taxonomy' }, { field: 'is_visible' }]
+	},
+	'responsibility-matrices': {
+		name: 'responsibilitymatrix',
+		localName: 'responsibilityMatrix',
+		localNamePlural: 'responsibilityMatrices',
+		verboseName: 'Responsibility matrix',
+		verboseNamePlural: 'Responsibility matrices',
+		endpointUrl: 'pmbok/responsibility-matrices',
+		detailViewFields: [
+			{ field: 'folder' },
+			{ field: 'ref_id' },
+			{ field: 'preset' },
+			{ field: 'updated_at', type: 'datetime' }
+		],
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'roles', urlModel: 'responsibility-roles' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		],
+		selectFields: [{ field: 'preset', endpointUrl: 'pmbok/responsibility-matrices' }],
+		filters: [
+			{ field: 'folder' },
+			{ field: 'preset' },
+			{ field: 'roles' },
+			{ field: 'filtering_labels' }
+		]
+	},
+	'responsibility-matrix-activities': {
+		name: 'responsibilitymatrixactivity',
+		localName: 'responsibilityActivity',
+		localNamePlural: 'responsibilityActivities',
+		verboseName: 'Responsibility activity',
+		verboseNamePlural: 'Responsibility activities',
+		endpointUrl: 'pmbok/responsibility-matrix-activities',
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'matrix', urlModel: 'responsibility-matrices' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'order' }
+		],
+		foreignKeyFields: [{ field: 'matrix', urlModel: 'responsibility-matrices' }],
+		filters: [{ field: 'matrix' }]
+	},
+	'responsibility-matrix-actors': {
+		name: 'responsibilitymatrixactor',
+		localName: 'responsibilityMatrixActor',
+		localNamePlural: 'responsibilityMatrixActors',
+		verboseName: 'Matrix actor',
+		verboseNamePlural: 'Matrix actors',
+		endpointUrl: 'pmbok/responsibility-matrix-actors',
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'matrix', urlModel: 'responsibility-matrices' },
+			{ field: 'actor', urlModel: 'actors' },
+			{ field: 'order' }
+		],
+		foreignKeyFields: [
+			{ field: 'matrix', urlModel: 'responsibility-matrices' },
+			{ field: 'actor', urlModel: 'actors' }
+		],
+		filters: [{ field: 'matrix' }, { field: 'actor' }]
+	},
+	'responsibility-assignments': {
+		name: 'responsibilityassignment',
+		localName: 'responsibilityAssignment',
+		localNamePlural: 'responsibilityAssignments',
+		verboseName: 'Responsibility assignment',
+		verboseNamePlural: 'Responsibility assignments',
+		endpointUrl: 'pmbok/responsibility-assignments',
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'activity', urlModel: 'responsibility-matrix-activities' },
+			{ field: 'actor', urlModel: 'actors' },
+			{ field: 'role', urlModel: 'responsibility-roles' }
+		],
+		foreignKeyFields: [
+			{ field: 'activity', urlModel: 'responsibility-matrix-activities' },
+			{ field: 'actor', urlModel: 'actors' },
+			{ field: 'role', urlModel: 'responsibility-roles' }
+		],
+		filters: [{ field: 'activity' }, { field: 'actor' }, { field: 'role' }]
+	},
+	workflows: {
+		name: 'workflow',
+		localName: 'workflow',
+		localNamePlural: 'workflows',
+		verboseName: 'Workflow',
+		verboseNamePlural: 'Workflows',
+		endpointUrl: 'workflows/workflows',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		],
+		filters: [{ field: 'folder' }, { field: 'filtering_labels' }]
+	},
+	'workflow-versions': {
+		name: 'workflowversion',
+		localName: 'workflowVersion',
+		localNamePlural: 'workflowVersions',
+		verboseName: 'Workflow version',
+		verboseNamePlural: 'Workflow versions',
+		endpointUrl: 'workflows/workflow-versions',
+		foreignKeyFields: [
+			{ field: 'workflow', urlModel: 'workflows' },
+			{ field: 'folder', urlModel: 'folders' },
+			{ field: 'published_by', urlModel: 'users' },
+			{ field: 'run_as', urlModel: 'users' }
+		],
+		selectFields: [{ field: 'status' }],
+		filters: [{ field: 'workflow' }, { field: 'status' }]
+	},
+	'metric-definitions': {
+		name: 'metricdefinition',
+		localName: 'metricDefinition',
+		localNamePlural: 'metricDefinitions',
+		verboseName: 'Metric definition',
+		verboseNamePlural: 'Metric definitions',
+		endpointUrl: 'metrology/metric-definitions',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'library', urlModel: 'libraries' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'unit', urlModel: 'terminologies' }
+		],
+		selectFields: [{ field: 'category' }],
+		reverseForeignKeyFields: [
+			{
+				field: 'metric_definition',
+				urlModel: 'metric-instances'
+			}
+		],
+		filters: [
+			{ field: 'folder' },
+			{ field: 'category' },
+			{ field: 'library' },
+			{ field: 'provider' }
+		]
+	},
+	'metric-instances': {
+		name: 'metricinstance',
+		localName: 'metricInstance',
+		localNamePlural: 'metricInstances',
+		verboseName: 'Metric instance',
+		verboseNamePlural: 'Metric instances',
+		endpointUrl: 'metrology/metric-instances',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'metric_definition', urlModel: 'metric-definitions' },
+			{ field: 'unit', urlModel: 'terminologies' },
+			{ field: 'owner', urlModel: 'actors' },
+			{ field: 'organisation_objectives', urlModel: 'organisation-objectives' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' },
+			{ field: 'evidences', urlModel: 'evidences' }
+		],
+		selectFields: [{ field: 'status' }, { field: 'collection_frequency' }],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'ref_id' },
+			{ field: 'name' },
+			{ field: 'description' },
+			{ field: 'folder' },
+			{ field: 'metric_definition' },
+			{ field: 'unit' },
+			{ field: 'owner' },
+			{ field: 'organisation_objectives' },
+			{ field: 'status' },
+			{ field: 'collection_frequency' },
+			{ field: 'target_value' },
+			{ field: 'current_value' },
+			{ field: 'last_computed_at', type: 'datetime' },
+			{ field: 'evidences' },
+			{ field: 'filtering_labels' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' }
+		],
+		reverseForeignKeyFields: [
+			{
+				field: 'metric_instance',
+				urlModel: 'custom-metric-samples',
+				fieldForInitialData: ['metric_definition', 'evidences']
+			}
+		],
+		filters: [
+			{ field: 'folder' },
+			{ field: 'metric_definition' },
+			{ field: 'status' },
+			{ field: 'collection_frequency' },
+			{ field: 'owner' }
+		]
+	},
+	'custom-metric-samples': {
+		name: 'custommetricsample',
+		localName: 'customMetricSample',
+		localNamePlural: 'customMetricSamples',
+		verboseName: 'Custom metric sample',
+		verboseNamePlural: 'Custom metric samples',
+		endpointUrl: 'metrology/custom-metric-samples',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'metric_instance', urlModel: 'metric-instances' },
+			{ field: 'evidence_revision', urlModel: 'evidence-revisions' }
+		],
+		detailViewFields: [
+			{ field: 'id' },
+			{ field: 'metric_instance' },
+			{ field: 'timestamp', type: 'datetime' },
+			{ field: 'display_value' },
+			{ field: 'observation' },
+			{ field: 'evidence_revision' },
+			{ field: 'folder' },
+			{ field: 'created_at', type: 'datetime' },
+			{ field: 'updated_at', type: 'datetime' }
+		],
+		filters: [{ field: 'folder' }, { field: 'metric_instance' }]
+	},
+	dashboards: {
+		name: 'dashboard',
+		localName: 'dashboard',
+		localNamePlural: 'dashboards',
+		verboseName: 'Dashboard',
+		verboseNamePlural: 'Dashboards',
+		endpointUrl: 'metrology/dashboards',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'filtering_labels', urlModel: 'filtering-labels' }
+		],
+		filters: [{ field: 'folder' }],
+		reverseForeignKeyFields: [{ field: 'widgets', urlModel: 'dashboard-widgets' }]
+	},
+	'dashboard-widgets': {
+		name: 'dashboardwidget',
+		localName: 'dashboardWidget',
+		localNamePlural: 'dashboardWidgets',
+		verboseName: 'Dashboard widget',
+		verboseNamePlural: 'Dashboard widgets',
+		endpointUrl: 'metrology/dashboard-widgets',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'dashboard', urlModel: 'dashboards' },
+			{ field: 'metric_instance', urlModel: 'metric-instances' }
+		],
+		selectFields: [
+			{ field: 'chart_type', valueType: 'string', detail: false },
+			{ field: 'time_range', valueType: 'string', detail: false },
+			{ field: 'aggregation', valueType: 'string', detail: false }
+		],
+		filters: [{ field: 'folder' }, { field: 'dashboard' }, { field: 'metric_instance' }]
+	},
+	'dashboard-text-widgets': {
+		name: 'dashboardwidget',
+		localName: 'dashboardTextWidget',
+		localNamePlural: 'dashboardTextWidgets',
+		verboseName: 'Dashboard text widget',
+		verboseNamePlural: 'Dashboard text widgets',
+		endpointUrl: 'metrology/dashboard-widgets',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'dashboard', urlModel: 'dashboards' },
+			{ field: 'metric_instance', urlModel: 'metric-instances' }
+		]
+	},
+	'dashboard-builtin-widgets': {
+		name: 'dashboardwidget',
+		localName: 'dashboardBuiltinWidget',
+		localNamePlural: 'dashboardBuiltinWidgets',
+		verboseName: 'Dashboard builtin widget',
+		verboseNamePlural: 'Dashboard builtin widgets',
+		endpointUrl: 'metrology/dashboard-widgets',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'dashboard', urlModel: 'dashboards' },
+			{ field: 'metric_instance', urlModel: 'metric-instances' }
+		],
+		selectFields: [
+			{ field: 'chart_type', valueType: 'string', detail: false },
+			{ field: 'time_range', valueType: 'string', detail: false },
+			{ field: 'aggregation', valueType: 'string', detail: false }
+		]
+	},
+	journeys: {
+		name: 'presetjourney',
+		localName: 'journey',
+		localNamePlural: 'journeys',
+		verboseName: 'Journey',
+		verboseNamePlural: 'Journeys',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' },
+			{ field: 'preset', urlModel: 'presets' },
+			{ field: 'applied_by', urlModel: 'users' }
+		],
+		filters: [{ field: 'folder' }, { field: 'preset' }]
+	},
+	presets: {
+		name: 'preset',
+		localName: 'preset',
+		localNamePlural: 'presets',
+		verboseName: 'Preset',
+		verboseNamePlural: 'Presets',
+		foreignKeyFields: [
+			{ field: 'folder', urlModel: 'folders', urlParams: 'content_type=DO&content_type=GL' }
+		]
+	}
+};
+
+export const CUSTOM_ACTIONS_COMPONENT = Symbol('CustomActions');
+
+const FIELD_COMPONENT_MAP = {
+	notifications: {
+		// No value in the payload; NotificationTitle computes it.
+		title: NotificationTitle
+	},
+	commitments: {
+		target: CommitmentTarget
+	},
+	'task-templates': {
+		schedule: ScheduleDisplay
+	},
+	evidences: {
+		attachment: EvidenceFileName
+	},
+	'evidence-revisions': {
+		attachment: EvidenceFileName
+	},
+	'stored-libraries': {
+		locales: LanguageDisplay,
+		objects_meta: LibraryOverview,
+		[CUSTOM_ACTIONS_COMPONENT]: LibraryActions
+	},
+	'loaded-libraries': {
+		locales: LanguageDisplay,
+		objects_meta: LibraryOverview,
+		[CUSTOM_ACTIONS_COMPONENT]: LibraryActions
+	},
+	'user-groups': {
+		name: UserGroupNameDisplay
+	},
+	'quantitative-risk-hypotheses': {
+		lec_data: LecChartPreview
+	},
+	frameworks: {
+		name: FrameworkName
+	},
+	workflows: {
+		trigger_types: TriggerTypesDisplay
+	},
+	entities: {
+		tier: TierBadge
+	},
+	solutions: {
+		tier: TierBadge
+	},
+	'entity-tier-changes': {
+		tier: TierBadge,
+		previous_tier: TierBadge,
+		source: TierSource
+	},
+	'solution-tier-changes': {
+		tier: TierBadge,
+		previous_tier: TierBadge,
+		source: TierSource
+	},
+	processings: {
+		dpia_required: DpiaRequiredBadge
+	},
+	vulnerabilities: {
+		state: VulnerabilitySlaState
+	},
+	'dpia-requirement-changes': {
+		dpia_required: DpiaRequiredBadge,
+		previous_dpia_required: DpiaRequiredBadge,
+		source: DpiaRequirementSource
+	}
+};
+
+/**
+ * Default fields rendered and edited as Markdown.
+ * Model-specific fields can be added through `markdownFields`.
+ */
+const DEFAULT_MARKDOWN_FIELDS = ['description', 'observation', 'annotation', 'justification'];
+
+export function getMarkdownFields(model: urlModel | string | undefined): Set<string> {
+	const modelSpecific = (model ? getModelInfo(model)?.markdownFields : undefined) ?? [];
+	return new Set([...DEFAULT_MARKDOWN_FIELDS, ...modelSpecific]);
+}
+
+export function getFieldComponentMap(URLModel: string) {
+	const fieldComponentMap = FIELD_COMPONENT_MAP[URLModel] ?? {};
+	const listViewConfig = listViewFields[URLModel] ?? { body: [] };
+
+	const markdownFields = getMarkdownFields(URLModel);
+	for (const field of [...listViewConfig.body, ...(listViewConfig.optionalFields?.body ?? [])]) {
+		if (markdownFields.has(field) && !fieldComponentMap[field]) {
+			fieldComponentMap[field] = MarkdownDescription;
+		}
+	}
+	return fieldComponentMap;
+}
+
+// Il faut afficher le tag "draft" pour la column name !
+
+interface TagConfig {
+	text: string;
+	cssClasses: string;
+}
+
+interface FieldColoredTagMap {
+	[key: string]: {
+		[key: string]: {
+			keys: { [key: string]: { [key: string]: TagConfig } };
+			values?: { [key: string]: TagConfig };
+		};
+	};
+}
+
+export const FIELD_COLORED_TAG_MAP: FieldColoredTagMap = {
+	policies: {
+		name: {
+			keys: {
+				status: {
+					to_do: { text: 'toDo', cssClasses: 'badge bg-blue-200' },
+					in_progress: { text: 'inProgress', cssClasses: 'badge bg-yellow-300' },
+					active: { text: 'active', cssClasses: 'badge bg-green-200' },
+					on_hold: { text: 'onHold', cssClasses: 'badge bg-surface-300-700' },
+					deprecated: { text: 'deprecated', cssClasses: 'badge bg-red-300' },
+					'--': { text: 'undefined', cssClasses: 'badge bg-surface-300-700' }
+				},
+				priority: {
+					P1: { text: '', cssClasses: 'fa-solid fa-flag text-red-500' },
+					P2: { text: '', cssClasses: 'fa-solid fa-flag text-orange-500' },
+					P3: { text: '', cssClasses: 'fa-solid fa-flag text-blue-500' },
+					P4: { text: '', cssClasses: 'fa-solid fa-flag text-surface-600-400' },
+					'--': { text: '', cssClasses: '' }
+				}
+			}
+		}
+	},
+	'risk-assessments': {
+		name: {
+			keys: {
+				status: {
+					planned: { text: 'planned', cssClasses: 'badge bg-indigo-300' },
+					in_progress: { text: 'inProgress', cssClasses: 'badge bg-yellow-300' },
+					in_review: { text: 'inReview', cssClasses: 'badge bg-cyan-300' },
+					done: { text: 'done', cssClasses: 'badge bg-lime-300' },
+					deprecated: { text: 'deprecated', cssClasses: 'badge bg-orange-300' }
+				}
+			}
+		}
+	},
+	'risk-scenarios': {
+		name: {
+			keys: {
+				treatment: {
+					open: { text: 'open', cssClasses: 'badge bg-green-300' },
+					mitigate: { text: 'mitigate', cssClasses: 'badge bg-lime-200' },
+					accept: { text: 'accept', cssClasses: 'badge bg-green-200' },
+					avoid: { text: 'avoid', cssClasses: 'badge bg-red-200' },
+					transfer: { text: 'transfer', cssClasses: 'badge bg-yellow-300' },
+					cancelled: { text: 'cancelled', cssClasses: 'badge bg-gray-300' }
+				}
+			}
+		}
+	},
+	'compliance-assessments': {
+		name: {
+			keys: {
+				status: {
+					planned: { text: 'planned', cssClasses: 'badge bg-indigo-300' },
+					in_progress: { text: 'inProgress', cssClasses: 'badge bg-yellow-300' },
+					in_review: { text: 'inReview', cssClasses: 'badge bg-cyan-300' },
+					done: { text: 'done', cssClasses: 'badge bg-lime-300' },
+					deprecated: { text: 'deprecated', cssClasses: 'badge bg-orange-300' }
+				}
+			}
+		}
+	},
+	assets: {
+		name: {
+			keys: {
+				type: {
+					Primary: { text: 'primary', cssClasses: 'badge bg-blue-200' }
+				}
+			}
+		}
+	},
+	'applied-controls': {
+		name: {
+			keys: {
+				status: {
+					to_do: { text: 'toDo', cssClasses: 'badge bg-blue-200' },
+					in_progress: { text: 'inProgress', cssClasses: 'badge bg-yellow-300' },
+					active: { text: 'active', cssClasses: 'badge bg-green-200' },
+					on_hold: { text: 'onHold', cssClasses: 'badge bg-surface-300-700' },
+					deprecated: { text: 'deprecated', cssClasses: 'badge bg-red-300' },
+					'--': { text: 'undefined', cssClasses: 'badge bg-surface-300-700' }
+				},
+				priority: {
+					P1: { text: '', cssClasses: 'fa-solid fa-flag text-red-500' },
+					P2: { text: '', cssClasses: 'fa-solid fa-flag text-orange-500' },
+					P3: { text: '', cssClasses: 'fa-solid fa-flag text-blue-500' },
+					P4: { text: '', cssClasses: 'fa-solid fa-flag text-surface-600-400' },
+					'--': { text: '', cssClasses: '' }
+				}
+			}
+		}
+	},
+	perimeters: {
+		name: {
+			keys: {
+				lc_status: {
+					Dropped: { text: 'dropped', cssClasses: 'badge bg-red-200' }
+				}
+			}
+		}
+	},
+	users: {
+		email: {
+			keys: {
+				keep_local_login: {
+					true: { text: 'Local', cssClasses: 'badge bg-violet-200' }
+				},
+				is_third_party: {
+					true: { text: 'Third party', cssClasses: 'badge bg-stone-200' }
+				}
+			}
+		}
+	}
+};
+
+export const getModelInfo = (model: urlModel | string): ModelMapEntry => {
+	const baseModel = model.split('_')[0];
+	const map = URL_MODEL_MAP[model] || URL_MODEL_MAP[baseModel] || {};
+	// The urlmodel of {model}_duplicate must be {model}
+	map['urlModel'] = baseModel;
+	return map;
+};
+
+/** Django model name -> route segment, derived from URL_MODEL_MAP. */
+export const urlModelForDjangoName = (name: string): string | null => {
+	const hit = Object.entries(URL_MODEL_MAP).find(([, entry]) => entry.name === name);
+	return hit ? hit[0] : null;
+};
+
+/** Human label for a Django model name, from the same map. */
+export const localNameForDjangoName = (name: string): string | null => {
+	const hit = Object.values(URL_MODEL_MAP).find((entry) => entry.name === name);
+	return hit ? (hit.localName ?? hit.verboseName ?? null) : null;
+};
+
+export const urlParamModelVerboseName = (model: string): string => {
+	const modelInfo = getModelInfo(model);
+	return modelInfo?.localName || modelInfo?.verboseName || model;
+};
+
+export const urlParamModelDescriptionKey = (model: string): string => {
+	// Convert model URL to camelCase description key
+	// e.g., "risk-assessments" → "riskAssessmentsDescription"
+	const camelCase = model
+		.split('-')
+		.map((word, index) => (index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)))
+		.join('');
+	return `${camelCase}Description`;
+};
+
+export const urlParamModelForeignKeyFields = (model: string): ForeignKeyField[] => {
+	return URL_MODEL_MAP[model]?.foreignKeyFields || [];
+};
+
+export const urlParamModelSelectFields = (model: string): SelectField[] => {
+	return URL_MODEL_MAP[model]?.selectFields || [];
+};
+
+export function processObject(
+	data: Record<string, any>,
+	regex: RegExp,
+	computeReplacement: (matchedString: string) => string
+): void {
+	for (const key in data) {
+		if (!Object.prototype.hasOwnProperty.call(data, key)) continue;
+
+		if (typeof data[key] === 'object' && data[key] !== null) {
+			processObject(data[key], regex, computeReplacement); // Recursive call for objects
+		} else if (typeof data[key] === 'string') {
+			data[key] = data[key].replace(regex, (match: string) => computeReplacement(match)); // Compute replacement for matched strings
+		} else if (Array.isArray(data[key])) {
+			data[key] = data[key].map(
+				(item: any) =>
+					typeof item === 'string'
+						? item.replace(regex, (match) => computeReplacement(match)) // Compute replacement for matched strings in arrays
+						: processObject(item, regex, computeReplacement) // Recursive call for objects in arrays
+			);
+		}
+	}
+}

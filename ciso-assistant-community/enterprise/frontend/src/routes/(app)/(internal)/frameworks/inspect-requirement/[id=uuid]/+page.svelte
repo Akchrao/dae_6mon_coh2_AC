@@ -1,0 +1,313 @@
+<script lang="ts">
+	import type { PageData } from './$types';
+	import { Accordion, Progress } from '@skeletonlabs/skeleton-svelte';
+	import Anchor from '#lib/components/Anchor/Anchor.svelte';
+	import { complianceResultColorMap, complianceStatusColorMap } from '#lib/utils/constants.js';
+	import { safeTranslate } from '#lib/utils/i18n.js';
+	import * as m from '#paraglide/messages.js';
+	import { darkenColor } from '#lib/utils/helpers.js';
+	import { page } from '$app/state';
+	import { displayScoreColor, formatScoreValue } from '#lib/utils/helpers.js';
+	import MarkdownRenderer from '#lib/components/MarkdownRenderer.svelte';
+	import ScorePair from '#lib/components/ComplianceAssessment/ScorePair.svelte';
+
+	interface Props {
+		data: PageData;
+	}
+
+	let { data }: Props = $props();
+
+	// Create a map for faster lookups
+	let memoizedRequirementAssessments = $derived(
+		new Map(data.requirementAssessments.map((ra) => [ra.compliance_assessment.id, ra]))
+	);
+
+	function findRequirementAssessment(audit: string): any {
+		return memoizedRequirementAssessments.get(audit);
+	}
+
+	// Store only the current indices instead of duplicating the entire data structure
+	let currentIndices = $derived(data.metrics.map((domain) => domain.perimeters.map(() => 0)));
+
+	function updateCurrentIndex(domainIndex: number, perimeterIndex: number, increment: number) {
+		const perimeter = data.metrics[domainIndex].perimeters[perimeterIndex];
+		const newIndex =
+			(currentIndices[domainIndex][perimeterIndex] +
+				increment +
+				perimeter.compliance_assessments.length) %
+			perimeter.compliance_assessments.length;
+
+		// Update only the specific index that changed
+		currentIndices[domainIndex][perimeterIndex] = newIndex;
+		currentIndices = [...currentIndices]; // Trigger reactivity
+	}
+
+	function hasMultipleAssessments(perimeter: any) {
+		return perimeter.compliance_assessments.length > 1;
+	}
+
+	// Style helpers
+	function getBadgeStyle(color: string) {
+		return `background-color: ${color + '44'}; color: ${darkenColor(color, 0.3)};`;
+	}
+
+	let openAccordionItems = $state(['requirement']);
+</script>
+
+<div
+	class="card px-6 py-4 bg-surface-50-950 flex flex-col justify-center items-center shadow-lg w-full rounded-lg"
+>
+	{#if data.requirementAssessments.length > 0}
+		{@const firstAssessment = data.requirementAssessments[0]}
+		<div class="flex flex-col text-center pt-2 pb-4">
+			{#if firstAssessment?.name}
+				<span class="text-2xl font-black text-surface-800-200">{firstAssessment.name}</span>
+			{/if}
+			{#if firstAssessment?.description}
+				<div class="text-surface-600-400 blockquote">
+					<MarkdownRenderer content={firstAssessment.description} />
+				</div>
+			{/if}
+		</div>
+
+		{#each data.metrics as domain, domainIndex}
+			<Accordion
+				class="my-4"
+				value={openAccordionItems}
+				onValueChange={(e) => (openAccordionItems = e.value)}
+				multiple
+			>
+				<Accordion.Item value="requirement">
+					<Accordion.ItemTrigger class="flex w-full items-center cursor-pointer">
+						<i class="fa-solid fa-sitemap text-primary-500 mr-2"></i>
+						<div class="flex flex-row flex-1 space-x-4 items-center text-left">
+							<span class="font-bold text-lg text-surface-800-200">{domain.name}</span>
+
+							<!-- Compliance section -->
+							<div>
+								<div class="flex items-center space-x-2 text-sm">
+									<p class="text-surface-600-400">{m.compliantRequirementsSemiColon()}</p>
+									<span class="font-bold text-green-500">
+										{domain.compliance_result.compliance_percentage}%
+									</span>
+									<span class="text-sm ml-2 text-surface-600-400">
+										({domain.compliance_result.compliant_count} / {domain.compliance_result
+											.total_count})
+									</span>
+								</div>
+								<div class="h-2 bg-surface-200-800 rounded-full mt-2">
+									<div
+										class="h-full bg-green-500 rounded-full"
+										style="width: {domain.compliance_result.compliance_percentage}%;"
+									></div>
+								</div>
+							</div>
+
+							<!-- Progress section -->
+							<div>
+								<div class="flex items-center space-x-2 text-sm">
+									<p class="text-surface-600-400">{m.requirementsProgressionSemiColon()}</p>
+									<span class="font-bold text-blue-500">
+										{domain.assessment_progress.assessment_completion_rate}%
+									</span>
+									<span class="text-sm ml-2 text-surface-600-400">
+										({domain.assessment_progress.assessed_count} / {domain.assessment_progress
+											.total_count})
+									</span>
+								</div>
+								<div class="h-2 bg-surface-200-800 rounded-full mt-2">
+									<div
+										class="h-full bg-blue-500 rounded-full"
+										style="width: {domain.assessment_progress.assessment_completion_rate}%;"
+									></div>
+								</div>
+							</div>
+						</div>
+						<Accordion.ItemIndicator
+							class="transition-transform duration-200 data-[state=open]:rotate-0 data-[state=closed]:-rotate-90"
+							><svg
+								xmlns="http://www.w3.org/2000/svg"
+								width="14px"
+								height="14px"
+								viewBox="0 0 448 512"
+								><path
+									d="M201.4 374.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 306.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"
+								/></svg
+							></Accordion.ItemIndicator
+						>
+					</Accordion.ItemTrigger>
+					<Accordion.ItemContent>
+						<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+							{#each domain.perimeters as perimeter, perimeterIndex}
+								{@const assessment =
+									perimeter.compliance_assessments[currentIndices[domainIndex][perimeterIndex]]}
+								{@const requirementAssessment = findRequirementAssessment(assessment.id)}
+
+								{#if requirementAssessment}
+									<div class="flex flex-col p-4 bg-surface-100-900 shadow-md rounded-lg space-y-2">
+										<span class="font-bold text-lg text-surface-800-200">
+											<i class="fa-solid fa-cubes mr-2 text-primary-500"></i>
+											{perimeter.name}
+										</span>
+
+										<div class="flex flex-col items-center space-y-2 h-full">
+											{#if hasMultipleAssessments(perimeter)}
+												<div class="flex w-full items-center justify-between space-x-4">
+													<button
+														aria-label="Previous assessment"
+														class="px-4 bg-surface-200-800 rounded hover:bg-surface-300-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+														onclick={() => updateCurrentIndex(domainIndex, perimeterIndex, -1)}
+													>
+														<i class="fa-solid fa-arrow-left"></i>
+													</button>
+
+													<Anchor
+														breadcrumbAction="push"
+														href={`/compliance-assessments/${assessment.id}?next=${page.url.pathname}`}
+														label={assessment.name}
+														class="font-semibold text-lg text-primary-500 whitespace-nowrap text-ellipsis overflow-hidden"
+													>
+														<i class="fa-solid fa-list-check mr-2 text-surface-800-200"></i>
+														{assessment.name} - {assessment.version}
+													</Anchor>
+
+													<button
+														aria-label="Next assessment"
+														class="px-4 bg-surface-200-800 rounded hover:bg-surface-300-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+														onclick={() => updateCurrentIndex(domainIndex, perimeterIndex, 1)}
+													>
+														<i class="fa-solid fa-arrow-right"></i>
+													</button>
+												</div>
+											{:else}
+												<div class="flex w-full items-center justify-center">
+													<Anchor
+														breadcrumbAction="push"
+														href={`/compliance-assessments/${assessment.id}?next=${page.url.pathname}`}
+														label={assessment.name}
+														class="font-semibold text-lg text-primary-500 whitespace-nowrap text-ellipsis overflow-hidden"
+													>
+														<i class="fa-solid fa-list-check mr-2 text-surface-800-200"></i>
+														{assessment.name} - {assessment.version}
+													</Anchor>
+												</div>
+											{/if}
+
+											<!-- Requirement Assessment Card -->
+											<Anchor
+												breadcrumbAction="push"
+												href={`/requirement-assessments/${requirementAssessment.id}?next=${page.url.pathname}`}
+												label={requirementAssessment.name}
+												class="flex flex-col items-center justify-center space-y-2 border w-full h-full p-2 rounded-lg bg-surface-200-800 shadow-md hover:border-2"
+												style="border-color: {complianceResultColorMap[
+													requirementAssessment.result
+												]};
+													background-color: {complianceResultColorMap[requirementAssessment.result] + '10'};"
+											>
+												<div class="flex flex-row space-x-2">
+													<span
+														class="badge h-fit whitespace-nowrap w-fit"
+														style={getBadgeStyle(
+															complianceStatusColorMap[requirementAssessment.status]
+														)}
+													>
+														{safeTranslate(requirementAssessment.status)}
+													</span>
+													<span
+														class="badge h-fit whitespace-nowrap w-fit"
+														style={getBadgeStyle(
+															complianceResultColorMap[requirementAssessment.result]
+														)}
+													>
+														{safeTranslate(requirementAssessment.result)}
+													</span>
+												</div>
+
+												{#if requirementAssessment.is_scored}
+													<div class="flex flex-row space-x-2">
+														<ScorePair>
+															{#snippet implementation()}
+																<div
+																	class="shrink-0 relative"
+																	title={assessment.show_documentation_score
+																		? m.implementationScore()
+																		: m.score()}
+																>
+																	<Progress
+																		value={formatScoreValue(
+																			requirementAssessment.score,
+																			assessment.max_score
+																		)}
+																		min={0}
+																		max={100}
+																	>
+																		<Progress.Circle class="[--size:--spacing(10)]">
+																			<Progress.CircleTrack />
+																			<Progress.CircleRange
+																				class={displayScoreColor(
+																					requirementAssessment.score,
+																					assessment.max_score
+																				)}
+																			/>
+																		</Progress.Circle>
+																		<div class="absolute inset-0 flex items-center justify-center">
+																			<span class="text-xs font-bold"
+																				>{requirementAssessment.score}</span
+																			>
+																		</div>
+																	</Progress>
+																</div>
+															{/snippet}
+															{#snippet documentation()}
+																{#if assessment.show_documentation_score}
+																	<div class="shrink-0 relative" title={m.documentationScore()}>
+																		<Progress
+																			value={formatScoreValue(
+																				requirementAssessment.documentation_score,
+																				assessment.max_score
+																			)}
+																			min={0}
+																			max={100}
+																		>
+																			<Progress.Circle class="[--size:--spacing(10)]">
+																				<Progress.CircleTrack />
+																				<Progress.CircleRange
+																					class={displayScoreColor(
+																						requirementAssessment.documentation_score,
+																						assessment.max_score
+																					)}
+																				/>
+																			</Progress.Circle>
+																			<div
+																				class="absolute inset-0 flex items-center justify-center"
+																			>
+																				<span class="text-xs font-bold"
+																					>{requirementAssessment.documentation_score}</span
+																				>
+																			</div>
+																		</Progress>
+																	</div>
+																{/if}
+															{/snippet}
+														</ScorePair>
+													</div>
+												{/if}
+											</Anchor>
+										</div>
+									</div>
+								{/if}
+							{/each}
+						</div>
+					</Accordion.ItemContent>
+				</Accordion.Item>
+			</Accordion>
+		{/each}
+	{:else}
+		<div class="flex flex-col items-center justify-center h-full">
+			<div class="text-center">
+				<h1 class="text-2xl font-bold">{m.noRequirementFound()}</h1>
+				<p class="text-surface-600-400">{m.noAuditForTheFramework()}</p>
+			</div>
+		</div>
+	{/if}
+</div>

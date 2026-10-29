@@ -1,0 +1,755 @@
+from typing import List, Type, Set, Dict, Optional, Iterable
+
+import django.apps
+from django.contrib.contenttypes.models import ContentType
+from rest_framework import serializers
+from django.db.models import Model, Q
+from django.db.models.deletion import Collector
+from collections import defaultdict
+
+from iam.models import Folder
+from rest_framework.exceptions import ValidationError
+
+from core.models import (
+    Answer,
+    QuickForm,
+    QuickFormResponse,
+    Asset,
+    AppliedControl,
+    Campaign,
+    Evidence,
+    EvidenceRevision,
+    Finding,
+    FindingsAssessment,
+    Framework,
+    Incident,
+    Perimeter,
+    RiskAcceptance,
+    RiskAssessment,
+    RiskMatrix,
+    RiskScenario,
+    ComplianceAssessment,
+    RequirementAssessment,
+    SecurityException,
+    TaskNode,
+    TaskTemplate,
+    Vulnerability,
+    Threat,
+    ReferenceControl,
+    LoadedLibrary,
+)
+
+from ebios_rm.models import (
+    EbiosRMStudy,
+    FearedEvent,
+    RoTo,
+    OperationalScenario,
+    Stakeholder,
+    StrategicScenario,
+    AttackPath,
+)
+
+from sec_intel.models import Technique
+
+from tprm.models import (
+    Entity,
+    EntityAssessment,
+    Representative,
+    Solution,
+    SolutionSubcontractor,
+    Contract,
+)
+
+from core.serializers import (
+    AnswerImportExportSerializer,
+    QuickFormImportExportSerializer,
+    QuickFormResponseImportExportSerializer,
+    FolderImportExportSerializer,
+    AssetImportExportSerializer,
+    AppliedControlImportExportSerializer,
+    CampaignImportExportSerializer,
+    EvidenceImportExportSerializer,
+    EvidenceRevisionImportExportSerializer,
+    FindingImportExportSerializer,
+    FindingsAssessmentImportExportSerializer,
+    IncidentImportExportSerializer,
+    PerimeterImportExportSerializer,
+    RiskAcceptanceImportExportSerializer,
+    RiskAssessmentImportExportSerializer,
+    RiskScenarioImportExportSerializer,
+    ComplianceAssessmentImportExportSerializer,
+    RequirementAssessmentImportExportSerializer,
+    SecurityExceptionImportExportSerializer,
+    TaskNodeImportExportSerializer,
+    TaskTemplateImportExportSerializer,
+    VulnerabilityImportExportSerializer,
+    ThreatImportExportSerializer,
+    ReferenceControlImportExportSerializer,
+    FrameworkImportExportSerializer,
+    RiskMatrixImportExportSerializer,
+)
+
+from ebios_rm.serializers import (
+    EbiosRMStudyImportExportSerializer,
+    FearedEventImportExportSerializer,
+    RoToImportExportSerializer,
+    OperationalScenarioImportExportSerializer,
+    StakeholderImportExportSerializer,
+    StrategicScenarioImportExportSerializer,
+    AttackPathImportExportSerializer,
+)
+
+from sec_intel.serializers import TechniqueImportExportSerializer
+
+from tprm.serializers import (
+    EntityImportExportSerializer,
+    EntityAssessmentImportExportSerializer,
+    RepresentativeImportExportSerializer,
+    SolutionImportExportSerializer,
+    SolutionSubcontractorImportExportSerializer,
+    ContractImportExportSerializer,
+)
+
+from django.db import models
+from library.serializers import LoadedLibraryImportExportSerializer
+
+import structlog
+
+logger = structlog.get_logger(__name__)
+
+
+def get_all_objects():
+    """
+    Get all objects in the database.
+
+    Returns:
+    --------
+    objects: list
+        List of objects in the database.
+    """
+    objects = list()
+    for app in django.apps.apps.get_app_configs():
+        for model in app.get_models():
+            objects.extend(model.objects.all())
+    return objects
+
+
+def dump_objects(queryset: Iterable[Model], path: str, format: str = "json"):
+    """
+    Dump objects to a file.
+
+    Parameters:
+    -----------
+    queryset: Iterable[Model]
+        Queryset of objects to dump.
+    path: str
+        Path to the file to dump to.
+    format: str
+        Format to dump to. Default is 'json'.
+    """
+    serialized_objects = serializers.serialize(format, queryset)
+    if path == "-":
+        print(serialized_objects)
+    else:
+        with open(path, "w") as outfile:
+            outfile.write(serialized_objects)
+    return path
+
+
+def restore_objects(path: str, format: str = "json"):
+    """
+    Restore objects from a file.
+
+    Parameters:
+    -----------
+    path: str
+        Path to the file to restore from.
+    format: str
+        Format to restore from. Default is 'json'.
+    """
+    with open(path, "r") as infile:
+        serialized_objects = infile.read()
+    objects = serializers.deserialize(format, serialized_objects)
+    for obj in objects:
+        obj.save()
+    return path
+
+
+def app_dot_model(model: Model) -> str:
+    """
+    Get the app label and model name of a model.
+    e.g. 'app_label.model_name'
+    """
+    content_type = ContentType.objects.get_for_model(model)
+    return f"{content_type.app_label}.{content_type.model}"
+
+
+def import_export_serializer_class(model: Model) -> serializers.Serializer:
+    model_serializer_map = {
+        Folder: FolderImportExportSerializer,
+        Answer: AnswerImportExportSerializer,
+        QuickForm: QuickFormImportExportSerializer,
+        QuickFormResponse: QuickFormResponseImportExportSerializer,
+        Asset: AssetImportExportSerializer,
+        AppliedControl: AppliedControlImportExportSerializer,
+        Campaign: CampaignImportExportSerializer,
+        Evidence: EvidenceImportExportSerializer,
+        EvidenceRevision: EvidenceRevisionImportExportSerializer,
+        Finding: FindingImportExportSerializer,
+        FindingsAssessment: FindingsAssessmentImportExportSerializer,
+        Incident: IncidentImportExportSerializer,
+        Perimeter: PerimeterImportExportSerializer,
+        RiskAcceptance: RiskAcceptanceImportExportSerializer,
+        RiskAssessment: RiskAssessmentImportExportSerializer,
+        RiskScenario: RiskScenarioImportExportSerializer,
+        ComplianceAssessment: ComplianceAssessmentImportExportSerializer,
+        RequirementAssessment: RequirementAssessmentImportExportSerializer,
+        SecurityException: SecurityExceptionImportExportSerializer,
+        TaskNode: TaskNodeImportExportSerializer,
+        TaskTemplate: TaskTemplateImportExportSerializer,
+        Vulnerability: VulnerabilityImportExportSerializer,
+        Threat: ThreatImportExportSerializer,
+        Technique: TechniqueImportExportSerializer,
+        ReferenceControl: ReferenceControlImportExportSerializer,
+        EbiosRMStudy: EbiosRMStudyImportExportSerializer,
+        FearedEvent: FearedEventImportExportSerializer,
+        RoTo: RoToImportExportSerializer,
+        OperationalScenario: OperationalScenarioImportExportSerializer,
+        Stakeholder: StakeholderImportExportSerializer,
+        Entity: EntityImportExportSerializer,
+        EntityAssessment: EntityAssessmentImportExportSerializer,
+        Representative: RepresentativeImportExportSerializer,
+        Solution: SolutionImportExportSerializer,
+        SolutionSubcontractor: SolutionSubcontractorImportExportSerializer,
+        Contract: ContractImportExportSerializer,
+        StrategicScenario: StrategicScenarioImportExportSerializer,
+        AttackPath: AttackPathImportExportSerializer,
+        Framework: FrameworkImportExportSerializer,
+        RiskMatrix: RiskMatrixImportExportSerializer,
+        LoadedLibrary: LoadedLibraryImportExportSerializer,
+    }
+
+    return model_serializer_map.get(model, None)
+
+
+def get_model_dependencies(
+    model: Type[models.Model], all_models: Set[Type[models.Model]]
+) -> List[Type[models.Model]]:
+    """
+    Get all required dependencies for a model.
+
+    Args:
+        model: The model to analyze
+        all_models: Set of models to consider as valid dependencies
+
+    Returns:
+        List of model classes that this model depends on
+    """
+    dependencies = []
+
+    logger.debug("Getting model dependencies", model=model)
+    for field in model._meta.get_fields():
+        if not field.is_relation or field.related_model not in all_models:
+            continue
+
+        # Check if the relationship is required
+        is_required = (
+            isinstance(field, (models.ForeignKey, models.OneToOneField))
+        ) or isinstance(field, models.ManyToManyField)
+
+        if is_required:
+            dependencies.append(field.related_model)
+
+    return dependencies
+
+
+def build_dependency_graph(
+    models: List[Type[models.Model]],
+) -> Dict[Type[models.Model], List[Type[models.Model]]]:
+    """
+    Build a dependency graph from a list of models.
+
+    Args:
+        models: List of model classes to analyze
+
+    Returns:
+        Dictionary mapping models to their dependencies
+    """
+    models_set = set(models + [Folder])
+    graph = defaultdict(list)
+
+    logger.debug("Building dependency graph", models=models)
+
+    for model in models:
+        dependencies = get_model_dependencies(model, models_set)
+
+        logger.debug("Model dependencies", model=model, dependencies=dependencies)
+
+        if dependencies:
+            graph[model].extend(dependencies)
+
+    logger.debug("Dependency graph", graph=graph)
+    return graph
+
+
+def topological_sort(
+    graph: Dict[Type[models.Model], List[Type[models.Model]]],
+) -> List[Type[models.Model]]:
+    """
+    Perform a topological sort with cycle detection.
+
+    Args:
+        graph: Dependency graph
+
+    Returns:
+        List of models in dependency order
+
+    Raises:
+        ValidationError: If a dependency cycle is detected
+    """
+    result = []
+    permanent_marks = set()
+    temporary_marks = set()
+
+    def visit(node):
+        if node in temporary_marks:
+            cycle_path = " -> ".join(m.__name__ for m in temporary_marks)
+            raise ValidationError(f"Circular dependency detected: {cycle_path}")
+
+        if node not in permanent_marks:
+            temporary_marks.add(node)
+
+            for neighbor in graph.get(node, []):
+                if neighbor == node:
+                    continue
+                visit(neighbor)
+
+            temporary_marks.remove(node)
+            permanent_marks.add(node)
+            result.append(node)
+
+    for node in graph:
+        if node not in permanent_marks:
+            visit(node)
+
+    return result
+
+
+def get_self_referencing_field(model: Type[models.Model]) -> Optional[str]:
+    """
+    Find self-referencing field in a model.
+
+    Args:
+        model: Model class to analyze
+
+    Returns:
+        Field name if found, None otherwise
+    """
+    return next(
+        (
+            field.field.name
+            for field in model._meta.get_fields()
+            if field.related_model == model
+        ),
+        None,
+    )
+
+
+def sort_objects_by_self_reference(
+    objects: List[dict], self_ref_field: str
+) -> List[dict]:
+    """
+    Sort objects by their hierarchical relationship when the self-referencing field
+    can contain multiple parent IDs. Missing parents are ignored.
+
+    Args:
+        objects: List of object dictionaries.
+        self_ref_field: Name of the self-referencing field, which may contain a single
+                        parent ID or a list of parent IDs.
+
+    Returns:
+        List[dict]: Sorted list of objects.
+
+    Raises:
+        ValidationError: If circular references are detected.
+    """
+    object_map = {obj["id"]: obj for obj in objects}
+
+    # Build dependency graph
+    graph = defaultdict(list)
+    roots = set(object_map.keys())
+
+    for obj in objects:
+        # A nullable self-referencing FK (e.g. Entity.parent_entity,
+        # Contract.overarching_contract) serializes to None when unset; treat
+        # that (and a missing key) as "no parent" rather than iterating None.
+        parent_ids = obj["fields"].get(self_ref_field) or []
+        if isinstance(parent_ids, str) or isinstance(parent_ids, int):
+            parent_ids = [parent_ids]  # Ensure it's a list
+
+        for parent_id in parent_ids:
+            if parent_id in object_map:
+                graph[parent_id].append(obj["id"])
+                roots.discard(obj["id"])  # Remove this ID from root candidates
+
+    # Sort with cycle detection
+    sorted_ids = []
+    visited = set()
+    temp_visited = set()
+
+    def visit(obj_id):
+        if obj_id in temp_visited:
+            path = " -> ".join(str(id) for id in temp_visited)
+            raise ValidationError(f"Circular reference detected: {path}")
+
+        if obj_id not in visited:
+            temp_visited.add(obj_id)
+
+            for child_id in graph.get(obj_id, []):
+                visit(child_id)
+
+            temp_visited.remove(obj_id)
+            visited.add(obj_id)
+            sorted_ids.append(obj_id)
+
+    # Process from roots
+    for root_id in roots:
+        visit(root_id)
+
+    # Ensure all objects were processed
+    if len(visited) != len(objects):
+        raise ValidationError("Detected objects unreachable from root")
+
+    return [object_map[obj_id] for obj_id in reversed(sorted_ids)]
+
+
+def get_domain_export_objects(domain: Folder) -> dict[str, Iterable[models.Model]]:
+    """
+    Get all objects related to a domain for export.
+
+    Args:
+        domain: The domain Folder instance.
+
+    Returns:
+        A dictionary mapping model names to QuerySets of related objects;
+    """
+    sub_folders = [f.id for f in domain.get_sub_folders()]
+    folders = (
+        Folder.objects.filter(Q(id=domain.id) | Q(id__in=sub_folders))
+        .filter(content_type=Folder.ContentType.DOMAIN)
+        .distinct()
+    )
+    # Enclaves travel, domains do not: they carry which objects a third party is
+    # allowed to see, and re-deriving that on import can only ever approximate.
+    # Keeping DOMAIN folders out is what still flattens sub-domains away.
+    enclaves = Folder.objects.filter(
+        id__in=sub_folders, content_type=Folder.ContentType.ENCLAVE
+    ).distinct()
+
+    campaigns = Campaign.objects.filter(folder__in=folders).distinct()
+    perimeters = Perimeter.objects.filter(folder__in=folders).distinct()
+    # Campaign.perimeters is unrestricted, so a campaign can target another
+    # domain. Export those rows so its M2M resolves, but never scope the
+    # assessments below on them or the dump swallows that domain's data.
+    exported_perimeters = Perimeter.objects.filter(
+        Q(folder__in=folders) | Q(campaigns__in=campaigns)
+    ).distinct()
+
+    # Computed early: the audits these reference live in enclave sub-folders
+    # (excluded from `folders`) and must feed compliance_assessments below.
+    entity_assessments = EntityAssessment.objects.filter(
+        Q(folder__in=folders) | Q(perimeter__in=perimeters)
+    ).distinct()
+
+    risk_assessments = RiskAssessment.objects.filter(
+        Q(perimeter__in=perimeters) | Q(folder__in=folders)
+    ).distinct()
+    risk_scenarios = RiskScenario.objects.filter(
+        risk_assessment__in=risk_assessments
+    ).distinct()
+
+    ebios_rm_studies = EbiosRMStudy.objects.filter(folder__in=folders).distinct()
+    feared_events = FearedEvent.objects.filter(
+        ebios_rm_study__in=ebios_rm_studies
+    ).distinct()
+    ro_tos = RoTo.objects.filter(ebios_rm_study__in=ebios_rm_studies).distinct()
+    strategic_scenarios = StrategicScenario.objects.filter(
+        ebios_rm_study__in=ebios_rm_studies
+    ).distinct()
+    attack_paths = AttackPath.objects.filter(
+        ebios_rm_study__in=ebios_rm_studies
+    ).distinct()
+    operational_scenarios = OperationalScenario.objects.filter(
+        ebios_rm_study__in=ebios_rm_studies
+    ).distinct()
+    stakeholders = Stakeholder.objects.filter(
+        ebios_rm_study__in=ebios_rm_studies
+    ).distinct()
+
+    risk_matrices = RiskMatrix.objects.filter(
+        Q(folder__in=folders)
+        | Q(riskassessment__in=risk_assessments)
+        | Q(ebios_rm_studies__in=ebios_rm_studies)
+    ).distinct()
+
+    compliance_assessments = ComplianceAssessment.objects.filter(
+        Q(perimeter__in=perimeters)
+        | Q(folder__in=folders)
+        | Q(folder__in=enclaves)
+        | Q(ebios_rm_studies__in=ebios_rm_studies)
+        | Q(pk__in=entity_assessments.values("compliance_assessment"))
+    ).distinct()
+    requirement_assessments = RequirementAssessment.objects.filter(
+        compliance_assessment__in=compliance_assessments
+    ).distinct()
+    quick_form_responses = QuickFormResponse.objects.filter(
+        folder__in=folders
+    ).distinct()
+    quick_forms = QuickForm.objects.filter(
+        Q(folder__in=folders) | Q(responses__in=quick_form_responses)
+    ).distinct()
+    answers = Answer.objects.filter(
+        Q(requirement_assessment__in=requirement_assessments)
+        | Q(response__in=quick_form_responses)
+    ).distinct()
+    frameworks = Framework.objects.filter(
+        Q(folder__in=folders) | Q(complianceassessment__in=compliance_assessments)
+    ).distinct()
+
+    entities = Entity.objects.filter(
+        Q(folder__in=folders)
+        | Q(stakeholders__in=stakeholders)
+        | Q(ebios_rm_studies__in=ebios_rm_studies)
+    ).distinct()
+
+    vulnerabilities = Vulnerability.objects.filter(
+        Q(folder__in=folders) | Q(risk_scenarios__in=risk_scenarios)
+    ).distinct()
+
+    applied_controls = AppliedControl.objects.filter(
+        Q(folder__in=folders)
+        | Q(risk_scenarios__in=risk_scenarios)
+        | Q(risk_scenarios_e__in=risk_scenarios)
+        | Q(requirement_assessments__in=requirement_assessments)
+        | Q(stakeholders__in=stakeholders)
+        | Q(vulnerabilities__in=vulnerabilities)
+    ).distinct()
+
+    reference_controls = ReferenceControl.objects.filter(
+        Q(folder__in=folders) | Q(appliedcontrol__in=applied_controls)
+    ).distinct()
+
+    threats = Threat.objects.filter(
+        Q(folder__in=folders)
+        | Q(risk_scenarios__in=risk_scenarios)
+        | Q(operational_scenarios__in=operational_scenarios)
+    ).distinct()
+
+    techniques = Technique.objects.filter(
+        Q(folder__in=folders) | Q(operational_scenarios__in=operational_scenarios)
+    ).distinct()
+
+    findings_assessments = FindingsAssessment.objects.filter(
+        Q(perimeter__in=perimeters)
+        | Q(folder__in=folders)
+        # An enclave binder is in no perimeter (the audit drops its own), so the
+        # folder is what reaches it. Never reach one through the audit it points
+        # at: the binder's own folder is the only thing saying it is ours.
+        | Q(folder__in=enclaves)
+    ).distinct()
+    findings = Finding.objects.filter(
+        Q(folder__in=folders)
+        | Q(folder__in=enclaves)
+        | Q(findings_assessment__in=findings_assessments)
+    ).distinct()
+
+    risk_acceptances = RiskAcceptance.objects.filter(
+        Q(folder__in=folders) | Q(risk_scenarios__in=risk_scenarios)
+    ).distinct()
+
+    security_exceptions = SecurityException.objects.filter(
+        folder__in=folders
+    ).distinct()
+
+    incidents = Incident.objects.filter(folder__in=folders).distinct()
+    # Close the loop on reverse M2Ms so objects reachable only through
+    # incidents/campaigns/findings still make it into the dump (and into
+    # loaded_libraries). Rebuild with fresh Q filters rather than queryset
+    # union so the result plays nicely with .distinct().
+    entities = Entity.objects.filter(
+        Q(folder__in=folders)
+        | Q(stakeholders__in=stakeholders)
+        | Q(ebios_rm_studies__in=ebios_rm_studies)
+        | Q(incidents__in=incidents)
+        | Q(campaigns__in=campaigns)
+    ).distinct()
+
+    frameworks = Framework.objects.filter(
+        Q(folder__in=folders)
+        | Q(complianceassessment__in=compliance_assessments)
+        | Q(campaigns__in=campaigns)
+        | Q(requirement_nodes__findings__in=findings)
+    ).distinct()
+    assets = Asset.objects.filter(
+        Q(folder__in=folders)
+        | Q(risk_scenarios__in=risk_scenarios)
+        | Q(ebios_rm_studies__in=ebios_rm_studies)
+        | Q(feared_events__in=feared_events)
+        | Q(findings__in=findings)
+        | Q(vulnerabilities__in=vulnerabilities)
+    ).distinct()
+    # A third party owns tasks in its enclave the way it owns evidence there,
+    # so those belong to the export too.
+    task_templates = TaskTemplate.objects.filter(
+        Q(folder__in=folders) | Q(folder__in=enclaves)
+    ).distinct()
+    task_nodes = TaskNode.objects.filter(
+        Q(folder__in=folders)
+        | Q(folder__in=enclaves)
+        | Q(task_template__in=task_templates)
+    ).distinct()
+
+    # --- TPRM ecosystem ---
+    # Pull in the rest of the third party graph so a SaaS -> on-prem migration
+    # keeps solutions, subcontracting chains, representatives and contracts (all
+    # flattened into the target domain like everything else). entity_assessments
+    # is defined earlier (its audits feed the compliance_assessments scope).
+    solutions = Solution.objects.filter(
+        Q(provider_entity__in=entities)
+        | Q(recipient_entity__in=entities)
+        | Q(entity_assessments__in=entity_assessments)
+    ).distinct()
+
+    contracts = Contract.objects.filter(folder__in=folders).distinct()
+
+    # Close the entity loop so exported FKs resolve on import.
+    #
+    # Required (non-null) FK targets MUST travel or the import crashes on a
+    # missing lookup: EntityAssessment.entity, Solution.provider_entity and
+    # SolutionSubcontractor.subcontractor. These are exported even when
+    # builtin — correctness wins over the (rare) duplicate main-entity row.
+    required_entity_targets = Entity.objects.filter(
+        Q(pk__in=entity_assessments.values("entity"))
+        | Q(provided_solutions__in=solutions)
+        | Q(subcontracts__solution__in=solutions)
+    )
+
+    # Optional (nullable) FK targets are pulled in for fidelity but skip
+    # builtin entities: the main organisation lives in the root folder and the
+    # target instance keeps its own, so a null on import degrades gracefully
+    # (Contract.save even re-defaults beneficiary to the target main entity).
+    optional_entity_targets = Entity.objects.filter(
+        Q(received_solutions__in=solutions)
+        | Q(contracts__in=contracts)
+        | Q(beneficiary_contracts__in=contracts)
+        | Q(subcontract_recipients__solution__in=solutions)
+    ).exclude(builtin=True)
+
+    # NOTE: parent_entity / overarching_contract ancestor chains are only
+    # preserved when the ancestor is itself in scope (handled by the self-ref
+    # sort at import). Ancestors living outside the exported domain become null
+    # on import — acceptable for a flat single-domain migration; we don't walk
+    # the chain recursively across domains.
+    entities = Entity.objects.filter(
+        Q(folder__in=folders)
+        | Q(stakeholders__in=stakeholders)
+        | Q(ebios_rm_studies__in=ebios_rm_studies)
+        | Q(incidents__in=incidents)
+        # A third-party campaign's targets are only reachable through the campaign.
+        | Q(campaigns__in=campaigns)
+        | Q(pk__in=required_entity_targets)
+        | Q(pk__in=optional_entity_targets)
+    ).distinct()
+
+    solution_subcontractors = SolutionSubcontractor.objects.filter(
+        solution__in=solutions
+    ).distinct()
+
+    representatives = Representative.objects.filter(entity__in=entities).distinct()
+
+    evidences = Evidence.objects.filter(
+        Q(folder__in=folders)
+        | Q(folder__in=enclaves)
+        | Q(applied_controls__in=applied_controls)
+        | Q(requirement_assessments__in=requirement_assessments)
+        # Attached straight to an audit: an enclave one is in no exported folder.
+        | Q(compliance_assessments__in=compliance_assessments)
+        | Q(findings__in=findings)
+        | Q(findings_assessments__in=findings_assessments)
+        | Q(entityassessment__in=entity_assessments)
+        | Q(contracts__in=contracts)
+        | Q(vulnerabilities__in=vulnerabilities)
+    ).distinct()
+
+    evidence_revisions = EvidenceRevision.objects.filter(
+        Q(folder__in=folders) | Q(folder__in=enclaves) | Q(evidence__in=evidences)
+    )
+
+    loaded_libraries = LoadedLibrary.objects.filter(
+        Q(folder__in=folders)
+        | Q(threats__in=threats)
+        | Q(reference_controls__in=reference_controls)
+        | Q(risk_matrices__in=risk_matrices)
+        | Q(frameworks__in=frameworks)
+        | Q(quick_forms__in=quick_forms)
+        | Q(techniques__in=techniques)
+        | Q(
+            pk__in=LoadedLibrary.objects.filter(
+                Q(folder__in=folders)
+                | Q(threats__in=threats)
+                | Q(reference_controls__in=reference_controls)
+                | Q(risk_matrices__in=risk_matrices)
+                | Q(frameworks__in=frameworks)
+                | Q(quick_forms__in=quick_forms)
+                | Q(techniques__in=techniques)
+            ).values_list("dependencies", flat=True)
+        )
+    ).distinct()
+
+    return {
+        # Enclaves only: they carry what a third party may see, so re-deriving
+        # it on import could only approximate. Domain folders stay out and are
+        # flattened onto base_folder, which is what keeps sub-domains a Pro
+        # feature; import_objects rejects any dump carrying one.
+        "folder": enclaves,
+        "loadedlibrary": loaded_libraries,
+        "vulnerability": vulnerabilities,
+        "framework": frameworks,
+        "quickform": quick_forms,
+        "riskmatrix": risk_matrices,
+        "referencecontrol": reference_controls,
+        "threat": threats,
+        "technique": techniques,
+        "asset": assets,
+        "appliedcontrol": applied_controls,
+        "entity": entities,
+        "solution": solutions,
+        "solutionsubcontractor": solution_subcontractors,
+        "representative": representatives,
+        "entityassessment": entity_assessments,
+        "contract": contracts,
+        "evidence": evidences,
+        "evidencerevision": evidence_revisions,
+        "perimeter": exported_perimeters,
+        "complianceassessment": compliance_assessments,
+        "requirementassessment": requirement_assessments,
+        "quickformresponse": quick_form_responses,
+        "answer": answers,
+        "ebiosrmstudy": ebios_rm_studies,
+        "riskassessment": risk_assessments,
+        "riskscenario": risk_scenarios,
+        "fearedevent": feared_events,
+        "roto": ro_tos,
+        "operationalscenario": operational_scenarios,
+        "stakeholder": stakeholders,
+        "strategicscenario": strategic_scenarios,
+        "attackpath": attack_paths,
+        "findingsassessment": findings_assessments,
+        "finding": findings,
+        "riskacceptance": risk_acceptances,
+        "securityexception": security_exceptions,
+        "incident": incidents,
+        "campaign": campaigns,
+        "tasktemplate": task_templates,
+        "tasknode": task_nodes,
+    }

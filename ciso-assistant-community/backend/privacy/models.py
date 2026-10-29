@@ -1,0 +1,722 @@
+from django.db import models
+from iam.models import FolderMixin
+from tprm.models import Entity
+from core.models import Actor, AppliedControl, Asset, Evidence, Incident, Perimeter
+from core.models import FilteringLabelMixin, Terminology
+from core.base_models import NameDescriptionMixin, AbstractBaseModel
+from core.constants import COUNTRY_CHOICES
+from django.db.models import Count
+
+from auditlog.registry import auditlog
+
+from django.utils.translation import gettext_lazy as _
+from django.utils import timezone
+import uuid
+
+
+class DpiaRequirementSource(models.TextChoices):
+    ASSESSMENT = "assessment", _("Assessment")
+    OVERRIDE = "override", _("Override")
+    MANUAL = "manual", _("Manual")
+
+
+class NameDescriptionFolderMixin(NameDescriptionMixin, FolderMixin):
+    class Meta:
+        abstract = True
+
+
+# Article 6(1) Legal Bases for Processing
+ART6_LAWFUL_BASIS_CHOICES = (
+    ("privacy_consent", "Consent"),
+    ("privacy_contract", "Performance of a Contract"),
+    ("privacy_legal_obligation", "Compliance with a Legal Obligation"),
+    ("privacy_vital_interests", "Protection of Vital Interests"),
+    ("privacy_public_interest", "Performance of a Task in the Public Interest"),
+    ("privacy_legitimate_interests", "Legitimate Interests"),
+)
+
+# Article 9(2) Special Category Conditions
+ART9_SPECIAL_CATEGORY_CONDITION_CHOICES = (
+    ("privacy_explicit_consent", "Explicit Consent for Special Categories"),
+    ("privacy_employment_social_security", "Employment and Social Security Law"),
+    (
+        "privacy_vital_interests_incapacity",
+        "Vital Interests (Subject Physically/Legally Incapable)",
+    ),
+    ("privacy_nonprofit_organization", "Processing by Nonprofit Organization"),
+    ("privacy_public_data", "Data Manifestly Made Public by the Data Subject"),
+    ("privacy_legal_claims", "Establishment, Exercise or Defense of Legal Claims"),
+    ("privacy_substantial_public_interest", "Substantial Public Interest"),
+    ("privacy_preventive_medicine", "Preventive or Occupational Medicine"),
+    ("privacy_public_health", "Public Health"),
+    ("privacy_archiving_research", "Archiving, Research or Statistical Purposes"),
+)
+
+# Chapter V Transfer Mechanisms (Articles 45-49)
+TRANSFER_MECHANISM_CHOICES = (
+    ("privacy_adequacy_decision", "Adequacy Decision (Art. 45)"),
+    (
+        "privacy_standard_contractual_clauses",
+        "Standard Contractual Clauses (Art. 46.2c)",
+    ),
+    ("privacy_appropriate_safeguards", "Appropriate Safeguards (Art. 46)"),
+    ("privacy_binding_corporate_rules", "Binding Corporate Rules (Art. 47)"),
+    ("privacy_codes_of_conduct", "Codes of Conduct (Art. 46.2e)"),
+    ("privacy_certification_mechanisms", "Certification Mechanisms (Art. 46.2f)"),
+    ("privacy_derogation", "Derogation for Specific Situations (Art. 49)"),
+)
+
+
+def create_default_privacy_terminologies():
+    from privacy.terminology_seeds import (
+        DEFAULT_PROCESSING_NATURES,
+        DEFAULT_PERSONAL_DATA_CATEGORIES,
+    )
+
+    Terminology._seed_defaults(DEFAULT_PROCESSING_NATURES)
+    Terminology._seed_defaults(DEFAULT_PERSONAL_DATA_CATEGORIES)
+
+
+class Processing(NameDescriptionFolderMixin, FilteringLabelMixin):
+    STATUS_CHOICES = (
+        ("privacy_draft", "Draft"),
+        ("privacy_in_review", "In Review"),
+        ("privacy_approved", "Approved"),
+        ("privacy_deprecated", "Deprecated"),
+    )
+    ROLE_CHOICES = (
+        ("privacy_controller", "Controller"),
+        ("privacy_joint_controller", "Joint Controller"),
+        ("privacy_data_processor", "Data Processor"),
+    )
+    # A DPIA is the controller's (Art. 35): a processor only assists (Art. 28(3)(f)).
+    DPIA_ROLES = ("privacy_controller", "privacy_joint_controller")
+
+    ref_id = models.CharField(max_length=100, blank=True)
+    # Art. 30(1) register for controller roles, Art. 30(2) for processor roles
+    role = models.CharField(
+        max_length=30, choices=ROLE_CHOICES, default="privacy_controller"
+    )
+    controllers = models.ManyToManyField(
+        Entity,
+        blank=True,
+        related_name="processings_as_controller",
+        help_text="Controllers on whose behalf this processing is carried out",
+    )
+    nature = models.ManyToManyField(
+        Terminology,
+        blank=True,
+        related_name="processing_natures",
+        limit_choices_to={
+            "field_path": Terminology.FieldPath.PROCESSING_NATURE,
+            "is_visible": True,
+        },
+    )
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, default="privacy_draft"
+    )
+    author = models.ForeignKey(
+        Actor, on_delete=models.SET_NULL, null=True, related_name="authored_processings"
+    )
+    information_channel = models.CharField(max_length=255, blank=True)
+    usage_channel = models.CharField(max_length=255, blank=True)
+    dpia_required = models.BooleanField(default=False, blank=True)
+    dpia_reference = models.CharField(max_length=255, blank=True)
+    dpia_screening = models.ForeignKey(
+        "core.QuickFormResponse",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="screened_processings",
+        verbose_name=_("DPIA screening"),
+    )
+    # The DPIA last validated for this processing, a quick form response.
+    dpia = models.ForeignKey(
+        "core.QuickFormResponse",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assessed_processings",
+        verbose_name=_("DPIA"),
+    )
+    # Who or what last set `dpia_required`; written through
+    # `privacy.dpia_requirement.set_dpia_required` with its history row.
+    dpia_required_source = models.CharField(
+        max_length=20,
+        choices=DpiaRequirementSource.choices,
+        blank=True,
+        default="",
+        verbose_name=_("DPIA requirement source"),
+    )
+    dpia_required_set_at = models.DateTimeField(
+        null=True, blank=True, verbose_name=_("DPIA requirement set at")
+    )
+    has_sensitive_personal_data = models.BooleanField(default=False)
+    associated_controls = models.ManyToManyField(
+        AppliedControl, blank=True, related_name="processings"
+    )
+    assigned_to = models.ManyToManyField(
+        Actor,
+        verbose_name="Assigned to",
+        related_name="assigned_processings",
+        blank=True,
+    )
+
+    evidences = models.ManyToManyField(
+        Evidence,
+        verbose_name="Evidences",
+        blank=True,
+        related_name="processings",
+    )
+
+    perimeters = models.ManyToManyField(
+        Perimeter, blank=True, related_name="processings"
+    )
+    fields_to_check = ["ref_id", "name"]
+
+    @property
+    def dpia_applies(self) -> bool:
+        return self.role in self.DPIA_ROLES
+
+    def update_sensitive_data_flag(self):
+        """Update the has_sensitive_personal_data flag based on associated personal data"""
+        has_sensitive = self.personal_data.filter(is_sensitive=True).exists()
+
+        if has_sensitive != self.has_sensitive_personal_data:
+            self.has_sensitive_personal_data = has_sensitive
+            self.save(update_fields=["has_sensitive_personal_data"])
+
+    def metrics(self):
+        return {}
+
+
+class ProcessingChildMixin:
+    def _touch_processing(self):
+        if self.processing_id:
+            Processing.objects.filter(pk=self.processing_id).update(
+                updated_at=timezone.now()
+            )
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        self._touch_processing()
+
+    def delete(self, *args, **kwargs):
+        processing_id = self.processing_id
+        result = super().delete(*args, **kwargs)
+        Processing.objects.filter(pk=processing_id).update(updated_at=timezone.now())
+        return result
+
+
+class Purpose(ProcessingChildMixin, NameDescriptionFolderMixin):
+    name = models.CharField(
+        max_length=200, verbose_name=_("Name"), null=True, blank=True
+    )
+
+    processing = models.ForeignKey(
+        Processing, on_delete=models.CASCADE, related_name="purposes"
+    )
+    legal_basis = models.CharField(
+        max_length=255, choices=ART6_LAWFUL_BASIS_CHOICES, default="privacy_consent"
+    )
+    article_9_condition = models.CharField(
+        max_length=255,
+        choices=ART9_SPECIAL_CATEGORY_CONDITION_CHOICES,
+        blank=True,
+        null=True,
+    )
+
+    fields_to_check = ["name", "legal_basis", "processing"]
+
+    def __str__(self):
+        return self.name if self.name else self.legal_basis
+
+    def save(self, *args, **kwargs):
+        self.folder = self.processing.folder
+        super().save(*args, **kwargs)
+
+
+class PersonalData(ProcessingChildMixin, NameDescriptionFolderMixin):
+    DELETION_POLICY_CHOICES = (
+        ("privacy_automatic_deletion", "Automatic Deletion"),
+        ("privacy_anonymization", "Anonymization"),
+        ("privacy_manual_review_deletion", "Manual Review Deletion"),
+        ("privacy_user_requested_deletion", "User Requested Deletion"),
+        ("privacy_legal_regulatory_hold", "Legal/Regulatory Hold"),
+        ("privacy_partial_deletion", "Partial Deletion"),
+    )
+
+    name = models.CharField(
+        max_length=200, verbose_name=_("Name"), null=True, blank=True
+    )
+
+    processing = models.ForeignKey(
+        Processing, on_delete=models.CASCADE, related_name="personal_data"
+    )
+    category = models.ForeignKey(
+        Terminology,
+        on_delete=models.PROTECT,
+        related_name="personal_data_categories",
+        limit_choices_to={
+            "field_path": Terminology.FieldPath.PERSONAL_DATA_CATEGORY,
+            "is_visible": True,
+        },
+    )
+    retention = models.CharField(max_length=255, blank=True)
+    deletion_policy = models.CharField(
+        max_length=50, choices=DELETION_POLICY_CHOICES, blank=True
+    )
+    is_sensitive = models.BooleanField(default=False)
+    assets = models.ManyToManyField(Asset, blank=True, related_name="personal_data")
+
+    # GDPR Article 9 special categories + Article 10 criminal data
+    SENSITIVE_CATEGORIES = {
+        "privacy_health_data",
+        "privacy_genetic_data",
+        "privacy_biometric_data",
+        "privacy_racial_ethnic_origin",
+        "privacy_political_opinions",
+        "privacy_religious_beliefs",
+        "privacy_trade_union_membership",
+        "privacy_sexual_orientation",
+        "privacy_sex_life_data",
+        "privacy_criminal_records",
+    }
+
+    fields_to_check = ["name", "category", "processing"]
+
+    def __str__(self):
+        return self.name if self.name else str(self.category)
+
+    def save(self, *args, **kwargs):
+        self.folder = self.processing.folder
+        if self.category_id and self.category.name in self.SENSITIVE_CATEGORIES:
+            self.is_sensitive = True
+        super().save(*args, **kwargs)
+
+        # Update the processing's sensitive data flag if needed
+        if self.is_sensitive and not self.processing.has_sensitive_personal_data:
+            self.processing.has_sensitive_personal_data = True
+            self.processing.save(update_fields=["has_sensitive_personal_data"])
+
+    @classmethod
+    def get_categories_count(cls, filters: dict = {}):
+        categories = (
+            cls.objects.filter(**filters)
+            .values("category__name")
+            .annotate(count=Count("id"))
+            .order_by("-count")
+        )
+
+        result = []
+        for item in categories:
+            category_code = item["category__name"]
+            result.append(
+                {"id": category_code, "name": category_code, "value": item["count"]}
+            )
+
+        return result
+
+
+class DataSubject(ProcessingChildMixin, NameDescriptionFolderMixin):
+    CATEGORY_CHOICES = (
+        # Core Categories
+        ("privacy_customer", "Customer/Client"),
+        ("privacy_prospect", "Prospective Customer/Client"),
+        ("privacy_employee", "Employee"),
+        ("privacy_job_applicant", "Job Applicant"),
+        ("privacy_contractor", "Contractor/Vendor"),
+        ("privacy_business_partner", "Business Partner"),
+        # Website/Service Users
+        ("privacy_user", "Website/App User"),
+        ("privacy_visitor", "Visitor"),
+        # Special Categories
+        ("privacy_minor", "Child/Minor"),
+        ("privacy_vulnerable", "Vulnerable Person"),
+        # Others
+        ("privacy_public", "General Public"),
+        ("privacy_other", "Other Data Subject Category"),
+    )
+
+    name = models.CharField(
+        max_length=200, verbose_name=_("Name"), null=True, blank=True
+    )
+
+    processing = models.ForeignKey(
+        "Processing", on_delete=models.CASCADE, related_name="data_subjects"
+    )
+    category = models.CharField(max_length=255, choices=CATEGORY_CHOICES)
+
+    fields_to_check = ["name", "category", "processing"]
+
+    def __str__(self):
+        return self.name if self.name else self.category
+
+    def save(self, *args, **kwargs):
+        self.folder = self.processing.folder
+        super().save(*args, **kwargs)
+
+
+class DataRecipient(ProcessingChildMixin, NameDescriptionFolderMixin):
+    CATEGORY_CHOICES = (
+        # Internal Recipients
+        ("privacy_internal_team", "Internal Team/Department"),
+        ("privacy_employee", "Employee"),
+        ("privacy_subsidiary", "Subsidiary Company"),
+        ("privacy_parent_company", "Parent Company"),
+        ("privacy_affiliated_entity", "Affiliated Entity"),
+        # External Service Providers
+        ("privacy_service_provider", "Service Provider"),
+        ("privacy_data_processor", "Data Processor"),
+        ("privacy_cloud_provider", "Cloud Service Provider"),
+        ("privacy_it_provider", "IT Service Provider"),
+        ("privacy_marketing_agency", "Marketing Agency"),
+        ("privacy_payment_processor", "Payment Processor"),
+        ("privacy_analytics_provider", "Analytics Provider"),
+        # Business Partners
+        ("privacy_business_partner", "Business Partner"),
+        ("privacy_distributor", "Distributor"),
+        ("privacy_reseller", "Reseller"),
+        ("privacy_supplier", "Supplier"),
+        ("privacy_contractor", "Contractor"),
+        # Professional Services
+        ("privacy_legal_advisor", "Legal Advisor"),
+        ("privacy_accountant", "Accountant"),
+        ("privacy_consultant", "Consultant"),
+        ("privacy_auditor", "Auditor"),
+        # Authorities
+        ("privacy_regulatory_authority", "Regulatory Authority"),
+        ("privacy_tax_authority", "Tax Authority"),
+        ("privacy_law_enforcement", "Law Enforcement"),
+        ("privacy_government_entity", "Government Entity"),
+        ("privacy_court", "Court"),
+        # Others
+        ("privacy_joint_controller", "Joint Controller"),
+        ("privacy_individual_recipient", "Individual Recipient"),
+        ("privacy_public", "Public Disclosure"),
+        ("privacy_other", "Other Recipient Category"),
+    )
+
+    name = models.CharField(
+        max_length=200, verbose_name=_("Name"), null=True, blank=True
+    )
+
+    processing = models.ForeignKey(
+        Processing, on_delete=models.CASCADE, related_name="data_recipients"
+    )
+    category = models.CharField(max_length=255, choices=CATEGORY_CHOICES)
+
+    fields_to_check = ["name", "category", "processing"]
+
+    def __str__(self):
+        return self.name if self.name else self.category
+
+    def save(self, *args, **kwargs):
+        self.folder = self.processing.folder
+        super().save(*args, **kwargs)
+
+
+class DataContractor(ProcessingChildMixin, NameDescriptionFolderMixin):
+    RELATIONSHIP_TYPE_CHOICES = (
+        ("privacy_data_processor", "Data Processor"),
+        ("privacy_sub_processor", "Sub-processor"),
+        ("privacy_joint_controller", "Joint Controller"),
+        ("privacy_independent_controller", "Independent Controller"),
+        ("privacy_other", "Other Relationship Type"),
+    )
+
+    name = models.CharField(
+        max_length=200, verbose_name=_("Name"), null=True, blank=True
+    )
+
+    processing = models.ForeignKey(
+        Processing, on_delete=models.CASCADE, related_name="contractors_involved"
+    )
+    entity = models.ForeignKey(
+        Entity,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    relationship_type = models.CharField(
+        max_length=255, choices=RELATIONSHIP_TYPE_CHOICES
+    )
+    country = models.CharField(max_length=3, choices=COUNTRY_CHOICES)
+    documentation_link = models.URLField(blank=True, max_length=2048)
+
+    fields_to_check = ["entity", "relationship_type", "processing"]
+
+    IAM_SCOPE_FIELD = "entity"
+
+    def __str__(self):
+        return self.name if self.name else self.relationship_type
+
+    def save(self, *args, **kwargs):
+        self.folder = self.processing.folder
+        super().save(*args, **kwargs)
+
+
+class DataTransfer(ProcessingChildMixin, NameDescriptionFolderMixin):
+    name = models.CharField(
+        max_length=200, verbose_name=_("Name"), null=True, blank=True
+    )
+
+    processing = models.ForeignKey(
+        Processing, on_delete=models.CASCADE, related_name="data_transfers"
+    )
+    entity = models.ForeignKey(
+        Entity,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
+    country = models.CharField(max_length=3, choices=COUNTRY_CHOICES)
+    transfer_mechanism = models.CharField(
+        max_length=255, choices=TRANSFER_MECHANISM_CHOICES, blank=True
+    )
+    guarantees = models.TextField(blank=True)
+    documentation_link = models.URLField(blank=True, max_length=2048)
+
+    fields_to_check = ["entity", "country", "processing"]
+
+    IAM_SCOPE_FIELD = "entity"
+
+    def __str__(self):
+        return self.name if self.name else self.country
+
+    def save(self, *args, **kwargs):
+        self.folder = self.processing.folder
+        super().save(*args, **kwargs)
+
+
+class RightRequest(NameDescriptionFolderMixin):
+    REQUEST_TYPE_CHOICES = (
+        ("deletion", "Deletion / Erasure"),
+        ("rectification", "Rectification"),
+        ("access", "Access / Extract"),
+        ("portability", "Portability"),
+        ("restriction", "Restriction"),
+        ("objection", "Objection"),
+        ("other", "Other"),
+    )
+
+    STATUS_CHOICES = (
+        ("new", "New"),
+        ("in_progress", "In Progress"),
+        ("on_hold", "On hold"),
+        ("done", "Done"),
+    )
+
+    ref_id = models.CharField(max_length=100, blank=True)
+    owner = models.ManyToManyField(
+        Actor,
+        blank=True,
+        related_name="assigned_right_requests",
+    )
+    requested_on = models.DateField()
+    due_date = models.DateField(null=True, blank=True)
+    request_type = models.CharField(
+        max_length=30, choices=REQUEST_TYPE_CHOICES, default="other"
+    )
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="new")
+    observation = models.TextField(blank=True)
+    processings = models.ManyToManyField(
+        Processing,
+        blank=True,
+        related_name="right_requests",
+    )
+
+    class Meta:
+        ordering = ["-requested_on"]
+        verbose_name = "Right Request"
+        verbose_name_plural = "Right Requests"
+
+
+class DataBreach(NameDescriptionFolderMixin):
+    BREACH_TYPE_CHOICES = (
+        ("privacy_destruction", "Destruction"),
+        ("privacy_loss", "Loss"),
+        ("privacy_alteration", "Alteration"),
+        ("privacy_unauthorized_disclosure", "Unauthorized Disclosure"),
+        ("privacy_unauthorized_access", "Unauthorized Access"),
+        ("privacy_other", "Other"),
+    )
+
+    RISK_LEVEL_CHOICES = (
+        ("privacy_no_risk", "No Risk"),
+        ("privacy_risk", "Risk"),
+        ("privacy_high_risk", "High Risk"),
+    )
+
+    STATUS_CHOICES = (
+        ("privacy_discovered", "Discovered"),
+        ("privacy_under_investigation", "Under Investigation"),
+        ("privacy_authority_notified", "Authority Notified"),
+        ("privacy_subjects_notified", "Data Subjects Notified"),
+        ("privacy_closed", "Closed"),
+    )
+
+    ref_id = models.CharField(max_length=100, blank=True)
+    assigned_to = models.ManyToManyField(
+        Actor,
+        verbose_name="Assigned to",
+        related_name="assigned_data_breaches",
+        blank=True,
+    )
+    discovered_on = models.DateTimeField()
+    breach_type = models.CharField(
+        max_length=50, choices=BREACH_TYPE_CHOICES, default="privacy_other"
+    )
+    risk_level = models.CharField(
+        max_length=30, choices=RISK_LEVEL_CHOICES, default="privacy_risk"
+    )
+    status = models.CharField(
+        max_length=50, choices=STATUS_CHOICES, default="privacy_discovered"
+    )
+
+    affected_subjects_count = models.PositiveIntegerField(
+        default=0, help_text="Approximate number of affected data subjects"
+    )
+    affected_processings = models.ManyToManyField(
+        Processing, blank=True, related_name="data_breaches"
+    )
+    affected_personal_data = models.ManyToManyField(
+        PersonalData, blank=True, related_name="data_breaches"
+    )
+    affected_personal_data_count = models.PositiveIntegerField(
+        default=0, help_text="Approximate number of affected personal data"
+    )
+
+    # Notification tracking
+    authorities = models.ManyToManyField(
+        Entity,
+        blank=True,
+        related_name="data_breaches_authorities",
+        help_text="Regulatory authorities to notify (e.g., CNIL, ICO, etc.)",
+    )
+    authority_notified_on = models.DateTimeField(null=True, blank=True)
+    authority_notification_ref = models.CharField(max_length=255, blank=True)
+    subjects_notified_on = models.DateTimeField(null=True, blank=True)
+
+    # Consequences and remediation
+    potential_consequences = models.TextField(blank=True)
+    remediation_measures = models.ManyToManyField(
+        AppliedControl, blank=True, related_name="data_breaches_remediated"
+    )
+    evidences = models.ManyToManyField(
+        Evidence,
+        verbose_name="Evidences",
+        blank=True,
+        related_name="data_breaches",
+    )
+
+    # Investigation
+    incident = models.ForeignKey(
+        Incident,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="data_breaches",
+        help_text="Link to associated security incident investigation",
+    )
+
+    reference_link = models.URLField(
+        null=True,
+        blank=True,
+        max_length=2048,
+    )
+
+    # Additional documentation
+    observation = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-discovered_on"]
+        verbose_name = "Data Breach"
+        verbose_name_plural = "Data Breaches"
+
+
+class DpiaRequirementChange(AbstractBaseModel, FolderMixin):
+    """One change of a processing's `dpia_required`, whatever the path (form,
+    API, batch, accepted screening). Append-only; `created_at` is when it
+    happened."""
+
+    processing = models.ForeignKey(
+        Processing,
+        on_delete=models.CASCADE,
+        related_name="dpia_requirement_changes",
+        verbose_name=_("Processing"),
+    )
+    dpia_required = models.BooleanField(verbose_name=_("DPIA required"))
+    previous_dpia_required = models.BooleanField(
+        null=True, blank=True, verbose_name=_("Previously required")
+    )
+    source = models.CharField(
+        max_length=20,
+        choices=DpiaRequirementSource.choices,
+        verbose_name=_("Source"),
+    )
+    response = models.ForeignKey(
+        "core.QuickFormResponse",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("Screening"),
+    )
+    changed_by = models.ForeignKey(
+        "iam.User",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="dpia_requirement_changes",
+        verbose_name=_("Changed by"),
+    )
+    note = models.TextField(blank=True, default="", verbose_name=_("Note"))
+
+    class Meta:
+        verbose_name = _("DPIA requirement change")
+        verbose_name_plural = _("DPIA requirement changes")
+        ordering = ["-created_at"]
+
+    def save(self, *args, **kwargs):
+        self.folder = self.processing.folder
+        super().save(*args, **kwargs)
+
+
+common_exclude = ["created_at", "updated_at"]
+auditlog.register(
+    Processing,
+    exclude_fields=common_exclude,
+)
+auditlog.register(
+    Purpose,
+    exclude_fields=common_exclude,
+)
+auditlog.register(
+    PersonalData,
+    exclude_fields=common_exclude,
+)
+auditlog.register(
+    DataSubject,
+    exclude_fields=common_exclude,
+)
+auditlog.register(
+    DataRecipient,
+    exclude_fields=common_exclude,
+)
+auditlog.register(
+    DataContractor,
+    exclude_fields=common_exclude,
+)
+auditlog.register(
+    DataTransfer,
+    exclude_fields=common_exclude,
+)
+auditlog.register(
+    RightRequest,
+    exclude_fields=common_exclude,
+)
+auditlog.register(
+    DataBreach,
+    exclude_fields=common_exclude,
+)

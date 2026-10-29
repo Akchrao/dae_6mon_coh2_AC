@@ -1,0 +1,44 @@
+<script lang="ts">
+	import { page } from '$app/state';
+	import { safeTranslate } from '#lib/utils/i18n.js';
+	import Anchor from '#lib/components/Anchor/Anchor.svelte';
+
+	interface Props {
+		// `key` distinguishes entries that share a label (and so a visibility flag).
+		item?: { name: string; href: string; fa_icon: string; key?: string }[];
+		sideBarVisibleItems: Record<string, boolean>;
+	}
+
+	let { item = [], sideBarVisibleItems }: Props = $props();
+
+	// Entries that preselect a filter carry a query string, so match on it too —
+	// otherwise `/campaigns?kind=internal` would never highlight.
+	let classesActive = $derived((href: string) =>
+		href === page.url.pathname || href === `${page.url.pathname}${page.url.search}`
+			? 'bg-primary-100-900 text-primary-800-200'
+			: 'hover:bg-primary-50-950 text-surface-950-50 '
+	);
+</script>
+
+{#each item as item}
+	<!-- undefined and true must be shown -->
+	{#if sideBarVisibleItems[item.name] !== false}
+		<Anchor
+			href={item.href}
+			breadcrumbAction="replace"
+			class="unstyled flex whitespace-nowrap items-center py-2 text-sm font-normal rounded-base {classesActive(
+				item.href ?? ''
+			)}"
+			data-testid={'accordion-item-' + item.href.substring(1)}
+		>
+			<span
+				class="px-4 flex items-center w-full space-x-2 text-xs"
+				id={item.key ?? item.name}
+				title={safeTranslate(item.name)}
+			>
+				<i class="{item.fa_icon} w-1/12"></i>
+				<span class="text-sm tracking-wide truncate">{safeTranslate(item.name)}</span>
+			</span>
+		</Anchor>
+	{/if}
+{/each}

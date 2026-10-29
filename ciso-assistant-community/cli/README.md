@@ -1,0 +1,425 @@
+# CISO Assistant CLI (CLICA)
+
+CLICA is a command-line interface tool for interacting with the CISO Assistant REST API. It provides powerful functionality for importing and managing cybersecurity data, including risk assessments, assets, controls, and evidence.
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Authentication Setup](#authentication-setup)
+- [Configuration](#configuration)
+- [Available Commands](#available-commands)
+  - [Query Commands](#query-commands)
+  - [Import Commands](#import-commands)
+  - [File Upload Commands](#file-upload-commands)
+  - [Instance Management Commands](#instance-management-commands)
+- [MCP Integration](#mcp-integration)
+- [Examples](#examples)
+- [Troubleshooting](#troubleshooting)
+
+## Installation
+
+### Prerequisites
+
+- Python 3.14 or higher
+- [uv](https://docs.astral.sh/uv/) (the project is managed with `uv`; install via `curl -LsSf https://astral.sh/uv/install.sh | sh` or your package manager)
+
+### Setup
+
+From the `cli/` directory:
+
+```bash
+uv sync
+```
+
+This creates a `.venv/` and installs the locked dependencies from `uv.lock`. Run CLI commands with `uv run` (see examples below), or activate the venv manually with `source .venv/bin/activate`.
+
+### Dependencies
+
+Runtime dependencies are declared in [`pyproject.toml`](./pyproject.toml) and pinned in [`uv.lock`](./uv.lock). Use `uv add <pkg>` / `uv remove <pkg>` to manage them — do not edit `uv.lock` by hand.
+
+## Authentication Setup
+
+CLICA uses Personal Access Tokens (PAT) for authentication with the CISO Assistant API.
+
+### Step 1: Generate a PAT in CISO Assistant
+
+1. Log into your CISO Assistant instance
+2. Select "My Profile"
+3. Go to "Settings"
+4. Generate a new Personal Access Token
+5. Copy the token for use in the next step
+
+### Step 2: Configure Authentication
+
+Create or use existing `.clica.env` file in the CLI directory with the following content:
+
+```env
+TOKEN=
+API_URL=http://localhost:8000/api
+VERIFY_CERTIFICATE=true
+```
+
+**Configuration Parameters:**
+
+- `TOKEN`: Your Personal Access Token from CISO Assistant
+- `API_URL`: The base URL of your CISO Assistant API endpoint
+- `VERIFY_CERTIFICATE`: Set to `false` if using self-signed certificates (not recommended for production)
+
+## Configuration
+
+The CLI uses environment variables for configuration. Make sure your `.clica.env` file is properly configured before running any commands.
+
+> [!WARNING]
+> Never commit your `.clica.env` file to version control as it contains sensitive authentication information.
+
+## Available Commands
+
+### Query Commands
+
+These commands retrieve information from your CISO Assistant instance:
+
+#### `get_folders`
+
+Retrieves all available folders/domains from your CISO Assistant instance.
+
+```bash
+uv run clica.py get-folders
+```
+
+**Output:** JSON list of all folders with their IDs and names.
+
+#### `get_perimeters`
+
+Lists all available perimeters in your CISO Assistant instance.
+
+```bash
+uv run clica.py get-perimeters
+```
+
+**Output:** JSON list of perimeters organized by folder.
+
+#### `get_matrices`
+
+Retrieves all loaded risk matrices from the Global folder.
+
+```bash
+uv run clica.py get-matrices
+```
+
+**Output:** JSON list of available risk matrices with their IDs and names.
+
+### Import Commands
+
+Most import commands now leverage the same “Data Wizard” backend that powers the enterprise UI. These commands accept the Excel/CSV templates described in the [documentation](https://intuitem.gitbook.io/ciso-assistant/guide/data-import-wizard) and share a common set of options:
+
+- `--file` (required): Path to the template to upload.
+- `--folder`: Folder/domain name or UUID. Required for models that need a domain. Individual rows in the template can still override the folder via their `domain` column.
+- `--perimeter`: Perimeter name or UUID (only for models that require it).
+- `--framework`: Framework name or UUID (Compliance Assessments only).
+- `--matrix`: Risk matrix name or UUID (Risk Assessments and EBIOS RM studies).
+
+You can pass either UUIDs or human-readable names; the CLI resolves names through the `/ids/` endpoints.
+
+Supported Data Wizard commands:
+
+| Command | Model type | Required CLI options |
+| --- | --- | --- |
+| `import-assets` | Asset | `--folder` |
+| `import-applied-controls` | AppliedControl | `--folder` |
+| `import-evidences` | Evidence | `--folder` |
+| `import-users` | User | — |
+| `import-folders` | Folder | — |
+| `import-perimeters` | Perimeter | `--folder` |
+| `import-compliance-assessments` | ComplianceAssessment | `--perimeter`, `--framework` |
+| `import-cyfun-assessment` | CyFunAssessment | `--folder` or `--perimeter` |
+| `import-findings-assessments` | FindingsAssessment | `--perimeter` |
+| `import-risk-assessment` | RiskAssessment | `--perimeter`, `--matrix` |
+| `import-elementary-actions` | ElementaryAction | `--folder` |
+| `import-reference-controls` | ReferenceControl | `--folder` |
+| `import-threats` | Threat | `--folder` |
+| `import-processings` | Processing | `--folder` |
+| `import-tprm` | TPRM | `--folder` |
+| `import-ebios-rm-study-arm` | EbiosRMStudyARM | `--folder`, `--matrix` |
+| `import-ebios-rm-study` | EbiosRMStudyExcel | `--folder`, `--matrix` |
+| `import-ebios-rm-study-egerie-xml` | EbiosRMStudyEgerieXML | `--folder`, `--matrix` |
+| `import-bia` | BusinessImpactAnalysis | — |
+Example:
+
+```bash
+uv run clica.py import-assets \
+  --file data-wizard-assets.xlsx \
+  --folder "Global"
+```
+
+### File Upload Commands
+
+#### `upload-attachment`
+
+Uploads a file as an attachment to an existing evidence record.
+
+```bash
+uv run clica.py upload-attachment \
+  --file /path/to/document.pdf \
+  --name "Asset Management Policy"
+```
+
+**Parameters:**
+
+- `--file`: Path to the file to upload
+- `--name`: Name of the existing evidence record to attach the file to
+
+### Backup and Restore Commands
+
+#### `backup_full`
+
+Creates a complete backup of your CISO Assistant instance using a memory-efficient streaming approach. Supports resume capability for interrupted backups.
+
+```bash
+uv run clica.py backup-full --dest-dir ./db --batch-size 200 --resume
+```
+
+**Parameters:**
+
+- `--dest-dir`: Destination directory to save backup files (default: `./db`)
+- `--batch-size`: Number of files to download per batch (default: 200)
+- `--resume/--no-resume`: Resume from existing manifest if backup was interrupted (default: True)
+
+**Output:**
+
+- `backup.json.gz`: Compressed database backup
+- `backup-manifest.jsonl`: JSON Lines manifest tracking all downloaded files with hashes
+- `attachments/evidence-revisions/`: Directory containing all attachment files with naming pattern `{evidence_id}_v{version}_{filename}`
+
+**How it works:**
+
+1. **Database Backup**: Downloads the database backup as `backup.json.gz`
+2. **Metadata Fetch**: Retrieves metadata for all attachments (pagination handled automatically)
+3. **Resume Logic**: Compares server metadata with local manifest to identify missing/changed files (based on SHA256 hash comparison)
+4. **Batch Download**: Downloads files in configurable batches using custom streaming protocol
+5. **Manifest Update**: Appends each successfully downloaded file to manifest (crash-safe, append-only)
+
+**Advantages:**
+
+- **No ZIP Processing**: Avoids loading large ZIP files into memory
+- **Resume Capability**: Can continue interrupted backups without re-downloading existing files
+- **Hash Verification**: Uses SHA256 hashes to detect file changes and skip unchanged files
+- **Memory Efficient**: Streams files in 1MB chunks, never loads full files in memory
+- **Progress Tracking**: Shows batch progress and total data downloaded
+
+**Notes:**
+
+- Requires `has_backup_permission` flag in your user profile
+- If backup is interrupted, simply run the same command again with `--resume` (default)
+- The manifest file tracks which files have been downloaded with their hashes
+- Files are only re-downloaded if their hash changes on the server
+
+#### `restore_full`
+
+Restores a complete backup of your CISO Assistant instance using a memory-efficient streaming approach. Supports resume capability for interrupted restores.
+
+```bash
+uv run clica.py restore-full --src-dir ./db --verify-hashes
+```
+
+**Parameters:**
+
+- `--src-dir`: Source directory containing backup files (default: `./db`)
+- `--verify-hashes/--no-verify-hashes`: Verify local file hashes before upload (default: True)
+
+**Requirements:**
+
+- The source directory must contain `backup.json.gz`
+- The source directory must contain `backup-manifest.jsonl` (for attachments restore)
+- Attachments should be in `attachments/evidence-revisions/` directory
+- Requires `has_backup_permission` flag in your user profile
+
+**How it works:**
+
+1. **Database Restore**: Uploads and restores the database backup
+2. **Manifest Load**: Reads the backup manifest to identify files to upload
+3. **Hash Verification** (optional): Verifies local file hashes match manifest entries
+4. **Resume Logic**: Skips files already marked as uploaded in the manifest
+5. **Batch Upload**: Uploads files in configurable batches using custom streaming protocol
+6. **Server-Side Deduplication**: Server skips files if hash matches existing attachment (idempotent)
+7. **Manifest Update**: Marks successfully uploaded files in manifest after each batch
+
+**Advantages:**
+
+- **No ZIP Processing**: Avoids creating large ZIP files in memory
+- **Resume Capability**: Can continue interrupted restores without re-uploading existing files
+- **Hash Verification**: Validates file integrity before upload
+- **Idempotent**: Server skips files that already match (safe to re-run)
+- **Memory Efficient**: Streams files in batches, never loads all files in memory
+- **Partial Success Handling**: Continues processing even if some files fail, reports errors
+
+**Notes:**
+
+- The restore process happens in **two separate steps** (database first, then attachments)
+- After database restore, you'll need to regenerate your Personal Access Token
+- If restore is interrupted, run the same command again with `--resume` (default)
+- Files with hash mismatches (detected during `--verify-hashes`) are skipped and reported
+- Server validates uploaded file hashes and skips if they match existing attachments
+
+> [!WARNING]
+> Restoring a backup will **replace all existing data** in your CISO Assistant instance. Make sure you have a current backup before performing a restore operation.
+
+> [!TIP]
+> **Best Practices:**
+> - Run `backup-full` regularly to maintain disaster recovery capabilities
+> - Use `--batch-size` to tune performance based on your network and file sizes
+> - Keep the manifest file safe - it enables resume functionality
+> - After restore completes, regenerate your Personal Access Token immediately
+
+**Technical Details:**
+
+The backup/restore system uses a custom binary streaming protocol to avoid memory issues:
+
+- **Format**: Each file is transmitted as `[4-byte length][JSON header][file bytes]`
+- **Hashing**: SHA256 hashes computed using 1MB chunks (no full file in memory)
+- **Deduplication**: Files are skipped if their hash matches (both client and server-side)
+- **Manifest**: JSON Lines format allows incremental append (crash-safe)
+- **Batch Processing**: Configurable batch sizes balance efficiency vs memory usage
+
+### Domain Export and Import Commands
+
+These commands wrap the domain (folder) export/import endpoints, giving community users access to a capability that is otherwise only surfaced in the enterprise frontend.
+
+#### `export-domain`
+
+Exports a single domain (folder) and its content as a zip archive (`data.json` dump plus evidence attachments).
+
+```bash
+uv run clica.py export-domain --folder "My Domain" --output ./my-domain.zip
+```
+
+**Parameters:**
+
+- `--folder`: Domain name or UUID to export (required)
+- `--output`: Output zip path (default: `./<folder>-domain-export.zip`)
+
+**Notes:**
+
+- Requires `view` permission on every object type contained in the domain.
+
+#### `import-domain`
+
+Imports a domain from an export zip into a new folder.
+
+```bash
+uv run clica.py import-domain --file ./my-domain.zip --name "My Domain (restored)"
+```
+
+**Parameters:**
+
+- `--file`: Path to the domain export zip to import (required)
+- `--name`: Name for the imported domain (default: the zip file name)
+- `--load-missing-libraries`: Load libraries referenced by the dump that are missing on the target
+
+**Notes:**
+
+- Requires `add_folder` permission on the root folder.
+
+### Instance Management Commands
+
+
+## MCP Integration
+
+CLICA includes Model Context Protocol (MCP) integration for use with Claude Desktop and other MCP-compatible clients.
+
+### Setup for Claude Desktop
+
+1. Make sure the CLI is installed (see [Installation](#installation) — `uv sync` from the `cli/` directory), and that you also have Node.js and Claude Desktop.
+2. Configure your `.mcp.env` file with the same parameters as `.clica.env`.
+3. Update Claude Desktop configuration (`~/Library/Application Support/Claude/claude_desktop_config.json` on macOS). `uv` will resolve and run the locked environment for you:
+
+```json
+{
+  "mcpServers": {
+    "ciso-assistant": {
+      "command": "/full/path/to/uv",
+      "args": ["--directory", "/full/path/to/cli/folder", "run", "ca_mcp.py"]
+    }
+  }
+}
+```
+
+4. Restart Claude Desktop
+
+### Available MCP Tools
+
+- `get_risk_scenarios()`: Retrieve risk scenarios from CISO Assistant
+- `get_applied_controls()`: Retrieve applied controls/action plan
+- `get_audits_progress()`: Retrieve compliance assessment progress
+
+## Examples
+
+### Complete Risk Assessment Import
+
+```bash
+# First, check available folders, perimeters, and matrices
+uv run clica.py get-folders
+uv run clica.py get-perimeters
+uv run clica.py get-matrices
+
+# Import a complete risk assessment via the Data Wizard backend
+uv run clica.py import-risk-assessment \
+  --file data-wizard-risk-assessments.xlsx \
+  --perimeter "IT Infrastructure" \
+  --matrix "4x4 risk matrix from EBIOS-RM"
+```
+
+### Import Supporting Data
+
+```bash
+# Import assets using the Data Wizard backend
+uv run clica.py import-assets --file data-wizard-assets.xlsx --folder "Global"
+
+# Import applied controls
+uv run clica.py import-applied-controls --file data-wizard-controls.xlsx --folder "Global"
+
+# Import evidence records
+uv run clica.py import-evidences --file data-wizard-evidences.xlsx --folder "Global"
+
+# Upload supporting documents
+uv run clica.py upload-attachment \
+  --file "security_policy.pdf" \
+  --name "Information Security Policy"
+```
+
+### Backup and Restore Operations
+
+```bash
+# Create a full backup with timestamp
+BACKUP_DATE=$(date +%Y-%m-%d_%H-%M-%S)
+uv run clica.py backup-full --dest-dir "./backups/backup-$BACKUP_DATE"
+
+# List backups
+ls -lh ./backups/
+
+# Restore from a specific backup
+uv run clica.py restore-full --src-dir "./backups/backup-2024-01-15_10-30-00"
+
+# Automated daily backup (can be added to cron)
+uv run clica.py backup-full --dest-dir "/var/backups/ciso-assistant/$(date +%Y-%m-%d)"
+```
+
+## Troubleshooting
+
+### Error Messages
+
+- `"No authentication token available"`: Configure your PAT token in `.clica.env`
+- `"something went wrong. check authentication"`: Verify your token and API URL
+### Getting Help
+
+For additional support:
+
+1. Check the CISO Assistant documentation
+2. Verify your API endpoint is accessible
+3. Review the Data Wizard templates for proper formatting
+4. Ensure all required dependencies are installed
+5. Contact us on our Discord !
+
+## Security Considerations
+
+- Never commit `.clica.env` or `.mcp.env` files to version control
+- Use `VERIFY_CERTIFICATE=true` in production environments

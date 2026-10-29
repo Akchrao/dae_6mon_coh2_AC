@@ -1,0 +1,4 @@
+"name","description","domain","status","expiry_date","owner","filtering_labels"
+"Asset Management Policy","Signed asset management policy","Global","approved","2027-06-30","","policy"
+"Asset Inventory","Quarterly export of the asset register","Global","missing","","","inventory|quarterly"
+"Access review report","Privileged account review evidence","Global","in_review","","","iam"

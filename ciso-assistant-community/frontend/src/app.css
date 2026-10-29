@@ -1,0 +1,173 @@
+/* Restrict the Tailwind source scan to src/ (the default auto-detection can crawl the whole project tree, which makes the app.css transform take minutes in the enterprise .build overlay). */
+@import 'tailwindcss' source('.');
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+@import '@skeletonlabs/skeleton';
+
+/*
+  Add your theme import for your theme: "ciso-theme" here
+*/
+@import '../ciso-theme.css';
+@import '@skeletonlabs/skeleton-svelte';
+
+@source './**/*.{html,js,svelte,ts}';
+
+@custom-variant dark (&:is(.dark, .dark *));
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+	*,
+	::after,
+	::before,
+	::backdrop,
+	::file-selector-button {
+		border-color: var(--color-surface-200-800, currentcolor);
+	}
+}
+
+@utility btn-mini-primary {
+	/* Follows the theme primary like preset-filled-primary-500 (bg + contrast text), with the
+	   same Skeleton btn hover (brightness 125% light / 75% dark) rather than a bg shift. */
+	@apply text-primary-contrast-500 bg-primary-500 hover:brightness-125 dark:hover:brightness-75;
+}
+@utility btn-mini-secondary {
+	@apply text-gray-50 bg-pink-500 hover:bg-pink-400 dark:bg-pink-600 dark:hover:bg-pink-500;
+}
+@utility btn-mini-tertiary {
+	@apply text-gray-50 bg-sky-500 hover:bg-sky-400 dark:bg-sky-600 dark:hover:bg-sky-500;
+}
+@utility btn-mini-quaternary {
+	@apply text-gray-50 bg-teal-500 hover:bg-teal-400 dark:bg-teal-600 dark:hover:bg-teal-500;
+}
+
+/* v5 styles the <code> element itself and dropped the `code` utility; we still tag
+   <a>/<span> as code, so mirror the v5 base declarations for those. */
+@utility code {
+	&:not(pre &, .ec-line &) {
+		background-color: color-mix(
+			in oklab,
+			light-dark(var(--color-brand-light), var(--color-brand-dark)) 25%,
+			transparent
+		);
+		color: var(--color-surface-950-50);
+		border-radius: var(--radius-base);
+		font-family: var(--font-mono);
+		font-size: var(--text-xs);
+		white-space: nowrap;
+		padding-inline: --spacing(1.5);
+		padding-block: --spacing(0.75);
+	}
+}
+
+@layer utilities {
+	/* (all other styles here...) */
+	html,
+	body {
+		@apply h-auto;
+	}
+	.capitalize-first:first-letter {
+		@apply capitalize;
+	}
+	tbody {
+		& > :not(:last-child) {
+			border-color: var(--color-surface-100-900) !important;
+		}
+	}
+	.input,
+	.select,
+	.multiselect,
+	.textarea {
+		background-color: var(--color-surface-100-900);
+		/* adaptive text so native field values stay readable in dark mode */
+		color: var(--color-surface-950-50);
+	}
+
+	.checkbox,
+	.radio {
+		background-color: var(--color-surface-100-900);
+	}
+}
+
+@layer base {
+	[data-popup] {
+		transition: none;
+	}
+}
+
+/* svelte-multiselect dropdown: align the options panel with the app surface in both
+   themes (off-white surface-100 instead of pure white in light, surface-900 in dark). */
+div.multiselect {
+	--sms-open-z-index: 20;
+}
+div.multiselect > ul.options {
+	background-color: var(--color-surface-100-900);
+	color: var(--color-surface-950-50);
+}
+div.multiselect > ul.options > li.active {
+	background-color: var(--color-surface-200-800);
+}
+div.multiselect > ul.options > li:not(.active):hover {
+	background-color: var(--color-surface-200-800);
+}
+/* Portaled to <body>, so the rules above no longer match; theme via the library's vars. */
+ul.options.portaled-options {
+	--sms-options-bg: var(--color-surface-100-900);
+	--sms-li-active-bg: var(--color-surface-200-800);
+	/* Above modals (z-999): an open dropdown is on top of whatever opened it. */
+	--sms-options-z-index: 1000;
+	color: var(--color-surface-950-50);
+}
+ul.options.portaled-options > li:not(.active):hover {
+	background-color: var(--color-surface-200-800);
+}
+/* Selected values/chips: keep text readable in dark mode. Single-select uses a
+   transparent li (text sits on the dark input bg); multi-select uses a filled
+   chip. The chip's own contrast color is preserved; only bare/transparent
+   selected text inherits this adaptive color. */
+.dark div.multiselect > ul.selected > li:not(.chip) {
+	color: var(--color-surface-50);
+}
+
+/* Tailwind prose dark mode */
+.dark .prose {
+	color: var(--color-surface-50);
+}
+.dark .prose th,
+.dark .prose td {
+	border-color: var(--color-surface-700);
+}
+.dark .prose thead {
+	border-color: var(--color-surface-600);
+}
+
+/* AutocompleteSelect: collapse overflow chips when chip-max-N class is on outerDiv.
+   Uses position/size instead of display:none to avoid Tailwind v4 @layer !important cascade. */
+.chip-max-1 ul.selected > li:nth-child(n + 3),
+.chip-max-2 ul.selected > li:nth-child(n + 4),
+.chip-max-3 ul.selected > li:nth-child(n + 5),
+.chip-max-4 ul.selected > li:nth-child(n + 6),
+.chip-max-5 ul.selected > li:nth-child(n + 7) {
+	position: absolute !important;
+	width: 0 !important;
+	height: 0 !important;
+	padding: 0 !important;
+	margin: 0 !important;
+	overflow: hidden !important;
+	opacity: 0 !important;
+	pointer-events: none !important;
+}
+
+.hide-scrollbar {
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar {
+	display: none;
+}

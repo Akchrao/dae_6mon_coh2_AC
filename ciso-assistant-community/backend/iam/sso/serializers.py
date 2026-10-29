@@ -1,0 +1,416 @@
+from allauth.socialaccount.providers.saml.provider import SAMLProvider
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+from rest_framework import serializers
+
+from global_settings.models import GlobalSettings
+from iam.models import UserGroup
+from .models import SSOSettings
+
+from core.serializers import BaseModelSerializer
+
+User = get_user_model()
+
+
+class SSOSettingsReadSerializer(BaseModelSerializer):
+    name = serializers.CharField(read_only=True, source="get_name")
+    provider = serializers.CharField(read_only=True, source="get_provider_display")
+
+    class Meta:
+        model = SSOSettings
+        fields = ["id", "name", "provider", "is_enabled", "force_sso", "slo_enabled"]
+
+
+def _merge_settings(stored: dict, incoming: dict) -> dict:
+    """Overlay *incoming* on *stored*, descending one level into the nested
+    sections (`idp`, `sp`, `attribute_mapping`, `advanced`).
+
+    One level is exactly right: those sections are the only nesting the dotted
+    `source=` declarations produce, and their leaves are scalars a payload
+    legitimately overwrites. A section the payload does not mention keeps its
+    stored contents; a section it does mention keeps the stored leaves it did
+    not send (the SP private key being the one that matters most).
+    """
+    merged = dict(stored)
+    for key, value in incoming.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = {**merged[key], **value}
+        else:
+            merged[key] = value
+    return merged
+
+
+class SSOSettingsWriteSerializer(BaseModelSerializer):
+    is_enabled = serializers.BooleanField(
+        required=False,
+    )
+    force_sso = serializers.BooleanField(
+        required=False,
+    )
+    slo_enabled = serializers.BooleanField(
+        required=False,
+        default=False,
+    )
+    jit_provisioning_enabled = serializers.BooleanField(
+        required=False,
+    )
+    default_user_groups = serializers.ListField(
+        child=serializers.UUIDField(),
+        required=False,
+    )
+    provider = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+    provider_id = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+    client_id = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )
+    secret = serializers.CharField(
+        write_only=True,
+        trim_whitespace=False,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+    )  # NOTE: Only used for OIDC
+    server_url = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        source="settings.server_url",
+    )  # NOTE: Only used for OIDC
+    token_auth_method = serializers.ChoiceField(
+        choices=[
+            "client_secret_basic",
+            "client_secret_post",
+            "client_secret_jwt",
+            "private_key_jwt",
+            "none",
+        ],
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        source="settings.token_auth_method",
+    )  # NOTE: Only used for OIDC
+    oauth_pkce_enabled = serializers.BooleanField(
+        default=False,
+        source="settings.oauth_pkce_enabled",
+    )  # NOTE: Only used for OIDC
+    additional_scopes = serializers.RegexField(
+        regex=(
+            r"^[\x21\x23-\x2b\x2d-\x5b\x5d-\x7e]+"
+            r"(?:[ \t]*,[ \t]*[\x21\x23-\x2b\x2d-\x5b\x5d-\x7e]+)*$"
+        ),
+        required=False,
+        allow_blank=True,
+        max_length=1000,
+        source="settings.additional_scopes",
+        help_text="Comma-separated OAuth scopes appended to the default OIDC scopes.",
+    )  # NOTE: Only used for OIDC
+    provider_name = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        source="settings.name",
+    )
+    attribute_mapping_uid = serializers.ListField(
+        child=serializers.CharField(
+            required=False,
+            allow_blank=True,
+            allow_null=True,
+        ),
+        required=False,
+        allow_null=True,
+        source="settings.attribute_mapping.uid",
+    )
+    attribute_mapping_email_verified = serializers.ListField(
+        child=serializers.CharField(
+            required=False,
+            allow_blank=True,
+            allow_null=True,
+        ),
+        required=False,
+        allow_null=True,
+        source="settings.attribute_mapping.email_verified",
+    )
+    attribute_mapping_email = serializers.ListField(
+        child=serializers.CharField(
+            required=False,
+            allow_blank=True,
+            allow_null=True,
+        ),
+        required=False,
+        allow_null=True,
+        source="settings.attribute_mapping.email",
+    )
+    attribute_mapping_groups = serializers.ListField(
+        child=serializers.CharField(
+            required=False,
+            allow_blank=True,
+            allow_null=True,
+        ),
+        required=False,
+        allow_null=True,
+        source="settings.attribute_mapping.groups",
+    )
+    idp_entity_id = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        source="settings.idp.entity_id",
+    )
+    metadata_url = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        source="settings.idp.metadata_url",
+    )
+    sso_url = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        source="settings.idp.sso_url",
+    )
+    slo_url = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        source="settings.idp.slo_url",
+    )
+    x509cert = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        source="settings.idp.x509cert",
+    )
+    sp_entity_id = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        source="settings.sp.entity_id",
+    )
+    allow_repeat_attribute_name = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.allow_repeat_attribute_name",
+    )
+    allow_single_label_domains = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.allow_single_label_domains",
+    )
+    authn_request_signed = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.authn_request_signed",
+    )
+    digest_algorithm = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        source="settings.advanced.digest_algorithm",
+    )
+    logout_request_signed = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.logout_request_signed",
+    )
+    logout_response_signed = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.logout_response_signed",
+    )
+    metadata_signed = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.metadata_signed",
+    )
+    name_id_encrypted = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.name_id_encrypted",
+    )
+    reject_deprecated_algorithm = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.reject_deprecated_algorithm",
+    )
+    reject_idp_initiated_sso = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.reject_idp_initiated_sso",
+    )
+    signature_algorithm = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        source="settings.advanced.signature_algorithm",
+    )
+    want_assertion_encrypted = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.want_assertion_encrypted",
+    )
+    want_assertion_signed = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.want_assertion_signed",
+    )
+    want_attribute_statement = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.want_attribute_statement",
+    )
+    want_message_signed = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.want_message_signed",
+    )
+    want_name_id = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.want_name_id",
+    )
+    want_name_id_encrypted = serializers.BooleanField(
+        required=False,
+        source="settings.advanced.want_name_id_encrypted",
+    )
+    sp_x509cert = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        source="settings.advanced.x509cert",
+    )
+    sp_private_key = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        trim_whitespace=False,
+        source="settings.advanced.private_key",
+        write_only=True,
+    )
+    oidc_has_secret = serializers.SerializerMethodField()
+    saml_has_sp_private_key = serializers.SerializerMethodField()
+
+    def get_oidc_has_secret(self, obj) -> bool:
+        try:
+            return bool(SSOSettings.objects.get().secret)
+        except SSOSettings.DoesNotExist:
+            return False
+
+    def get_saml_has_sp_private_key(self, obj) -> bool:
+        try:
+            return bool(
+                SSOSettings.objects.get()
+                .settings.get("advanced", {})
+                .get("private_key")
+            )
+        except SSOSettings.DoesNotExist:
+            return False
+
+    def validate_default_user_groups(self, value):
+        existing_ids = set(
+            UserGroup.objects.filter(id__in=value).values_list("id", flat=True)
+        )
+        unknown_ids = [group_id for group_id in value if group_id not in existing_ids]
+        if unknown_ids:
+            raise serializers.ValidationError(
+                f"Unknown user group id(s): {', '.join(str(i) for i in unknown_ids)}"
+            )
+        return value
+
+    class Meta:
+        model = SSOSettings
+        exclude = ["value"]
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+
+        # remove nested private_key if present
+        advanced = data.get("settings", {}).get("advanced", {})
+        if "private_key" in advanced:
+            advanced.pop("private_key")
+
+        return data
+
+    def update(self, instance, validated_data):
+        settings_object = GlobalSettings.objects.get(name=GlobalSettings.Names.SSO)
+
+        # The stored value is replaced wholesale at the end of this method, and
+        # to_internal_value builds a nested mapping only for the dotted sources
+        # it actually received. A payload that omits a whole section therefore
+        # arrives without it — an OIDC save carries no `settings.advanced.*`
+        # (the SAML accordion is not rendered), a SAML save no
+        # `settings.server_url` — and a wholesale replace would drop every
+        # setting that section holds, including the SP private key.
+        #
+        # So overlay the sections the payload does carry on top of the stored
+        # ones instead of replacing the lot. `advanced` is then guaranteed to
+        # exist for the private-key restore below, without inventing a
+        # completeness requirement no real form save can meet.
+        validated_data["settings"] = _merge_settings(
+            settings_object.value.get("settings") or {},
+            validated_data.get("settings") or {},
+        )
+        validated_data["settings"].setdefault("advanced", {})
+
+        # The value dict is replaced wholesale below, so an omitted flag must
+        # fall back to the stored state (like secret and jit_provisioning_
+        # enabled already do): otherwise a payload that simply leaves out
+        # is_enabled silently disables SSO — stranding SSO-only users while
+        # skirting the guard, which would only see an explicit False.
+        currently_enabled = settings_object.value.get("is_enabled", False)
+        validated_data["is_enabled"] = validated_data.get(
+            "is_enabled", currently_enabled
+        )
+        validated_data["force_sso"] = validated_data.get(
+            "force_sso", settings_object.value.get("force_sso", False)
+        )
+
+        # Guard the enabled -> disabled transition only: re-saving an already
+        # disabled configuration must stay possible (configure-then-enable).
+        if currently_enabled and not validated_data["is_enabled"]:
+            has_sso_only_users_without_local_fallback = User.objects.filter(
+                Q(is_scim_managed=True) | Q(is_jit_provisioned=True),
+                keep_local_login=False,
+            ).exists()
+            if has_sso_only_users_without_local_fallback:
+                raise serializers.ValidationError(
+                    {"is_enabled": "errorSsoRequiredForManagedUsers"}
+                )
+
+        # Use stored secret and sp_private_key if no transmitted
+        validated_data["secret"] = validated_data.get(
+            "secret", settings_object.value.get("secret", "")
+        )
+        validated_data["settings"]["advanced"]["private_key"] = (
+            validated_data.get("settings", {})
+            .get("advanced", {})
+            .get(
+                "private_key",
+                settings_object.value.get("settings", {})
+                .get("advanced", {})
+                .get("private_key", ""),
+            )
+        )
+
+        # Same class as is_enabled above: an omitted top-level field must fall
+        # back to the stored value, not reset the configuration to a default.
+        validated_data["provider"] = validated_data.get(
+            "provider", settings_object.value.get("provider", "n/a")
+        )
+        validated_data["client_id"] = validated_data.get(
+            "client_id", settings_object.value.get("client_id", "")
+        )
+        validated_data["provider_id"] = validated_data["provider"]
+        validated_data["settings"]["name"] = validated_data["provider"]
+
+        # Use stored jit_provisioning_enabled and default_user_groups if not transmitted
+        validated_data["jit_provisioning_enabled"] = validated_data.get(
+            "jit_provisioning_enabled",
+            settings_object.value.get("jit_provisioning_enabled", False),
+        )
+        validated_data["default_user_groups"] = [
+            str(group_id)
+            for group_id in validated_data.get(
+                "default_user_groups",
+                settings_object.value.get("default_user_groups", []),
+            )
+        ]
+
+        settings_object.value = validated_data
+        settings_object.save()
+        return instance

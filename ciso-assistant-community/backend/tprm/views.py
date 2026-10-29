@@ -1,0 +1,2319 @@
+import io
+import re
+import uuid
+
+import django_filters as df
+from django.db import transaction
+from django.conf import settings
+from django.utils.translation import gettext_lazy as _
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
+from rest_framework.status import (
+    HTTP_201_CREATED,
+    HTTP_400_BAD_REQUEST,
+    HTTP_403_FORBIDDEN,
+    HTTP_409_CONFLICT,
+)
+from iam.models import Folder, Permission, RoleAssignment, User
+from core.views import (
+    BaseModelViewSet as AbstractBaseModelViewSet,
+    ComplianceAssessmentViewSet,
+    ExportMixin,
+    GenericFilterSet,
+    NullableModelChoiceFilter,
+    actor_prefetch,
+    escape_excel_formula,
+)
+from core.models import (
+    Asset,
+    ComplianceAssessment,
+    Question,
+    RequirementAssessment,
+    RequirementAssignment,
+    Terminology,
+)
+from core.utils import (
+    assessable_requirement_assessments,
+    compliance_overviews,
+    compute_respondent_progress,
+    viewable_audit_ids,
+)
+from django.db.models import (
+    Case,
+    Count,
+    Exists,
+    IntegerField,
+    OuterRef,
+    Q,
+    Subquery,
+    Value,
+    When,
+)
+from tprm.models import (
+    Entity,
+    EntityScore,
+    EntityTierChange,
+    Tier,
+    TierSource,
+    Representative,
+    Solution,
+    SolutionSubcontractor,
+    SolutionTierChange,
+    EntityAssessment,
+    Contract,
+)
+from rest_framework.decorators import action
+import structlog
+
+from rest_framework.request import Request
+from rest_framework.response import Response
+
+from django.utils.formats import date_format
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.db.models import Prefetch, Sum, F, FloatField, TextField, Case, When, Value
+from django.db.models.functions import Cast, Greatest, Coalesce, Round
+
+from core.constants import COUNTRY_CHOICES, CURRENCY_CHOICES
+from core.dora import (
+    DORA_ENTITY_TYPE_CHOICES,
+    DORA_ENTITY_HIERARCHY_CHOICES,
+    DORA_CONTRACTUAL_ARRANGEMENT_CHOICES,
+    TERMINATION_REASON_CHOICES,
+    DORA_ICT_SERVICE_CHOICES,
+    DORA_SENSITIVENESS_CHOICES,
+    DORA_RELIANCE_CHOICES,
+    DORA_PROVIDER_PERSON_TYPE_CHOICES,
+    DORA_SUBSTITUTABILITY_CHOICES,
+    DORA_NON_SUBSTITUTABILITY_REASON_CHOICES,
+    DORA_BINARY_CHOICES,
+    DORA_YES_NO_ASSESSMENT_CHOICES,
+    DORA_REINTEGRATION_POSSIBILITY_CHOICES,
+    DORA_DISCONTINUING_IMPACT_CHOICES,
+)
+
+import csv
+import io
+import uuid
+import zipfile
+from datetime import datetime
+
+logger = structlog.get_logger(__name__)
+
+# Core models the DORA ROI is built from. Reading the register as a whole
+# requires holding these on the root folder, i.e. instance-wide.
+DORA_ROI_PERMISSIONS = (
+    "view_entity",
+    "view_solution",
+    "view_asset",
+    "view_contract",
+)
+
+
+def _join_lines(values) -> str:
+    return "\n".join(v for v in values if v)
+
+
+def _iso_datetime(value) -> str:
+    return value.isoformat(timespec="seconds") if value else ""
+
+
+def has_dora_roi_access(user) -> bool:
+    root_folder = Folder.get_root_folder()
+    return all(
+        RoleAssignment.is_access_allowed(
+            user=user,
+            perm=Permission.objects.get(codename=codename),
+            folder=root_folder,
+        )
+        for codename in DORA_ROI_PERMISSIONS
+    )
+
+
+class BaseModelViewSet(AbstractBaseModelViewSet):
+    serializers_module = "tprm.serializers"
+
+
+NEVER_ASSESSED = "never"
+
+ENTITY_FILTERSET_FIELDS = [
+    "name",
+    "ref_id",
+    "is_active",
+    "folder",
+    "parent_entity",
+    "relationship",
+    "relationship__name",
+    "contracts",
+    "country",
+    "currency",
+    "dora_entity_type",
+    "dora_entity_hierarchy",
+    "dora_competent_authority",
+    "filtering_labels",
+    "default_dependency",
+    "default_penetration",
+    "default_maturity",
+    "default_trust",
+    "tier",
+    "tier_source",
+]
+
+
+class EntityFilterSet(GenericFilterSet):
+    """`last_assessment_status` is annotated, so the auto-built FilterSet misses it."""
+
+    # "--" lists the vendors not tiered yet.
+    tier = NullableModelChoiceFilter(queryset=Tier.objects.all())
+    last_assessment_status = df.MultipleChoiceFilter(
+        choices=lambda: (
+            list(EntityAssessment.Status.choices)
+            + [(NEVER_ASSESSED, _("Never assessed"))]
+        ),
+        method="filter_last_assessment_status",
+    )
+
+    class Meta:
+        model = Entity
+        fields = ENTITY_FILTERSET_FIELDS
+
+    def filter_last_assessment_status(self, queryset, name, value):
+        if not value:
+            return queryset
+        statuses = [v for v in value if v != NEVER_ASSESSED]
+        condition = Q(last_assessment_status__in=statuses) if statuses else Q()
+        if NEVER_ASSESSED in value:
+            # `status` is nullable, so only a missing date means "never assessed".
+            condition |= Q(last_assessment_date__isnull=True)
+        return queryset.filter(condition)
+
+
+# Create your views here.
+class EntityViewSet(ExportMixin, BaseModelViewSet):
+    """
+    API endpoint that allows entities to be viewed or edited.
+    """
+
+    model = Entity
+    export_config = {
+        "filename": "entities_export",
+        "fields": {
+            "ref_id": {"source": "ref_id", "label": "ref_id", "escape": True},
+            "name": {"source": "name", "label": "name", "escape": True},
+            "description": {
+                "source": "description",
+                "label": "description",
+                "escape": True,
+            },
+            "mission": {"source": "mission", "label": "mission", "escape": True},
+            "country": {"source": "country", "label": "country"},
+            "currency": {"source": "currency", "label": "currency"},
+            "dependency": {"source": "default_dependency", "label": "dependency"},
+            "penetration": {"source": "default_penetration", "label": "penetration"},
+            "maturity": {"source": "default_maturity", "label": "maturity"},
+            "trust": {"source": "default_trust", "label": "trust"},
+            "lei": {
+                "source": "legal_identifiers_dict",
+                "label": "lei",
+                "format": lambda v: v.get("LEI", ""),
+            },
+            "euid": {
+                "source": "legal_identifiers_dict",
+                "label": "euid",
+                "format": lambda v: v.get("EUID", ""),
+            },
+            "duns": {
+                "source": "legal_identifiers_dict",
+                "label": "duns",
+                "format": lambda v: v.get("DUNS", ""),
+            },
+            "vat": {
+                "source": "legal_identifiers_dict",
+                "label": "vat",
+                "format": lambda v: v.get("VAT", ""),
+            },
+            "parent_entity_ref_id": {
+                "source": "parent_entity.ref_id",
+                "label": "parent_entity_ref_id",
+                "escape": True,
+            },
+            "domain": {"source": "folder.name", "label": "domain", "escape": True},
+        },
+        "select_related": ["folder", "parent_entity"],
+        "wrap_columns": ["name", "description", "mission"],
+    }
+    filterset_class = EntityFilterSet
+    search_fields = ["name", "description", "legal_identifiers_text"]
+    # The column shows the status; chronology is what makes it sortable.
+    ordering_remap = {
+        "last_assessment_status": "last_assessment_date",
+        "tier": "tier__rank",
+    }
+    ordering_nulls_last = ("last_assessment_date", "tier__rank")
+
+    @action(detail=False, name="Get last assessment status choices")
+    def last_assessment_status(self, request):
+        return Response(
+            dict(EntityAssessment.Status.choices)
+            | {NEVER_ASSESSED: _("Never assessed")}
+        )
+
+    def get_protected_error_response_data(self, instance, error):
+        """
+        Both the subcontractor and recipient FKs on SolutionSubcontractor use
+        on_delete=PROTECT, so deleting an Entity referenced by either role
+        raises ProtectedError. Collect blocking rows for both roles so the
+        frontend can render "this entity is used as a subcontractor/recipient
+        in N solutions" rather than a generic message.
+        """
+        as_subcontractor = instance.subcontracts.select_related("solution")
+        as_recipient = instance.subcontract_recipients.select_related("solution")
+        total_count = as_subcontractor.count() + as_recipient.count()
+
+        # Combine both querysets, ordered by solution name, capped at 50.
+        blocking_rows = []
+        for row in as_subcontractor.order_by("solution__name")[:50]:
+            blocking_rows.append(
+                {
+                    "id": str(row.id),
+                    "solution_id": str(row.solution_id),
+                    "solution_name": row.solution.name,
+                    "role": "subcontractor",
+                }
+            )
+        remaining = 50 - len(blocking_rows)
+        if remaining > 0:
+            for row in as_recipient.order_by("solution__name")[:remaining]:
+                blocking_rows.append(
+                    {
+                        "id": str(row.id),
+                        "solution_id": str(row.solution_id),
+                        "solution_name": row.solution.name,
+                        "role": "recipient",
+                    }
+                )
+
+        return {
+            "detail": (
+                f"Cannot delete entity '{instance.name}' — it is "
+                f"referenced in {total_count} subcontracting "
+                f"chain row(s). Remove those references first."
+            ),
+            "blocking_subcontracts": blocking_rows,
+        }
+
+    def get_queryset(self):
+        """Add annotations for default_criticality sorting and legal identifier search."""
+        qs = (
+            super()
+            .get_queryset()
+            .select_related(
+                "folder",
+                "folder__parent_folder",
+                "parent_entity",
+                "tier",
+            )
+        )
+
+        # Skip the heavier prefetches on autocomplete (lightweight payload).
+        if self.action != "autocomplete":
+            # M2Ms / reverse FKs rendered as FieldsRelatedField on
+            # EntityReadSerializer — without these every row issues a fresh query.
+            qs = qs.prefetch_related(
+                "owned_folders",
+                "branches",
+                "relationship",
+                "contracts",
+                "filtering_labels",
+            )
+
+        # Cast legal_identifiers JSON to text so DRF SearchFilter can icontains on it.
+        # Works on both SQLite (JSON stored as text) and PostgreSQL (jsonb → text cast).
+        qs = qs.annotate(
+            legal_identifiers_text=Cast("legal_identifiers", output_field=TextField()),
+        )
+
+        # Newest by creation: a revision supersedes its predecessor, and editing an
+        # old assessment must not float it back to the top.
+        latest_assessment = EntityAssessment.objects.filter(
+            entity=OuterRef("pk")
+        ).order_by("-created_at")
+        qs = qs.annotate(
+            last_assessment_status=Subquery(latest_assessment.values("status")[:1]),
+            last_assessment_date=Subquery(latest_assessment.values("created_at")[:1]),
+        )
+
+        # Annotate with default_criticality calculation
+        # Formula: (default_dependency * default_penetration) / (default_maturity * default_trust)
+        # Handle division by zero by using Case/When
+        # Rounded to 2 decimal places by multiplying by 100, rounding, then dividing by 100
+        qs = qs.annotate(
+            default_criticality=Cast(
+                Round(
+                    Case(
+                        # If maturity or trust is 0, return 0.0
+                        When(default_maturity=0, then=Value(0.0)),
+                        When(default_trust=0, then=Value(0.0)),
+                        # Otherwise, calculate criticality * 100
+                        default=Cast(
+                            (F("default_dependency") * F("default_penetration") * 100.0)
+                            / (F("default_maturity") * F("default_trust")),
+                            output_field=FloatField(),
+                        ),
+                        output_field=FloatField(),
+                    )
+                )
+                / 100.0,
+                output_field=FloatField(),
+            )
+        )
+
+        return qs
+
+    @action(detail=False, methods=["get"], name="Generate DORA ROI")
+    def generate_dora_roi(self, request):
+        """
+        Generate DORA Register of Information (ROI) as a zip file containing CSV data.
+
+        This generates a comprehensive DORA ROI export containing multiple CSV reports:
+        - b_01.01: Main entity information
+        - b_01.02: Entity register (main entity + branches)
+        - b_01.03: Branches register
+        - b_02.01-03: Contractual arrangements
+        - b_03.01-03: Signing entities and providers
+        - b_04.01: Entities using ICT services
+        - b_05.01-02: Provider details and supply chains
+        - b_06.01: Critical functions register
+        - b_07.01: Assessment of ICT services
+        - b_99.01: Aggregation report
+        - FilingIndicators.csv: Template inclusion indicators
+        - parameters.csv: Report metadata and configuration
+        - META-INF/reportPackage.json: XBRL report package metadata
+        - reports/report.json: XBRL CSV configuration and taxonomy references
+        """
+        from tprm import dora_export
+
+        # Get the main entity
+        main_entity = Entity.get_main_entity()
+
+        if not main_entity:
+            return HttpResponse("No main entity found", status=400)
+
+        # Get accessible objects for the current user
+        viewable_entities = RoleAssignment.get_viewable_object_ids(request.user, Entity)
+        viewable_contracts = RoleAssignment.get_viewable_object_ids(
+            request.user, Contract
+        )
+        viewable_assets = RoleAssignment.get_viewable_object_ids(request.user, Asset)
+
+        # Prepare entity lists
+        # Subsidiaries: entities with main entity as parent AND dora_provider_person_type set (legal person)
+        # Branches: entities with main entity as parent AND dora_provider_person_type not set
+        subsidiaries = list(
+            Entity.objects.filter(
+                id__in=viewable_entities,
+                parent_entity=main_entity,
+                dora_provider_person_type__isnull=False,
+            ).exclude(dora_provider_person_type="")
+        )
+        branches = list(
+            Entity.objects.filter(
+                id__in=viewable_entities,
+                parent_entity=main_entity,
+                dora_provider_person_type__isnull=True,
+            )
+            | Entity.objects.filter(
+                id__in=viewable_entities,
+                parent_entity=main_entity,
+                dora_provider_person_type="",
+            )
+        )
+        # b_01.02 includes only main entity and subsidiaries (not branches)
+        entities_for_b_01_02 = [main_entity] + subsidiaries
+
+        # Prepare contract QuerySets
+        contracts = (
+            Contract.objects.filter(id__in=viewable_contracts)
+            .exclude(status=Contract.Status.DRAFT)
+            .exclude(dora_exclude=True)
+        )
+
+        # Prepare business functions
+        business_functions = Asset.objects.filter(
+            id__in=viewable_assets, is_business_function=True
+        )
+
+        # Collect all assets related to business functions (including child assets)
+        # This ensures that solutions linked to child assets are also captured in DORA reports
+        business_function_asset_ids = set(
+            business_functions.values_list("id", flat=True)
+        )
+        for business_function in business_functions:
+            # Get all descendant (child) assets for each business function
+            # Note: get_descendants() returns Asset objects, not IDs
+            descendants = business_function.get_descendants()
+            business_function_asset_ids.update(asset.id for asset in descendants)
+
+        # Get all solutions related to business functions and their child assets
+        # These are the ICT services that support critical business functions
+        related_solutions = Solution.objects.filter(
+            assets__id__in=business_function_asset_ids
+        ).distinct()
+
+        # Filter contracts to only those with solutions related to business functions
+        # This subset is used for reports that focus on ICT services supporting critical functions
+        # (b_02.02, b_07.01, b_99.01)
+        related_solution_ids = set(related_solutions.values_list("id", flat=True))
+        business_function_contracts = contracts.filter(
+            solutions__id__in=related_solution_ids
+        ).distinct()
+
+        # Get export metadata (naming, identifiers)
+        identifier_type = request.query_params.get("identifier_type", None)
+        level = request.query_params.get("level", "IND")
+        naming_convention = request.query_params.get("naming_convention", "nbb")
+        try:
+            export_meta = dora_export.get_dora_export_metadata(
+                main_entity,
+                identifier_type=identifier_type,
+                level=level,
+                naming_convention=naming_convention,
+            )
+        except ValueError:
+            logger.exception("Error generating DORA export metadata")
+            return Response(
+                {
+                    "error": "Error generating DORA export metadata. Please ensure the main entity has the required DORA metadata fields (folder_prefix, entity_id, filename)."
+                },
+                status=HTTP_400_BAD_REQUEST,
+            )
+
+        base_folder_name = export_meta["folder_prefix"]
+        entity_id = export_meta["entity_id"]
+        filename = export_meta["filename"]
+
+        # Create zip file in memory
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            # Generate all DORA ROI reports (with folder prefix)
+            dora_export.generate_b_01_01_main_entity(
+                zip_file, main_entity, base_folder_name
+            )
+            dora_export.generate_b_01_02_entities(
+                zip_file, main_entity, entities_for_b_01_02, base_folder_name
+            )
+            dora_export.generate_b_01_03_branches(zip_file, branches, base_folder_name)
+
+            dora_export.generate_b_02_01_contracts(
+                zip_file, contracts, base_folder_name
+            )
+            dora_export.generate_b_02_02_ict_services(
+                zip_file, contracts, base_folder_name, business_function_asset_ids
+            )
+            dora_export.generate_b_02_03_intragroup_contracts(
+                zip_file, contracts, base_folder_name
+            )
+
+            dora_export.generate_b_03_01_signing_entities(
+                zip_file, main_entity, contracts, base_folder_name
+            )
+            dora_export.generate_b_03_02_ict_providers(
+                zip_file, contracts, base_folder_name
+            )
+            dora_export.generate_b_03_03_intragroup_providers(
+                zip_file, main_entity, contracts, base_folder_name
+            )
+
+            dora_export.generate_b_04_01_service_users(
+                zip_file, branches, contracts, base_folder_name
+            )
+
+            dora_export.generate_b_05_01_provider_details(
+                zip_file, main_entity, contracts, base_folder_name
+            )
+            dora_export.generate_b_05_02_supply_chains(
+                zip_file, contracts, base_folder_name
+            )
+
+            dora_export.generate_b_06_01_functions(
+                zip_file, main_entity, business_functions, base_folder_name
+            )
+
+            dora_export.generate_b_07_01_assessment(
+                zip_file, business_function_contracts, base_folder_name
+            )
+
+            dora_export.generate_b_99_01_aggregation(
+                zip_file,
+                business_function_contracts,
+                business_functions,
+                base_folder_name,
+            )
+
+            # Generate FilingIndicators.csv
+            dora_export.generate_filing_indicators(zip_file, base_folder_name)
+
+            # Generate parameters.csv
+            dora_export.generate_parameters(
+                zip_file, main_entity, base_folder_name, entity_id=entity_id
+            )
+
+            # Generate JSON metadata files
+            dora_export.generate_report_package_json(zip_file, base_folder_name)
+            dora_export.generate_report_json(zip_file, base_folder_name)
+
+        # Prepare response
+        zip_buffer.seek(0)
+
+        response = HttpResponse(zip_buffer.getvalue(), content_type="application/zip")
+        sanitized_filename = re.sub(r"[^\w.\-]", "_", filename)
+        response["Content-Disposition"] = f'attachment; filename="{sanitized_filename}"'
+
+        return response
+
+    @action(detail=False, methods=["get"], name="Lint DORA ROI")
+    def dora_roi_lint(self, request):
+        """
+        Validate DORA ROI requirements and return linting results.
+        """
+        from tprm import dora_linter
+
+        if not has_dora_roi_access(request.user):
+            return Response(status=HTTP_403_FORBIDDEN)
+
+        lint_results = dora_linter.lint_dora_roi()
+        return Response(lint_results)
+
+    @action(detail=False, methods=["get"], name="Get entities graph")
+    def graph(self, request):
+        """
+        Generate graph data for entities, showing:
+        - Entity hierarchy (parent-child relationships)
+        - Solutions provided by entities
+        - Contracts between entities
+        - Assets linked to solutions
+        - Asset hierarchy (parent-child asset relationships)
+        """
+        # Get accessible objects for the current user
+        viewable_entities = RoleAssignment.get_viewable_object_ids(request.user, Entity)
+        viewable_contracts = RoleAssignment.get_viewable_object_ids(
+            request.user, Contract
+        )
+        viewable_solutions = RoleAssignment.get_viewable_object_ids(
+            request.user, Solution
+        )
+        viewable_assets = RoleAssignment.get_viewable_object_ids(request.user, Asset)
+
+        # Get entities, solutions, contracts, and assets
+        entities = Entity.objects.filter(id__in=viewable_entities)
+        solutions = Solution.objects.filter(id__in=viewable_solutions).select_related(
+            "provider_entity"
+        )
+        contracts = (
+            Contract.objects.filter(id__in=viewable_contracts)
+            .select_related("provider_entity", "beneficiary_entity")
+            .prefetch_related("solutions")
+        )
+        assets = Asset.objects.filter(id__in=viewable_assets)
+
+        # Build nodes and links
+        nodes = []
+        links = []
+        categories = []
+        category_map = {}
+        node_index = 0
+
+        # Create entity nodes
+        entity_node_map = {}
+        for entity in entities:
+            nodes.append(
+                {
+                    "name": entity.name,
+                    "category": 0,  # Entities category
+                    "symbol": "roundRect",
+                    "symbolSize": 35,
+                    "value": f"Entity: {entity.name}",
+                }
+            )
+            entity_node_map[entity.id] = node_index
+            node_index += 1
+
+        # Add entity hierarchy links (parent-child relationships)
+        for entity in entities:
+            if entity.parent_entity and entity.parent_entity.id in entity_node_map:
+                links.append(
+                    {
+                        "source": entity_node_map[entity.parent_entity.id],
+                        "target": entity_node_map[entity.id],
+                        "value": "parent of",
+                    }
+                )
+
+        # Create solution nodes
+        solution_node_map = {}
+        for solution in solutions:
+            nodes.append(
+                {
+                    "name": solution.name,
+                    "category": 1,  # Solutions category
+                    "symbol": "diamond",
+                    "symbolSize": 30,
+                    "value": f"Solution: {solution.name}",
+                }
+            )
+            solution_node_map[solution.id] = node_index
+
+            # Link solution to provider entity
+            if (
+                solution.provider_entity
+                and solution.provider_entity.id in entity_node_map
+            ):
+                links.append(
+                    {
+                        "source": entity_node_map[solution.provider_entity.id],
+                        "target": node_index,
+                        "value": "provides",
+                    }
+                )
+
+            node_index += 1
+
+        # Create contract nodes
+        contract_node_map = {}
+        for contract in contracts:
+            nodes.append(
+                {
+                    "name": contract.name,
+                    "category": 2,  # Contracts category
+                    "symbol": "circle",
+                    "symbolSize": 25,
+                    "value": f"Contract: {contract.name}",
+                }
+            )
+            contract_node_map[contract.id] = node_index
+
+            # Link contract to provider entity
+            if (
+                contract.provider_entity
+                and contract.provider_entity.id in entity_node_map
+            ):
+                links.append(
+                    {
+                        "source": entity_node_map[contract.provider_entity.id],
+                        "target": node_index,
+                        "value": "provider",
+                    }
+                )
+
+            # Link contract to beneficiary entity
+            if (
+                contract.beneficiary_entity
+                and contract.beneficiary_entity.id in entity_node_map
+            ):
+                links.append(
+                    {
+                        "source": node_index,
+                        "target": entity_node_map[contract.beneficiary_entity.id],
+                        "value": "beneficiary",
+                    }
+                )
+
+            # Link contract to solutions
+            for solution in contract.solutions.all():
+                if solution.id in solution_node_map:
+                    links.append(
+                        {
+                            "source": node_index,
+                            "target": solution_node_map[solution.id],
+                            "value": "frames",
+                        }
+                    )
+
+            node_index += 1
+
+        # Create asset nodes (only those with connections)
+        asset_node_map = {}
+        for asset in assets:
+            # Check if asset has any connections (to solutions or other assets)
+            linked_solutions = solutions.filter(assets=asset)
+            parent_assets = asset.parent_assets.filter(id__in=viewable_assets)
+            child_assets = assets.filter(parent_assets=asset)
+
+            has_connections = (
+                linked_solutions.exists()
+                or parent_assets.exists()
+                or child_assets.exists()
+            )
+
+            # Only create node if asset has connections
+            if has_connections:
+                nodes.append(
+                    {
+                        "name": asset.name,
+                        "category": 3,  # Assets category
+                        "symbol": "triangle",
+                        "symbolSize": 20,
+                        "value": f"Asset: {asset.name}",
+                    }
+                )
+                asset_node_map[asset.id] = node_index
+
+                # Link asset to solutions
+                for solution in linked_solutions:
+                    if solution.id in solution_node_map:
+                        links.append(
+                            {
+                                "source": node_index,
+                                "target": solution_node_map[solution.id],
+                                "value": "uses",
+                            }
+                        )
+
+                node_index += 1
+
+        # Add asset hierarchy links (parent-child relationships)
+        for asset in assets:
+            if asset.id in asset_node_map:
+                # Get parent assets for this asset
+                parent_assets = asset.parent_assets.filter(id__in=viewable_assets)
+                for parent_asset in parent_assets:
+                    if parent_asset.id in asset_node_map:
+                        links.append(
+                            {
+                                "source": asset_node_map[parent_asset.id],
+                                "target": asset_node_map[asset.id],
+                                "value": "relies on",
+                            }
+                        )
+
+        # Define categories
+        categories = [
+            {"name": "Entities"},
+            {"name": "Solutions"},
+            {"name": "Contracts"},
+            {"name": "Assets"},
+        ]
+
+        return Response(
+            {
+                "nodes": nodes,
+                "links": links,
+                "categories": categories,
+                "meta": {"display_name": "Entities Graph"},
+            }
+        )
+
+    @action(detail=False, methods=["get"], name="Export TPRM ecosystem")
+    def export_ecosystem(self, request):
+        """
+        Export the TPRM ecosystem as a multi-sheet Excel file with 4 sheets
+        (Entities, Solutions, Contracts, Representatives).
+        """
+        import pandas as pd  # imported lazily: optional/heavy dependency
+
+        viewable_entity_ids = RoleAssignment.get_viewable_object_ids(
+            request.user, Entity
+        )
+        viewable_solution_ids = RoleAssignment.get_viewable_object_ids(
+            request.user, Solution
+        )
+        viewable_contract_ids = RoleAssignment.get_viewable_object_ids(
+            request.user, Contract
+        )
+        viewable_representative_ids = RoleAssignment.get_viewable_object_ids(
+            request.user, Representative
+        )
+
+        # Honor the filters/search applied on the entities list page so the
+        # exported "Entities" sheet matches what the user is viewing.
+        # Solutions/Contracts/Representatives stay on the IAM-scoped set, with
+        # Representatives further limited to the exported entities.
+        entities = self.filter_queryset(
+            Entity.objects.filter(id__in=viewable_entity_ids).select_related(
+                "folder", "parent_entity"
+            )
+        )
+        solutions = Solution.objects.filter(
+            id__in=viewable_solution_ids
+        ).select_related("provider_entity")
+        contracts = (
+            Contract.objects.filter(id__in=viewable_contract_ids)
+            .select_related("folder", "provider_entity")
+            .prefetch_related(
+                Prefetch(
+                    "solutions",
+                    queryset=Solution.objects.filter(id__in=viewable_solution_ids),
+                )
+            )
+        )
+        representatives = Representative.objects.filter(
+            id__in=viewable_representative_ids,
+            entity__in=entities,
+        ).select_related("entity")
+
+        esc = escape_excel_formula
+
+        # --- Entities sheet ---
+        entities_rows = []
+        for entity in entities:
+            legal = entity.legal_identifiers_dict
+            entities_rows.append(
+                {
+                    "ref_id": esc(entity.ref_id),
+                    "name": esc(entity.name),
+                    "description": esc(entity.description),
+                    "mission": esc(entity.mission),
+                    "country": esc(entity.country),
+                    "currency": esc(entity.currency),
+                    "parent_entity_ref_id": (
+                        esc(entity.parent_entity.ref_id) if entity.parent_entity else ""
+                    ),
+                    "dependency": entity.default_dependency,
+                    "penetration": entity.default_penetration,
+                    "maturity": entity.default_maturity,
+                    "trust": entity.default_trust,
+                    "domain": esc(entity.folder.name) if entity.folder else "",
+                    "lei": esc(legal.get("LEI", "")),
+                    "euid": esc(legal.get("EUID", "")),
+                    "vat": esc(legal.get("VAT", "")),
+                    "duns": esc(legal.get("DUNS", "")),
+                }
+            )
+
+        # --- Solutions sheet ---
+        solutions_rows = []
+        for solution in solutions:
+            solutions_rows.append(
+                {
+                    "ref_id": esc(solution.ref_id),
+                    "name": esc(solution.name),
+                    "description": esc(solution.description),
+                    "provider_entity_ref_id": esc(solution.provider_entity.ref_id),
+                    "provider": esc(solution.provider_entity.name),
+                    "criticality": solution.criticality,
+                }
+            )
+
+        # --- Contracts sheet ---
+        contracts_rows = []
+        for contract in contracts:
+            contract_solutions = list(contract.solutions.all())
+            solution_ref_ids = "\n".join(
+                esc(s.ref_id) for s in contract_solutions if s.ref_id
+            )
+            solution_names = "\n".join(
+                esc(s.name) for s in contract_solutions if s.name
+            )
+            contracts_rows.append(
+                {
+                    "ref_id": esc(contract.ref_id),
+                    "name": esc(contract.name),
+                    "description": esc(contract.description),
+                    "provider_entity_ref_id": (
+                        esc(contract.provider_entity.ref_id)
+                        if contract.provider_entity
+                        else ""
+                    ),
+                    "provider": (
+                        esc(contract.provider_entity.name)
+                        if contract.provider_entity
+                        else ""
+                    ),
+                    "solution_ref_id": solution_ref_ids,
+                    "solution": solution_names,
+                    "status": contract.status,
+                    "start_date": (
+                        contract.start_date.isoformat() if contract.start_date else ""
+                    ),
+                    "end_date": (
+                        contract.end_date.isoformat() if contract.end_date else ""
+                    ),
+                    "annual_expense": (
+                        contract.annual_expense
+                        if contract.annual_expense is not None
+                        else ""
+                    ),
+                    "currency": esc(contract.currency),
+                    "domain": esc(contract.folder.name) if contract.folder else "",
+                }
+            )
+
+        # --- Representatives sheet ---
+        representatives_rows = []
+        for representative in representatives:
+            representatives_rows.append(
+                {
+                    "email": esc(representative.email),
+                    "first_name": esc(representative.first_name),
+                    "last_name": esc(representative.last_name),
+                    "description": esc(representative.description),
+                    "phone": esc(representative.phone),
+                    "role": esc(representative.role),
+                    "provider_entity_ref_id": esc(representative.entity.ref_id),
+                    "provider": esc(representative.entity.name),
+                }
+            )
+
+        entity_columns = [
+            "ref_id",
+            "name",
+            "description",
+            "mission",
+            "country",
+            "currency",
+            "parent_entity_ref_id",
+            "dependency",
+            "penetration",
+            "maturity",
+            "trust",
+            "domain",
+            "lei",
+            "euid",
+            "vat",
+            "duns",
+        ]
+        solution_columns = [
+            "ref_id",
+            "name",
+            "description",
+            "provider_entity_ref_id",
+            "provider",
+            "criticality",
+        ]
+        contract_columns = [
+            "ref_id",
+            "name",
+            "description",
+            "provider_entity_ref_id",
+            "provider",
+            "solution_ref_id",
+            "solution",
+            "status",
+            "start_date",
+            "end_date",
+            "annual_expense",
+            "currency",
+            "domain",
+        ]
+
+        representative_columns = [
+            "email",
+            "first_name",
+            "last_name",
+            "description",
+            "phone",
+            "role",
+            "provider_entity_ref_id",
+            "provider",
+        ]
+
+        buffer = io.BytesIO()
+        with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+            pd.DataFrame(entities_rows, columns=entity_columns).to_excel(
+                writer, index=False, sheet_name="Entities"
+            )
+            pd.DataFrame(solutions_rows, columns=solution_columns).to_excel(
+                writer, index=False, sheet_name="Solutions"
+            )
+            pd.DataFrame(contracts_rows, columns=contract_columns).to_excel(
+                writer, index=False, sheet_name="Contracts"
+            )
+            pd.DataFrame(representatives_rows, columns=representative_columns).to_excel(
+                writer, index=False, sheet_name="Representatives"
+            )
+
+        buffer.seek(0)
+        response = HttpResponse(
+            buffer.getvalue(),
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = (
+            'attachment; filename="tprm_ecosystem_export.xlsx"'
+        )
+        return response
+
+    @action(detail=False, name="Get country choices")
+    def country(self, request):
+        return Response(dict(COUNTRY_CHOICES))
+
+    @action(detail=False, name="Get currency choices")
+    def currency(self, request):
+        return Response(dict(CURRENCY_CHOICES))
+
+    @action(detail=False, name="Get DORA entity type choices")
+    def dora_entity_type(self, request):
+        return Response(dict(DORA_ENTITY_TYPE_CHOICES))
+
+    @action(detail=False, name="Get DORA entity hierarchy choices")
+    def dora_entity_hierarchy(self, request):
+        return Response(dict(DORA_ENTITY_HIERARCHY_CHOICES))
+
+    @action(detail=False, name="Get DORA provider person type choices")
+    def dora_provider_person_type(self, request):
+        return Response(dict(DORA_PROVIDER_PERSON_TYPE_CHOICES))
+
+    @action(detail=False, methods=["post"], url_path="batch-create")
+    def batch_create(self, request):
+        """
+        Batch create multiple entities from a text list.
+        Expected format:
+        {
+            "entities_text": "Entity 1\\nEntity 2\\nREF-001:Entity 3",
+            "folder": "folder-uuid"
+        }
+        Lines can optionally have a ref_id prefix (REF-001:Entity Name).
+        Entities with the same name in the folder will be skipped.
+        """
+        from rest_framework import status
+        from tprm.serializers import EntityWriteSerializer
+
+        try:
+            entities_text = request.data.get("entities_text", "")
+            folder_id = request.data.get("folder")
+
+            if not entities_text:
+                return Response(
+                    {"error": "entities_text is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if not folder_id:
+                return Response(
+                    {"error": "folder is required"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            try:
+                folder = Folder.objects.get(id=uuid.UUID(str(folder_id)))
+            except ValueError, AttributeError, Folder.DoesNotExist:
+                return Response(
+                    {"error": "Folder not found"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # Parse the entities text
+            lines = [line.strip() for line in entities_text.split("\n") if line.strip()]
+            created_entities = []
+            skipped_entities = []
+            errors = []
+
+            for line in lines:
+                # Check for ref_id prefix (REF-001:Entity Name)
+                ref_id = ""
+                entity_name = line
+
+                if ":" in line:
+                    parts = line.split(":", 1)
+                    if len(parts) == 2 and parts[0].strip():
+                        ref_id = parts[0].strip()
+                        entity_name = parts[1].strip()
+
+                if not entity_name:
+                    errors.append({"line": line, "error": "Empty entity name"})
+                    continue
+
+                # Check if entity already exists in the folder
+                existing_entity = Entity.objects.filter(
+                    name=entity_name, folder=folder
+                ).first()
+
+                if existing_entity:
+                    # Skip existing entity
+                    skipped_entities.append(
+                        {
+                            "id": str(existing_entity.id),
+                            "name": existing_entity.name,
+                            "ref_id": existing_entity.ref_id,
+                        }
+                    )
+                    continue
+
+                # Create new entity using the serializer to respect IAM
+                entity_data = {
+                    "name": entity_name,
+                    "folder": str(folder.id),
+                }
+
+                if ref_id:
+                    entity_data["ref_id"] = ref_id
+
+                serializer = EntityWriteSerializer(
+                    data=entity_data, context={"request": request}
+                )
+
+                if serializer.is_valid():
+                    try:
+                        entity = serializer.save()
+                    except PermissionDenied as e:
+                        return Response(
+                            {"error": e.detail},
+                            status=status.HTTP_403_FORBIDDEN,
+                        )
+
+                    created_entities.append(
+                        {
+                            "id": str(entity.id),
+                            "name": entity.name,
+                            "ref_id": entity.ref_id,
+                        }
+                    )
+                else:
+                    errors.append(
+                        {
+                            "line": line,
+                            "errors": serializer.errors,
+                        }
+                    )
+
+            return Response(
+                {
+                    "created": len(created_entities),
+                    "skipped": len(skipped_entities),
+                    "entities": created_entities,
+                    "skipped_entities": skipped_entities,
+                    "errors": errors,
+                },
+                status=status.HTTP_200_OK,
+            )
+
+        except Exception as e:
+            logger.error("Error in batch create entities", error=str(e))
+            return Response(
+                {"error": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
+class EntityAssessmentViewSet(ExportMixin, BaseModelViewSet):
+    """
+    API endpoint that allows entity assessments to be viewed or edited.
+    """
+
+    model = EntityAssessment
+    export_config = {
+        "filename": "entity_assessments_export",
+        "fields": {
+            "name": {"source": "name", "label": "name", "escape": True},
+            "version": {"source": "version", "label": "version", "escape": True},
+            "description": {
+                "source": "description",
+                "label": "description",
+                "escape": True,
+            },
+            "entity_ref_id": {
+                "source": "_export_entity.ref_id",
+                "label": "entity_ref_id",
+                "escape": True,
+            },
+            "entity": {
+                "source": "_export_entity.name",
+                "label": "entity",
+                "escape": True,
+            },
+            "solution_ref_id": {
+                "source": "_export_solutions",
+                "label": "solution_ref_id",
+                "format": lambda objs: _join_lines(s.ref_id for s in objs),
+                "escape": True,
+            },
+            "solution": {
+                "source": "_export_solutions",
+                "label": "solution",
+                "format": lambda objs: _join_lines(s.name for s in objs),
+                "escape": True,
+            },
+            "compliance_assessment": {
+                "source": "_export_compliance_assessment.name",
+                "label": "questionnaire",
+                "escape": True,
+            },
+            "framework": {
+                "source": "_export_compliance_assessment.framework.name",
+                "label": "framework",
+                "escape": True,
+            },
+            "status": {"source": "status", "label": "status"},
+            "assignment_status": {
+                "source": "_export_assignment_status",
+                "label": "assignment_status",
+            },
+            "completion": {"source": "_export_completion", "label": "completion"},
+            "review_progress": {
+                "source": "_export_review_progress",
+                "label": "review_progress",
+            },
+            "eta": {"source": "eta", "label": "eta"},
+            "due_date": {"source": "due_date", "label": "due_date"},
+            "expiry_date": {"source": "expiry_date", "label": "expiry_date"},
+            "criticality": {"source": "criticality", "label": "criticality"},
+            "conclusion": {"source": "conclusion", "label": "conclusion"},
+            "observation": {
+                "source": "observation",
+                "label": "observation",
+                "escape": True,
+            },
+            "author": {
+                "source": "_export_authors",
+                "label": "author",
+                "format": lambda objs: _join_lines(str(a) for a in objs),
+                "escape": True,
+            },
+            "reviewer": {
+                "source": "_export_reviewers",
+                "label": "reviewer",
+                "format": lambda objs: _join_lines(str(a) for a in objs),
+                "escape": True,
+            },
+            "representative_email": {
+                "source": "_export_representatives",
+                "label": "representative_email",
+                "format": lambda objs: _join_lines(u.email for u in objs),
+                "escape": True,
+            },
+            "representative": {
+                "source": "_export_representatives",
+                "label": "representative",
+                "format": lambda objs: _join_lines(str(u) for u in objs),
+                "escape": True,
+            },
+            "domain": {
+                "source": "_export_folder.name",
+                "label": "domain",
+                "escape": True,
+            },
+            "perimeter": {
+                "source": "_export_perimeter.name",
+                "label": "perimeter",
+                "escape": True,
+            },
+            "reference_link": {
+                "source": "reference_link",
+                "label": "reference_link",
+                "escape": True,
+            },
+            "created_at": {
+                "source": "created_at",
+                "label": "created_at",
+                "format": _iso_datetime,
+            },
+            "updated_at": {
+                "source": "updated_at",
+                "label": "updated_at",
+                "format": _iso_datetime,
+            },
+        },
+        "select_related": [
+            "folder",
+            "perimeter",
+            "entity",
+            "compliance_assessment__framework",
+        ],
+        "prefetch_related": ["solutions", "representatives"],
+        "wrap_columns": ["name", "description", "observation"],
+    }
+    filterset_fields = [
+        "name",
+        "status",
+        "perimeter",
+        "perimeter__folder",
+        "folder",
+        "authors",
+        "entity",
+        "criticality",
+        "conclusion",
+        "genericcollection",
+        # A third-party campaign owns the questionnaire; the assessment hangs off it.
+        "compliance_assessment__campaign",
+        "due_date",
+        "expiry_date",
+        "filtering_labels",
+    ]
+
+    # Ordering the raw string would be alphabetical; the annotation ranks it by
+    # workflow position.
+    ordering_remap = {"assignment_status": "assignment_status_rank"}
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        order = RequirementAssignment.WORKFLOW_ORDER
+        rank = Case(
+            *[
+                When(status=value, then=Value(index))
+                for index, value in enumerate(order)
+            ],
+            default=Value(len(order)),
+            output_field=IntegerField(),
+        )
+        least_advanced = (
+            RequirementAssignment.objects.filter(
+                compliance_assessment_id=OuterRef("compliance_assessment_id")
+            )
+            .annotate(rank=rank)
+            .order_by("rank")
+            .values("rank")[:1]
+        )
+        return qs.annotate(assignment_status_rank=Subquery(least_advanced))
+
+    def _get_optimized_object_data(self, queryset, with_compliance=True):
+        """Answering progress and assignment state for the whole page at once: per row the walk is a query storm."""
+        data = super()._get_optimized_object_data(queryset)
+
+        audit_ids = {
+            ea.compliance_assessment_id
+            for ea in queryset
+            if ea.compliance_assessment_id
+        }
+        if not audit_ids:
+            return data
+
+        audits = list(
+            ComplianceAssessment.objects.filter(id__in=audit_ids)
+            .select_related("framework")
+            .prefetch_related(
+                Prefetch(
+                    "requirement_assessments",
+                    queryset=RequirementAssessment.objects.select_related(
+                        "requirement"
+                    ).prefetch_related(
+                        "requirement__questions",
+                        "requirement__questions__choices",
+                        "answers",
+                        "answers__question",
+                        "answers__selected_choices",
+                    ),
+                ),
+            )
+        )
+        data["completion"] = {
+            audit.id: compute_respondent_progress(
+                audit, assessable_requirement_assessments(audit)
+            )
+            for audit in audits
+        }
+        totals, assessed = ComplianceAssessmentViewSet.get_requirement_counts(
+            list(audit_ids)
+        )
+        data["review_progress"] = {
+            audit.id: int(assessed.get(audit.id, 0) / totals[audit.id] * 100)
+            if totals.get(audit.id)
+            else 0
+            for audit in audits
+        }
+
+        if with_compliance:
+            data["viewable_audits"] = viewable_audit_ids(self.request.user, audit_ids)
+            data["compliance_overview"] = compliance_overviews(
+                audit for audit in audits if audit.id in data["viewable_audits"]
+            )
+
+        statuses: dict = {}
+        for audit_id, status_value in RequirementAssignment.objects.filter(
+            compliance_assessment_id__in=audit_ids
+        ).values_list("compliance_assessment_id", "status"):
+            statuses.setdefault(audit_id, []).append(status_value)
+        data["assignment_statuses"] = statuses
+
+        return data
+
+    EXPORT_BATCH_SIZE = 200
+
+    def _get_export_queryset(self):
+        queryset = (
+            super()
+            ._get_export_queryset()
+            .prefetch_related(actor_prefetch("authors"), actor_prefetch("reviewers"))
+        )
+        return self._iter_export_rows(queryset)
+
+    def _iter_export_rows(self, queryset):
+        """Yield rows batch by batch, related objects masked as in `list`."""
+        from tprm.serializers import EntityAssessmentReadSerializer
+
+        field_models = self._get_fieldsrelated_map(EntityAssessmentReadSerializer())
+        allowed = self._get_accessible_ids_map(set(field_models.values()))
+        user_id = str(self.request.user.pk)
+
+        def visible(obj, model):
+            ids = allowed.get(model)
+            return (
+                ids is None
+                or str(obj.pk) in ids
+                or (model is User and str(obj.pk) == user_id)
+            )
+
+        ids = list(dict.fromkeys(queryset.values_list("pk", flat=True)))
+        for start in range(0, len(ids), self.EXPORT_BATCH_SIZE):
+            batch = ids[start : start + self.EXPORT_BATCH_SIZE]
+            by_id = {ea.pk: ea for ea in queryset.filter(pk__in=batch)}
+            rows = [by_id[pk] for pk in batch if pk in by_id]
+            serializer = EntityAssessmentReadSerializer(
+                context={
+                    "optimized_data": self._get_optimized_object_data(
+                        rows, with_compliance=False
+                    )
+                }
+            )
+            for ea in rows:
+                ea._export_completion = serializer.get_completion(ea)
+                ea._export_review_progress = serializer.get_review_progress(ea)
+                ea._export_assignment_status = serializer.get_assignment_status(ea)
+                for field in ("entity", "folder", "perimeter", "compliance_assessment"):
+                    obj = getattr(ea, field)
+                    setattr(
+                        ea,
+                        f"_export_{field}",
+                        obj if obj and visible(obj, field_models[field]) else None,
+                    )
+                for field in ("solutions", "authors", "reviewers", "representatives"):
+                    setattr(
+                        ea,
+                        f"_export_{field}",
+                        [
+                            obj
+                            for obj in getattr(ea, field).all()
+                            if visible(obj, field_models[field])
+                        ],
+                    )
+                yield ea
+
+    def _owned_audit_deletion(self, instance):
+        """What deleting this assessment takes down with it: the linked audit when
+        its enclave is shared by other rounds, the whole enclave folder when this is
+        the last audit in it, nothing when the audit lives outside an enclave.
+        """
+        audit = instance.compliance_assessment
+        if not audit:
+            return None
+        folder = audit.folder
+        if folder.content_type != Folder.ContentType.ENCLAVE:
+            return None
+        # Revisions share the enclave: it is the vendor's workspace, not this
+        # round's. Only the last audit takes the folder down with it.
+        shared = (
+            ComplianceAssessment.objects.filter(folder=folder)
+            .exclude(pk=audit.pk)
+            .exists()
+        )
+        return audit if shared else folder
+
+    def cascade_extra_deletions(self, instance):
+        target = self._owned_audit_deletion(instance)
+        return [target] if target is not None else []
+
+    def perform_destroy(self, instance):
+        # Here rather than in destroy() so batch deletes take the same path.
+        with transaction.atomic():
+            if instance.compliance_assessment:
+                audit = instance.compliance_assessment
+                target = self._owned_audit_deletion(instance)
+                if target is None:
+                    logger.warning(
+                        "Compliance assessment folder is not an Enclave, skipping deletion",
+                        folder=audit.folder,
+                    )
+                elif isinstance(target, Folder):
+                    logger.info(
+                        "deleting_compliance_assessment_folder",
+                        folder_id=str(target.id),
+                        content_type=str(target.content_type),
+                    )
+                    target.delete()
+                    instance.compliance_assessment = None
+                else:
+                    logger.info(
+                        "deleting_audit_keeping_shared_enclave",
+                        audit_id=str(target.pk),
+                        folder_id=str(target.folder_id),
+                    )
+                    target.delete()
+                    instance.compliance_assessment = None
+            super().perform_destroy(instance)
+
+    @action(detail=True, methods=["post"], name="Clone as a new revision")
+    def clone(self, request, pk=None):
+        """Start the next round: a new assessment for the same entity, sharing the vendor's
+
+        enclave, with a questionnaire carrying the previous answers. The source is untouched.
+        """
+        source = self.get_object()
+        if not RoleAssignment.is_access_allowed(
+            request.user,
+            Permission.objects.get(codename="add_entityassessment"),
+            source.folder,
+        ):
+            raise PermissionDenied(
+                {"error": "You do not have permission to create an entity assessment"}
+            )
+        if source.compliance_assessment is None:
+            return Response(
+                {"error": "sourceAssessmentHasNoAudit"},
+                status=HTTP_400_BAD_REQUEST,
+            )
+
+        from tprm.services import create_enclave_audit
+
+        name = request.data.get("name") or f"{source.name} (copy)"
+        with transaction.atomic():
+            clone = EntityAssessment.objects.create(
+                name=name,
+                description=source.description,
+                folder=source.folder,
+                perimeter=source.perimeter,
+                entity=source.entity,
+                version=request.data.get("version") or source.version,
+                # Criticality and its inputs are typed by hand, so a revision would
+                # show last round's judgement as current. A new round rates again.
+                reference_link=source.reference_link,
+                due_date=request.data.get("due_date") or None,
+            )
+            clone.solutions.set(source.solutions.all())
+            clone.reviewers.set(source.reviewers.all())
+            clone.authors.set(source.authors.all())
+            clone.representatives.set(source.representatives.all())
+            audit = create_enclave_audit(
+                clone,
+                source.compliance_assessment.framework,
+                source.compliance_assessment.selected_implementation_groups,
+                field_visibility=source.compliance_assessment.field_visibility,
+                baseline=source.compliance_assessment,
+                enclave=source.compliance_assessment.folder,
+            )
+        return Response(
+            {"id": str(clone.id), "compliance_assessment": str(audit.id)},
+            status=HTTP_201_CREATED,
+        )
+
+    @action(detail=False, name="Get status choices")
+    def status(self, request):
+        return Response(dict(EntityAssessment.Status.choices))
+
+    @action(detail=False, name="Get conclusion choices")
+    def conclusion(self, request):
+        return Response(dict(EntityAssessment.Conclusion.choices))
+
+    @action(detail=False, name="Get TPRM metrics")
+    def metrics(self, request):
+        assessments_data = []
+
+        viewable_items = RoleAssignment.get_viewable_object_ids(
+            request.user, EntityAssessment
+        )
+
+        # One query for the whole page, scoped to the audits rendered.
+        audit_ids = EntityAssessment.objects.filter(
+            id__in=viewable_items, compliance_assessment__isnull=False
+        ).values_list("compliance_assessment_id", flat=True)
+        assignments_by_audit: dict = {}
+        for audit_id, assignment_id in (
+            RequirementAssignment.objects.filter(compliance_assessment_id__in=audit_ids)
+            .exclude(status=RequirementAssignment.Status.DRAFT)
+            .values_list("compliance_assessment_id", "id")
+        ):
+            assignments_by_audit.setdefault(audit_id, []).append(str(assignment_id))
+
+        # Same page-level prefetch as the list endpoint: per-row resolution is a
+        # query storm.
+        audits_by_id = {
+            audit.id: audit
+            for audit in ComplianceAssessment.objects.filter(id__in=list(audit_ids))
+            .select_related("framework")
+            .prefetch_related(
+                Prefetch(
+                    "requirement_assessments",
+                    queryset=RequirementAssessment.objects.select_related(
+                        "requirement"
+                    ).prefetch_related(
+                        "requirement__questions",
+                        "requirement__questions__choices",
+                        "answers",
+                        "answers__question",
+                        "answers__selected_choices",
+                    ),
+                ),
+            )
+        }
+        # Same page-level pass as the completion figures: the rows are already
+        # in memory, and the framework trees are primed in one query.
+        viewable_audits = viewable_audit_ids(request.user, audits_by_id)
+        overviews = compliance_overviews(
+            audit for audit in audits_by_id.values() if audit.id in viewable_audits
+        )
+
+        # `has_questions` and `progress` query per audit when read off the model.
+        frameworks_with_questions = set(
+            Question.objects.filter(
+                requirement_node__framework_id__in={
+                    audit.framework_id for audit in audits_by_id.values()
+                }
+            )
+            .values_list("requirement_node__framework_id", flat=True)
+            .distinct()
+        )
+        for audit in audits_by_id.values():
+            audit._has_questions = audit.framework_id in frameworks_with_questions
+        totals, assessed = ComplianceAssessmentViewSet.get_requirement_counts(
+            list(audits_by_id)
+        )
+
+        for ea in (
+            EntityAssessment.objects.filter(id__in=viewable_items)
+            .select_related("folder", "entity", "entity__tier")
+            .prefetch_related("solutions", "reviewers")
+        ):
+            audit = audits_by_id.get(ea.compliance_assessment_id)
+            # Use entity assessment's folder for grouping
+            folder = ea.folder
+            entry = {
+                "entity_assessment_id": ea.id,
+                "entity_id": str(ea.entity_id),
+                "provider": ea.entity.name,
+                # The vendor's criticality, for context: the assessment itself
+                # measures posture, not criticality.
+                "tier": {
+                    "id": str(ea.entity.tier.id),
+                    "name": ea.entity.tier.name,
+                    "hexcolor": ea.entity.tier.hexcolor,
+                    "rank": ea.entity.tier.rank,
+                }
+                if ea.entity.tier_id
+                else None,
+                "folder_id": str(folder.id) if folder else None,
+                "folder_name": folder.name if folder else None,
+                "solutions": ",".join([sol.name for sol in ea.solutions.all()])
+                if len(ea.solutions.all()) > 0
+                else "-",
+                "baseline": audit.framework.name if audit else "-",
+                "due_date": ea.due_date.strftime("%Y-%m-%d") if ea.due_date else "-",
+                "last_update": ea.updated_at.strftime("%Y-%m-%d")
+                if ea.updated_at
+                else "-",
+                # Full precision: picks a vendor's latest assessment.
+                "updated_at": ea.updated_at.isoformat() if ea.updated_at else "",
+                "conclusion": ea.conclusion if ea.conclusion else "ongoing",
+                "compliance_assessment_id": audit.id if audit else "#",
+                "reviewers": ",".join([str(re.specific) for re in ea.reviewers.all()])
+                if len(ea.reviewers.all())
+                else "-",
+                "observation": ea.observation if ea.observation else "-",
+                "has_questions": audit.has_questions if audit else False,
+            }
+
+            # With several, no single target is right: the card falls back to the audit.
+            review_assignments = assignments_by_audit.get(
+                ea.compliance_assessment_id, []
+            )
+            entry["review_assignment_id"] = (
+                review_assignments[0] if len(review_assignments) == 1 else None
+            )
+
+            # Same respondent-facing walk as the list and the auditee dashboard.
+            # `answers_progress` counted questions only: a framework without any read 0%.
+            completion = (
+                compute_respondent_progress(
+                    audit, assessable_requirement_assessments(audit)
+                )
+                if audit
+                else 0
+            )
+            entry.update({"completion": completion})
+
+            review_progress = (
+                int(assessed.get(audit.id, 0) / totals[audit.id] * 100)
+                if audit and totals.get(audit.id)
+                else 0
+            )
+            entry.update({"review_progress": review_progress})
+
+            # None, not an empty donut: no questionnaire, or one out of reach,
+            # is not a result.
+            entry["compliance_overview"] = (
+                overviews.get(ea.compliance_assessment_id)
+                if ea.compliance_assessment_id in viewable_audits
+                else None
+            )
+            assessments_data.append(entry)
+
+        return Response(assessments_data)
+
+
+class TierFedByMixin:
+    @action(detail=False, url_path="fed-by", name="Forms that set tiers")
+    def fed_by(self, request):
+        """Forms the caller can see whose accepted responses set a tier
+        (`?target=`, entity.tier by default), with what keeps them from
+        applying on this scale."""
+        from core.models import QuickForm
+        from core.quick_form_apply import on_accept_health
+        from iam.models import RoleAssignment
+
+        target = request.query_params.get("target") or "entity.tier"
+        viewable = RoleAssignment.get_viewable_object_ids(request.user, QuickForm)
+        rows = []
+        cache: dict = {}
+        for quick_form in (
+            QuickForm.objects.filter(id__in=viewable)
+            .exclude(on_accept=[])
+            .select_related("library")
+            .order_by("name")
+        ):
+            health = next(
+                (
+                    h
+                    for h in on_accept_health(quick_form, cache)
+                    if h["target"] == target
+                ),
+                None,
+            )
+            if health is None:
+                continue
+            rows.append(
+                {
+                    "id": str(quick_form.id),
+                    "name": quick_form.get_name_translated,
+                    "library": quick_form.library.name if quick_form.library else None,
+                    "problems": health["problems"],
+                }
+            )
+        return Response(rows)
+
+
+class TierViewSet(TierFedByMixin, BaseModelViewSet):
+    """The organisation's vendor tier scale, highest rank first."""
+
+    model = Tier
+    filterset_fields = ["is_visible", "builtin"]
+    search_fields = ["name", "description"]
+    ordering = ["-rank"]
+
+    def get_queryset(self):
+        # Counts cover what the viewer may read: the scale itself is global,
+        # the entities on it are not.
+        visible = RoleAssignment.get_viewable_object_ids(self.request.user, Entity)
+        qs = (
+            super()
+            .get_queryset()
+            .annotate(
+                entities_count=Count(
+                    "entities", filter=Q(entities__id__in=visible), distinct=True
+                ),
+                solutions_count=Count(
+                    "solutions",
+                    filter=Q(solutions__provider_entity_id__in=visible),
+                    distinct=True,
+                ),
+                # The history keeps a hard link to every tier it names: such a
+                # tier can be hidden, never deleted.
+                in_history=Exists(
+                    EntityTierChange.objects.filter(
+                        Q(tier=OuterRef("pk")) | Q(previous_tier=OuterRef("pk"))
+                    )
+                )
+                | Exists(
+                    SolutionTierChange.objects.filter(
+                        Q(tier=OuterRef("pk")) | Q(previous_tier=OuterRef("pk"))
+                    )
+                ),
+            )
+        )
+        # `?selectable=<tier id>`: what a picker may offer for an entity whose
+        # current tier is that one — the visible tiers plus the current tier even
+        # when hidden, so opening and saving the entity does not clear it.
+        if (selectable := self.request.query_params.get("selectable")) is not None:
+            try:
+                current = uuid.UUID(selectable) if selectable else None
+            except ValueError:
+                current = None
+            qs = qs.filter(Q(is_visible=True) | Q(id=current))
+        return qs
+
+    def destroy(self, request, *args, **kwargs):
+        """Say why a tier cannot go, instead of a bare integrity conflict.
+        Built-in tiers are refused by the base class (403) as before."""
+        tier = self.get_object()
+        if not tier.builtin:
+            # Not the annotated counts: those only cover what the caller sees.
+            if tier.entities.exists() or tier.solutions.exists():
+                return Response(
+                    {"error": "tierInUseCannotDelete"}, status=HTTP_409_CONFLICT
+                )
+            if tier.in_history:
+                return Response(
+                    {"error": "tierInHistoryCannotDelete"}, status=HTTP_409_CONFLICT
+                )
+        return super().destroy(request, *args, **kwargs)
+
+    @action(detail=False, methods=["post"], name="Reorder tiers")
+    def reorder(self, request):
+        """Takes every tier id, most critical first, and renumbers the ranks in
+        one transaction. Partial lists are refused: a rank left out would
+        collide with the renumbered ones."""
+        if not RoleAssignment.is_access_allowed(
+            user=request.user,
+            perm=Permission.objects.get(codename="change_tier"),
+            folder=Folder.get_root_folder(),
+        ):
+            raise PermissionDenied()
+        raw_ids = request.data.get("ids")
+        if not isinstance(raw_ids, list):
+            return Response(
+                {"error": "idsMustListEveryTier"}, status=HTTP_400_BAD_REQUEST
+            )
+        ids = [str(i) for i in raw_ids]
+        existing = {str(pk) for pk in Tier.objects.values_list("id", flat=True)}
+        if len(ids) != len(set(ids)) or set(ids) != existing:
+            return Response(
+                {"error": "idsMustListEveryTier"}, status=HTTP_400_BAD_REQUEST
+            )
+        with transaction.atomic():
+            tiers = {str(t.id): t for t in Tier.objects.select_for_update()}
+            # Park every rank above the current maximum first, so no
+            # intermediate state violates the unique constraint (SQLite cannot
+            # defer it).
+            # `default`: an empty scale (or one emptied meanwhile) has no maximum.
+            offset = max((t.rank for t in tiers.values()), default=0) + len(ids)
+            for position, tier_id in enumerate(ids):
+                Tier.objects.filter(pk=tier_id).update(rank=offset + position + 1)
+            for position, tier_id in enumerate(ids):
+                Tier.objects.filter(pk=tier_id).update(rank=len(ids) - position)
+        from tprm.serializers import TierReadSerializer
+
+        return Response(
+            TierReadSerializer(
+                self.get_queryset().order_by("-rank"),
+                many=True,
+                context=self.get_serializer_context(),
+            ).data
+        )
+
+    @action(detail=False, methods=["get", "put"], name="Tier propagation")
+    def propagation(self, request):
+        """How solution tiers reach their provider: off, suggest or floor."""
+        from global_settings.models import GlobalSettings
+        from tprm.tiers import (
+            Propagation,
+            entities_below_floor,
+            propagation_mode,
+            raise_all_to_floor,
+        )
+
+        raised = 0
+        can_change = all(
+            RoleAssignment.is_access_allowed(
+                user=request.user,
+                perm=Permission.objects.get(codename=codename),
+                folder=Folder.get_root_folder(),
+            )
+            for codename in ("change_tier", "change_entity")
+        )
+        if request.method == "PUT":
+            if not can_change:
+                raise PermissionDenied()
+            mode = request.data.get("mode")
+            if mode not in Propagation.MODES:
+                return Response(
+                    {"error": "invalidPropagationMode"}, status=HTTP_400_BAD_REQUEST
+                )
+            row, _ = GlobalSettings.objects.get_or_create(
+                name=GlobalSettings.Names.TPRM,
+                defaults={"folder": Folder.get_root_folder()},
+            )
+            previous = propagation_mode()
+            with transaction.atomic():
+                row.value = {**(row.value or {}), "tier_propagation": mode}
+                row.save(update_fields=["value", "updated_at"])
+                # Switching the floor on raises the vendors already below it.
+                if mode == Propagation.FLOOR and previous != Propagation.FLOOR:
+                    raised = raise_all_to_floor(request.user)
+        # Counts every vendor: only for those who may switch the mode.
+        return Response(
+            {
+                "mode": propagation_mode(),
+                "below_floor": entities_below_floor().count() if can_change else None,
+                "raised": raised,
+            }
+        )
+
+
+class EntityTierChangeViewSet(BaseModelViewSet):
+    """History of tier changes. Written only by `set_entity_tier`."""
+
+    model = EntityTierChange
+    http_method_names = ["get", "head", "options"]
+    filterset_fields = ["entity", "tier", "source", "changed_by"]
+    ordering = ["-created_at"]
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related(
+                "entity__folder", "tier", "previous_tier", "changed_by", "response"
+            )
+        )
+
+    @action(detail=False, name="Get source choices")
+    def source(self, request):
+        return Response(dict(TierSource.choices))
+
+
+class SolutionTierChangeViewSet(BaseModelViewSet):
+    model = SolutionTierChange
+    http_method_names = ["get", "head", "options"]
+    filterset_fields = ["solution", "tier", "source", "changed_by"]
+    ordering = ["-created_at"]
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related(
+                "solution__provider_entity__folder",
+                "tier",
+                "previous_tier",
+                "changed_by",
+                "response",
+            )
+        )
+
+    @action(detail=False, name="Get source choices")
+    def source(self, request):
+        return Response(dict(TierSource.choices))
+
+
+class EntityScoreViewSet(BaseModelViewSet):
+    """API endpoint that allows entity scores to be viewed or edited."""
+
+    model = EntityScore
+    filterset_fields = ["entity", "provider", "filtering_labels", "folder"]
+    search_fields = ["grade", "observation"]
+    ordering_fields = ["as_of", "score", "normalized_score"]
+    # A property: the ORM needs it computed in SQL to order by it.
+    ordering_remap = {"normalized_score": "normalized_score_value"}
+
+    def get_queryset(self):
+        return (
+            super()
+            .get_queryset()
+            .select_related("entity", "provider", "folder")
+            .annotate(
+                normalized_score_value=Case(
+                    When(scale_max=0, then=Value(None)),
+                    default=(F("score") * 100.0) / F("scale_max"),
+                    output_field=FloatField(),
+                )
+            )
+        )
+
+    @action(detail=False, name="Get provider choices")
+    def provider(self, request):
+        return Response(
+            {
+                str(t.id): t.get_name_translated
+                for t in Terminology.objects.filter(
+                    field_path=Terminology.FieldPath.ENTITY_SCORE_PROVIDER,
+                    is_visible=True,
+                )
+            }
+        )
+
+
+class RepresentativeViewSet(ExportMixin, BaseModelViewSet):
+    """
+    API endpoint that allows representatives to be viewed or edited.
+    """
+
+    model = Representative
+
+    @action(detail=False, name="Get language choices")
+    def language(self, request):
+        return Response(dict(settings.LANGUAGES))
+
+    export_config = {
+        "filename": "representatives_export",
+        "fields": {
+            "email": {"source": "email", "label": "email", "escape": True},
+            "first_name": {
+                "source": "first_name",
+                "label": "first_name",
+                "escape": True,
+            },
+            "last_name": {
+                "source": "last_name",
+                "label": "last_name",
+                "escape": True,
+            },
+            "description": {
+                "source": "description",
+                "label": "description",
+                "escape": True,
+            },
+            "phone": {"source": "phone", "label": "phone", "escape": True},
+            "role": {"source": "role", "label": "role", "escape": True},
+            "provider_entity_ref_id": {
+                "source": "entity.ref_id",
+                "label": "provider_entity_ref_id",
+                "escape": True,
+            },
+            "provider": {
+                "source": "entity.name",
+                "label": "provider",
+                "escape": True,
+            },
+        },
+        "select_related": ["entity"],
+        "wrap_columns": ["first_name", "last_name", "description", "role"],
+    }
+    filterset_fields = ["entity", "ref_id", "filtering_labels"]
+    search_fields = ["email"]
+
+    def get_queryset(self):
+        # folder is serialized via source="entity.folder"; pull it in one join
+        return super().get_queryset().select_related("entity__folder")
+
+
+SOLUTION_FILTERSET_FIELDS = [
+    "name",
+    "ref_id",
+    "is_active",
+    "provider_entity",
+    "assets",
+    "criticality",
+    "tier",
+    "tier_source",
+    "contracts",
+    "owner",
+    "dora_ict_service_type",
+    "storage_of_data",
+    "data_location_storage",
+    "data_location_processing",
+    "dora_data_sensitiveness",
+    "dora_reliance_level",
+    "dora_substitutability",
+    "dora_non_substitutability_reason",
+    "dora_has_exit_plan",
+    "dora_reintegration_possibility",
+    "dora_discontinuing_impact",
+    "dora_alternative_providers_identified",
+    "filtering_labels",
+]
+
+
+class SolutionFilterSet(GenericFilterSet):
+    # "--" lists the solutions not tiered yet.
+    tier = NullableModelChoiceFilter(queryset=Tier.objects.all())
+
+    class Meta:
+        model = Solution
+        fields = SOLUTION_FILTERSET_FIELDS
+
+
+class SolutionViewSet(ExportMixin, BaseModelViewSet):
+    """
+    API endpoint that allows solutions to be viewed or edited.
+    """
+
+    model = Solution
+
+    export_config = {
+        "filename": "solutions_export",
+        "fields": {
+            "ref_id": {"source": "ref_id", "label": "ref_id", "escape": True},
+            "name": {"source": "name", "label": "name", "escape": True},
+            "description": {
+                "source": "description",
+                "label": "description",
+                "escape": True,
+            },
+            "provider_entity_ref_id": {
+                "source": "provider_entity.ref_id",
+                "label": "provider_entity_ref_id",
+                "escape": True,
+            },
+            "provider_entity": {
+                "source": "provider_entity.name",
+                "label": "provider",
+                "escape": True,
+            },
+            "criticality": {"source": "criticality", "label": "criticality"},
+        },
+        "select_related": ["provider_entity"],
+        "wrap_columns": ["name", "description"],
+    }
+    filterset_class = SolutionFilterSet
+    filterset_fields = SOLUTION_FILTERSET_FIELDS
+    ordering_remap = {
+        "provider_entity": "provider_entity__name",
+        "tier": "tier__rank",
+    }
+    ordering_nulls_last = ("tier__rank",)
+
+    def get_autocomplete_serializer_class(self):
+        from tprm.serializers import SolutionAutocompleteSerializer
+
+        return SolutionAutocompleteSerializer
+
+    def get_queryset(self):
+        # folder is serialized via source="provider_entity.folder"; pull it in one join
+        if self.action == "autocomplete":
+            return super().get_queryset().select_related("provider_entity__folder")
+        return (
+            super()
+            .get_queryset()
+            .select_related(
+                "provider_entity__folder", "recipient_entity", "tier", "tier_response"
+            )
+            .prefetch_related(
+                "assets",
+                "contracts",
+                actor_prefetch("owner"),
+                # The nested serializer reads subcontractor and recipient on every
+                # chain row: join them in the prefetch query.
+                Prefetch(
+                    "subcontracting_chain",
+                    queryset=SolutionSubcontractor.objects.select_related(
+                        "subcontractor", "recipient"
+                    ),
+                ),
+            )
+        )
+
+    @action(detail=False, name="Get data location storage choices")
+    def data_location_storage(self, request):
+        return Response(dict(COUNTRY_CHOICES))
+
+    @action(detail=False, name="Get data location processing choices")
+    def data_location_processing(self, request):
+        return Response(dict(COUNTRY_CHOICES))
+
+    @action(detail=False, name="Get data sensitiveness choices")
+    def dora_data_sensitiveness(self, request):
+        return Response(dict(DORA_SENSITIVENESS_CHOICES))
+
+    @action(detail=False, name="Get reliance level choices")
+    def dora_reliance_level(self, request):
+        return Response(dict(DORA_RELIANCE_CHOICES))
+
+    @action(detail=False, name="Get substitutability choices")
+    def dora_substitutability(self, request):
+        return Response(dict(DORA_SUBSTITUTABILITY_CHOICES))
+
+    @action(detail=False, name="Get non-substitutability reason choices")
+    def dora_non_substitutability_reason(self, request):
+        return Response(dict(DORA_NON_SUBSTITUTABILITY_REASON_CHOICES))
+
+    @action(detail=False, name="Get exit plan choices")
+    def dora_has_exit_plan(self, request):
+        return Response(dict(DORA_BINARY_CHOICES))
+
+    @action(detail=False, name="Get reintegration possibility choices")
+    def dora_reintegration_possibility(self, request):
+        return Response(dict(DORA_REINTEGRATION_POSSIBILITY_CHOICES))
+
+    @action(detail=False, name="Get discontinuing impact choices")
+    def dora_discontinuing_impact(self, request):
+        return Response(dict(DORA_DISCONTINUING_IMPACT_CHOICES))
+
+    @action(detail=False, name="Get alternative providers identified choices")
+    def dora_alternative_providers_identified(self, request):
+        return Response(dict(DORA_YES_NO_ASSESSMENT_CHOICES))
+
+    def perform_create(self, serializer):
+        serializer.save()
+        solution = serializer.instance
+        solution.recipient_entity = Entity.objects.get(builtin=True)
+        solution.save()
+
+    @action(detail=False, name="Get DORA ICT service type choices")
+    def dora_ict_service_type(self, request):
+        return Response(dict(DORA_ICT_SERVICE_CHOICES))
+
+
+class ContractViewSet(ExportMixin, BaseModelViewSet):
+    """
+    API endpoint that allows contracts to be viewed or edited.
+    """
+
+    model = Contract
+    export_config = {
+        "filename": "contracts_export",
+        "fields": {
+            "ref_id": {"source": "ref_id", "label": "ref_id", "escape": True},
+            "name": {"source": "name", "label": "name", "escape": True},
+            "description": {
+                "source": "description",
+                "label": "description",
+                "escape": True,
+            },
+            "provider_entity_ref_id": {
+                "source": "provider_entity.ref_id",
+                "label": "provider_entity_ref_id",
+                "escape": True,
+            },
+            "provider_entity": {
+                "source": "provider_entity.name",
+                "label": "provider",
+                "escape": True,
+            },
+            "solution_ref_id": {
+                "source": "solutions",
+                "label": "solution_ref_id",
+                "format": lambda qs: "\n".join(s.ref_id for s in qs.all() if s.ref_id),
+                "escape": True,
+            },
+            "solution": {
+                "source": "solutions",
+                "label": "solution",
+                "format": lambda qs: "\n".join(s.name for s in qs.all() if s.name),
+                "escape": True,
+            },
+            "status": {"source": "status", "label": "status"},
+            "start_date": {"source": "start_date", "label": "start_date"},
+            "end_date": {"source": "end_date", "label": "end_date"},
+            "annual_expense": {"source": "annual_expense", "label": "annual_expense"},
+            "currency": {"source": "currency", "label": "currency"},
+            "domain": {"source": "folder.name", "label": "domain", "escape": True},
+        },
+        "select_related": ["folder", "provider_entity"],
+        "prefetch_related": ["solutions"],
+        "wrap_columns": ["name", "description"],
+    }
+    filterset_fields = [
+        "name",
+        "folder",
+        "provider_entity",
+        "beneficiary_entity",
+        "solutions",
+        "status",
+        "owner",
+        "dora_contractual_arrangement",
+        "currency",
+        "termination_reason",
+        "is_intragroup",
+        "overarching_contract",
+        "governing_law_country",
+        "notice_period_entity",
+        "notice_period_provider",
+        "end_date",
+        "start_date",
+        "filtering_labels",
+    ]
+
+    @action(detail=False, name="Get status choices")
+    def status(self, request):
+        return Response(dict(Contract.Status.choices))
+
+    @action(detail=False, name="Get currency choices")
+    def currency(self, request):
+        return Response(dict(CURRENCY_CHOICES))
+
+    @action(detail=False, name="Get DORA contractual arrangement choices")
+    def dora_contractual_arrangement(self, request):
+        return Response(dict(DORA_CONTRACTUAL_ARRANGEMENT_CHOICES))
+
+    @action(detail=False, name="Get termination reason choices")
+    def termination_reason(self, request):
+        return Response(dict(TERMINATION_REASON_CHOICES))
+
+    @action(detail=False, name="Get governing law country choices")
+    def governing_law_country(self, request):
+        return Response(dict(COUNTRY_CHOICES))

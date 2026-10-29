@@ -1,0 +1,861 @@
+import { complianceResultColorMap } from '#lib/utils/constants.js';
+import { m } from '#paraglide/messages.js';
+
+export function formatStringToDate(inputString: string, locale = 'en') {
+	const date = new Date(inputString);
+	return date.toLocaleDateString(locale, {
+		year: 'numeric',
+		month: 'short',
+		day: 'numeric'
+	});
+}
+
+export const isURL = (url: string) => {
+	try {
+		const urlToCheck = new URL(url);
+		if (urlToCheck.protocol !== 'http:' && urlToCheck.protocol !== 'https:') return false;
+		return true;
+	} catch (e) {
+		return false;
+	}
+};
+
+export function getRequirementTitle(ref_id: string, name: string) {
+	const pattern = (ref_id ? 2 : 0) + (name ? 1 : 0);
+	const title: string =
+		pattern == 3 ? `${ref_id} - ${name}` : pattern == 2 ? ref_id : pattern == 1 ? name : '';
+	return title;
+}
+
+export function displayScoreColor(
+	value: number | null,
+	max_score: number,
+	inversedColors = false,
+	min_score = 0
+) {
+	value ??= min_score;
+	const range = max_score - min_score;
+	value = range > 0 ? ((value - min_score) * 100) / range : 0;
+	if (inversedColors) {
+		if (value < 25) {
+			return 'stroke-green-300';
+		}
+		if (value < 50) {
+			return 'stroke-yellow-300';
+		}
+		if (value < 75) {
+			return 'stroke-orange-400';
+		}
+		return 'stroke-red-400';
+	} else {
+		if (value < 25) {
+			return 'stroke-red-400';
+		}
+		if (value < 50) {
+			return 'stroke-orange-400';
+		}
+		if (value < 75) {
+			return 'stroke-yellow-300';
+		}
+		return 'stroke-green-300';
+	}
+}
+
+export function getScoreHexColor(
+	value: number | null,
+	max_score: number,
+	inversedColors = false,
+	min_score = 0
+) {
+	value ??= min_score;
+	const range = max_score - min_score;
+	const percentage = range > 0 ? ((value - min_score) * 100) / range : 0;
+	// Tailwind color hex equivalents
+	const colors = {
+		red400: '#f87171',
+		orange400: '#fb923c',
+		yellow300: '#fde047',
+		green300: '#86efac'
+	};
+	if (inversedColors) {
+		if (percentage < 25) return colors.green300;
+		if (percentage < 50) return colors.yellow300;
+		if (percentage < 75) return colors.orange400;
+		return colors.red400;
+	} else {
+		if (percentage < 25) return colors.red400;
+		if (percentage < 50) return colors.orange400;
+		if (percentage < 75) return colors.yellow300;
+		return colors.green300;
+	}
+}
+
+/**
+ * `getScoreHexColor`'s bands as text classes. Its hexes are chart fills: on a
+ * light surface, yellow-300 on white is barely legible as a figure.
+ */
+const SCORE_TEXT_CLASSES: Record<string, string> = {
+	'#f87171': 'text-red-600 dark:text-red-400',
+	'#fb923c': 'text-orange-600 dark:text-orange-400',
+	'#fde047': 'text-yellow-600 dark:text-yellow-300',
+	'#86efac': 'text-green-600 dark:text-green-400'
+};
+
+export function getScoreTextClass(
+	value: number | null,
+	max_score: number,
+	inversedColors = false,
+	min_score = 0
+) {
+	return SCORE_TEXT_CLASSES[getScoreHexColor(value, max_score, inversedColors, min_score)];
+}
+
+/**
+ * A score as displayed: two decimals, half up, like the CCB CyFun tools' 0.00
+ * format and the backend's `round_score`. Scores are computed unrounded; only
+ * their display rounds. As the backend, float noise is cleared at nine
+ * decimals first (68.335 * 100 is 6833.4999…, which must show 68.34, while
+ * 1.234999999 stays below the tie); the rounding then runs on integers.
+ */
+export function roundScore(value: number, decimals = 2): number {
+	const nanos = Math.round(Math.abs(value) * 1e9);
+	const step = 10 ** (9 - decimals);
+	const rounded = Math.floor((nanos + step / 2) / step) / 10 ** decimals;
+	return value < 0 ? -rounded : rounded;
+}
+
+export function formatScoreValue(
+	value: number | null,
+	max_score: number,
+	fullDonut = false,
+	min_score = 0
+) {
+	if (value === null) {
+		return 0;
+	} else if (fullDonut) {
+		return 100;
+	}
+	const range = max_score - min_score;
+	if (range <= 0) {
+		return 0;
+	}
+	const boundedValue = Math.max(min_score, Math.min(max_score, value));
+	return ((boundedValue - min_score) * 100) / range;
+}
+
+export function getSecureRedirect(url: any): string {
+	const SECURE_REDIRECT_URL_REGEX = /^\/\w+/;
+	return typeof url === 'string' && SECURE_REDIRECT_URL_REGEX.test(url) ? url : '';
+}
+
+export function darkenColor(hex: string, amount: number) {
+	hex = hex.slice(1);
+	const num = parseInt(hex, 16);
+
+	let r = (num >> 16) - amount * 255;
+	let g = ((num >> 8) & 0x00ff) - amount * 255;
+	let b = (num & 0x0000ff) - amount * 255;
+
+	r = Math.max(0, Math.min(255, r));
+	g = Math.max(0, Math.min(255, g));
+	b = Math.max(0, Math.min(255, b));
+
+	return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+}
+
+export function stringify(value: string | number | boolean | null = null) {
+	return String(value)
+		.toLowerCase()
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '');
+}
+
+/**
+ * Best-effort display name for an actor/approver: "First Last", else email, else
+ * its string representation. Returns '' when none is available so callers can
+ * fall back to their own placeholder.
+ */
+export function formatActorName(
+	actor:
+		{ first_name?: string; last_name?: string; email?: string; str?: string } | null | undefined
+): string {
+	if (!actor) return '';
+	const full = `${actor.first_name || ''} ${actor.last_name || ''}`.trim();
+	return full || actor.email || actor.str || '';
+}
+
+const HTML_ESCAPES: Record<string, string> = {
+	'&': '&amp;',
+	'<': '&lt;',
+	'>': '&gt;',
+	'"': '&quot;',
+	"'": '&#39;'
+};
+
+export function escapeHtml(value: unknown): string {
+	return String(value ?? '').replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]);
+}
+
+export function isDark(hexcolor: string | undefined): boolean {
+	if (!hexcolor) return false;
+	const r = parseInt(hexcolor.slice(1, 3), 16);
+	const g = parseInt(hexcolor.slice(3, 5), 16);
+	const b = parseInt(hexcolor.slice(5, 7), 16);
+	// compute brightness from rgb values
+	// https://www.w3.org/tr/aert/#color-contrast
+	const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+	return brightness < 128;
+}
+
+// Get the search key from an option object or the option itself
+// if it's a string or number
+export const getSearchTarget = (opt: Option): string => {
+	// Handle primitive values (string/number)
+	if (typeof opt === 'string' || typeof opt === 'number') {
+		return String(opt).trim();
+	}
+
+	// Handle non-object types
+	if (!opt || typeof opt !== 'object') {
+		return '';
+	}
+
+	// Validate object structure
+	if (opt.label === undefined) {
+		const opt_str = JSON.stringify(opt);
+		console.error(`MultiSelect option ${opt_str} is an object but has no label key`);
+		return '';
+	}
+
+	// Build searchable components
+	const components: string[] = [];
+
+	// Add path information (hierarchical context)
+	if (opt.path && Array.isArray(opt.path)) {
+		const pathString = opt.path
+			.filter(Boolean) // Remove empty/null values
+			.map((item) => String(item).trim())
+			.join(' ');
+		if (pathString) {
+			components.push(pathString);
+		}
+	}
+
+	// Add main label (primary searchable content)
+	const mainLabel = String(opt.label || '').trim();
+	if (mainLabel) {
+		components.push(mainLabel);
+	}
+
+	// Add translated label if different from main label
+	if (opt.translatedLabel && opt.translatedLabel !== opt.label) {
+		const translatedLabel = String(opt.translatedLabel).trim();
+		if (translatedLabel && translatedLabel !== mainLabel) {
+			components.push(translatedLabel);
+		}
+	}
+
+	// Add value if it's different from label (for ID-based searches)
+	if (opt.value !== undefined && opt.value !== opt.label) {
+		const valueString = String(opt.value).trim();
+		if (valueString && valueString !== mainLabel) {
+			components.push(valueString);
+		}
+	}
+
+	// Add info string content
+	if (opt.infoString?.string) {
+		const infoString = String(opt.infoString.string).trim();
+		if (infoString) {
+			components.push(infoString);
+		}
+	}
+
+	// Combine all components with spaces
+	const searchTarget = components.join(' ');
+
+	// Normalize the search target
+	return normalizeSearchString(searchTarget);
+};
+
+// Helper function to normalize search strings for better matching
+export function normalizeSearchString(str: string): string {
+	return str
+		.toLowerCase()
+		.normalize('NFD') // Decompose accented characters
+		.replace(/\p{Diacritic}/gu, '') // Remove combining marks (diacritics)
+		.replace(/[^\p{L}\p{N}\s-]/gu, ' ') // Replace special chars with spaces (unicode-aware, keeps e.g. Cyrillic)
+		.replace(/\s+/g, ' ') // Collapse multiple spaces
+		.trim();
+}
+
+export function isQuestionVisible(
+	question: any,
+	answers: any,
+	questions: Record<string, any> | null = null,
+	visited: Set<string> = new Set()
+): boolean {
+	if (!question.depends_on) return true;
+
+	const dependency = question.depends_on;
+	const targetUrn = dependency.question;
+
+	if (questions && targetUrn && !visited.has(targetUrn)) {
+		const parent = questions[targetUrn];
+		if (parent) {
+			const nextVisited = new Set(visited);
+			nextVisited.add(targetUrn);
+			if (!isQuestionVisible(parent, answers, questions, nextVisited)) return false;
+		}
+	}
+
+	const targetAnswer = answers[targetUrn];
+	if (targetAnswer === undefined || targetAnswer === null) return false;
+
+	// Mirror backend default: missing `condition` (e.g. hand-authored YAML)
+	// is treated as "any".
+	const condition = dependency.condition ?? 'any';
+
+	if (condition === 'any') {
+		if (Array.isArray(targetAnswer)) {
+			return targetAnswer.some((a) => dependency.answers.includes(a));
+		}
+		return dependency.answers.includes(targetAnswer);
+	}
+
+	if (condition === 'all') {
+		if (Array.isArray(targetAnswer)) {
+			return dependency.answers.every((a: unknown) => targetAnswer.includes(a));
+		}
+		return dependency.answers.length === 1 && dependency.answers[0] === targetAnswer;
+	}
+
+	return false;
+}
+
+/**
+ * Lowest and highest total a completed choice question can reach (mirrors
+ * core.utils.question_score_bounds). `scores` is the contribution of every
+ * selectable choice, an unscored one counting as 0. A unique choice reaches
+ * exactly one score, a multiple choice every positive (or every negative) one.
+ */
+export function questionScoreBounds(scores: number[], multiple: boolean): [number, number] {
+	if (scores.length === 0) return [0, 0];
+	if (multiple) {
+		const positives = scores.filter((s) => s > 0);
+		const negatives = scores.filter((s) => s < 0);
+		const hi = positives.length ? positives.reduce((a, b) => a + b, 0) : Math.max(...scores);
+		const lo = negatives.length ? negatives.reduce((a, b) => a + b, 0) : Math.min(...scores);
+		return [lo, hi];
+	}
+	return [Math.min(...scores), Math.max(...scores)];
+}
+
+/**
+ * Map a weighted SUM total back onto the unweighted scale of the same questions
+ * (mirrors core.utils.project_weighted_sum). When the total can reach 0, each
+ * side of it is scaled on its own, so a choice worth 0 stays neutral. When 0
+ * sits outside the reachable range, the whole range is mapped onto the
+ * unweighted one. With every weight at 1 the two ranges coincide and the total
+ * comes back unchanged.
+ */
+export function projectWeightedSum(
+	total: number,
+	weightedLo: number,
+	weightedHi: number,
+	lo: number,
+	hi: number
+): number {
+	if (weightedLo > 0 || weightedHi < 0) {
+		const span = weightedHi - weightedLo;
+		return span <= 0 ? total : lo + ((total - weightedLo) * (hi - lo)) / span;
+	}
+	if (total >= 0) return weightedHi > 0 ? (total * hi) / weightedHi : total;
+	return weightedLo < 0 ? (total * lo) / weightedLo : total;
+}
+
+export function computeRequirementScoreAndResult(requirementAssessment: any, answers: any) {
+	const questions = requirementAssessment.requirement.questions;
+
+	if (!questions) return { score: null, result: null };
+
+	const ca = requirementAssessment.compliance_assessment ?? {};
+	const min_score = requirementAssessment.effective_min_score ?? ca.min_score ?? 0;
+	const max_score = requirementAssessment.effective_max_score ?? ca.max_score ?? 100;
+
+	const scoresDef = ca.scores_definition;
+	let aggregation: 'sum' | 'mean' | null = null;
+	if (scoresDef && typeof scoresDef === 'object') {
+		if (scoresDef.aggregation === 'sum' || scoresDef.aggregation === 'mean') {
+			aggregation = scoresDef.aggregation;
+		}
+	}
+	if (!aggregation) {
+		aggregation = ca.score_calculation_method === 'sum' ? 'sum' : 'mean';
+	}
+
+	let totalScore = 0;
+	let totalWeight = 0;
+	let isScoreComputed = false;
+	const results: string[] = [];
+	const questionResults: { tier: string | null; selected: string[] }[] = [];
+	let visibleCount = 0;
+	let answeredVisibleCount = 0;
+	// Reachable range of the visible scored questions, weighted and not: the
+	// weighted SUM is projected from the former onto the latter (mirrors
+	// RequirementAssessment.recompute_assessment).
+	let weightedLo = 0;
+	let weightedHi = 0;
+	let unweightedLo = 0;
+	let unweightedHi = 0;
+
+	for (const [q_urn, question] of Object.entries<any>(questions)) {
+		if (!isQuestionVisible(question, answers, questions)) continue;
+
+		// Free-text questions are informational: they have no choices and can be anything,
+		// so it does not make very much sense to take them into account.
+		// Skip them out. (mirrors RequirementAssessment.recompute_assessment).
+		if (question.type === 'text') continue;
+
+		visibleCount++;
+
+		// A negative weight has no defined meaning; treat it as 0.
+		const questionWeight = Math.max(typeof question.weight === 'number' ? question.weight : 1, 0);
+		const choices: any[] = Array.isArray(question.choices) ? question.choices : [];
+		const choiceScores: number[] = choices
+			.map((choice: any) => choice.add_score)
+			.filter((s: any) => s !== undefined && s !== null);
+		if (choiceScores.length > 0) {
+			// An unscored choice is selectable and contributes 0.
+			const reachable = choices.map((choice: any) => choice.add_score ?? 0);
+			const [lo, hi] = questionScoreBounds(reachable, question.type === 'multiple_choice');
+			unweightedLo += lo;
+			unweightedHi += hi;
+			weightedLo += lo * questionWeight;
+			weightedHi += hi * questionWeight;
+		}
+
+		const selectedChoiceURNs = answers?.[q_urn];
+		const hasAnswer =
+			selectedChoiceURNs !== undefined &&
+			selectedChoiceURNs !== null &&
+			!(typeof selectedChoiceURNs === 'string' && selectedChoiceURNs.trim() === '') &&
+			!(Array.isArray(selectedChoiceURNs) && selectedChoiceURNs.length === 0);
+
+		if (!hasAnswer) continue;
+
+		answeredVisibleCount++;
+
+		const choiceURNs = Array.isArray(selectedChoiceURNs)
+			? selectedChoiceURNs
+			: [selectedChoiceURNs];
+
+		if (!question.choices || !Array.isArray(question.choices)) continue;
+
+		const selected: string[] = [];
+
+		for (const urn of choiceURNs) {
+			const selectedChoice = question.choices.find((choice: any) => choice.urn === urn);
+			if (!selectedChoice) continue;
+
+			if (selectedChoice.add_score !== undefined && selectedChoice.add_score !== null) {
+				isScoreComputed = true;
+				totalScore += selectedChoice.add_score * questionWeight;
+				totalWeight += questionWeight;
+			}
+
+			if (selectedChoice.compute_result !== undefined && selectedChoice.compute_result !== null) {
+				const resolved = resolveComputeResult(selectedChoice.compute_result);
+				if (resolved !== null) {
+					results.push(resolved);
+					selected.push(resolved);
+				}
+			}
+		}
+
+		questionResults.push({
+			tier: resolveResultTier(question.choices.map((choice: any) => choice.compute_result)),
+			selected
+		});
+	}
+
+	let score: number | null;
+	if (isScoreComputed) {
+		let raw: number;
+		if (aggregation === 'mean' && totalWeight > 0) {
+			raw = totalScore / totalWeight;
+		} else if (aggregation === 'sum') {
+			raw = projectWeightedSum(totalScore, weightedLo, weightedHi, unweightedLo, unweightedHi);
+		} else {
+			raw = totalScore;
+		}
+		score = Math.max(min_score, Math.min(max_score, Math.trunc(raw)));
+	} else {
+		score = null;
+	}
+
+	// A requirement is "result-driven" only if at least one choice carries a
+	// resolvable compute_result. For score-only questionnaires we return
+	// result=null so the edit page falls back to the manual result select.
+	const isResultDriven = hasComputedResult(questions);
+
+	const tiered = ca.framework?.result_aggregation === 'tiered_all';
+	let result: string | null;
+	if (!isResultDriven) {
+		result = null;
+	} else if (visibleCount === 0) {
+		result = 'not_applicable';
+	} else if (answeredVisibleCount < visibleCount || (results.length === 0 && !tiered)) {
+		result = 'not_assessed';
+	} else {
+		const aggregated = tiered
+			? aggregateTieredResults(questionResults)
+			: aggregateComputeResults(results);
+		result = aggregated ?? 'not_assessed';
+	}
+
+	return { score, result };
+}
+
+/** Map a QuestionChoice.compute_result value to a Result string. */
+export function resolveComputeResult(value: unknown): string | null {
+	if (value === null || value === undefined) return null;
+	if (typeof value === 'boolean') return value ? 'compliant' : 'non_compliant';
+	if (typeof value !== 'string') return null;
+	const v = value.trim().toLowerCase();
+	if (v === '') return null;
+	if (v === 'true' || v === '1' || v === 'compliant') return 'compliant';
+	if (v === 'false' || v === '0' || v === 'non_compliant') return 'non_compliant';
+	if (v === 'partially_compliant') return 'partially_compliant';
+	if (v === 'not_applicable') return 'not_applicable';
+	console.warn(`Unknown compute_result value ignored: "${value}"`);
+	return null;
+}
+
+/**
+ * The tier a question states, read from the results its choices can set.
+ * Mirrors `resolve_result_tier` in backend/core/utils.py.
+ */
+export function resolveResultTier(computeResults: unknown[]): string | null {
+	const resolved = new Set(computeResults.map((value) => resolveComputeResult(value)));
+	if (resolved.has('compliant')) return 'compliant';
+	if (resolved.has('partially_compliant')) return 'partially_compliant';
+	if (resolved.has('non_compliant')) return 'blocking';
+	return null;
+}
+
+/**
+ * Aggregate answers where a tier is earned only if all of it holds.
+ * Mirrors `aggregate_tiered_results` in backend/core/utils.py - keep the two in step.
+ */
+export function aggregateTieredResults(
+	questionResults: { tier: string | null; selected: string[] }[]
+): string | null {
+	const answered = questionResults.filter((entry) => entry.tier);
+	if (answered.length === 0) return null;
+
+	// not_applicable is neutral, as in aggregateComputeResults: on a multiple
+	// choice answer it drops out of the selection rather than failing the tier,
+	// and a question answered entirely not_applicable stops contributing.
+	const contributing: { tier: string | null; selected: string[] }[] = [];
+	for (const { tier, selected } of answered) {
+		const effective = selected.filter((r) => r !== 'not_applicable');
+		if (selected.length > 0 && effective.length === 0) continue;
+		contributing.push({ tier, selected: effective });
+	}
+	if (contributing.length === 0) return 'not_applicable';
+
+	const holdsByTier: Record<string, boolean[]> = { compliant: [], partially_compliant: [] };
+	for (const { tier, selected } of contributing) {
+		if (tier === 'blocking') {
+			if (selected.some((r) => r === 'non_compliant')) return 'non_compliant';
+			continue;
+		}
+		holdsByTier[tier as string].push(selected.length > 0 && selected.every((r) => r === tier));
+	}
+
+	for (const tier of ['compliant', 'partially_compliant']) {
+		if (holdsByTier[tier].length > 0 && holdsByTier[tier].every(Boolean)) return tier;
+	}
+
+	// Nothing states a tier - only blocking statements, none of them triggered.
+	if (holdsByTier.compliant.length === 0 && holdsByTier.partially_compliant.length === 0) {
+		return 'compliant';
+	}
+	return 'non_compliant';
+}
+
+/**
+ * Aggregate resolved compute_result values, each answer standing on its own:
+ * not_applicable is neutral, unanimous answers carry, and answers that disagree
+ * land on partially_compliant.
+ */
+function aggregateComputeResults(resolved: string[]): string | null {
+	const contributing = resolved.filter((r) => r !== null && r !== undefined);
+	if (contributing.length === 0) return null;
+
+	const nonNA = contributing.filter((r) => r !== 'not_applicable');
+	if (nonNA.length === 0) return 'not_applicable';
+
+	const hasCompliant = nonNA.some((r) => r === 'compliant');
+	const hasNonCompliant = nonNA.some((r) => r === 'non_compliant');
+	const hasPartial = nonNA.some((r) => r === 'partially_compliant');
+
+	if (hasPartial || (hasCompliant && hasNonCompliant)) return 'partially_compliant';
+	if (hasNonCompliant) return 'non_compliant';
+	return 'compliant';
+}
+
+/**
+ * Whether "partially compliant" should be offered when setting a result.
+ * Dropped when `disablePartial`, unless it is already the assessment's persisted
+ * value, so existing data keeps rendering its selected state.
+ */
+function showPartiallyCompliant(disablePartial: boolean, currentResult: string | null): boolean {
+	return !disablePartial || currentResult === 'partially_compliant';
+}
+
+/** Build the {id,label} result options for the bulk result editors. */
+export function requirementResultOptions(
+	disablePartial = false,
+	currentResult: string | null = null
+): { id: string; label: string }[] {
+	const showPartial = showPartiallyCompliant(disablePartial, currentResult);
+	return [
+		{ id: 'not_assessed', label: m.notAssessed() },
+		{ id: 'non_compliant', label: m.nonCompliant() },
+		...(showPartial ? [{ id: 'partially_compliant', label: m.partiallyCompliant() }] : []),
+		{ id: 'compliant', label: m.compliant() },
+		{ id: 'not_applicable', label: m.notApplicable() }
+	];
+}
+
+/** Filter backend-provided {value,label} result choices the same way. */
+export function filterResultChoices<T extends { value: string }>(
+	options: T[],
+	disablePartial = false,
+	currentResult: string | null = null
+): T[] {
+	if (showPartiallyCompliant(disablePartial, currentResult)) return options;
+	return options.filter((o) => o.value !== 'partially_compliant');
+}
+
+/**
+ * Field names that the CA-level visibility editor knows about.
+ * The audit's `field_visibility` is the single source of truth at runtime.
+ *
+ * Storage shape: {fieldName: {role: 'edit' | 'read' | 'hidden'}}.
+ * Roles known today: 'auditor', 'respondent'. A missing field key — or a
+ * missing role within the pair — resolves to 'edit'.
+ */
+// Order matches the rendering sequence in the respondent (auditee) view.
+export const VISIBILITY_FIELDS = [
+	'answers',
+	'respondent_alignment',
+	'status',
+	'result',
+	'extended_result',
+	'score',
+	'documentation_score',
+	'applied_controls',
+	'task_templates',
+	'evidences',
+	'observation',
+	'comments'
+] as const;
+
+export type VisibilityField = (typeof VISIBILITY_FIELDS)[number];
+
+export type RoleAccess = 'edit' | 'read' | 'hidden';
+export type VisibilityPair = { auditor: RoleAccess; respondent: RoleAccess };
+
+const EDIT_PAIR: VisibilityPair = { auditor: 'edit', respondent: 'edit' };
+
+/** Return the per-role visibility pair for a field. Missing → all roles edit. */
+export function resolveFieldVisibility(
+	complianceAssessment: Record<string, any> | null | undefined,
+	fieldName: string
+): VisibilityPair {
+	const raw = complianceAssessment?.field_visibility?.[fieldName];
+	if (!raw || typeof raw !== 'object') return { ...EDIT_PAIR };
+	return {
+		auditor: (raw.auditor as RoleAccess) ?? 'edit',
+		respondent: (raw.respondent as RoleAccess) ?? 'edit'
+	};
+}
+
+function roleAccess(
+	complianceAssessment: Record<string, any> | null | undefined,
+	fieldName: string,
+	role: 'auditor' | 'respondent'
+): RoleAccess {
+	return resolveFieldVisibility(complianceAssessment, fieldName)[role];
+}
+
+/** Whether a field is readable by the given role. */
+export function isFieldVisible(
+	complianceAssessment: Record<string, any> | null | undefined,
+	fieldName: string,
+	viewerRole: 'respondent' | 'auditor' = 'auditor'
+): boolean {
+	return roleAccess(complianceAssessment, fieldName, viewerRole) !== 'hidden';
+}
+
+/** Whether a field is writable by the given role. */
+export function isFieldEditable(
+	complianceAssessment: Record<string, any> | null | undefined,
+	fieldName: string,
+	viewerRole: 'respondent' | 'auditor' = 'auditor'
+): boolean {
+	return roleAccess(complianceAssessment, fieldName, viewerRole) === 'edit';
+}
+
+/**
+ * Return visibility flags for all standard assessment fields at once.
+ */
+export function getFieldVisibility(
+	complianceAssessment: Record<string, any> | null | undefined,
+	viewerRole: 'respondent' | 'auditor' = 'auditor'
+): {
+	showAnswers: boolean;
+	showResult: boolean;
+	showStatus: boolean;
+	showScore: boolean;
+	showDocumentationScore: boolean;
+	showObservation: boolean;
+	showAppliedControls: boolean;
+	showTaskTemplates: boolean;
+	showEvidences: boolean;
+	showRespondentAlignment: boolean;
+	showComments: boolean;
+	showExtendedResult: boolean;
+} {
+	return {
+		showAnswers: isFieldVisible(complianceAssessment, 'answers', viewerRole),
+		showResult: isFieldVisible(complianceAssessment, 'result', viewerRole),
+		showStatus: isFieldVisible(complianceAssessment, 'status', viewerRole),
+		showScore: isFieldVisible(complianceAssessment, 'score', viewerRole),
+		showDocumentationScore: isFieldVisible(complianceAssessment, 'documentation_score', viewerRole),
+		showObservation: isFieldVisible(complianceAssessment, 'observation', viewerRole),
+		showAppliedControls: isFieldVisible(complianceAssessment, 'applied_controls', viewerRole),
+		showTaskTemplates: isFieldVisible(complianceAssessment, 'task_templates', viewerRole),
+		showEvidences: isFieldVisible(complianceAssessment, 'evidences', viewerRole),
+		showRespondentAlignment: isFieldVisible(
+			complianceAssessment,
+			'respondent_alignment',
+			viewerRole
+		),
+		showComments: isFieldVisible(complianceAssessment, 'comments', viewerRole),
+		showExtendedResult: isFieldVisible(complianceAssessment, 'extended_result', viewerRole)
+	};
+}
+
+/**
+ * Check whether any question in a questions object has at least one choice with
+ * a *resolvable* `compute_result`. Mirrors `resolveComputeResult`: empty strings,
+ * whitespace, and unknown values are not treated as result-bearing, so a
+ * questionnaire that only carries scoring (`add_score`) does not hide the manual
+ * result select on the requirement edit page.
+ */
+export function hasComputedResult(questions: Record<string, any> | null | undefined): boolean {
+	if (!questions) return false;
+	return Object.values(questions).some(
+		(question: any) =>
+			Array.isArray(question.choices) &&
+			question.choices.some((choice: any) => resolveComputeResult(choice?.compute_result) !== null)
+	);
+}
+
+/**
+ * Check whether any question in a questions object has choices with `add_score` defined.
+ */
+export function hasComputedScore(questions: Record<string, any> | null | undefined): boolean {
+	if (!questions) return false;
+	return Object.values(questions).some(
+		(question: any) =>
+			Array.isArray(question.choices) &&
+			question.choices.some((choice: any) => choice.add_score !== undefined)
+	);
+}
+
+// --- Auto-alignment question for respondent mode ---
+
+export const AUTO_ALIGNMENT_QUESTION_URN = 'auto:alignment';
+
+const AUTO_CHOICES = [
+	{ id: 'yes', urn: 'auto:alignment:choice:yes', color: '#22c55e' },
+	{ id: 'no', urn: 'auto:alignment:choice:no', color: '#ef4444' },
+	{ id: 'in_progress', urn: 'auto:alignment:choice:in_progress', color: '#f59e0b' },
+	{ id: 'not_applicable', urn: 'auto:alignment:choice:not_applicable', color: '#9ca3af' }
+] as const;
+
+export const alignmentColorMap: Record<string, string> = Object.fromEntries(
+	AUTO_CHOICES.map((c) => [c.id, c.color])
+);
+
+/**
+ * Build a synthetic question dict for the auto-alignment question.
+ * Passed to Question.svelte as the `questions` prop.
+ */
+export function buildAutoAlignmentQuestion(translations: {
+	text: string;
+	yes: string;
+	no: string;
+	inProgress: string;
+	notApplicable: string;
+}) {
+	return {
+		[AUTO_ALIGNMENT_QUESTION_URN]: {
+			type: 'unique_choice',
+			text: translations.text,
+			choices: [
+				{ urn: AUTO_CHOICES[0].urn, value: translations.yes, color: AUTO_CHOICES[0].color },
+				{ urn: AUTO_CHOICES[1].urn, value: translations.no, color: AUTO_CHOICES[1].color },
+				{
+					urn: AUTO_CHOICES[2].urn,
+					value: translations.inProgress,
+					color: AUTO_CHOICES[2].color
+				},
+				{
+					urn: AUTO_CHOICES[3].urn,
+					value: translations.notApplicable,
+					color: AUTO_CHOICES[3].color
+				}
+			]
+		}
+	};
+}
+
+export function alignmentValueFromChoiceUrn(choiceUrn: string | null): string | null {
+	if (!choiceUrn) return null;
+	return AUTO_CHOICES.find((c) => c.urn === choiceUrn)?.id ?? null;
+}
+
+export function choiceUrnFromAlignmentValue(value: string | null): string | undefined {
+	if (!value) return undefined;
+	return AUTO_CHOICES.find((c) => c.id === value)?.urn;
+}
+
+/** Background + readable text color for a compliance-result badge. */
+export function resultBadgeStyle(result: string | null | undefined): string {
+	const key = result ?? 'not_assessed';
+	const bg = complianceResultColorMap[key] || '#ddd';
+	return `background-color: ${bg};${isDark(bg) ? ' color: white;' : ''}`;
+}
+
+/**
+ * Whether the auto-alignment question should be shown for a given requirement.
+ * Visible to respondents when respondent_alignment visibility includes them and
+ * the requirement has no framework questions of its own.
+ */
+export function shouldShowAutoQuestion(
+	requirement: Record<string, any>,
+	viewerRole: string,
+	ca: Record<string, any> | null | undefined
+): boolean {
+	if (viewerRole !== 'respondent') return false;
+	const hasQuestions =
+		requirement.questions != null && Object.keys(requirement.questions).length > 0;
+	if (hasQuestions) return false;
+	return isFieldEditable(ca, 'respondent_alignment', 'respondent');
+}

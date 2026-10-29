@@ -1,0 +1,149 @@
+<script lang="ts">
+	import type { PageData, ActionData } from './$types';
+	import DetailView from '#lib/components/DetailView/DetailView.svelte';
+	import { page } from '$app/state';
+	import { m } from '#paraglide/messages.js';
+	import CreateModal from '#lib/components/Modals/CreateModal.svelte';
+	import {
+		getModalStore,
+		type ModalComponent,
+		type ModalSettings,
+		type ModalStore
+	} from '#lib/components/Modals/stores.js';
+	import ValidationFlowsSection from '#lib/components/ValidationFlows/ValidationFlowsSection.svelte';
+	import MarkdownRenderer from '#lib/components/MarkdownRenderer.svelte';
+	import { refreshAll } from '$app/navigation';
+
+	interface Props {
+		data: PageData;
+		form: ActionData;
+	}
+
+	let { data, form }: Props = $props();
+
+	const modalStore: ModalStore = getModalStore();
+	const policy = $derived(data.data);
+	const policyDocument = $derived(data.policyDocument);
+	const currentRevisionContent = $derived(data.currentRevisionContent);
+
+	const statusColors: Record<string, string> = {
+		draft: 'bg-yellow-100 text-yellow-800',
+		in_review: 'bg-blue-100 text-blue-800',
+		change_requested: 'bg-red-100 text-red-800',
+		published: 'bg-green-100 text-green-800',
+		deprecated: 'bg-gray-100 text-gray-500'
+	};
+
+	function modalRequestValidation(): void {
+		const modalComponent: ModalComponent = {
+			ref: CreateModal,
+			props: {
+				form: data.validationFlowForm,
+				model: data.validationFlowModel,
+				debug: false,
+				invalidateAll: true,
+				formAction: '/validation-flows?/create',
+				onConfirm: async () => {
+					await refreshAll();
+				}
+			}
+		};
+
+		const modal: ModalSettings = {
+			type: 'component',
+			component: modalComponent,
+			title: m.requestValidation()
+		};
+		modalStore.trigger(modal);
+	}
+</script>
+
+<DetailView {data}>
+	{#snippet actions()}
+		<div class="flex flex-col space-y-2">
+			{#if page.data?.featureflags?.policy_documents}
+				<a
+					href="/policies/{policy.id}/document"
+					class="btn text-gray-100 bg-linear-to-r from-blue-500 to-indigo-500 h-fit"
+					data-testid="edit-document-button"
+				>
+					<i class="fa-solid fa-file-pen mr-2"></i>
+					{m.editDocument()}
+				</a>
+			{/if}
+			{#if page.data?.featureflags?.validation_flows}
+				<button
+					class="btn text-white bg-linear-to-r from-orange-500 to-amber-500 h-fit"
+					onclick={() => modalRequestValidation()}
+					data-testid="request-validation-button"
+				>
+					<i class="fa-solid fa-check-circle mr-2"></i>
+					{m.requestValidation()}
+				</button>
+			{/if}
+		</div>
+	{/snippet}
+
+	{#snippet widgets()}
+		{#if page.data?.featureflags?.validation_flows && policy.validation_flows}
+			{#key policy.validation_flows}
+				<ValidationFlowsSection validationFlows={policy.validation_flows} />
+			{/key}
+		{/if}
+
+		{#if page.data?.featureflags?.policy_documents && currentRevisionContent}
+			<div class="card bg-surface-50-950 shadow rounded-lg border mt-4">
+				<div class="p-4 border-b flex items-center justify-between">
+					<div class="flex items-center space-x-3">
+						<h3 class="font-semibold text-lg">
+							<i class="fa-solid fa-file-lines mr-2 text-blue-500"></i>
+							{m.policyDocument()}
+						</h3>
+						<span
+							class="px-2 py-0.5 rounded-full text-xs font-medium {statusColors[
+								currentRevisionContent.status
+							] || 'bg-surface-100-900 text-surface-600-400'}"
+						>
+							{currentRevisionContent.status_display || currentRevisionContent.status}
+						</span>
+						<span class="text-sm text-surface-600-400">
+							v{currentRevisionContent.version_number}
+						</span>
+					</div>
+					<a
+						href="/policies/{policy.id}/document"
+						class="text-sm text-blue-600 hover:text-blue-800"
+					>
+						<i class="fa-solid fa-pen-to-square mr-1"></i>
+						{m.editDocument()}
+					</a>
+				</div>
+				<div class="p-6 overflow-auto max-h-[600px]">
+					<MarkdownRenderer content={currentRevisionContent.content} />
+				</div>
+				{#if currentRevisionContent.published_at}
+					<div class="px-4 py-2 border-t text-xs text-surface-500">
+						{m.publishedAt()}:
+						{new Date(currentRevisionContent.published_at).toLocaleString(undefined, {
+							year: 'numeric',
+							month: 'short',
+							day: 'numeric',
+							hour: '2-digit',
+							minute: '2-digit'
+						})}
+						{#if currentRevisionContent.author}
+							&middot;
+							{currentRevisionContent.author.str ||
+								`${currentRevisionContent.author.first_name || ''} ${currentRevisionContent.author.last_name || ''}`.trim()}
+						{/if}
+					</div>
+				{/if}
+			</div>
+		{:else if page.data?.featureflags?.policy_documents && policyDocument === null}
+			<div class="card bg-surface-50-950 shadow rounded-lg border mt-4 p-6 text-center">
+				<i class="fa-solid fa-file-circle-plus text-4xl text-gray-300 mb-3"></i>
+				<p class="text-surface-600-400">{m.noDocumentCreatedYet()}</p>
+			</div>
+		{/if}
+	{/snippet}
+</DetailView>

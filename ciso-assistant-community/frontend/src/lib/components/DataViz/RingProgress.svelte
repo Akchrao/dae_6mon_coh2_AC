@@ -1,0 +1,169 @@
+<script lang="ts">
+	import { onMount } from 'svelte';
+
+	import { isDarkTheme, mountThemeAwareChart } from '#lib/utils/echartsTheme.js';
+	import { roundScore } from '#lib/utils/helpers.js';
+
+	interface Props {
+		width?: string;
+		height?: string;
+		classesContainer?: string;
+		name?: string;
+		value: number;
+		max: number;
+		min?: number;
+		isPercentage?: boolean;
+		color?: string;
+		backgroundColor?: string;
+		strokeWidth?: number;
+		fontSize?: number;
+		title?: string;
+		radius?: string;
+	}
+
+	let {
+		width = 'w-auto',
+		height = 'h-full',
+		classesContainer = '',
+		name = 'single_gauge',
+		value,
+		max,
+		min = 0,
+		isPercentage = false,
+		color = '#B075CC',
+		backgroundColor,
+		strokeWidth = 20,
+		fontSize = 32,
+		title = '',
+		radius = '65%'
+	}: Props = $props();
+
+	const chart_id = `${name}_${crypto.randomUUID().slice(0, 8)}_div`;
+
+	let chart: any;
+
+	const percentage = $derived.by(() => {
+		const range = max - min;
+		return range > 0 ? Math.min(100, Math.max(0, ((value - min) / range) * 100)) : 0;
+	});
+	const displayValue = $derived(roundScore(value, isPercentage ? 1 : 2));
+
+	function buildOption() {
+		// Recomputed on every theme flip so the value and track stay readable on both surfaces.
+		const isDark = isDarkTheme();
+		const valueColor = isDark ? '#e5e5e5' : '#333';
+		const trackColor = backgroundColor ?? (isDark ? '#475569' : '#E6E6E6');
+		// read once so the ECharts formatter closes over a plain value
+		const shown = displayValue;
+		return {
+			title: {
+				text: title,
+				textStyle: {
+					fontWeight: 'bold',
+					fontSize: 14,
+					color: valueColor
+				}
+			},
+			series: [
+				{
+					type: 'gauge',
+					radius: radius,
+					center: ['50%', '45%'],
+					startAngle: 90,
+					endAngle: -270,
+					min: 0,
+					max: 100,
+					pointer: {
+						show: false
+					},
+					progress: {
+						show: true,
+						width: strokeWidth,
+						roundCap: true,
+						itemStyle: {
+							color: color
+						}
+					},
+					axisLine: {
+						lineStyle: {
+							width: strokeWidth,
+							color: [[1, trackColor]]
+						}
+					},
+					splitLine: {
+						show: false
+					},
+					axisTick: {
+						show: false
+					},
+					axisLabel: {
+						show: false
+					},
+					title: {
+						show: false
+					},
+					data: [
+						{
+							value: percentage,
+							detail: {
+								valueAnimation: true,
+								offsetCenter: ['0%', '0%'],
+								fontSize: fontSize,
+								fontWeight: 'bold',
+								color: valueColor,
+								formatter: function () {
+									return isPercentage ? `${shown}%` : shown;
+								}
+							}
+						}
+					],
+					detail: {
+						width: 80,
+						height: 60,
+						fontSize: fontSize,
+						fontWeight: 'bold',
+						color: valueColor,
+						backgroundColor: 'transparent',
+						borderWidth: 0
+					}
+				}
+			]
+		};
+	}
+
+	onMount(() => {
+		let dispose: (() => void) | undefined;
+		let active = true;
+		(async () => {
+			const echarts = await import('echarts');
+			if (!active) return;
+			const el = document.getElementById(chart_id);
+			if (!el) return;
+			dispose = mountThemeAwareChart(echarts, el, buildOption, {
+				onChart: (c: any) => (chart = c)
+			});
+		})();
+		return () => {
+			active = false;
+			dispose?.();
+			chart = undefined;
+		};
+	});
+
+	$effect(() => {
+		void percentage;
+		void displayValue;
+		chart?.setOption(buildOption());
+	});
+</script>
+
+<div
+	id={chart_id}
+	class="{width} {height} {classesContainer}"
+	style="min-width: 180px; min-height: 180px;"
+	data-testid="progress-ring-svg"
+	aria-valuenow={value}
+	aria-valuemin={min}
+	aria-valuemax={max}
+	role="progressbar"
+></div>

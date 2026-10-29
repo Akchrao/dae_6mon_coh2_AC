@@ -1,0 +1,50 @@
+*.DS_Store
+*~$*
+.env
+.venv
+venv
+cli/.mcp.env
+**/node_modules/
+.vscode
+*.sqlite3
+django_secret_key
+temp/
+db/
+.dccache
+/backend/profiles
+./backend/ciso_assistant/.meta
+caddy_data/
+**/dist/
+**/.meta
+charts/custom-values.yaml
+**/charts/*/charts
+charts/ciso-assistant-next/custom.yaml
+.history/
+__pycache__
+cli/db_backup
+# Ignore everything under .claude/ by default (personal settings, agents, etc.)
+# but track .claude/skills/ so project-shared skills ship with the repo.
+/.claude/*
+!/.claude/skills/
+/frontend/project.inlang/cache
+
+# Ignore Windows-specific dev script helpers
+# > Backend
+backend.ps1
+backend/.win_native_dev_runserver.py
+# > Tools
+tools/convert_library_v2.bat
+
+# > Power BI (working files embed instance data; only the .pbit template ships)
+automation/powerbi/**/*.pbix
+automation/powerbi/connector/bin/
+automation/powerbi/connector/obj/
+*.pfx
+
+# > MCP local client config (holds a personal access token)
+cli/.mcp.json
+.mcp.json
+cli/.mcp.env
+
+# pnpm package cache (materialized by npx/pnpm runs at repo root)
+.pnpm-store/

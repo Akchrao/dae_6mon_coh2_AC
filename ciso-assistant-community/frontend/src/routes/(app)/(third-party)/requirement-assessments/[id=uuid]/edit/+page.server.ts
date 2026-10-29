@@ -1,0 +1,414 @@
+import { handleErrorResponse, nestedWriteFormAction } from '#lib/utils/actions.js';
+import { BASE_API_URL } from '#lib/utils/constants.js';
+import { getModelInfo, urlParamModelVerboseName } from '#lib/utils/crud.js';
+import { safeTranslate } from '#lib/utils/i18n.js';
+import { getSecureRedirect } from '#lib/utils/helpers.js';
+import { formatSelectFieldData } from '#lib/utils/load.js';
+import { modelSchema } from '#lib/utils/schemas.js';
+import { headData } from '#lib/utils/table.js';
+import { m } from '#paraglide/messages.js';
+import { type TableSource } from '#lib/components/ModelTable/types.js';
+import type { Actions } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
+import { setFlash } from 'sveltekit-flash-message/server';
+import { superValidate } from 'sveltekit-superforms';
+import { zod4 as zod } from 'sveltekit-superforms/adapters';
+import type { PageServerLoad } from './$types';
+import { z } from 'zod';
+
+export const load = (async ({ fetch, params }) => {
+	const URLModel = 'requirement-assessments';
+	const baseUrl = BASE_API_URL;
+	const endpoint = `${baseUrl}/${URLModel}/${params.id}/`;
+
+	async function fetchJson(url: string) {
+		const res = await fetch(url);
+		if (!res.ok) {
+			console.error(`Failed to fetch data from ${url}: ${res.statusText}`);
+			return null;
+		}
+		return res.json();
+	}
+
+	const requirementAssessment = await fetchJson(endpoint);
+	const requirement = requirementAssessment.requirement;
+	const compliance_assessment_score = await fetchJson(
+		`${baseUrl}/compliance-assessments/${requirementAssessment.compliance_assessment.id}/global_score/`
+	);
+
+	const parent = requirementAssessment.requirement.parent_requirement;
+
+	const model = getModelInfo(URLModel);
+	const object = { ...requirementAssessment };
+	Object.keys(object).forEach((key) => {
+		if (object[key] instanceof Object && 'id' in object[key]) {
+			object[key] = object[key].id;
+		}
+	});
+
+	// Fetch ordered assessable requirement assessments to find next/previous
+	const requirementsListData = await fetchJson(
+		`${baseUrl}/compliance-assessments/${requirementAssessment.compliance_assessment.id}/requirements_list/?assessable=true`
+	);
+	let nextRequirementAssessmentId: string | null = null;
+	if (requirementsListData?.requirement_assessments) {
+		const raIds = requirementsListData.requirement_assessments.map((ra: any) => ra.id);
+		const currentIndex = raIds.indexOf(params.id);
+		if (currentIndex !== -1 && currentIndex < raIds.length - 1) {
+			nextRequirementAssessmentId = raIds[currentIndex + 1];
+		}
+	}
+
+	const schema = modelSchema(URLModel);
+	object.evidences = object.evidences?.map((evidence) => evidence.id) ?? [];
+	object.applied_controls =
+		object.applied_controls?.map((applied_control) => applied_control.id) ?? [];
+	object.security_exceptions =
+		object.security_exceptions?.map((security_exception) => security_exception.id) ?? [];
+	object.task_templates = object.task_templates?.map((task_template) => task_template.id) ?? [];
+	object.findings = object.findings?.map((finding) => finding.id) ?? [];
+	object.nextRequirementAssessmentId = nextRequirementAssessmentId;
+	const form = await superValidate(object, zod(schema), { errors: true });
+
+	const selectOptions: Record<string, any> = {};
+	if (model.selectFields) {
+		await Promise.all(
+			model.selectFields.map(async (selectField) => {
+				const url = `${baseUrl}/${URLModel}/${selectField.field}/`;
+				const data = await fetchJson(url);
+				if (data) {
+					selectOptions[selectField.field] = formatSelectFieldData(data, selectField);
+				}
+			})
+		);
+	}
+	model.selectOptions = selectOptions;
+
+	const measureCreateSchema = modelSchema('applied-controls');
+	const measureCreateForm = await superValidate(
+		{ folder: requirementAssessment.folder.id },
+		zod(measureCreateSchema),
+		{ errors: false }
+	);
+
+	const measureModel = getModelInfo('applied-controls');
+
+	const measureSelectOptions: Record<string, any> = {};
+	if (measureModel.selectFields) {
+		await Promise.all(
+			measureModel.selectFields.map(async (selectField) => {
+				const url = `${baseUrl}/applied-controls/${selectField.field}/`;
+				const data = await fetchJson(url);
+				if (data) {
+					measureSelectOptions[selectField.field] = formatSelectFieldData(data, selectField);
+				} else {
+					console.error(`Failed to fetch data for ${selectField.field}: ${response.statusText}`);
+				}
+			})
+		);
+	}
+
+	measureModel['selectOptions'] = measureSelectOptions;
+
+	const tables: Record<string, any> = {};
+
+	await Promise.all(
+		['applied-controls', 'task-templates', 'evidences', 'security-exceptions', 'findings'].map(
+			async (key) => {
+				const table: TableSource = {
+					head: headData(key),
+					body: [],
+					meta: []
+				};
+				tables[key] = table;
+			}
+		)
+	);
+
+	const evidenceModel = getModelInfo('evidences');
+	const evidenceCreateSchema = modelSchema('evidences');
+	const evidenceCreateForm = await superValidate(
+		{ requirement_assessments: [params.id], folder: requirementAssessment.folder.id },
+		zod(evidenceCreateSchema),
+		{ errors: false }
+	);
+
+	const evidenceSelectOptions: Record<string, any> = {};
+	if (evidenceModel.selectFields) {
+		await Promise.all(
+			evidenceModel.selectFields.map(async (selectField) => {
+				const url = `${baseUrl}/evidences/${selectField.field}/`;
+				const data = await fetchJson(url);
+				if (data) {
+					evidenceSelectOptions[selectField.field] = formatSelectFieldData(data, selectField);
+				}
+			})
+		);
+	}
+	evidenceModel.selectOptions = evidenceSelectOptions;
+
+	const taskTemplateModel = getModelInfo('task-templates');
+	const taskTemplateCreateSchema = modelSchema('task-templates');
+	const taskTemplateCreateForm = await superValidate(
+		{ requirement_assessments: [params.id], folder: requirementAssessment.folder.id },
+		zod(taskTemplateCreateSchema),
+		{ errors: false }
+	);
+
+	const taskTemplateSelectOptions: Record<string, any> = {};
+	if (taskTemplateModel.selectFields) {
+		await Promise.all(
+			taskTemplateModel.selectFields.map(async (selectField) => {
+				const url = `${baseUrl}/task-templates/${selectField.field}/`;
+				const data = await fetchJson(url);
+				if (data) {
+					taskTemplateSelectOptions[selectField.field] = formatSelectFieldData(data, selectField);
+				}
+			})
+		);
+	}
+	taskTemplateModel.selectOptions = taskTemplateSelectOptions;
+
+	const securityExceptionModel = getModelInfo('security-exceptions');
+	const securityExceptionCreateSchema = modelSchema('security-exceptions');
+	const securityExceptionCreateForm = await superValidate(
+		{ requirement_assessments: [params.id], folder: requirementAssessment.folder.id },
+		zod(securityExceptionCreateSchema),
+		{ errors: false }
+	);
+
+	const securityExceptionSelectOptions: Record<string, any> = {};
+	if (securityExceptionModel.selectFields) {
+		await Promise.all(
+			securityExceptionModel.selectFields.map(async (selectField) => {
+				const url = `${baseUrl}/security-exceptions/${selectField.field}/`;
+				const data = await fetchJson(url);
+				if (data) {
+					securityExceptionSelectOptions[selectField.field] = formatSelectFieldData(
+						data,
+						selectField
+					);
+				}
+			})
+		);
+	}
+	securityExceptionModel.selectOptions = securityExceptionSelectOptions;
+
+	return {
+		URLModel,
+		title: requirementAssessment.name,
+		requirementAssessment,
+		compliance_assessment_score,
+		requirement,
+		parent,
+		model,
+		form,
+		measureCreateForm,
+		measureModel,
+		evidenceModel,
+		evidenceCreateForm,
+		taskTemplateModel,
+		taskTemplateCreateForm,
+		securityExceptionModel,
+		securityExceptionCreateForm,
+		tables,
+		nextRequirementAssessmentId,
+		viewerRole: requirementsListData?.viewer_role === 'auditor' ? 'auditor' : 'respondent'
+	};
+}) satisfies PageServerLoad;
+
+export const actions: Actions = {
+	updateRequirementAssessment: async (event) => {
+		const URLModel = 'requirement-assessments';
+		const schema = modelSchema(URLModel);
+		const endpoint = `${BASE_API_URL}/${URLModel}/${event.params.id}/`;
+		const form = await superValidate(event.request, zod(schema));
+
+		if (!form.valid) {
+			console.log(form.errors);
+			return fail(400, { form: form });
+		}
+
+		const formData: Record<string, any> = { ...form.data };
+
+		// Strip fields the backend hid from the GET response. Sending them back as
+		// empty arrays / null would silently wipe data the user could not see.
+		// Fail closed: if we cannot fetch the current state, abort rather than risk
+		// a PATCH that clears hidden relations.
+		let currentRa: Record<string, any>;
+		try {
+			const currentRaResponse = await event.fetch(endpoint);
+			if (!currentRaResponse.ok) {
+				return handleErrorResponse({ event, response: currentRaResponse, form });
+			}
+			currentRa = await currentRaResponse.json();
+		} catch (error) {
+			console.error('Failed to fetch requirement assessment before update', error);
+			return fail(502, { form });
+		}
+
+		const visibilityControlled = [
+			'result',
+			'status',
+			'score',
+			'is_scored',
+			'is_score_overridden',
+			'documentation_score',
+			'observation',
+			'respondent_alignment',
+			'answers',
+			'evidences',
+			'applied_controls',
+			'task_templates',
+			'security_exceptions',
+			'findings'
+		];
+		for (const key of visibilityControlled) {
+			if (!(key in currentRa)) {
+				delete formData[key];
+			}
+		}
+		// extended_result is a qualifier on result — strip it alongside a hidden result.
+		if (!('result' in currentRa)) {
+			delete formData.extended_result;
+		}
+		// The Select component's default option renders as <option value={null}>--</option>;
+		// Svelte omits the null attribute so the browser falls back to the text "--",
+		// which the backend rejects as an invalid enum choice. Normalize to null.
+		if (formData.extended_result === '--' || formData.extended_result === '') {
+			formData.extended_result = null;
+		}
+
+		const requestInitOptions: RequestInit = {
+			method: 'PATCH',
+			body: JSON.stringify(formData)
+		};
+
+		const response = await event.fetch(endpoint, requestInitOptions);
+
+		if (!response.ok) return handleErrorResponse({ event, response, form });
+
+		const object = await response.json();
+		const model: string = safeTranslate(urlParamModelVerboseName(URLModel));
+		setFlash({ type: 'success', message: m.successfullySavedObject({ object: model }) }, event);
+		if (formData.noRedirect) return;
+
+		// If there's a next requirement assessment, redirect to it
+		if (formData.nextRequirementAssessmentId) {
+			const nextParam = getSecureRedirect(event.url.searchParams.get('next'));
+			redirect(
+				302,
+				`/requirement-assessments/${formData.nextRequirementAssessmentId}/edit${nextParam ? `?next=${nextParam}` : ''}`
+			);
+		}
+
+		redirect(
+			302,
+			getSecureRedirect(event.url.searchParams.get('next')) ||
+				`/compliance-assessments/${object.compliance_assessment}/`
+		);
+	},
+	createAppliedControl: async (event) => {
+		const URLModel = 'applied-controls';
+		const schema = modelSchema(URLModel);
+		const endpoint = `${BASE_API_URL}/${URLModel}/`;
+		const form = await superValidate(event.request, zod(schema));
+
+		if (!form.valid) {
+			console.log(form.errors);
+			return fail(400, { form: form });
+		}
+
+		const requestInitOptions: RequestInit = {
+			method: 'POST',
+			body: JSON.stringify(form.data)
+		};
+
+		const response = await event.fetch(endpoint, requestInitOptions);
+
+		if (!response.ok) return handleErrorResponse({ event, response, form });
+
+		const measure = await response.json();
+
+		const requirementAssessmentEndpoint = `${BASE_API_URL}/requirement-assessments/${event.params.id}/`;
+		const requirementAssessment = await event
+			.fetch(`${requirementAssessmentEndpoint}object/`)
+			.then((res) => res.json());
+
+		const measures = [...requirementAssessment.applied_controls, measure.id];
+
+		const patchRequestInitOptions: RequestInit = {
+			method: 'PATCH',
+			body: JSON.stringify({ applied_controls: measures })
+		};
+
+		const patchRes = await event.fetch(requirementAssessmentEndpoint, patchRequestInitOptions);
+		if (!patchRes.ok) return handleErrorResponse({ event, response: patchRes, form });
+
+		const model: string = urlParamModelVerboseName(URLModel);
+		setFlash(
+			{
+				type: 'success',
+				message: m.successfullyUpdatedObject({ object: model })
+			},
+			event
+		);
+		return { form, newControls: [measure.id] };
+	},
+	createEvidence: async (event) => {
+		const result = await nestedWriteFormAction({ event, action: 'create' });
+		return { form: result.form, newEvidence: result.form.message.object.id };
+	},
+	createTaskTemplate: async (event) => {
+		const result = await nestedWriteFormAction({ event, action: 'create' });
+		return { form: result.form, newTaskTemplate: result.form.message.object.id };
+	},
+	createSecurityException: async (event) => {
+		const result = await nestedWriteFormAction({ event, action: 'create' });
+		return { form: result.form, newSecurityException: result.form.message.object.id };
+	},
+	createFinding: async (event) => {
+		const result = await nestedWriteFormAction({ event, action: 'create' });
+		return { form: result.form, newFinding: result.form.message.object.id };
+	},
+	createSuggestedControls: async (event) => {
+		const formData = await event.request.formData();
+
+		if (!formData) {
+			return fail(400, { form: null });
+		}
+
+		const schema = z.object({ id: z.string().uuid() });
+		const form = await superValidate(formData, zod(schema));
+
+		const response = await event.fetch(
+			`/requirement-assessments/${event.params.id}/suggestions/applied-controls`,
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			}
+		);
+		if (response.ok) {
+			setFlash(
+				{
+					type: 'success',
+					message: m.createAppliedControlsFromSuggestionsSuccess()
+				},
+				event
+			);
+		} else {
+			setFlash(
+				{
+					type: 'error',
+					message: m.createAppliedControlsFromSuggestionsError()
+				},
+				event
+			);
+			return fail(400, { form });
+		}
+		const newControls = await response.json().then((data) => data.map((e) => e.id));
+		return { form, newControls };
+	}
+};

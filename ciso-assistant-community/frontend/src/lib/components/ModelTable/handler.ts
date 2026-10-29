@@ -1,0 +1,107 @@
+import { getListViewFields, tableSourceMapper } from '#lib/utils/table.js';
+import type { urlModel } from '#lib/utils/types.js';
+import type { State } from '@vincjo/datatables/remote';
+import type { TableSource } from './types';
+
+export interface LoadTableDataParams {
+	state: State;
+	URLModel: urlModel;
+	endpoint: string;
+	fields?: { head: string[]; body: string[] };
+	featureFlags?: Record<string, boolean>;
+	onError?: (error: unknown) => void;
+}
+
+export const loadTableData = async ({
+	state,
+	URLModel,
+	endpoint,
+	fields,
+	featureFlags = {},
+	onError
+}: LoadTableDataParams) => {
+	const url = new URL(endpoint, window.location.origin);
+	const params = new URLSearchParams(url.search);
+	const newParams = getParams(state);
+
+	newParams.forEach((value, key) => params.append(key, value));
+	if (URLModel === 'filtering-labels') params.set('usage_count', 'true');
+	url.search = params.toString();
+
+	let response;
+	try {
+		const res = await fetch(url.toString());
+		if (!res.ok) throw new Error(`Failed to load ${URLModel}: ${res.status}`);
+		response = await res.json();
+	} catch (error) {
+		state.setTotalRows(0);
+		onError?.(error);
+		return [];
+	}
+	state.setTotalRows(response.count);
+
+	const baseFields = getListViewFields({ key: URLModel, featureFlags, includeOptional: true });
+
+	const fieldsToUse =
+		fields?.head && fields.head.length > 0 && fields.head.toString() !== baseFields.head.toString()
+			? {
+					...baseFields,
+					head: fields.head,
+					body: fields.body.length > 0 ? fields.body : fields.head
+				}
+			: baseFields;
+
+	// Flatten custom field values to top-level `cf__<key>` so they map to opt-in columns.
+	const results = (response.results ?? []).map((row: Record<string, any>) => {
+		if (row.custom_fields && typeof row.custom_fields === 'object') {
+			const flat: Record<string, any> = {};
+			for (const [k, v] of Object.entries(row.custom_fields)) flat[`cf__${k}`] = v;
+			return { ...row, ...flat };
+		}
+		return row;
+	});
+
+	const bodyData = tableSourceMapper(results, fieldsToUse.body);
+
+	const headData: Record<string, string> = fieldsToUse.body.reduce((obj, key, index) => {
+		obj[key] = fieldsToUse.head[index];
+		return obj;
+	}, {});
+
+	const table: TableSource = {
+		head: headData,
+		body: bodyData,
+		meta: response // metaData
+	};
+
+	return table.body.map((item: Record<string, any>, index: number) => {
+		return { ...item, meta: table?.meta?.results ? { ...table.meta.results[index] } : undefined };
+	});
+};
+
+export const getParams = ({ offset, rowsPerPage, search, sort, filters }: State) => {
+	const params = new URLSearchParams();
+	params.set('offset', offset.toString() ?? '0');
+	// rowsPerPage is 0 when a table opts out of pagination, and the backend rejects
+	// limit=0; leaving it unset falls back to the server default page size.
+	if (rowsPerPage) params.set('limit', rowsPerPage.toString());
+	if (search) {
+		params.set('search', search);
+	}
+	if (sort?.orderBy) {
+		params.set('ordering', `${sort.direction === 'desc' ? '-' : ''}${sort.orderBy}`);
+	}
+	if (filters) {
+		for (const filter of filters) {
+			const filterKey = filter.filterBy.toString();
+			if (Array.isArray(filter.value)) {
+				for (const val of filter.value) {
+					params.append(filterKey, val.toString());
+				}
+			} else if (filter.value) {
+				params.append(filterKey, filter.value.toString());
+			}
+		}
+	}
+	return params;
+};

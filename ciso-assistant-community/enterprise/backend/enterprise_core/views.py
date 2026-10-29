@@ -1,0 +1,1564 @@
+import json
+from datetime import datetime
+from django.utils.formats import date_format
+
+import magic
+import structlog
+from django.db import models, transaction
+from django.db.models import CharField, Value, Case, When
+from django.db.models.functions import Coalesce, Lower, Cast, NullIf
+import django_filters as df
+from django.contrib.auth.models import Permission
+from rest_framework import serializers, status
+from rest_framework.decorators import (
+    action,
+    api_view,
+    permission_classes,
+)
+from rest_framework.parsers import FileUploadParser
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import mixins, viewsets, filters
+
+from django_filters.rest_framework import DjangoFilterBackend
+
+from django.conf import settings
+from django.core.exceptions import ValidationError
+
+from core.views import (
+    BaseModelViewSet,
+    ComplianceAssessmentViewSet,
+    ExportMixin,
+    GenericFilterSet,
+    RoleFilter,
+    SmartOrderingFilter,
+)
+from core.utils import MAIN_ENTITY_DEFAULT_NAME, get_respondent_scoped_folder_ids
+from iam.models import User, Role, UserGroup, RoleAssignment
+from tprm.models import Entity
+
+from tprm.models import Folder
+from uuid import UUID
+
+import shutil
+from pathlib import Path
+import humanize
+
+from core.models import (
+    Actor,
+    AppliedControl,
+    ComplianceAssessment,
+    CustomDocHtmlTemplate,
+    CustomEmailTemplate,
+    CustomWordTemplate,
+    FindingsAssessment,
+    RiskAssessment,
+    SecurityException,
+)
+from global_settings.models import GlobalSettings
+from resilience.models import BusinessImpactAnalysis
+from .models import ClientSettings, LogEntryAction
+from .serializers import (
+    ClientSettingsReadSerializer,
+    CustomEmailTemplateReadSerializer,
+    CustomEmailTemplateWriteSerializer,
+    CustomWordTemplateReadSerializer,
+    CustomWordTemplateWriteSerializer,
+    CustomDocHtmlTemplateReadSerializer,
+    CustomDocHtmlTemplateWriteSerializer,
+    LogEntrySerializer,
+)
+from .template_registry import (
+    EMAIL_TEMPLATE_REGISTRY,
+    WORD_TEMPLATE_REGISTRY,
+    DOC_HTML_TEMPLATE_REGISTRY,
+)
+from .license import effective_expiration, get_editors, seat_limit_reachable
+
+from auditlog.models import LogEntry
+
+logger = structlog.get_logger(__name__)
+
+
+class ClientSettingsViewSet(BaseModelViewSet):
+    model = ClientSettings
+
+    # No role holds add_clientsettings (the row is created by AppConfig), so the
+    # image actions authorize as edits of the existing singleton.
+    permission_overrides = {
+        "upload_logo": "change_clientsettings",
+        "upload_favicon": "change_clientsettings",
+        "delete_logo": "change_clientsettings",
+        "delete_favicon": "change_clientsettings",
+    }
+
+    def create(self, request, *args, **kwargs):
+        return Response(
+            {
+                "detail": "Client settings object cannot be created outside of AppConfig."
+            },
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
+
+    def delete(self, request, *args, **kwargs):
+        return Response(
+            {"detail": "Client settings object cannot be deleted."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
+
+    def perform_update(self, serializer):
+        instance = serializer.save()
+        self._update_main_entity_name(instance)
+
+    def _update_main_entity_name(self, instance):
+        main_entity = Entity.get_main_entity()
+
+        if instance.name:
+            self._set_main_entity_name(main_entity, instance.name)
+        elif main_entity.name != MAIN_ENTITY_DEFAULT_NAME:
+            self._set_main_entity_name(main_entity, MAIN_ENTITY_DEFAULT_NAME)
+
+    def _set_main_entity_name(self, main_entity, new_name):
+        if main_entity.name == new_name:
+            return
+
+        logger.info("Updating main entity name", entity=main_entity, name=new_name)
+        try:
+            main_entity.name = new_name
+            main_entity.save()
+            logger.info("Main entity name updated", entity=main_entity, name=new_name)
+        except Exception as e:
+            logger.error("An error occurred while renaming main entity", exc_info=e)
+            raise
+
+    @action(methods=["get"], detail=False, permission_classes=[AllowAny])
+    def info(self, request):
+        try:
+            client = ClientSettings.objects.get()
+            return Response(
+                ClientSettingsReadSerializer(client).data, status=status.HTTP_200_OK
+            )
+        except ClientSettings.DoesNotExist:
+            return Response(
+                {"error": "Client settings not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(methods=["get"], detail=False, permission_classes=[AllowAny])
+    def logo(self, request):
+        instance = ClientSettings.objects.get()
+        show_data = (
+            instance.show_images_unauthenticated or request.user.is_authenticated
+        )
+        if not (instance.logo and show_data):
+            return Response(
+                {"error": "No logo uploaded"}, status=status.HTTP_404_NOT_FOUND
+            )
+        return Response(
+            {"data": instance.logo_base64, "mime_type": instance.logo_mime_type}
+        )
+
+    @action(methods=["get"], detail=False, permission_classes=[AllowAny])
+    def favicon(self, request):
+        instance = ClientSettings.objects.get()
+        show_data = (
+            instance.show_images_unauthenticated or request.user.is_authenticated
+        )
+        if not (instance.favicon and show_data):
+            return Response(
+                {"error": "No favicon uploaded"}, status=status.HTTP_404_NOT_FOUND
+            )
+        return Response(
+            {"data": instance.favicon_base64, "mime_type": instance.favicon_mime_type}
+        )
+
+    def handle_file_upload(self, request, pk, field_name):
+        # Raises 403/404 before anything is read; the blanket except below must
+        # not turn an authorization failure into a 400.
+        settings = self.get_object()
+
+        if "file" not in request.FILES:
+            return Response(
+                {"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            file = request.FILES["file"]
+            content_type = magic.Magic(mime=True).from_buffer(file.read())
+
+            if content_type not in [
+                "image/png",
+                "image/jpeg",
+                "image/webp",
+                "image/x-icon",
+                "image/vnd.microsoft.icon",
+                "image/svg+xml",
+            ]:
+                return Response(
+                    {field_name: "invalidFileType"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            setattr(settings, field_name, request.FILES["file"])
+            settings.full_clean()
+            settings.save()
+            return Response(status=status.HTTP_200_OK)
+        except ValidationError:
+            return Response(
+                {field_name: "invalidFileType"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        except Exception as e:
+            logger.error("Error uploading file", exc_info=e)
+            return Response(
+                {"error": "Error uploading file"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(
+        methods=["post"],
+        detail=True,
+        url_path="logo/upload",
+        parser_classes=(FileUploadParser,),
+    )
+    def upload_logo(self, request, pk):
+        return self.handle_file_upload(request, pk, "logo")
+
+    @action(
+        methods=["post"],
+        detail=True,
+        url_path="favicon/upload",
+        parser_classes=(FileUploadParser,),
+    )
+    def upload_favicon(self, request, pk):
+        return self.handle_file_upload(request, pk, "favicon")
+
+    def handle_file_delete(self, field_name):
+        settings = self.get_object()
+        image = getattr(settings, field_name)
+        if not image:
+            return Response(status=status.HTTP_403_FORBIDDEN)
+        image.delete()
+        settings.save()
+        return Response(status=status.HTTP_200_OK)
+
+    @action(methods=["put"], detail=True, url_path="logo/delete")
+    def delete_logo(self, request, pk):
+        return self.handle_file_delete("logo")
+
+    @action(methods=["put"], detail=True, url_path="favicon/delete")
+    def delete_favicon(self, request, pk):
+        return self.handle_file_delete("favicon")
+
+
+class LicenseStatusView(APIView):
+    def get(self, request):
+        expiry_date_str = settings.LICENSE_EXPIRATION
+
+        if expiry_date_str == "unset":
+            return Response(
+                {"status": "active", "message": "No expiration date set"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            expiration_date = datetime.fromisoformat(expiry_date_str)
+        except ValueError as e:
+            logger.error("Invalid expiration date format", exc_info=e)
+            error_msg = "noExpirationDateSet"
+            return Response(
+                {"status": "active", "message": error_msg},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        now = datetime.now()
+        effective = effective_expiration(expiration_date)
+
+        if effective > now:
+            days_left = (effective - now).days
+            return Response({"status": "active", "days_left": days_left})
+        else:
+            days_expired = (now - effective).days
+            return Response({"status": "expired", "days_expired": days_expired})
+
+
+class RoleFilterSet(GenericFilterSet):
+    read_only = df.BooleanFilter(method="filter_read_only")
+
+    class Meta:
+        model = Role
+        fields = ["builtin"]
+
+    def filter_read_only(self, queryset, name, value):
+        """
+        A role is read-only when none of its permissions is a non-view
+        permission. A role with no permissions at all counts as read-only.
+
+        No regex here: the negative lookahead this used to rely on is not
+        supported by PostgreSQL's POSIX regexes (it only worked on SQLite,
+        whose regex operator is Python-backed).
+        """
+        write_permissions = Permission.objects.exclude(codename__startswith="view_")
+        if value:
+            return queryset.exclude(permissions__in=write_permissions)
+        return queryset.filter(permissions__in=write_permissions).distinct()
+
+
+class RoleViewSet(BaseModelViewSet):
+    """
+    API endpoint that allows roles to be viewed or edited
+    """
+
+    model = Role
+    ordering_fields = ["name"]
+    filterset_class = RoleFilterSet
+    filter_backends = [
+        DjangoFilterBackend,
+        RoleFilter,
+    ]
+
+    def get_queryset(self):
+        # Hide only dedicated per-SA roles; a shared builtin role stays visible.
+        return (
+            super()
+            .get_queryset()
+            .exclude(service_accounts__isnull=False, builtin=False)
+        )
+
+    def _get_default_permissions(self):
+        return Permission.objects.filter(
+            codename__in=["view_folder", "view_globalsettings"],
+            content_type__app_label__in=["iam", "global_settings"],
+        )
+
+    def _ensure_default_permissions(self, role):
+        role.permissions.add(*self._get_default_permissions())
+
+    def perform_create(self, serializer):
+        """
+        Create per-folder UserGroups and RoleAssignments for the new role.
+        """
+        with transaction.atomic():
+            role = serializer.save()
+            self._ensure_default_permissions(role)
+
+            root_folder = Folder.get_root_folder()
+            folders = Folder.objects.exclude(content_type="EN")
+
+            user_groups = []
+            role_assignments = []
+            processed_folders = []
+
+            for folder in folders:
+                if (
+                    folder.content_type == Folder.ContentType.DOMAIN
+                    and not folder.create_iam_groups
+                ):
+                    continue
+
+                ug, _ = UserGroup.objects.get_or_create(
+                    folder=folder,
+                    name=role.name,
+                    defaults={"builtin": True},
+                )
+                user_groups.append(ug)
+                processed_folders.append(folder)
+
+                role_assignments.append(
+                    RoleAssignment(
+                        folder=root_folder,
+                        role=role,
+                        user_group=ug,
+                        is_recursive=True,
+                    )
+                )
+
+            RoleAssignment.objects.bulk_create(role_assignments)
+
+            # M2M must be handled after bulk_create
+            for ra, folder in zip(role_assignments, processed_folders):
+                ra.perimeter_folders.add(folder)
+
+    def perform_update(self, serializer):
+        """
+        Update the user groups associated with the role.
+        """
+        with transaction.atomic():
+            # A role edit changes no user count: when the limit is out of reach
+            # before, it stays so after, and both editor scans can be skipped.
+            check_seats = seat_limit_reachable(settings.LICENSE_SEATS)
+            if check_seats:
+                editors_before = get_editors().count()
+
+            role = serializer.save()
+            self._ensure_default_permissions(role)
+
+            if check_seats:
+                editors_after = get_editors().count()
+                if (
+                    editors_after > editors_before
+                    and editors_after > settings.LICENSE_SEATS
+                ):
+                    raise serializers.ValidationError(
+                        {"permissions": "errorLicenseSeatsExceeded"}
+                    )
+
+            ug_ids = (
+                RoleAssignment.objects.filter(
+                    role=role,
+                    user_group__isnull=False,
+                    user_group__builtin=True,
+                )
+                .values_list("user_group_id", flat=True)
+                .distinct()
+            )
+
+            if ug_ids:
+                UserGroup.objects.filter(id__in=ug_ids).update(name=role.name)
+
+    def perform_destroy(self, instance):
+        """
+        Delete only user groups tied to this role’s assignments, atomically.
+        """
+        with transaction.atomic():
+            ras_qs = RoleAssignment.objects.select_related("user_group").filter(
+                role=instance
+            )
+            ug_ids = list(
+                ras_qs.exclude(user_group__isnull=True).values_list(
+                    "user_group_id", flat=True
+                )
+            )
+            # Remove this role's assignments first
+            ras_qs.delete()
+            if ug_ids:
+                # Delete only non-builtin groups that are now orphaned (no remaining RAs)
+                orphan_ug_ids = list(
+                    UserGroup.objects.filter(id__in=ug_ids, builtin=True)
+                    .annotate(ra_count=models.Count("roleassignment"))
+                    .filter(ra_count=0)
+                    .values_list("id", flat=True)
+                )
+                if orphan_ug_ids:
+                    UserGroup.objects.filter(id__in=orphan_ug_ids).delete()
+            super().perform_destroy(instance)
+
+
+class PermissionViewSet(BaseModelViewSet):
+    """
+    API endpoint that allows permissions to be viewed or edited.
+    """
+
+    model = Permission
+    ordering = ["codename"]
+    filterset_fields = ["codename", "content_type"]
+    search_fields = ["codename", "name"]
+
+
+def get_disk_usage():
+    try:
+        path = Path(settings.BASE_DIR) / "db"
+        usage = shutil.disk_usage(path)
+        return usage
+    except PermissionError:
+        logger.error(
+            "Permission issue: cannot access the path to retrieve the disk_usage info"
+        )
+        return None
+    except FileNotFoundError:
+        logger.error(
+            "Path issue: cannot access the path to retrieve the disk_usage info"
+        )
+        return None
+
+
+@api_view(["GET"])
+def get_build(request):
+    """
+    API endpoint that returns the build version of the application.
+    """
+    VERSION = settings.VERSION
+    BUILD = settings.BUILD
+    LICENSE_SEATS = settings.LICENSE_SEATS
+    LICENSE_EXPIRATION = settings.LICENSE_EXPIRATION
+    default_db_engine = settings.DATABASES["default"]["ENGINE"]
+    if "postgresql" in default_db_engine:
+        database_type = "P-FS"
+    elif "sqlite" in default_db_engine:
+        database_type = "S-FS"
+    else:
+        database_type = "Unknown"
+    try:
+        try:
+            expiration_iso = datetime.fromisoformat(LICENSE_EXPIRATION)
+            license_expiration = date_format(expiration_iso, use_l10n=True)
+        except ValueError:
+            license_expiration = "noExpirationDateSet"
+    except ValueError:
+        logger.error("Invalid expiry date format", exc_info=True)
+        license_expiration = LICENSE_EXPIRATION
+
+    disk_info = get_disk_usage()
+
+    if disk_info:
+        total, used, free = disk_info
+        disk_response = {
+            "diskSpace": f"{humanize.naturalsize(total)}",
+            "diskUsed": f"{humanize.naturalsize(used)} ({int((used / total) * 100)} %)",
+        }
+    else:
+        disk_response = {
+            "diskSpace": "Unable to retrieve disk usage",
+        }
+    return Response(
+        {
+            "version": VERSION,
+            "build": BUILD,
+            "infrastructure": database_type,
+            "licenseSeats": LICENSE_SEATS,
+            "availableSeats": LICENSE_SEATS - get_editors().count(),
+            "licenseExpiration": license_expiration,
+            **disk_response,
+        }
+    )
+
+
+class NumberInFilter(df.BaseInFilter, df.NumberFilter):
+    pass
+
+
+class LogEntryFilterSet(GenericFilterSet):
+    actor = df.CharFilter(field_name="actor__email", lookup_expr="icontains")
+    folder = df.CharFilter(method="filter_folder")
+    action = NumberInFilter(field_name="action", lookup_expr="in")
+    content_type = df.CharFilter(method="filter_content_type_model")
+
+    class Meta:
+        model = LogEntry
+        fields = {
+            "actor": ["exact"],
+            "content_type": ["exact"],
+            "action": ["exact"],
+        }
+
+    def filter_content_type_model(self, queryset, name, value):
+        if not value:
+            return queryset
+        normalized = value.replace(" ", "").lower()
+        return queryset.filter(content_type__model__icontains=normalized)
+
+    def filter_folder(self, queryset, name, value):
+        # additional_data stores folder_id, not the path string the old enrichment
+        # used. Resolve folders whose full path matches the query, then match their
+        # ids. Path resolution hits the in-memory folders cache, not the DB.
+        if not value:
+            return queryset
+        needle = value.lower()
+        matching_ids = [
+            str(folder.id)
+            for folder in Folder.objects.only("id")
+            if needle in folder.get_folder_full_path_string().lower()
+        ]
+        if not matching_ids:
+            return queryset.none()
+        q = models.Q()
+        for folder_id in matching_ids:
+            q |= models.Q(additional_data__folder_id=folder_id)
+        return queryset.filter(q)
+
+
+def _format_log_action(action):
+    try:
+        return LogEntryAction(action).to_string()
+    except ValueError:
+        return str(action)
+
+
+def _format_log_changes(changes):
+    if not changes:
+        return ""
+    if isinstance(changes, str):
+        try:
+            changes = json.loads(changes)
+        except ValueError:
+            return changes
+    if isinstance(changes, dict) and "password" in changes:
+        changes = {**changes, "password": ["[old password]", "[new password]"]}
+    return json.dumps(changes, ensure_ascii=False, default=str)
+
+
+class LogEntryViewSet(
+    ExportMixin,
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    viewsets.GenericViewSet,
+):
+    model = LogEntry
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        SmartOrderingFilter,
+    ]
+    ordering = ["-timestamp"]
+    ordering_fields = "__all__"
+    search_fields = [
+        "content_type__model",
+        "action",
+        "actor__email",
+        "actor__first_name",
+        "actor__last_name",
+        "changes",  # allows to search for last_login (for example)
+    ]
+    filterset_class = LogEntryFilterSet
+
+    permission_classes = (IsAuthenticated,)
+    serializer_class = LogEntrySerializer
+
+    export_config = {
+        "filename": "audit_log",
+        "select_related": ["content_type", "actor"],
+        "wrap_columns": ["changes"],
+        "fields": {
+            "timestamp": {
+                "source": "timestamp",
+                "label": "timestamp",
+                "format": lambda d: d.isoformat() if d else "",
+            },
+            "actor": {"source": "actor_label", "label": "actor"},
+            "action": {
+                "source": "action",
+                "label": "action",
+                "format": _format_log_action,
+            },
+            "content_type": {"source": "content_type.model", "label": "model"},
+            "object_id": {"source": "object_pk", "label": "object_id"},
+            "object": {"source": "object_repr", "label": "object"},
+            "folder": {"source": "folder", "label": "folder"},
+            "changes": {
+                "source": "changes",
+                "label": "changes",
+                "format": _format_log_changes,
+            },
+            "remote_addr": {"source": "remote_addr", "label": "remote_addr"},
+        },
+    }
+
+    def _get_export_queryset(self):
+        self._folder_paths = {
+            str(folder.id): folder.get_folder_full_path_string()
+            for folder in Folder.objects.all()
+        }
+        return (
+            super()
+            ._get_export_queryset()
+            .annotate(
+                actor_label=Coalesce(
+                    NullIf("actor_email", Value("")),
+                    "actor__email",
+                    Value(""),
+                    output_field=CharField(),
+                )
+            )
+        )
+
+    def _resolve_field_value(self, obj, field_config):
+        if field_config.get("source") == "folder":
+            folder_id = (obj.additional_data or {}).get("folder_id")
+            return self._folder_paths.get(str(folder_id), "") if folder_id else ""
+        return super()._resolve_field_value(obj, field_config)
+
+    @action(detail=False, name="Export as XLSX")
+    def export_xlsx(self, request):
+        max_rows = settings.AUDITLOG_EXPORT_XLSX_MAX_ROWS
+        if self.filter_queryset(self.get_queryset()).count() > max_rows:
+            return Response(
+                {"error": "tooManyRowsForXlsx", "max_rows": max_rows},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().export_xlsx(request)
+
+    def get_queryset(self):
+        if not RoleAssignment.is_access_allowed(
+            user=self.request.user,
+            perm=Permission.objects.get(codename="view_central_auditlog"),
+            folder=Folder.get_root_folder(),
+        ):
+            return LogEntry.objects.none()
+        # Annotate folder_id (display resolution to a path happens in the serializer
+        # via the folders cache). Keeps `folder` orderable without a per-row join.
+        return LogEntry.objects.all().annotate(
+            folder=Lower(
+                Case(
+                    When(additional_data__isnull=True, then=Value("")),
+                    When(additional_data__folder_id=None, then=Value("")),
+                    default=Cast("additional_data__folder_id", CharField()),
+                    output_field=CharField(),
+                )
+            ),
+        )
+
+
+class CustomEmailTemplateViewSet(BaseModelViewSet):
+    """
+    API endpoint for managing custom email template overrides.
+    Only accessible to users with change_globalsettings permission.
+    """
+
+    model = CustomEmailTemplate
+    filterset_fields = ["template_key", "language", "is_active", "folder"]
+    search_fields = ["template_key", "language", "subject"]
+
+    def _has_permission(self, request):
+        return RoleAssignment.is_access_allowed(
+            user=request.user,
+            perm=Permission.objects.get(codename="change_globalsettings"),
+            folder=Folder.get_root_folder(),
+        )
+
+    def get_queryset(self):
+        if not self._has_permission(self.request):
+            return CustomEmailTemplate.objects.none()
+        return CustomEmailTemplate.objects.all()
+
+    def get_serializer_class(self, **kwargs):
+        if self.request.method in ("POST", "PUT", "PATCH"):
+            return CustomEmailTemplateWriteSerializer
+        return CustomEmailTemplateReadSerializer
+
+    @action(methods=["get"], detail=False, url_path="available")
+    def available(self, request):
+        """Return the registry of all overridable templates with their metadata."""
+        if not self._has_permission(request):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        overrides = CustomEmailTemplate.objects.filter(is_active=True).values_list(
+            "template_key", "language"
+        )
+        override_set = {(k, l) for k, l in overrides}
+
+        from core.email_utils import get_disabled_email_templates
+
+        disabled_templates = get_disabled_email_templates()
+
+        result = []
+        for key, meta in EMAIL_TEMPLATE_REGISTRY.items():
+            result.append(
+                {
+                    "template_key": key,
+                    "description": meta["description"],
+                    "category": meta.get("category", "notification"),
+                    "variables": meta["variables"],
+                    "overrides": [
+                        lang for lang in ["en", "fr"] if (key, lang) in override_set
+                    ],
+                    "is_enabled": key not in disabled_templates,
+                }
+            )
+        return Response(result)
+
+    @action(methods=["post"], detail=False, url_path="set-enabled")
+    def set_enabled(self, request):
+        """Enable or disable sending of a given email template."""
+        if not self._has_permission(request):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        template_key = request.data.get("template_key")
+        is_enabled = request.data.get("is_enabled")
+        if template_key not in EMAIL_TEMPLATE_REGISTRY:
+            return Response(
+                {"error": "Unknown template key"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        if not isinstance(is_enabled, bool):
+            return Response(
+                {"error": "is_enabled must be a boolean"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        with transaction.atomic():
+            general = (
+                GlobalSettings.objects.select_for_update()
+                .filter(name="general")
+                .first()
+            )
+            if general is None:
+                return Response(
+                    {"error": "General settings not initialized"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            value = general.value if isinstance(general.value, dict) else {}
+            disabled = {
+                key
+                for key in value.get("disabled_email_templates", [])
+                if isinstance(key, str)
+            }
+            if is_enabled:
+                disabled.discard(template_key)
+            else:
+                disabled.add(template_key)
+            value["disabled_email_templates"] = sorted(disabled)
+            general.value = value
+            general.save(update_fields=["value"])
+
+        return Response({"template_key": template_key, "is_enabled": is_enabled})
+
+    @action(
+        methods=["get"],
+        detail=False,
+        url_path="default/(?P<template_key>[^/]+)/(?P<language>[^/]+)",
+    )
+    def default_template(self, request, template_key=None, language=None):
+        """Return the built-in default template content for a given key and language."""
+        if not self._has_permission(request):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        if template_key not in EMAIL_TEMPLATE_REGISTRY:
+            return Response(
+                {"error": "Unknown template key"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        from core.email_utils import load_email_template
+
+        template_data = load_email_template(
+            template_key, locale=language, builtin_only=True
+        )
+        if not template_data:
+            return Response(
+                {"error": "Default template not found for this language"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return Response(
+            {
+                "template_key": template_key,
+                "language": language,
+                "subject": template_data["subject"],
+                "body": template_data["body"],
+                "variables": EMAIL_TEMPLATE_REGISTRY[template_key]["variables"],
+            }
+        )
+
+
+class CustomWordTemplateViewSet(BaseModelViewSet):
+    """
+    API endpoint for managing custom Word template overrides.
+    Only accessible to users with change_globalsettings permission.
+    """
+
+    model = CustomWordTemplate
+    filterset_fields = ["template_key", "language", "is_active", "folder"]
+    search_fields = ["template_key", "language"]
+
+    def _has_permission(self, request):
+        return RoleAssignment.is_access_allowed(
+            user=request.user,
+            perm=Permission.objects.get(codename="change_globalsettings"),
+            folder=Folder.get_root_folder(),
+        )
+
+    def get_queryset(self):
+        if not self._has_permission(self.request):
+            return CustomWordTemplate.objects.none()
+        return CustomWordTemplate.objects.all()
+
+    def get_serializer_class(self, **kwargs):
+        if self.request.method in ("POST", "PUT", "PATCH"):
+            return CustomWordTemplateWriteSerializer
+        return CustomWordTemplateReadSerializer
+
+    def perform_create(self, serializer):
+        """New records start inactive until a file is uploaded."""
+        serializer.save(is_active=False)
+
+    @action(methods=["get"], detail=False, url_path="available")
+    def available(self, request):
+        """Return the registry of all overridable Word templates."""
+        if not self._has_permission(request):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        overrides = (
+            CustomWordTemplate.objects.filter(is_active=True)
+            .exclude(file="")
+            .values_list("template_key", "language")
+        )
+        override_set = {(k, l) for k, l in overrides}
+
+        result = []
+        for key, meta in WORD_TEMPLATE_REGISTRY.items():
+            result.append(
+                {
+                    "template_key": key,
+                    "description": meta["description"],
+                    "format": meta.get("format", "docx"),
+                    "default_languages": meta["default_languages"],
+                    "variables": meta.get("variables", []),
+                    "overrides": [
+                        lang
+                        for lang in meta["default_languages"]
+                        if (key, lang) in override_set
+                    ],
+                }
+            )
+        return Response(result)
+
+    @action(
+        methods=["post"],
+        detail=True,
+        url_path="upload",
+        parser_classes=(FileUploadParser,),
+    )
+    def upload_file(self, request, pk):
+        """Upload a .docx file for an existing override record."""
+        if not self._has_permission(request):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        if "file" not in request.FILES:
+            return Response(
+                {"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            template = CustomWordTemplate.objects.get(id=pk)
+            uploaded = request.FILES["file"]
+            is_typst = (
+                WORD_TEMPLATE_REGISTRY.get(template.template_key, {}).get("format")
+                == "typst"
+            )
+
+            if not uploaded.name.endswith(".typ" if is_typst else ".docx"):
+                return Response(
+                    {"file": "invalidFileType"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Typst errors only surface against real data, at render time; a
+            # failing override falls back to the default there.
+            try:
+                uploaded.seek(0)
+                if is_typst:
+                    uploaded.read().decode("utf-8")
+                else:
+                    from docxtpl import DocxTemplate
+                    import io
+
+                    DocxTemplate(io.BytesIO(uploaded.read()))
+                uploaded.seek(0)
+            except Exception:
+                return Response(
+                    {
+                        "file": "invalidTypstTemplate"
+                        if is_typst
+                        else "invalidDocxTemplate"
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            template.file = uploaded
+            template.is_active = True
+            try:
+                template.full_clean()
+            except ValidationError as e:
+                return Response(
+                    e.message_dict
+                    if hasattr(e, "message_dict")
+                    else {"file": "invalidDocxTemplate"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            template.save()
+            return Response(status=status.HTTP_200_OK)
+        except CustomWordTemplate.DoesNotExist:
+            return Response(
+                {"error": "Template not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(methods=["get"], detail=True, url_path="download")
+    def download_file(self, request, pk):
+        """Download the current custom template file."""
+        if not self._has_permission(request):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            template = CustomWordTemplate.objects.get(id=pk)
+            if not template.file:
+                return Response(
+                    {"error": "No file uploaded"}, status=status.HTTP_404_NOT_FOUND
+                )
+
+            from django.http import FileResponse
+
+            ext = template.file.name.rsplit(".", 1)[-1]
+            template.file.open("rb")
+            return FileResponse(
+                template.file,
+                content_type="text/plain"
+                if ext == "typ"
+                else "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                as_attachment=True,
+                filename=f"{template.template_key}_{template.language}.{ext}",
+            )
+        except CustomWordTemplate.DoesNotExist:
+            return Response(
+                {"error": "Template not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(
+        methods=["get"],
+        detail=False,
+        url_path="download-default/(?P<template_key>[^/]+)/(?P<language>[^/]+)",
+    )
+    def download_default(self, request, template_key=None, language=None):
+        """Download the built-in default Word template."""
+        if not self._has_permission(request):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        if template_key not in WORD_TEMPLATE_REGISTRY:
+            return Response(
+                {"error": "Unknown template key"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        from django.http import FileResponse
+        import core as core_module
+
+        meta = WORD_TEMPLATE_REGISTRY[template_key]
+        if meta.get("format") == "typst":
+            from core.typst_render import TEMPLATE_DIR, localized_template
+
+            name = localized_template(meta["default_template"], language)
+            return FileResponse(
+                open(TEMPLATE_DIR / name, "rb"),
+                content_type="text/plain",
+                as_attachment=True,
+                filename=name,
+            )
+
+        core_dir = Path(core_module.__file__).resolve().parent
+
+        template_path = (
+            core_dir / "templates" / "core" / f"{template_key}_template_{language}.docx"
+        )
+
+        resolved_language = language
+        if not template_path.exists() and language != "en":
+            resolved_language = "en"
+            template_path = (
+                core_dir / "templates" / "core" / f"{template_key}_template_en.docx"
+            )
+
+        if not template_path.exists():
+            return Response(
+                {"error": "Default template not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return FileResponse(
+            open(template_path, "rb"),
+            content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            as_attachment=True,
+            filename=f"{template_key}_template_{resolved_language}.docx",
+        )
+
+
+class CustomDocHtmlTemplateViewSet(BaseModelViewSet):
+    """
+    API endpoint for managing custom HTML render-template overrides
+    (WeasyPrint PDF layouts, ...). Gated by change_globalsettings.
+    """
+
+    model = CustomDocHtmlTemplate
+    filterset_fields = ["template_key", "language", "is_active", "folder"]
+    search_fields = ["template_key", "language"]
+
+    def _has_permission(self, request):
+        return RoleAssignment.is_access_allowed(
+            user=request.user,
+            perm=Permission.objects.get(codename="change_globalsettings"),
+            folder=Folder.get_root_folder(),
+        )
+
+    def get_queryset(self):
+        if not self._has_permission(self.request):
+            return CustomDocHtmlTemplate.objects.none()
+        return CustomDocHtmlTemplate.objects.all()
+
+    def get_serializer_class(self, **kwargs):
+        if self.request.method in ("POST", "PUT", "PATCH"):
+            return CustomDocHtmlTemplateWriteSerializer
+        return CustomDocHtmlTemplateReadSerializer
+
+    def perform_create(self, serializer):
+        """New records start inactive until a file is uploaded."""
+        serializer.save(is_active=False)
+
+    @action(methods=["get"], detail=False, url_path="available")
+    def available(self, request):
+        """Return the registry of all overridable HTML templates."""
+        if not self._has_permission(request):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        overrides = (
+            CustomDocHtmlTemplate.objects.filter(is_active=True)
+            .exclude(file="")
+            .values_list("template_key", "language")
+        )
+        override_set = {(k, l) for k, l in overrides}
+
+        result = []
+        for key, meta in DOC_HTML_TEMPLATE_REGISTRY.items():
+            result.append(
+                {
+                    "template_key": key,
+                    "description": meta["description"],
+                    "default_languages": meta["default_languages"],
+                    "variables": meta.get("variables", []),
+                    "overrides": [
+                        lang
+                        for lang in meta["default_languages"]
+                        if (key, lang) in override_set
+                    ],
+                }
+            )
+        return Response(result)
+
+    @action(
+        methods=["post"],
+        detail=True,
+        url_path="upload",
+        parser_classes=(FileUploadParser,),
+    )
+    def upload_file(self, request, pk):
+        """Upload a .html file for an existing override record."""
+        if not self._has_permission(request):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        if "file" not in request.FILES:
+            return Response(
+                {"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            template = CustomDocHtmlTemplate.objects.get(id=pk)
+            uploaded = request.FILES["file"]
+
+            if not uploaded.name.endswith(".html"):
+                return Response(
+                    {"file": "invalidFileType"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Validate the template compiles as a Django template.
+            try:
+                from django.template import Template
+
+                uploaded.seek(0)
+                source = uploaded.read().decode("utf-8")
+                Template(source)
+                uploaded.seek(0)
+            except Exception:
+                return Response(
+                    {"file": "invalidHtmlTemplate"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Reject tags a PDF layout never needs (defense-in-depth).
+            from doc_management.html_templates import find_forbidden_template_tags
+
+            if find_forbidden_template_tags(source):
+                return Response(
+                    {"file": "forbiddenTemplateTags"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            template.file = uploaded
+            template.is_active = True
+            try:
+                template.full_clean()
+            except ValidationError as e:
+                return Response(
+                    e.message_dict
+                    if hasattr(e, "message_dict")
+                    else {"file": "invalidHtmlTemplate"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            template.save()
+            # Keep a single active override per (template_key, language) so the
+            # resolver's .first() is deterministic.
+            CustomDocHtmlTemplate.objects.filter(
+                template_key=template.template_key,
+                language=template.language,
+                is_active=True,
+            ).exclude(pk=template.pk).update(is_active=False)
+            return Response(status=status.HTTP_200_OK)
+        except CustomDocHtmlTemplate.DoesNotExist, ValidationError, ValueError:
+            return Response(
+                {"error": "Template not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(methods=["get"], detail=True, url_path="download")
+    def download_file(self, request, pk):
+        """Download the current custom template file."""
+        if not self._has_permission(request):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        try:
+            template = CustomDocHtmlTemplate.objects.get(id=pk)
+            if not template.file:
+                return Response(
+                    {"error": "No file uploaded"}, status=status.HTTP_404_NOT_FOUND
+                )
+
+            from django.http import FileResponse
+
+            template.file.open("rb")
+            return FileResponse(
+                template.file,
+                content_type="text/html",
+                as_attachment=True,
+                filename=f"{template.template_key}_{template.language}.html",
+            )
+        except CustomDocHtmlTemplate.DoesNotExist, ValidationError, ValueError:
+            return Response(
+                {"error": "Template not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+    @action(
+        methods=["get"],
+        detail=False,
+        url_path="download-default/(?P<template_key>[^/]+)/(?P<language>[^/]+)",
+    )
+    def download_default(self, request, template_key=None, language=None):
+        """Download the built-in default HTML template."""
+        if not self._has_permission(request):
+            return Response(status=status.HTTP_403_FORBIDDEN)
+
+        if template_key not in DOC_HTML_TEMPLATE_REGISTRY:
+            return Response(
+                {"error": "Unknown template key"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        from django.http import FileResponse
+        import doc_management as doc_module
+
+        # The built-in document PDF layout is a single, language-agnostic template.
+        template_path = (
+            Path(doc_module.__file__).resolve().parent
+            / "templates"
+            / "doc_management"
+            / "policy_document_pdf.html"
+        )
+        if not template_path.exists():
+            return Response(
+                {"error": "Default template not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        return FileResponse(
+            open(template_path, "rb"),
+            content_type="text/html",
+            as_attachment=True,
+            filename=f"{template_key}_{language}.html",
+        )
+
+
+AUDIT_TRAIL_PERMISSION = "view_object_audittrail"
+
+
+def _object_audit_trail_enabled():
+    from global_settings.models import GlobalSettings
+
+    gs = GlobalSettings.objects.filter(name=GlobalSettings.Names.FEATURE_FLAGS).first()
+    flags = gs.value if gs and isinstance(gs.value, dict) else {}
+    return flags.get("object_audit_trail", True) is not False
+
+
+class AuditedModelsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        from auditlog.registry import auditlog
+
+        if (
+            not _object_audit_trail_enabled()
+            or not RoleAssignment.has_permission_anywhere(
+                request.user, AUDIT_TRAIL_PERMISSION
+            )
+        ):
+            return Response([])
+        names = sorted(model._meta.model_name for model in auditlog.get_models())
+        return Response(names)
+
+
+class ObjectAuditTrailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    MAX_ENTRIES = 200
+
+    def get(self, request, format=None):
+        from uuid import UUID
+        from django.contrib.contenttypes.models import ContentType
+
+        model_name = (request.query_params.get("content_type") or "").lower()
+        raw_object_id = request.query_params.get("object_id")
+        if not model_name or not raw_object_id:
+            return Response(
+                {"detail": "content_type and object_id are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if not _object_audit_trail_enabled():
+            raise PermissionDenied
+        try:
+            object_id = UUID(str(raw_object_id))
+        except ValueError:
+            return Response(
+                {"detail": "Invalid object_id."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        content_type = ContentType.objects.filter(model=model_name).first()
+        if content_type is None:
+            return Response(
+                {"detail": "Unknown content type."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        model_class = content_type.model_class()
+        obj = model_class.objects.filter(pk=object_id).first()
+        folder = getattr(obj, "folder", None) or Folder.get_root_folder()
+        if not RoleAssignment.is_access_allowed(
+            user=request.user,
+            perm=Permission.objects.get(codename=AUDIT_TRAIL_PERMISSION),
+            folder=folder,
+        ):
+            raise PermissionDenied
+
+        entries = (
+            LogEntry.objects.filter(content_type=content_type, object_pk=str(object_id))
+            .select_related("actor")
+            .order_by("-timestamp")[: self.MAX_ENTRIES]
+        )
+        fk_models = {
+            f.name: f.related_model
+            for f in model_class._meta.get_fields()
+            if getattr(f, "many_to_one", False) and f.related_model
+        }
+        label_cache = {}
+        results = [
+            {
+                "id": entry.id,
+                "cid": entry.cid or None,
+                "action": entry.get_action_display(),
+                "actor": (entry.additional_data or {}).get("user_email")
+                or (entry.actor.email if entry.actor else None),
+                "timestamp": entry.timestamp,
+                "changes": self._mask(
+                    model_name, self._humanize(entry.changes, fk_models, label_cache)
+                ),
+            }
+            for entry in entries
+        ]
+        return Response(results)
+
+    @staticmethod
+    def _humanize(changes, fk_models, label_cache):
+        # Replace foreign-key UUIDs with the related object's label when resolvable.
+        if not isinstance(changes, dict):
+            return changes
+        result = {}
+        for field, value in changes.items():
+            if field in fk_models and isinstance(value, list) and len(value) == 2:
+                model = fk_models[field]
+                result[field] = [
+                    ObjectAuditTrailView._label(model, v, label_cache) for v in value
+                ]
+            else:
+                result[field] = value
+        return result
+
+    @staticmethod
+    def _label(model, value, label_cache):
+        if value in (None, "None", ""):
+            return value
+        key = (model, value)
+        if key not in label_cache:
+            try:
+                obj = model.objects.filter(pk=value).first()
+            except Exception:
+                obj = None
+            label_cache[key] = str(obj) if obj is not None else value
+        return label_cache[key]
+
+    @staticmethod
+    def _mask(model_name, changes):
+        # Backstop for rows logged before "password" was excluded at registration
+        # (iam/models.py); current writes never include it.
+        if model_name == "user" and isinstance(changes, dict) and "password" in changes:
+            return {**changes, "password": ["***", "***"]}
+        return changes
+
+
+class TimelineEntriesView(APIView):
+    """
+    Aggregate feed for the insights timeline (Gantt) page.
+
+    Replaces six fetch-all list calls with one request returning, per model,
+    only the fields the timeline renders. Rows are scoped per model through
+    RoleAssignment.get_accessible_object_ids, the same kernel the list
+    endpoints use (superusers included), and compliance assessments
+    additionally get the respondent scoping of their list queryset.
+    """
+
+    ASSESSMENT_MODELS = [
+        (RiskAssessment, "risk_assessments"),
+        (BusinessImpactAnalysis, "business_impact_analyses"),
+        (FindingsAssessment, "findings_assessments"),
+    ]
+
+    def get(self, request):
+        user = request.user
+        actor_ids: set = set()
+        entries: list[dict] = []
+
+        def accessible_ids(model):
+            # Same kernel call as BaseModelViewSet.get_queryset: a queryset of
+            # the ids the user may view, usable directly in id__in filters.
+            return RoleAssignment.get_viewable_object_ids(user, model)
+
+        def owner_ids_map(model, field_name, object_ids):
+            """Map object id to its owning actor ids via the M2M through
+            table (one query per model, no per-row fan-out)."""
+            field = model._meta.get_field(field_name)
+            through = field.remote_field.through
+            source = f"{field.m2m_field_name()}_id"
+            target = f"{field.m2m_reverse_field_name()}_id"
+            mapping: dict = {}
+            for object_id, actor_id in through.objects.filter(
+                **{f"{source}__in": object_ids}
+            ).values_list(source, target):
+                mapping.setdefault(object_id, []).append(actor_id)
+                actor_ids.add(actor_id)
+            return mapping
+
+        # Applied controls: bar (start_date + eta) or milestone (eta only)
+        ac_ids = accessible_ids(AppliedControl)
+        ac_owners = owner_ids_map(AppliedControl, "owner", ac_ids)
+        for row in (
+            AppliedControl.objects.filter(id__in=ac_ids)
+            .order_by("created_at")
+            .values("id", "name", "start_date", "eta", "progress_field", "folder_id")
+        ):
+            entries.append(
+                {
+                    "model": "applied_controls",
+                    "id": row["id"],
+                    "name": row["name"],
+                    "folder": row["folder_id"],
+                    "start_date": row["start_date"],
+                    "eta": row["eta"],
+                    "progress_field": row["progress_field"],
+                    "owners": ac_owners.get(row["id"], []),
+                }
+            )
+
+        # Compliance assessments: eta/due_date milestone with progress.
+        # Progress reuses the bucketed bulk computation of the list endpoint
+        # (ComplianceAssessmentViewSet._get_optimized_object_data) so the
+        # rendered percentage matches ComplianceAssessmentListSerializer.
+        ca_qs = ComplianceAssessment.objects.filter(
+            id__in=accessible_ids(ComplianceAssessment)
+        )
+        respondent_folders = get_respondent_scoped_folder_ids(user)
+        if respondent_folders:
+            user_actors = Actor.get_all_for_user(user)
+            ca_qs = ca_qs.filter(
+                ~models.Q(folder_id__in=respondent_folders)
+                | models.Q(requirement_assignments__actor__in=user_actors)
+            ).distinct()
+        audits = list(ca_qs.select_related("folder").order_by("created_at"))
+        optimized = ComplianceAssessmentViewSet()._get_optimized_object_data(audits)
+        total_map = optimized.get("total_requirements", {})
+        assessed_map = optimized.get("assessed_requirements", {})
+        for audit in audits:
+            total = total_map.get(audit.id, 0)
+            assessed = assessed_map.get(audit.id, 0)
+            entries.append(
+                {
+                    "model": "compliance_assessments",
+                    "id": audit.id,
+                    "name": audit.name,
+                    "folder": audit.folder_id,
+                    "eta": audit.eta,
+                    "due_date": audit.due_date,
+                    "created_at": audit.created_at,
+                    # Same computation as ComplianceAssessmentListSerializer.get_progress
+                    "progress": int((assessed / total) * 100) if total else 0,
+                    # No owners: the compliance list serializer does not expose
+                    # authors, so the timeline never showed them (parity).
+                }
+            )
+
+        # Risk assessments, BIAs, findings assessments: eta/due_date milestone
+        for model, key in self.ASSESSMENT_MODELS:
+            ids = accessible_ids(model)
+            owners = owner_ids_map(model, "authors", ids)
+            for row in (
+                model.objects.filter(id__in=ids)
+                .order_by("created_at")
+                .values("id", "name", "eta", "due_date", "created_at", "folder_id")
+            ):
+                entries.append(
+                    {
+                        "model": key,
+                        "id": row["id"],
+                        "name": row["name"],
+                        "folder": row["folder_id"],
+                        "eta": row["eta"],
+                        "due_date": row["due_date"],
+                        "created_at": row["created_at"],
+                        "owners": owners.get(row["id"], []),
+                    }
+                )
+
+        # Security exceptions: expiration_date milestone
+        se_ids = accessible_ids(SecurityException)
+        se_owners = owner_ids_map(SecurityException, "owners", se_ids)
+        for row in (
+            SecurityException.objects.filter(id__in=se_ids)
+            .order_by("created_at")
+            .values("id", "name", "expiration_date", "created_at", "folder_id")
+        ):
+            entries.append(
+                {
+                    "model": "security_exceptions",
+                    "id": row["id"],
+                    "name": row["name"],
+                    "folder": row["folder_id"],
+                    "expiration_date": row["expiration_date"],
+                    "created_at": row["created_at"],
+                    "owners": se_owners.get(row["id"], []),
+                }
+            )
+
+        # Resolve actor display names once for every model (same strings as
+        # FieldsRelatedField's "str", i.e. str(actor)). Restricted to actors
+        # the requester can view, matching the related-field masking the list
+        # endpoints apply to owners/authors.
+        actor_qs = Actor.objects.filter(id__in=actor_ids)
+        try:
+            actor_qs = actor_qs.filter(id__in=accessible_ids(Actor))
+        except NotImplementedError, Permission.DoesNotExist:
+            # Model not IAM-scoped: list endpoints skip masking too.
+            pass
+        actor_labels = {
+            actor.id: str(actor)
+            for actor in actor_qs.select_related("user", "team", "entity")
+        }
+        for entry in entries:
+            if "owners" in entry:
+                entry["owners"] = [
+                    actor_labels[actor_id]
+                    for actor_id in entry["owners"]
+                    if actor_id in actor_labels
+                ]
+
+        return Response(entries)

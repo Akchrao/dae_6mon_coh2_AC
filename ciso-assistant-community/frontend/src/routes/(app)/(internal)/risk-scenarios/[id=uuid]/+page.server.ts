@@ -1,0 +1,117 @@
+import type { Actions, PageServerLoad } from './$types';
+
+import { BASE_API_URL } from '#lib/utils/constants.js';
+import { fetchAllPages } from '#lib/utils/pagination.js';
+import { type TableSource } from '#lib/components/ModelTable/types.js';
+import { headData } from '#lib/utils/table.js';
+import { fail, superValidate } from 'sveltekit-superforms';
+import { z } from 'zod';
+import { zod4 as zod } from 'sveltekit-superforms/adapters';
+import { setFlash } from 'sveltekit-flash-message/server';
+import { m } from '#paraglide/messages.js';
+import { error, redirect } from '@sveltejs/kit';
+
+export const load = (async ({ fetch, params, cookies, locals }) => {
+	const URLModel = 'risk-scenarios';
+	const baseEndpoint = `${BASE_API_URL}/${URLModel}/${params.id}/`;
+
+	// Depends only on params.id, so start it now and let it overlap the fetches below.
+	const riskAcceptancesPromise = fetchAllPages(
+		fetch,
+		`${BASE_API_URL}/risk-acceptances/?risk_scenarios=${params.id}`
+	).catch(() => []);
+
+	const res = await fetch(baseEndpoint);
+	if (!res.ok) {
+		if (res.status === 404) {
+			// Check if focus mode is active
+			const focusFolderId = cookies.get('focus_folder_id');
+			const focusModeEnabled = (await locals.getFeatureFlags())?.focus_mode ?? false;
+			const isFocusModeActive = focusFolderId && focusModeEnabled;
+
+			const message = isFocusModeActive
+				? m.objectNotReachableFromCurrentFocus()
+				: m.objectNotFound();
+			setFlash({ type: 'warning', message }, cookies);
+			throw redirect(302, '/risk-scenarios');
+		}
+		throw error(res.status, res.statusText || 'Failed to load risk scenario');
+	}
+	const scenario = await res.json();
+
+	const tables: Record<string, any> = {};
+
+	for (const key of ['assets', 'threats', 'vulnerabilities', 'security-exceptions'] as const) {
+		const table: TableSource = {
+			head: headData(key),
+			body: [],
+			meta: []
+		};
+		tables[key] = table;
+	}
+	//todo the naming here is not great because of inverted logic inhereted from the filters
+	await Promise.all(
+		['risk_scenarios', 'risk_scenarios_e'].map(async (key) => {
+			const table: TableSource = {
+				head: headData('applied-controls'),
+				body: [],
+				meta: []
+			};
+			tables[key] = table;
+		})
+	);
+
+	const riskMatrix = await fetch(`${BASE_API_URL}/risk-matrices/${scenario.risk_matrix.id}/`)
+		.then((res) => res.json())
+		.then((res) => JSON.parse(res.json_definition));
+
+	return {
+		scenario,
+		tables,
+		riskMatrix,
+		title: scenario.str,
+		riskAcceptances: await riskAcceptancesPromise
+	};
+}) satisfies PageServerLoad;
+
+export const actions: Actions = {
+	syncToActions: async (event) => {
+		const formData = await event.request.formData();
+
+		if (!formData) {
+			return fail(400, { form: null });
+		}
+
+		const schema = z.object({ reset_residual: z.boolean().optional() });
+		const form = await superValidate(formData, zod(schema));
+
+		const response = await event.fetch(
+			`${BASE_API_URL}/risk-scenarios/${event.params.id}/sync-to-actions/?dry_run=false`,
+			{
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify(form.data)
+			}
+		);
+		if (response.ok) {
+			setFlash(
+				{
+					type: 'success',
+					message: m.syncToAppliedControlsSuccess()
+				},
+				event
+			);
+		} else {
+			setFlash(
+				{
+					type: 'error',
+					message: m.syncToAppliedControlsError()
+				},
+				event
+			);
+		}
+		return { form, message: { appliedControls: await response.json() } };
+	}
+};

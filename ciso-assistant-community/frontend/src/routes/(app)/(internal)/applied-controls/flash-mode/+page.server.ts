@@ -1,0 +1,62 @@
+import { BASE_API_URL } from '#lib/utils/constants.js';
+import { fetchAllPages } from '#lib/utils/pagination.js';
+import { getSecureRedirect } from '#lib/utils/helpers.js';
+import type { PageServerLoad } from './$types';
+import type { Actions } from '@sveltejs/kit';
+
+export const load = (async ({ fetch, url }) => {
+	const URLModel = 'applied-controls';
+	const endpoint = `${BASE_API_URL}/${URLModel}/`;
+
+	// Build query parameters based on the user's access (viewable objects pattern)
+	const queryParams = new URLSearchParams();
+
+	// Get search parameters from the URL to preserve any filters
+	const searchParams = url.searchParams;
+	for (const [key, value] of searchParams.entries()) {
+		// Don't pass through UI-specific parameters to the API, nor paging
+		// params (fetchAllPages appends its own; a stray offset skips rows).
+		if (!['backUrl', 'backLabel', 'limit', 'offset'].includes(key)) {
+			queryParams.append(key, value);
+		}
+	}
+
+	const fullEndpoint = `${endpoint}?${queryParams.toString()}`;
+	const applied_controls = await fetchAllPages(fetch, fullEndpoint);
+
+	// Extract UI parameters for the flash mode page
+	const backUrl = getSecureRedirect(searchParams.get('backUrl')) || '/applied-controls';
+	const backLabel = searchParams.get('backLabel') || 'Applied Controls';
+
+	return {
+		URLModel,
+		applied_controls,
+		backUrl,
+		backLabel
+	};
+}) satisfies PageServerLoad;
+
+export const actions: Actions = {
+	updateAppliedControl: async (event) => {
+		const data = await event.request.json();
+		const value: {
+			id: string;
+			status?: string;
+			effort?: string;
+			priority?: string;
+			control_impact?: string;
+			csf_function?: string;
+		} = data;
+
+		const URLModel = 'applied-controls';
+		const endpoint = `${BASE_API_URL}/${URLModel}/${value.id}/`;
+
+		const requestInitOptions: RequestInit = {
+			method: 'PATCH',
+			body: JSON.stringify(value)
+		};
+
+		const res = await event.fetch(endpoint, requestInitOptions);
+		return { status: res.status, body: await res.json() };
+	}
+};

@@ -1,0 +1,1047 @@
+from django.core.exceptions import ValidationError
+from django.db import models
+from django.utils.text import slugify
+from django.utils.translation import get_language, gettext_lazy as _
+from django.core.validators import MaxValueValidator, MinValueValidator
+from core.base_models import (
+    ActorSyncManager,
+    ActorSyncMixin,
+    NameDescriptionMixin,
+    AbstractBaseModel,
+)
+from core.models import (
+    Actor,
+    Assessment,
+    ComplianceAssessment,
+    Evidence,
+    Asset,
+    Terminology,
+    FilteringLabelMixin,
+)
+from core.constants import COUNTRY_CHOICES, CURRENCY_CHOICES
+from core.dora import (
+    DORA_ENTITY_TYPE_CHOICES,
+    DORA_ENTITY_HIERARCHY_CHOICES,
+    DORA_CONTRACTUAL_ARRANGEMENT_CHOICES,
+    TERMINATION_REASON_CHOICES,
+    DORA_ICT_SERVICE_CHOICES,
+    DORA_SENSITIVENESS_CHOICES,
+    DORA_RELIANCE_CHOICES,
+    DORA_PROVIDER_PERSON_TYPE_CHOICES,
+    DORA_SUBSTITUTABILITY_CHOICES,
+    DORA_NON_SUBSTITUTABILITY_REASON_CHOICES,
+    DORA_BINARY_CHOICES,
+    DORA_YES_NO_ASSESSMENT_CHOICES,
+    DORA_REINTEGRATION_POSSIBILITY_CHOICES,
+    DORA_DISCONTINUING_IMPACT_CHOICES,
+)
+from iam.models import Folder, FolderMixin
+from iam.views import User
+
+from auditlog.registry import auditlog
+
+
+class TierSource(models.TextChoices):
+    ASSESSMENT = "assessment", _("Assessment")
+    OVERRIDE = "override", _("Override")
+    MANUAL = "manual", _("Manual")
+    ROLLUP = "rollup", _("Solution rollup")
+
+
+class Tier(NameDescriptionMixin, FolderMixin):
+    """One level of the organisation's vendor tier scale. Ordered by `rank`,
+    higher meaning more critical; global, so it lives in the root folder."""
+
+    # Four levels, like the 1-4 criticality of entity assessments and solutions,
+    # named in the vocabulary of DORA / EBA outsourcing ("critical or important").
+    DEFAULT_TIERS = [
+        {"name": "critical", "rank": 4, "hexcolor": "#dc2626"},
+        {"name": "important", "rank": 3, "hexcolor": "#ea580c"},
+        {"name": "standard", "rank": 2, "hexcolor": "#ca8a04"},
+        {"name": "low-impact", "rank": 1, "hexcolor": "#16a34a"},
+    ]
+
+    # What forms reference a tier by: set once from the name, never changed, so
+    # renaming or reordering the scale cannot repoint a form to another tier.
+    key = models.SlugField(max_length=100, unique=True, verbose_name=_("Key"))
+    rank = models.PositiveIntegerField(unique=True, verbose_name=_("Rank"))
+    hexcolor = models.CharField(
+        max_length=9, blank=True, default="", verbose_name=_("Color")
+    )
+    builtin = models.BooleanField(default=False, verbose_name=_("Built-in"))
+    is_visible = models.BooleanField(default=True, verbose_name=_("Is visible"))
+    # Compliance share (%) a vendor of this tier is expected to reach; a score
+    # target would be a separate field, the two are not comparable.
+    compliance_target = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        validators=[MaxValueValidator(100)],
+        verbose_name=_("Compliance target"),
+    )
+    translations = models.JSONField(
+        default=dict, blank=True, null=True, verbose_name=_("Translations")
+    )
+
+    fields_to_check = ["name"]
+
+    class Meta:
+        ordering = ["-rank"]
+        verbose_name = _("Tier")
+        verbose_name_plural = _("Tiers")
+
+    def __str__(self) -> str:
+        t = (self.translations or {}).get(get_language(), {})
+        return (t.get("name") if isinstance(t, dict) else None) or self.name
+
+    def save(self, *args, **kwargs):
+        self.folder = Folder.get_root_folder()
+        if not self.key:
+            self.key = self.free_key(self.name)
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def free_key(cls, name: str) -> str:
+        base = slugify(name)[:90] or "tier"
+        key, n = base, 1
+        while cls.objects.filter(key=key).exists():
+            n += 1
+            key = f"{base}-{n}"
+        return key
+
+    @classmethod
+    def create_default_tiers(cls):
+        # Seeded once: the scale belongs to the organisation, so a restart must
+        # not undo a rename, a recolour or a deletion.
+        if cls.objects.exists():
+            return
+        for tier in cls.DEFAULT_TIERS:
+            cls.objects.create(**tier, builtin=True)
+
+    @classmethod
+    def make_room_at_the_bottom(cls) -> int:
+        """Shift every rank up by one and return the freed rank 1. Call inside a
+        transaction. Parked above the current range first: rank is unique, and a
+        row-by-row `+ 1` collides with its neighbour (SQLite cannot defer the
+        constraint). The rows are locked through a plain select: Django drops
+        `select_for_update` from an aggregate."""
+        ranks = list(cls.objects.select_for_update().values_list("rank", flat=True))
+        top = max(ranks, default=0)
+        if top:
+            cls.objects.update(rank=models.F("rank") + top + 1)
+            cls.objects.update(rank=models.F("rank") - top)
+        return 1
+
+    @classmethod
+    def next_rank(cls) -> int:
+        top = cls.objects.aggregate(top=models.Max("rank"))["top"]
+        return (top or 0) + 1
+
+
+class Entity(
+    ActorSyncMixin,
+    NameDescriptionMixin,
+    FolderMixin,
+    FilteringLabelMixin,
+):
+    """
+    An entity represents a legal entity, a corporate body, an administrative body, an association
+    """
+
+    objects = ActorSyncManager()
+
+    ref_id = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True, verbose_name=_("Is active"))
+    default_dependency = models.PositiveSmallIntegerField(
+        verbose_name=_("Default dependency"),
+        default=0,
+        blank=True,
+        validators=[MaxValueValidator(4)],
+        help_text=_("Default dependency level for stakeholder assessment (0-4)"),
+    )
+    default_penetration = models.PositiveSmallIntegerField(
+        verbose_name=_("Default penetration"),
+        default=0,
+        blank=True,
+        validators=[MaxValueValidator(4)],
+        help_text=_("Default penetration level for stakeholder assessment (0-4)"),
+    )
+    default_maturity = models.PositiveSmallIntegerField(
+        verbose_name=_("Default maturity"),
+        default=1,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(4)],
+        help_text=_("Default maturity level for stakeholder assessment (1-4)"),
+    )
+    default_trust = models.PositiveSmallIntegerField(
+        verbose_name=_("Default trust"),
+        default=1,
+        blank=True,
+        validators=[MinValueValidator(1), MaxValueValidator(4)],
+        help_text=_("Default trust level for stakeholder assessment (1-4)"),
+    )
+    mission = models.TextField(blank=True)
+    reference_link = models.URLField(blank=True, null=True, max_length=2048)
+    owned_folders = models.ManyToManyField(
+        "iam.Folder",
+        related_name="owner",
+        blank=True,
+        verbose_name=_("Owned folders"),
+    )
+    builtin = models.BooleanField(default=False)
+    parent_entity = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="branches",
+        verbose_name=_("Parent entity"),
+        help_text=_("Parent entity for branch/subsidiary relationships"),
+    )
+    relationship = models.ManyToManyField(
+        Terminology,
+        blank=True,
+        related_name="entities",
+        limit_choices_to={
+            "field_path": Terminology.FieldPath.ENTITY_RELATIONSHIP,
+            "is_visible": True,
+        },
+        verbose_name=_("Relationship"),
+        help_text=_("Type of relationship with this entity"),
+    )
+    legal_identifiers = models.JSONField(
+        default=dict,
+        blank=True,
+        verbose_name=_("Legal identifiers"),
+        help_text=_("Legal identifiers (LEI, EUID, VAT, DUNS, etc.)"),
+    )
+    address = models.TextField(
+        blank=True,
+        verbose_name=_("Address"),
+        help_text=_("Postal address, as it should appear on formal documents"),
+    )
+    country = models.CharField(
+        max_length=3,
+        choices=COUNTRY_CHOICES,
+        blank=True,
+        verbose_name=_("Country"),
+        help_text=_("Country where the entity is located"),
+    )
+    currency = models.CharField(
+        max_length=3,
+        choices=CURRENCY_CHOICES,
+        blank=True,
+        verbose_name=_("Currency"),
+        help_text=_("Default currency for the entity"),
+    )
+    dora_entity_type = models.CharField(
+        max_length=20,
+        choices=DORA_ENTITY_TYPE_CHOICES,
+        blank=True,
+        verbose_name=_("DORA entity type"),
+        help_text=_("DORA entity type classification"),
+    )
+    dora_entity_hierarchy = models.CharField(
+        max_length=20,
+        choices=DORA_ENTITY_HIERARCHY_CHOICES,
+        blank=True,
+        verbose_name=_("DORA entity hierarchy"),
+        help_text=_("DORA entity hierarchy classification"),
+    )
+    dora_assets_value = models.FloatField(
+        blank=True,
+        null=True,
+        verbose_name=_("DORA assets value"),
+        help_text=_("Total assets value for DORA reporting"),
+    )
+    dora_competent_authority = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name=_("DORA competent authority"),
+        help_text=_("Competent authority overseeing this entity for DORA compliance"),
+    )
+    dora_provider_person_type = models.CharField(
+        max_length=20,
+        choices=DORA_PROVIDER_PERSON_TYPE_CHOICES,
+        blank=True,
+        verbose_name=_("DORA provider person type"),
+        help_text=_("Type of person for ICT third-party service providers"),
+    )
+    # Current tier only; written through `tprm.tiers.set_entity_tier`, which
+    # also appends the EntityTierChange history row.
+    tier = models.ForeignKey(
+        Tier,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="entities",
+        verbose_name=_("Tier"),
+    )
+    tier_source = models.CharField(
+        max_length=20,
+        choices=TierSource.choices,
+        blank=True,
+        default="",
+        verbose_name=_("Tier source"),
+    )
+    tier_set_at = models.DateTimeField(
+        null=True, blank=True, verbose_name=_("Tier set at")
+    )
+    # Set when score bands produced the tier: orders entities within a tier.
+    tier_value = models.FloatField(null=True, blank=True, verbose_name=_("Tier value"))
+    tier_response = models.ForeignKey(
+        "core.QuickFormResponse",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("Tier assessment"),
+        help_text=_("The accepted response the current tier came from"),
+    )
+
+    fields_to_check = ["name"]
+
+    class Meta:
+        verbose_name = _("Entity")
+        verbose_name_plural = _("Entities")
+
+    @classmethod
+    def get_main_entity(cls):
+        return (
+            cls.objects.filter(builtin=True)
+            .filter(owned_folders=Folder.get_root_folder())
+            .order_by("created_at")
+            .first()
+        )
+
+    @property
+    def legal_identifiers_dict(self) -> dict:
+        # legacy rows may hold a non-dict value written before validation existed
+        v = self.legal_identifiers
+        return v if isinstance(v, dict) else {}
+
+    def get_emails(self) -> list[str]:
+        emails = self.representatives.exclude(email="").values_list("email", flat=True)
+        return sorted({e.strip() for e in emails if e and e.strip()})
+
+
+class EntityAssessment(Assessment, FilteringLabelMixin):
+    class Conclusion(models.TextChoices):
+        BLOCKER = "blocker", _("Blocker")
+        WARNING = "warning", _("Warning")
+        OK = "ok", _("Ok")
+        NA = "not_applicable", _("Not applicable")
+
+    # Superseded by the entity's tier (qualification, not posture); kept, hidden
+    # in the UI, until integrations move over.
+    criticality = models.IntegerField(default=0, verbose_name=_("Criticality"))
+    penetration = models.IntegerField(default=0, verbose_name=_("Penetration"))
+    dependency = models.IntegerField(default=0, verbose_name=_("Dependency"))
+    maturity = models.IntegerField(default=0, verbose_name=_("Maturity"))
+    trust = models.IntegerField(default=0, verbose_name=_("Trust"))
+    representatives = models.ManyToManyField(
+        User,
+        blank=True,
+        verbose_name=_("Representative"),
+        related_name="entity_assessments",
+    )
+    entity = models.ForeignKey(
+        Entity,
+        on_delete=models.CASCADE,
+    )
+    solutions = models.ManyToManyField(
+        "tprm.Solution",
+        related_name="entity_assessments",
+        blank=True,
+        verbose_name=_("Solutions"),
+    )
+    compliance_assessment = models.ForeignKey(
+        ComplianceAssessment, on_delete=models.SET_NULL, blank=True, null=True
+    )
+    evidence = models.ForeignKey(
+        Evidence, on_delete=models.SET_NULL, blank=True, null=True
+    )
+    conclusion = models.CharField(
+        max_length=14,
+        choices=Conclusion.choices,
+        verbose_name=_("Conclusion"),
+        blank=True,
+        null=True,
+    )
+    expiry_date = models.DateField(
+        blank=True,
+        null=True,
+        verbose_name=_("Expiry date"),
+        help_text=_("Date after which the conclusion is no longer considered valid"),
+    )
+    reference_link = models.URLField(
+        blank=True,
+        null=True,
+        max_length=2048,
+        verbose_name=_("Reference link"),
+    )
+
+    IAM_SCOPE_FIELD = "entity"
+
+    class Meta:
+        verbose_name = _("Entity assessment")
+        verbose_name_plural = _("Entity assessments")
+
+
+class Representative(AbstractBaseModel, FilteringLabelMixin):
+    """
+    This represents a person that is linked to an entity (typically an employee),
+    and that is relevant for the main entity, like a contact person for an assessment
+    """
+
+    ref_id = models.CharField(max_length=255, blank=True)
+    entity = models.ForeignKey(
+        Entity,
+        on_delete=models.CASCADE,
+        related_name="representatives",
+        verbose_name=_("Entity"),
+    )
+    email = models.EmailField(unique=True)
+    first_name = models.CharField(max_length=255, blank=True)
+    last_name = models.CharField(max_length=255, blank=True)
+    phone = models.CharField(max_length=255, blank=True)
+    role = models.CharField(max_length=255, blank=True)
+    description = models.TextField(blank=True)
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+
+    fields_to_check = ["email"]
+
+    IAM_SCOPE_FIELD = "entity"
+
+
+class Solution(NameDescriptionMixin, FilteringLabelMixin):
+    """
+    A solution represents a product or service that is offered by an entity
+    """
+
+    provider_entity = models.ForeignKey(
+        Entity,
+        on_delete=models.CASCADE,
+        related_name="provided_solutions",
+        verbose_name=_("Provider entity"),
+    )
+    recipient_entity = models.ForeignKey(
+        Entity,
+        on_delete=models.CASCADE,
+        related_name="received_solutions",
+        verbose_name=_("Recipient entity"),
+        null=True,
+        blank=True,
+    )
+    ref_id = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True, verbose_name=_("Is active"))
+    reference_link = models.URLField(blank=True, null=True, max_length=2048)
+    # Superseded by `tier`; kept, hidden in the UI, until integrations move over.
+    criticality = models.IntegerField(default=0, verbose_name=_("Criticality"))
+    tier = models.ForeignKey(
+        Tier,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="solutions",
+        verbose_name=_("Tier"),
+    )
+    tier_source = models.CharField(
+        max_length=20,
+        choices=TierSource.choices,
+        blank=True,
+        default="",
+        verbose_name=_("Tier source"),
+    )
+    tier_set_at = models.DateTimeField(
+        null=True, blank=True, verbose_name=_("Tier set at")
+    )
+    tier_value = models.FloatField(null=True, blank=True, verbose_name=_("Tier value"))
+    tier_response = models.ForeignKey(
+        "core.QuickFormResponse",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("Tier assessment"),
+        help_text=_("The accepted response the current tier came from"),
+    )
+    owner = models.ManyToManyField(
+        Actor,
+        blank=True,
+        verbose_name=_("Owner"),
+        related_name="solutions",
+    )
+
+    assets = models.ManyToManyField(
+        Asset,
+        verbose_name=_("Related assets"),
+        blank=True,
+        help_text=_("Assets related to the solution"),
+        related_name="solutions",
+    )
+    dora_ict_service_type = models.CharField(
+        max_length=20,
+        choices=DORA_ICT_SERVICE_CHOICES,
+        blank=True,
+        verbose_name=_("DORA ICT service type"),
+        help_text=_("DORA ICT service type classification"),
+    )
+    storage_of_data = models.BooleanField(
+        default=False,
+        verbose_name=_("Storage of data"),
+        help_text=_("Whether data is stored by the ICT service provider"),
+    )
+    data_location_storage = models.CharField(
+        max_length=3,
+        choices=COUNTRY_CHOICES,
+        blank=True,
+        verbose_name=_("Location of data at rest"),
+        help_text=_("Country where data is stored"),
+    )
+    data_location_processing = models.CharField(
+        max_length=3,
+        choices=COUNTRY_CHOICES,
+        blank=True,
+        verbose_name=_("Location of data processing"),
+        help_text=_("Country where data is processed/managed"),
+    )
+    dora_data_sensitiveness = models.CharField(
+        max_length=20,
+        choices=DORA_SENSITIVENESS_CHOICES,
+        blank=True,
+        verbose_name=_("Data sensitiveness"),
+        help_text=_("Sensitiveness of the data stored"),
+    )
+    dora_reliance_level = models.CharField(
+        max_length=20,
+        choices=DORA_RELIANCE_CHOICES,
+        blank=True,
+        verbose_name=_("Level of reliance"),
+        help_text=_("Level of reliance on the ICT service"),
+    )
+    dora_substitutability = models.CharField(
+        max_length=20,
+        choices=DORA_SUBSTITUTABILITY_CHOICES,
+        blank=True,
+        verbose_name=_("Substitutability"),
+        help_text=_("Substitutability of the ICT third-party service provider"),
+    )
+    dora_non_substitutability_reason = models.CharField(
+        max_length=20,
+        choices=DORA_NON_SUBSTITUTABILITY_REASON_CHOICES,
+        blank=True,
+        verbose_name=_("Non-substitutability reason"),
+        help_text=_(
+            "Reason if the ICT third-party service provider is considered not substitutable or difficult to be substitutable"
+        ),
+    )
+    dora_has_exit_plan = models.CharField(
+        max_length=20,
+        choices=DORA_BINARY_CHOICES,
+        blank=True,
+        verbose_name=_("Exit plan"),
+        help_text=_("Existence of an exit plan"),
+    )
+    dora_reintegration_possibility = models.CharField(
+        max_length=20,
+        choices=DORA_REINTEGRATION_POSSIBILITY_CHOICES,
+        blank=True,
+        verbose_name=_("Reintegration possibility"),
+        help_text=_("Possibility of reintegration of the contracted ICT service"),
+    )
+    dora_discontinuing_impact = models.CharField(
+        max_length=20,
+        choices=DORA_DISCONTINUING_IMPACT_CHOICES,
+        blank=True,
+        verbose_name=_("Discontinuing impact"),
+        help_text=_("Impact of discontinuing the ICT services"),
+    )
+    dora_alternative_providers_identified = models.CharField(
+        max_length=20,
+        choices=DORA_YES_NO_ASSESSMENT_CHOICES,
+        blank=True,
+        verbose_name=_("Alternative providers identified"),
+        help_text=_(
+            "Are there alternative ICT third-party service providers identified?"
+        ),
+    )
+    dora_alternative_providers = models.TextField(
+        blank=True,
+        verbose_name=_("Alternative providers"),
+        help_text=_("Identification of alternative ICT third-party service providers"),
+    )
+
+    fields_to_check = ["name", "provider_entity"]
+
+    IAM_SCOPE_FIELD = "provider_entity"
+
+    class Meta:
+        verbose_name = _("Solution")
+        verbose_name_plural = _("Solutions")
+
+
+class SolutionSubcontractor(AbstractBaseModel):
+    """
+    ICT subcontracting tree for a Solution (DORA Art. 28(2), b_05.02).
+
+    The tree is defined by the ``recipient`` parent pointer:
+      - recipient = NULL → child of the direct provider (Solution.provider_entity)
+      - recipient = entity → child of that entity in the chain
+
+    Rank (depth in the tree) is not stored — it is computed by walking up the
+    recipient chain. This makes ``recipient`` the single source of truth for
+    the tree topology and eliminates any risk of rank/tree inconsistency.
+
+    Multiple entities may share the same parent (fan-out), e.g. Zscaler
+    subcontracting to both AWS and Azure, both with recipient=NULL.
+
+    Access via ``solution.subcontracting_chain.all()``.
+    """
+
+    solution = models.ForeignKey(
+        Solution,
+        on_delete=models.CASCADE,
+        related_name="subcontracting_chain",
+        verbose_name=_("Solution"),
+    )
+    subcontractor = models.ForeignKey(
+        Entity,
+        on_delete=models.PROTECT,
+        related_name="subcontracts",
+        verbose_name=_("Subcontractor"),
+        help_text=_("Entity providing the sub-contracted ICT service"),
+    )
+    recipient = models.ForeignKey(
+        Entity,
+        on_delete=models.PROTECT,
+        related_name="subcontract_recipients",
+        verbose_name=_("Recipient"),
+        help_text=_(
+            "Entity that sub-contracted to this subcontractor. "
+            "Leave empty when the direct provider is the parent."
+        ),
+        null=True,
+        blank=True,
+    )
+
+    IAM_SCOPE_FIELD = Folder.IAM_NOT_IMPLEMENTED
+
+    class Meta:
+        verbose_name = _("Solution subcontractor")
+        verbose_name_plural = _("Solution subcontractors")
+        unique_together = [
+            ("solution", "subcontractor"),
+        ]
+        ordering = ["created_at"]
+
+    def __str__(self):
+        return f"{self.solution} → {self.subcontractor}"
+
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        super().clean()
+        if (
+            self.subcontractor_id is not None
+            and self.solution_id is not None
+            and self.solution.provider_entity_id == self.subcontractor_id
+        ):
+            raise ValidationError(
+                {
+                    "subcontractor": _(
+                        "A subcontractor cannot be the solution's direct provider."
+                    )
+                }
+            )
+        if (
+            self.subcontractor_id is not None
+            and self.recipient_id is not None
+            and self.subcontractor_id == self.recipient_id
+        ):
+            raise ValidationError(
+                {"recipient": _("A subcontractor cannot be its own recipient.")}
+            )
+
+
+class Contract(NameDescriptionMixin, FolderMixin, FilteringLabelMixin):
+    """
+    A contract represents an agreement between multiple entities
+    """
+
+    class Status(models.TextChoices):
+        DRAFT = "draft", _("Draft")
+        ACTIVE = "active", _("Active")
+        EXPIRED = "expired", _("Expired")
+        TERMINATED = "terminated", _("Terminated")
+
+    owner = models.ManyToManyField(
+        Actor,
+        verbose_name=_("Owner"),
+        related_name="contracts",
+        blank=True,
+    )
+    provider_entity = models.ForeignKey(
+        Entity,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="contracts",
+        verbose_name=_("Provider entity"),
+        help_text=_("Entity providing this contract"),
+    )
+    beneficiary_entity = models.ForeignKey(
+        Entity,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="beneficiary_contracts",
+        verbose_name=_("Beneficiary entity"),
+        help_text=_("Entity benefiting from/receiving this contract"),
+    )
+    evidences = models.ManyToManyField(
+        Evidence,
+        blank=True,
+        related_name="contracts",
+        verbose_name=_("Evidences"),
+        help_text=_("Supporting evidence for this contract"),
+    )
+    solutions = models.ManyToManyField(
+        "tprm.Solution",
+        blank=True,
+        related_name="contracts",
+        verbose_name=_("Solutions"),
+        help_text=_("Solutions covered by this contract"),
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.DRAFT,
+        verbose_name=_("Status"),
+    )
+    start_date = models.DateField(
+        blank=True,
+        null=True,
+        verbose_name=_("Start date"),
+    )
+    end_date = models.DateField(
+        blank=True,
+        null=True,
+        verbose_name=_("End date"),
+    )
+    ref_id = models.CharField(
+        max_length=255,
+        blank=True,
+        verbose_name=_("Reference ID"),
+        help_text=_("Contract reference number or identifier"),
+    )
+    dora_contractual_arrangement = models.CharField(
+        max_length=20,
+        choices=DORA_CONTRACTUAL_ARRANGEMENT_CHOICES,
+        default="eba_CO:x1",
+        verbose_name=_("DORA contractual arrangement"),
+        help_text=_("DORA contractual arrangement type"),
+    )
+    currency = models.CharField(
+        max_length=3,
+        choices=CURRENCY_CHOICES,
+        blank=True,
+        verbose_name=_("Currency"),
+        help_text=_("Currency for contract expenses"),
+    )
+    annual_expense = models.FloatField(
+        blank=True,
+        null=True,
+        verbose_name=_("Annual expense"),
+        help_text=_("Annual expense amount for this contract"),
+    )
+    termination_reason = models.CharField(
+        max_length=20,
+        choices=TERMINATION_REASON_CHOICES,
+        blank=True,
+        verbose_name=_("Termination reason"),
+        help_text=_("Reason for contract termination"),
+    )
+    is_intragroup = models.BooleanField(
+        default=False,
+        verbose_name=_("Is intragroup"),
+        help_text=_("Whether this is an intragroup contract"),
+    )
+    dora_exclude = models.BooleanField(
+        default=False,
+        verbose_name=_("Exclude from DORA"),
+        help_text=_("Exclude this contract from DORA RoI reporting"),
+    )
+    overarching_contract = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="subordinate_contracts",
+        verbose_name=_("Overarching contract"),
+        help_text=_("Parent/overarching contract if this is a subordinate arrangement"),
+    )
+    governing_law_country = models.CharField(
+        max_length=3,
+        choices=COUNTRY_CHOICES,
+        blank=True,
+        verbose_name=_("Governing law country"),
+        help_text=_("Country whose law governs this contract"),
+    )
+    notice_period_entity = models.IntegerField(
+        blank=True,
+        null=True,
+        verbose_name=_("Notice period for entity (days)"),
+        help_text=_("Notice period in days for the financial entity"),
+    )
+    notice_period_provider = models.IntegerField(
+        blank=True,
+        null=True,
+        verbose_name=_("Notice period for provider (days)"),
+        help_text=_("Notice period in days for the ICT third-party service provider"),
+    )
+
+    fields_to_check = ["name"]
+
+    def save(self, *args, **kwargs):
+        # If beneficiary_entity is not set, default to main entity
+        if not self.beneficiary_entity:
+            main_entity = Entity.get_main_entity()
+            if main_entity:
+                self.beneficiary_entity = main_entity
+        super().save(*args, **kwargs)
+
+    class Meta:
+        verbose_name = _("Contract")
+        verbose_name_plural = _("Contracts")
+
+
+class EntityScore(AbstractBaseModel, FolderMixin, FilteringLabelMixin):
+    """A rating an external service publishes about an entity, dated so readings
+    accumulate as history. `scale_max` makes providers comparable."""
+
+    entity = models.ForeignKey(
+        Entity,
+        on_delete=models.CASCADE,
+        related_name="scores",
+        verbose_name=_("Entity"),
+    )
+    provider = models.ForeignKey(
+        Terminology,
+        on_delete=models.PROTECT,
+        related_name="entity_scores",
+        limit_choices_to={
+            "field_path": Terminology.FieldPath.ENTITY_SCORE_PROVIDER,
+            "is_visible": True,
+        },
+        verbose_name=_("Provider"),
+        help_text=_("Service that published this score"),
+    )
+    score = models.FloatField(
+        verbose_name=_("Score"),
+        help_text=_("Value as published by the provider"),
+    )
+    scale_max = models.FloatField(
+        default=100,
+        validators=[MinValueValidator(1)],
+        verbose_name=_("Scale maximum"),
+        help_text=_("Top of the provider's scale, so scores can be compared"),
+    )
+    grade = models.CharField(
+        max_length=8,
+        blank=True,
+        verbose_name=_("Grade"),
+        help_text=_("Letter rating, when the provider publishes one (A, B+, ...)"),
+    )
+    as_of = models.DateField(
+        verbose_name=_("As of"),
+        help_text=_("Date the provider published this score"),
+    )
+    url = models.URLField(
+        blank=True,
+        max_length=2048,
+        verbose_name=_("Link"),
+        help_text=_("Link to the report on the provider's platform"),
+    )
+    observation = models.TextField(blank=True, null=True, verbose_name=_("Observation"))
+
+    fields_to_check = ["entity", "provider", "as_of"]
+
+    class Meta:
+        verbose_name = _("Entity score")
+        verbose_name_plural = _("Entity scores")
+        ordering = ["-as_of"]
+        constraints = [
+            # One reading per provider per day, for writes that skip the serializer.
+            models.UniqueConstraint(
+                fields=["entity", "provider", "as_of"],
+                name="unique_entity_score_per_provider_and_date",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.entity} - {self.provider}: {self.score}"
+
+    @property
+    def normalized_score(self) -> float | None:
+        """The score on a 0-100 scale."""
+        if not self.scale_max:
+            return None
+        return round((self.score / self.scale_max) * 100, 1)
+
+    def save(self, *args, **kwargs):
+        # As visible as the entity it is about.
+        if self.entity_id:
+            self.folder = self.entity.folder
+        super().save(*args, **kwargs)
+
+
+class EntityTierChange(AbstractBaseModel):
+    """One change of an entity's tier, whatever the path (form, API, batch,
+    accepted response). Append-only; `created_at` is when it happened."""
+
+    IAM_SCOPE_FIELD = "entity"
+
+    entity = models.ForeignKey(
+        Entity,
+        on_delete=models.CASCADE,
+        related_name="tier_changes",
+        verbose_name=_("Entity"),
+    )
+    tier = models.ForeignKey(
+        Tier,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="changes",
+        verbose_name=_("Tier"),
+        help_text=_("Empty when the tier was cleared"),
+    )
+    previous_tier = models.ForeignKey(
+        Tier,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("Previous tier"),
+    )
+    source = models.CharField(
+        max_length=20, choices=TierSource.choices, verbose_name=_("Source")
+    )
+    value = models.FloatField(null=True, blank=True, verbose_name=_("Value"))
+    response = models.ForeignKey(
+        "core.QuickFormResponse",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("Assessment"),
+    )
+    changed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="entity_tier_changes",
+        verbose_name=_("Changed by"),
+    )
+    note = models.TextField(blank=True, default="", verbose_name=_("Note"))
+
+    class Meta:
+        verbose_name = _("Entity tier change")
+        verbose_name_plural = _("Entity tier changes")
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.entity}: {self.previous_tier} → {self.tier}"
+
+
+class SolutionTierChange(AbstractBaseModel):
+    IAM_SCOPE_FIELD = "solution"
+
+    solution = models.ForeignKey(
+        Solution,
+        on_delete=models.CASCADE,
+        related_name="tier_changes",
+        verbose_name=_("Solution"),
+    )
+    tier = models.ForeignKey(
+        Tier,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="solution_changes",
+        verbose_name=_("Tier"),
+        help_text=_("Empty when the tier was cleared"),
+    )
+    previous_tier = models.ForeignKey(
+        Tier,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("Previous tier"),
+    )
+    source = models.CharField(
+        max_length=20, choices=TierSource.choices, verbose_name=_("Source")
+    )
+    value = models.FloatField(null=True, blank=True, verbose_name=_("Value"))
+    response = models.ForeignKey(
+        "core.QuickFormResponse",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="+",
+        verbose_name=_("Assessment"),
+    )
+    changed_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="solution_tier_changes",
+        verbose_name=_("Changed by"),
+    )
+    note = models.TextField(blank=True, default="", verbose_name=_("Note"))
+
+    class Meta:
+        verbose_name = _("Solution tier change")
+        verbose_name_plural = _("Solution tier changes")
+        ordering = ["-created_at"]
+
+    def __str__(self) -> str:
+        return f"{self.solution}: {self.previous_tier} → {self.tier}"
+
+
+common_exclude = ["created_at", "updated_at"]
+
+auditlog.register(
+    Tier,
+    exclude_fields=common_exclude,
+)
+
+auditlog.register(
+    Entity,
+    exclude_fields=common_exclude,
+)
+auditlog.register(
+    EntityAssessment,
+    exclude_fields=common_exclude,
+)
+auditlog.register(
+    Representative,
+    exclude_fields=common_exclude,
+)
+auditlog.register(
+    Solution,
+    exclude_fields=common_exclude,
+)
+auditlog.register(
+    Contract,
+    exclude_fields=common_exclude,
+)
+auditlog.register(
+    EntityScore,
+    exclude_fields=common_exclude,
+)

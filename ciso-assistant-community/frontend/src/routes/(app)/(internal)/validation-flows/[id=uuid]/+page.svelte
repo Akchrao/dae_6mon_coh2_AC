@@ -1,0 +1,406 @@
+<script lang="ts">
+	import { page } from '$app/state';
+	import type { PageData } from './$types';
+	import Anchor from '#lib/components/Anchor/Anchor.svelte';
+	import { URL_MODEL_MAP } from '#lib/utils/crud.js';
+	import { m } from '#paraglide/messages.js';
+	import { safeTranslate } from '#lib/utils/i18n.js';
+	import { formatDateOrDateTime } from '#lib/utils/datetime.js';
+	import { getLocale } from '#paraglide/runtime.js';
+	import MarkdownRenderer from '#lib/components/MarkdownRenderer.svelte';
+	import { refreshAll } from '$app/navigation';
+	import { canPerformActionOnObject } from '#lib/utils/access-control.js';
+	import ValidationFlowActionModal from '#lib/components/Modals/ValidationFlowActionModal.svelte';
+	import { deserialize } from '$app/forms';
+	import {
+		validationFlowErrorMessage,
+		validationFlowItemHref,
+		validationFlowModelLabels,
+		validationStatusColor
+	} from '#lib/utils/validationFlows.js';
+	import {
+		getModalStore,
+		type ModalSettings,
+		type ModalStore
+	} from '#lib/components/Modals/stores.js';
+
+	interface Props {
+		data: PageData;
+	}
+
+	let { data }: Props = $props();
+
+	const user = page.data.user;
+	const validation_flow = $derived(data.validation_flow);
+
+	const modalStore: ModalStore = getModalStore();
+
+	const canEdit: boolean = canPerformActionOnObject({
+		user,
+		action: 'change',
+		model: 'validationflow',
+		object: validation_flow
+	});
+
+	const isApprover = String(user.id) === String(validation_flow.approver?.id);
+	const isRequester = String(user.id) === String(validation_flow.requester?.id);
+
+	type ActionType = 'approve' | 'reject' | 'revoke' | 'drop' | 'request_changes' | 'resubmit';
+
+	function openObservationModal(action: ActionType) {
+		const modal: ModalSettings = {
+			type: 'component',
+			component: {
+				ref: ValidationFlowActionModal,
+				props: {
+					action,
+					onConfirm: async (notes: string) => {
+						const formData = new FormData();
+						formData.append('notes', notes);
+						const response = await fetch(`?/${action}`, {
+							method: 'POST',
+							body: formData,
+							headers: { 'x-sveltekit-action': 'true' }
+						});
+						const result = deserialize(await response.text());
+						if (result.type === 'failure' || result.type === 'error') {
+							const message =
+								result.type === 'failure'
+									? validationFlowErrorMessage(result.data?.error)
+									: undefined;
+							throw new Error(message ?? m.anErrorOccurred());
+						}
+					},
+					onSuccess: () => refreshAll()
+				}
+			}
+		};
+		modalStore.trigger(modal);
+	}
+
+	const modelDisplayNames = validationFlowModelLabels();
+</script>
+
+<div class="flex flex-col space-y-4">
+	<div class="card px-6 py-4 bg-surface-50-950 shadow-lg">
+		<div class="flex justify-between items-start mb-4">
+			<div class="flex flex-col space-y-2">
+				<h1 class="text-2xl font-bold">{validation_flow.str}</h1>
+				<span
+					class="badge {validationStatusColor(
+						validation_flow.status
+					)} px-3 py-1 rounded-full text-sm font-medium w-fit"
+				>
+					{safeTranslate(validation_flow.status)}
+				</span>
+			</div>
+			<div class="flex flex-col space-y-2">
+				{#if validation_flow.status === 'submitted' && isApprover}
+					<!-- Approver actions for submitted status -->
+					<div class="flex flex-wrap gap-2">
+						<button
+							type="button"
+							onclick={() => openObservationModal('approve')}
+							class="btn preset-filled-success-500"
+							data-testid="approve-button"
+						>
+							<i class="fa-solid fa-check mr-2"></i>
+							{m.approve()}
+						</button>
+						<button
+							type="button"
+							onclick={() => openObservationModal('reject')}
+							class="btn preset-filled-error-500"
+							data-testid="reject-button"
+						>
+							<i class="fa-solid fa-times mr-2"></i>
+							{m.reject()}
+						</button>
+						<button
+							type="button"
+							onclick={() => openObservationModal('request_changes')}
+							class="btn preset-filled-warning-500"
+							data-testid="request-changes-button"
+						>
+							<i class="fa-solid fa-pencil mr-2"></i>
+							{m.requestChanges()}
+						</button>
+						<button
+							type="button"
+							onclick={() => openObservationModal('drop')}
+							class="btn preset-filled-surface-900-100"
+							data-testid="drop-button"
+						>
+							<i class="fa-solid fa-trash mr-2"></i>
+							{m.drop()}
+						</button>
+					</div>
+				{:else if validation_flow.status === 'accepted' && isApprover}
+					<!-- Approver actions for accepted status -->
+					<button
+						type="button"
+						onclick={() => openObservationModal('revoke')}
+						class="btn preset-filled-warning-500"
+						data-testid="revoke-button"
+					>
+						<i class="fa-solid fa-ban mr-2"></i>
+						{m.revoke()}
+					</button>
+				{:else if validation_flow.status === 'change_requested' && isRequester}
+					<!-- Requester actions for change_requested status -->
+					<div class="flex flex-wrap gap-2">
+						<button
+							type="button"
+							onclick={() => openObservationModal('resubmit')}
+							class="btn preset-filled-primary-500"
+							data-testid="resubmit-button"
+						>
+							<i class="fa-solid fa-paper-plane mr-2"></i>
+							{m.resubmit()}
+						</button>
+						<button
+							type="button"
+							onclick={() => openObservationModal('drop')}
+							class="btn preset-filled-surface-900-100"
+							data-testid="drop-button"
+						>
+							<i class="fa-solid fa-trash mr-2"></i>
+							{m.drop()}
+						</button>
+					</div>
+				{:else if ['rejected', 'revoked', 'expired', 'dropped'].includes(validation_flow.status)}
+					<!-- Terminal states - no actions available -->
+					<div class="text-sm text-surface-600-400 italic">
+						{m.noActionsAvailableForThisStatus()}
+					</div>
+				{:else if validation_flow.status === 'submitted' && isRequester}
+					<!-- Requester actions for submitted status - can drop their own request -->
+					<div class="flex flex-col gap-2">
+						<button
+							type="button"
+							onclick={() => openObservationModal('drop')}
+							class="btn preset-filled-surface-900-100"
+							data-testid="drop-button"
+						>
+							<i class="fa-solid fa-trash mr-2"></i>
+							{m.drop()}
+						</button>
+						<div
+							class="alert bg-blue-100 border border-blue-300 text-blue-800 px-4 py-3 rounded-lg text-xs"
+						>
+							<i class="fa-solid fa-info-circle mr-2"></i>
+							{m.onlyApproverCanModify()}
+						</div>
+					</div>
+				{:else if validation_flow.status === 'submitted'}
+					<!-- Not the approver or requester for submitted status -->
+					<div
+						class="alert bg-yellow-100 border border-yellow-300 text-yellow-800 px-4 py-3 rounded-lg text-sm"
+					>
+						<i class="fa-solid fa-exclamation-triangle mr-2"></i>
+						{m.onlyApproverCanModify()}
+					</div>
+				{:else if validation_flow.status === 'change_requested'}
+					<!-- Not the requester for change_requested status -->
+					<div
+						class="alert bg-yellow-100 border border-yellow-300 text-yellow-800 px-4 py-3 rounded-lg text-sm"
+					>
+						<i class="fa-solid fa-exclamation-triangle mr-2"></i>
+						{m.onlyRequesterCanModify()}
+					</div>
+				{/if}
+			</div>
+		</div>
+
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+			<div class="space-y-2">
+				<div class="text-sm font-medium text-surface-700-300">{m.domain()}</div>
+				<div class="text-sm text-surface-600-400">
+					<Anchor href="/folders/{validation_flow.folder.id}" class="anchor">
+						{validation_flow.folder.str}
+					</Anchor>
+				</div>
+			</div>
+
+			{#if validation_flow.filtering_labels && validation_flow.filtering_labels.length > 0}
+				<div class="space-y-2">
+					<div class="text-sm font-medium text-surface-700-300">{m.filteringLabels()}</div>
+					<div class="flex flex-wrap gap-2">
+						{#each validation_flow.filtering_labels as label}
+							<Anchor href="/filtering-labels/{label.id}" class="anchor">
+								<span class="badge preset-tonal-primary px-2 py-1 rounded text-xs">
+									{label.str}
+								</span>
+							</Anchor>
+						{/each}
+					</div>
+				</div>
+			{/if}
+
+			<div class="space-y-2">
+				<div class="text-sm font-medium text-surface-700-300">{m.requester()}</div>
+				<div class="text-sm text-surface-600-400">
+					{#if validation_flow.requester}
+						{#if validation_flow.requester.first_name || validation_flow.requester.last_name}
+							{validation_flow.requester.first_name}
+							{validation_flow.requester.last_name}
+							<span class="text-surface-600-400">({validation_flow.requester.email})</span>
+						{:else}
+							{validation_flow.requester.email}
+						{/if}
+					{:else}
+						--
+					{/if}
+				</div>
+			</div>
+
+			<div class="space-y-2">
+				<div class="text-sm font-medium text-surface-700-300">{m.approver()}</div>
+				<div class="text-sm text-surface-600-400">
+					{#if validation_flow.approver !== null}
+						{#if validation_flow.approver.first_name || validation_flow.approver.last_name}
+							{validation_flow.approver.first_name}
+							{validation_flow.approver.last_name}
+							<span class="text-surface-600-400">({validation_flow.approver.email})</span>
+						{:else}
+							{validation_flow.approver.email}
+						{/if}
+					{:else}
+						--
+					{/if}
+				</div>
+			</div>
+
+			{#if validation_flow.validation_deadline}
+				<div class="space-y-2">
+					<div class="text-sm font-medium text-surface-700-300">{m.validationDeadline()}</div>
+					<div class="text-sm text-surface-600-400">
+						{formatDateOrDateTime(validation_flow.validation_deadline, getLocale())}
+					</div>
+				</div>
+			{/if}
+
+			<div class="space-y-2">
+				<div class="text-sm font-medium text-surface-700-300">{m.createdAt()}</div>
+				<div class="text-sm text-surface-600-400">
+					{formatDateOrDateTime(validation_flow.created_at, getLocale())}
+				</div>
+			</div>
+
+			<div class="space-y-2">
+				<div class="text-sm font-medium text-surface-700-300">{m.updatedAt()}</div>
+				<div class="text-sm text-surface-600-400">
+					{formatDateOrDateTime(validation_flow.updated_at, getLocale())}
+				</div>
+			</div>
+		</div>
+
+		{#if validation_flow.request_notes}
+			<div class="mt-4 space-y-2">
+				<div class="text-sm font-medium text-surface-700-300">{m.requestNotes()}</div>
+				<div class="p-3 bg-surface-50-950 rounded-lg text-sm">
+					<MarkdownRenderer content={validation_flow.request_notes} />
+				</div>
+			</div>
+		{/if}
+	</div>
+
+	<!-- Associated Links Section -->
+	<div class="card px-6 py-4 bg-surface-50-950 shadow-lg mb-4">
+		<h2 class="text-xl font-semibold mb-4">{m.associatedObjects()}</h2>
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+			{#each Object.entries(validation_flow) as [key, value]}
+				{#if Array.isArray(value) && value.length > 0 && modelDisplayNames[key]}
+					<div class="space-y-2">
+						<h3 class="text-sm font-medium text-surface-700-300">{modelDisplayNames[key]}</h3>
+						<div class="space-y-2">
+							{#each value as item}
+								<div
+									class="border rounded-lg p-3 bg-surface-50-950 hover:bg-surface-100-900 transition"
+								>
+									<div class="flex items-start justify-between gap-2 mb-2">
+										<Anchor
+											href={validationFlowItemHref(key, item)}
+											class="anchor text-sm font-medium"
+										>
+											{item.str}
+										</Anchor>
+										{#if item.status}
+											<span
+												class="badge {validationStatusColor(
+													item.status
+												)} px-2 py-1 rounded text-xs font-medium whitespace-nowrap flex-shrink-0"
+											>
+												{safeTranslate(item.status)}
+											</span>
+										{/if}
+									</div>
+									<div class="flex flex-wrap gap-x-4 gap-y-1 text-xs text-surface-600-400">
+										{#if item.perimeter}
+											<div class="flex items-center gap-1">
+												<i class="fa-solid fa-draw-polygon text-surface-400-600"></i>
+												<span>{m.perimeter()}:</span>
+												<Anchor href="/perimeters/{item.perimeter.id}" class="anchor">
+													{item.perimeter.str}
+												</Anchor>
+											</div>
+										{/if}
+										{#if item.updated_at}
+											<div class="flex items-center gap-1">
+												<i class="fa-solid fa-clock text-surface-400-600"></i>
+												<span>{m.lastUpdate()}:</span>
+												<span>{formatDateOrDateTime(item.updated_at, getLocale())}</span>
+											</div>
+										{/if}
+									</div>
+								</div>
+							{/each}
+						</div>
+					</div>
+				{/if}
+			{/each}
+		</div>
+	</div>
+</div>
+
+<!-- Events History Section -->
+{#if validation_flow.events && validation_flow.events.length > 0}
+	<div class="card px-6 py-4 bg-surface-50-950 shadow-lg">
+		<h2 class="text-xl font-semibold mb-4">{m.eventsHistory()}</h2>
+		<div class="space-y-4">
+			{#each validation_flow.events as event}
+				<div class="border-l-4 border-primary-500 pl-4 py-2">
+					<div class="flex justify-between items-start mb-2">
+						<div>
+							<span
+								class="badge {validationStatusColor(
+									event.event_type
+								)} px-2 py-1 rounded text-xs font-medium mr-2"
+							>
+								{safeTranslate(event.event_type)}
+							</span>
+							<span class="text-sm font-medium text-surface-700-300">
+								{#if event.event_actor}
+									{#if event.event_actor.first_name || event.event_actor.last_name}
+										{event.event_actor.first_name}
+										{event.event_actor.last_name}
+									{:else}
+										{event.event_actor.email}
+									{/if}
+								{/if}
+							</span>
+						</div>
+						<div class="text-xs text-surface-600-400">
+							{formatDateOrDateTime(event.created_at, getLocale())}
+						</div>
+					</div>
+					{#if event.event_notes}
+						<div class="text-sm text-surface-600-400">
+							<MarkdownRenderer content={event.event_notes} />
+						</div>
+					{/if}
+				</div>
+			{/each}
+		</div>
+	</div>
+{/if}

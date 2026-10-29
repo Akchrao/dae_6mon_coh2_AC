@@ -1,0 +1,322 @@
+import type { Locator } from '@playwright/test';
+import { LoginPage } from '../../utils/login-page.js';
+import { PageContent } from '../../utils/page-content.js';
+import { TestContent, test, expect } from '../../utils/test-utils.js';
+import { m } from '#paraglide/messages.js';
+import { SideBar } from '../../utils/sidebar.js';
+
+let vars = TestContent.generateTestVars();
+let testObjectsData: { [k: string]: any } = TestContent.itemBuilder(vars);
+
+const entityAssessment = {
+	name: 'Test entity assessment',
+	// folder is inherited from the entity via initialData, no need to specify it
+	create_audit: true,
+	framework: vars.questionnaire.name,
+	representatives: 'third-party@tests.com'
+};
+
+test('user can create representatives, solutions and entity assessments inside entity', async ({
+	logedPage,
+	foldersPage,
+	perimetersPage,
+	entitiesPage,
+	representativesPage,
+	solutionsPage,
+	usersPage,
+	entityAssessmentsPage,
+	librariesPage,
+	complianceAssessmentsPage,
+	sideBar,
+	mailer,
+	page
+}) => {
+	await test.step('create required folder', async () => {
+		await foldersPage.goto();
+		await foldersPage.hasUrl();
+		await foldersPage.createItem({
+			name: vars.folderName,
+			description: vars.description
+		});
+		// NOTE: creating one more folder not to trip up the autocomplete test utils
+		await foldersPage.createItem({
+			name: vars.folderName + ' foo',
+			description: vars.description
+		});
+	});
+
+	await test.step('create required perimeter', async () => {
+		await perimetersPage.goto();
+		await perimetersPage.hasUrl();
+		await perimetersPage.createItem({
+			name: vars.perimeterName,
+			description: vars.description,
+			folder: vars.folderName,
+			ref_id: 'R.1234',
+			lc_status: 'Production'
+		});
+		await perimetersPage.createItem({
+			name: vars.perimeterName + ' bar',
+			description: vars.description,
+			folder: vars.folderName,
+			ref_id: 'R.12345',
+			lc_status: 'Production'
+		});
+	});
+
+	await test.step('import questionnaire', async () => {
+		await librariesPage.goto();
+		await librariesPage.hasUrl();
+		await librariesPage.importLibrary(vars.questionnaire.name, vars.framework.urn);
+	});
+
+	await test.step('create entity', async () => {
+		await entitiesPage.goto();
+		await entitiesPage.hasUrl();
+		await entitiesPage.createItem(testObjectsData.entitiesPage.build);
+		await entitiesPage.viewItemDetail(testObjectsData.entitiesPage.build.name);
+	});
+
+	await test.step('create solution', async () => {
+		await page.getByRole('tab', { name: 'Solutions' }).click();
+		await solutionsPage.createItem(
+			{
+				name: 'Test solution'
+			},
+			undefined,
+			undefined,
+			'solution'
+		);
+	});
+
+	await test.step('create representative', async () => {
+		await page.getByRole('tab', { name: 'Representatives' }).click();
+		await representativesPage.createItem(
+			{
+				email: 'third-party@tests.com',
+				entity: testObjectsData.entitiesPage.build.name,
+				create_user: true
+			},
+			undefined,
+			undefined,
+			'representative'
+		);
+	});
+
+	await test.step('verify that user was created alongside representative', async () => {
+		await page.getByRole('tab', { name: 'Representatives' }).click();
+		await representativesPage.viewItemDetail('third-party@tests.com');
+		await expect(page.getByTestId('user-field-value')).not.toBeEmpty();
+		await page.getByTestId('user-field-value').locator('a').first().click();
+		await usersPage.hasUrl();
+		await usersPage.hasTitle('third-party@tests.com');
+	});
+
+	await test.step('go back to entity detail', async () => {
+		await entitiesPage.goto();
+		await entitiesPage.viewItemDetail(testObjectsData.entitiesPage.build.name);
+	});
+
+	await test.step('create entity assessment', async () => {
+		await page.getByRole('tab', { name: 'Entity assessments' }).click();
+		await entityAssessmentsPage.createItem(
+			entityAssessment,
+			undefined,
+			undefined,
+			'entity assessment'
+		);
+	});
+
+	await test.step('verify that user was redirected to newly created entity assessment', async () => {
+		await entityAssessmentsPage.hasUrl();
+		await entityAssessmentsPage.hasTitle(entityAssessment.name);
+	});
+
+	await test.step('check that audit was created', async () => {
+		await expect(page.getByTestId('compliance-assessment-field-value')).not.toBeEmpty();
+		await page.getByTestId('compliance-assessment-field-value').locator('a').first().click();
+		await complianceAssessmentsPage.hasUrl();
+		await complianceAssessmentsPage.hasTitle(entityAssessment.name);
+	});
+
+	await test.step('send questionnaire to third party representatives', async () => {
+		await entityAssessmentsPage.goto();
+		await entityAssessmentsPage.viewItemDetail(entityAssessment.name);
+		await entityAssessmentsPage.hasUrl();
+		await page.getByText(m.sendQuestionnaire()).click();
+		await page.getByRole('button', { name: m.submit() }).click();
+		await entityAssessmentsPage.isToastVisible(m.mailSuccessfullySent() + /.+/.source);
+	});
+
+	await test.step('check that third parties overview was updated', async () => {
+		await page.goto('/analytics/tprm');
+		await page.locator('body[data-hydrated="true"]').waitFor();
+		await expect(page.locator('#page-title')).toHaveText('Overview');
+		await expect(page.getByTestId('vendor-posture')).toBeVisible();
+		await page.getByTestId('tab-assessments').click();
+		const cards = page.getByTestId('cards-list').locator('div');
+		await expect(page.getByTestId('no-data-available')).not.toBeVisible();
+		await expect(cards.first().getByTestId('provider')).toContainText(
+			testObjectsData.entitiesPage.build.name,
+			{
+				ignoreCase: true
+			}
+		);
+		await expect(cards.first().getByTestId('baseline')).toContainText(entityAssessment.framework, {
+			ignoreCase: true
+		});
+	});
+
+	await test.step('check that third parties overview cards can be flipped', async () => {
+		const cards = page.getByTestId('cards-list').locator('div');
+		const firstCard = cards.first();
+		await expect(firstCard).toBeVisible();
+		await expect(firstCard.getByTestId('flip-button-front')).toBeEnabled();
+		await firstCard.getByTestId('flip-button-front').click();
+		await expect(firstCard).toHaveClass(/rotate-x-180/);
+
+		// flip back to front
+		await firstCard.getByTestId('flip-button-back').click();
+		await expect(firstCard).not.toHaveClass(/rotate-x-180/);
+	});
+});
+
+test('third-party representative can set their password', async ({ sideBar, mailer, page }) => {
+	test.slow();
+	await test.step('set password and log in as third party representative', async () => {
+		const welcomeMail = await mailer.getEmailBySubject('Welcome to CISO Assistant!');
+		await welcomeMail.hasWelcomeEmailDetails();
+		await welcomeMail.hasEmailRecipient('third-party@tests.com');
+
+		await welcomeMail.open();
+		const pagePromise = page.context().waitForEvent('page');
+		await expect(mailer.emailContent.setPasswordButton).toBeVisible();
+		await mailer.emailContent.setPasswordButton.click();
+		const setPasswordPage = await pagePromise;
+		await setPasswordPage.waitForLoadState();
+		await expect(setPasswordPage).toHaveURL(
+			(await mailer.emailContent.setPasswordButton.getAttribute('href')) ||
+				'Set password link could not be found'
+		);
+
+		const setLoginPage = new LoginPage(setPasswordPage);
+		await setLoginPage.newPasswordInput.fill(vars.thirdPartyUser.password);
+		await setLoginPage.confirmPasswordInput.fill(vars.thirdPartyUser.password);
+		if (
+			setLoginPage.newPasswordInput.inputValue() !== vars.thirdPartyUser.password ||
+			setLoginPage.confirmPasswordInput.inputValue() !== vars.thirdPartyUser.password
+		) {
+			await setLoginPage.newPasswordInput.fill(vars.thirdPartyUser.password);
+			await setLoginPage.confirmPasswordInput.fill(vars.thirdPartyUser.password);
+		}
+
+		const passwordSetToast = setLoginPage.isToastVisible(
+			'Your password has been successfully set. Welcome to CISO Assistant!',
+			undefined,
+			{ optional: true }
+		);
+		await setLoginPage.setPasswordButton.click();
+		await passwordSetToast;
+
+		await setLoginPage.login('third-party@tests.com', vars.thirdPartyUser.password);
+
+		// third party user lands on auditee dashboard page
+		await expect(setLoginPage.page).toHaveURL('/auditee-dashboard');
+
+		// logout to prevent sessions conflicts
+		const passwordPageSideBar = new SideBar(setPasswordPage);
+		await passwordPageSideBar.logout();
+	});
+});
+
+test('third-party representative can fill their assigned audit', async ({
+	thirdPartyAuthenticatedPage,
+	page
+}) => {
+	await test.step('third party representative lands on auditee dashboard', async () => {
+		await expect(page).toHaveURL('/auditee-dashboard');
+	});
+
+	await test.step('third party representative can open their assigned audit', async () => {
+		await expect(
+			page.getByRole('heading', { name: entityAssessment.name, exact: true })
+		).toBeVisible();
+		await page.getByRole('link', { name: m.startAssessment() }).first().click();
+		await page.waitForURL('/auditee-assessments/**');
+	});
+
+	await test.step('third party respondent can fill questionnaire', async () => {
+		const clickAndPause = async (locator: Locator) => {
+			await locator.click();
+			await page.waitForTimeout(1000); // workaround flakiness due to overlapping calls
+		};
+
+		// Card view shows one requirement at a time — fill a few to verify functionality
+		// Requirement 1: click Yes
+		await clickAndPause(page.getByRole('button', { name: 'Yes' }).first());
+
+		// Navigate to next requirements and set results (fill 5 more)
+		const nextButton = page.getByRole('button', { name: m.next() });
+		for (let i = 0; i < 5 && !(await nextButton.isDisabled()); i++) {
+			await nextButton.click();
+			await page.waitForTimeout(500);
+			await clickAndPause(page.getByRole('button', { name: 'No' }).first());
+		}
+	});
+
+	await test.step('third party respondent can create evidence', async () => {
+		// Go back to first requirement
+		const prevButton = page.getByRole('button', { name: m.previous() });
+		while (!(await prevButton.isDisabled())) {
+			await prevButton.click();
+			await page.waitForTimeout(300);
+		}
+
+		// Open the evidence accordion section (collapsed by default)
+		await page.getByTestId('evidence-accordion-trigger').click();
+		await page.getByTestId('create-evidence-button').click();
+		await page.getByTestId('form-input-name').click();
+		await page.getByTestId('form-input-name').fill('tp-evidence');
+		await page.getByTestId('form-input-filtering-labels').getByRole('combobox').click();
+		let objectCreatedToast = thirdPartyAuthenticatedPage.isToastVisible(
+			'The evidence object has been successfully created' + /.+/.source
+		);
+		await page.getByTestId('save-button').click();
+		await objectCreatedToast;
+	});
+
+	await test.step('check that evidence count was updated', async () => {
+		await expect(page.getByTestId('evidence-count').first()).toContainText('1');
+	});
+
+	await test.step('check that selected evidences were updated', async () => {
+		await page.getByTestId('select-evidence-button').click();
+		await expect(page.getByTestId('modal-title')).toBeVisible();
+		await expect(page.getByTestId('form-input-evidences').locator('div.multiselect')).toContainText(
+			/.*tp-evidence.*/
+		);
+		await page.getByTestId('cancel-button').click();
+	});
+});
+
+test.afterAll('cleanup', async ({ browser }) => {
+	const page = await browser.newPage();
+	const loginPage = new LoginPage(page);
+	const foldersPage = new PageContent(page, '/folders', 'Domains');
+
+	await loginPage.goto();
+	await loginPage.login();
+	await foldersPage.goto();
+
+	await foldersPage.deleteItemButton(vars.folderName).click();
+	await expect(foldersPage.deletePromptConfirmTextField()).toBeVisible();
+	await foldersPage.deletePromptConfirmTextField().fill(m.yes());
+	await foldersPage.deletePromptConfirmButton().click();
+
+	await foldersPage.deleteItemButton(vars.folderName + ' foo').click();
+	await expect(foldersPage.deletePromptConfirmTextField()).toBeVisible();
+	await foldersPage.deletePromptConfirmTextField().fill(m.yes());
+	await foldersPage.deletePromptConfirmButton().click();
+
+	await expect(foldersPage.getRow(vars.folderName)).not.toBeVisible();
+});

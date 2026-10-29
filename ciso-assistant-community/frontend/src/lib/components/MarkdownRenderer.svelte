@@ -1,0 +1,94 @@
+<script lang="ts">
+	import { marked } from 'marked';
+	import sanitizeHtml from 'sanitize-html';
+	import { sanitizeConfig } from '#lib/utils/markdown.js';
+	import { mountMermaidBlocks, wrapMermaidBlocks } from '#lib/utils/mermaid.js';
+	import * as m from '#paraglide/messages.js';
+
+	interface Props {
+		content: string | null | undefined;
+		class?: string;
+	}
+
+	let { content, class: className = '' }: Props = $props();
+
+	// Matches only our internal image-serving proxy URLs:
+	// /frameworks/{uuid}/builder?_action=serve-image&...
+	// /policies/{uuid}/document?_action=serve-image&...
+	const INTERNAL_IMG_RE =
+		/src="(\/(frameworks|policies)\/[a-f0-9-]+\/[a-z]+\?_action=serve-image&[^"]*)"/g;
+	const INTERNAL_PLACEHOLDER = 'https://__ciso-internal__';
+
+	function processContent(content: string | null | undefined): string {
+		if (!content || content.trim() === '') return '';
+
+		// Resolve canonical document links [label](document:<uuid>) to the reader.
+		const src = content.replace(
+			/\]\(document:([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})\)/g,
+			'](/documents/$1/read)'
+		);
+
+		let html = marked(src) as string;
+
+		// Temporarily give internal image URLs an https scheme so they survive
+		// sanitize-html's allowedSchemes check, then strip the fake origin after.
+		html = html.replace(INTERNAL_IMG_RE, (_, path) => `src="${INTERNAL_PLACEHOLDER}${path}"`);
+		html = sanitizeHtml(html, sanitizeConfig);
+		html = html.replace(new RegExp(`src="${INTERNAL_PLACEHOLDER}`, 'g'), 'src="');
+
+		// Name GFM task-list checkboxes, which render unlabeled.
+		html = html.replace(/<input\b([^>]*?\btype="checkbox"[^>]*?)\s*\/?>/g, (full, attrs) =>
+			/aria-label/.test(attrs)
+				? full
+				: `<input${attrs} aria-label="${/\bchecked\b/.test(attrs) ? m.taskItemChecked() : m.taskItemUnchecked()}" />`
+		);
+
+		html = wrapMermaidBlocks(html);
+
+		// Clean up excessive spacing
+		html = html
+			.replace(/>\s+</g, '><') // Remove whitespace between tags
+			.replace(/\n\s*\n/g, '\n') // Remove double line breaks
+			.replace(/<\/p>\s*<ul>/g, '</p><ul>') // Remove space between paragraphs and lists
+			.replace(/<\/ul>\s*<p>/g, '</ul><p>') // Remove space between lists and paragraphs
+			.replace(/<\/p>\s*<ol>/g, '</p><ol>') // Remove space between paragraphs and ordered lists
+			.replace(/<\/ol>\s*<p>/g, '</ol><p>'); // Remove space between ordered lists and paragraphs
+
+		return html.trim();
+	}
+
+	let renderedContent = $derived(processContent(content));
+
+	let container: HTMLDivElement | undefined = $state();
+
+	$effect(() => {
+		if (container && renderedContent) return mountMermaidBlocks(container);
+	});
+</script>
+
+{#if renderedContent}
+	<div
+		bind:this={container}
+		class="prose prose-sm dark:prose-invert max-w-none wrap-break-word whitespace-pre-line {className}"
+	>
+		{@html renderedContent}
+	</div>
+{:else}
+	<span class="text-surface-600-400 italic">--</span>
+{/if}
+
+<style>
+	:global(.mermaid-diagram) {
+		display: flex;
+		justify-content: center;
+		margin: 1em 0;
+		overflow-x: auto;
+		white-space: normal;
+	}
+
+	:global(.mermaid-diagram pre) {
+		width: 100%;
+		white-space: pre;
+		font-family: var(--font-mono, monospace);
+	}
+</style>

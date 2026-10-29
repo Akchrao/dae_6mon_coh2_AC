@@ -1,0 +1,1612 @@
+from uuid import UUID
+from django.core.exceptions import ValidationError
+
+import pytest
+from django.conf import settings
+from test_fixtures import RISK_MATRIX_JSON_DEFINITION
+
+from core.models import (
+    Policy,
+    Perimeter,
+    RequirementMapping,
+    RequirementMappingSet,
+    RiskAssessment,
+    ComplianceAssessment,
+    RiskScenario,
+    RequirementNode,
+    RequirementAssessment,
+    AppliedControl,
+    ReferenceControl,
+    Evidence,
+    EvidenceRevision,
+    RiskAcceptance,
+    Asset,
+    Threat,
+    RiskMatrix,
+    LoadedLibrary,
+    Framework,
+)
+from django.contrib.auth import get_user_model
+from django.core.files.uploadedfile import SimpleUploadedFile
+from iam.models import Folder
+
+from .fixtures import *
+
+
+User = get_user_model()
+
+SAMPLE_640x480_JPG = settings.BASE_DIR / "app_tests" / "sample_640x480.jpg"
+
+
+@pytest.mark.django_db
+class TestEvidence:
+    def test_evidence_parameters_with_revision(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        applied_control = AppliedControl.objects.create(
+            name="test applied control",
+            description="test applied control description",
+            folder=folder,
+        )
+
+        evidence = Evidence.objects.create(
+            name="test evidence",
+            description="test evidence description",
+            folder=folder,
+        )
+        evidence.applied_controls.add(applied_control)
+
+        # Create a revision with an attachment
+        with open(SAMPLE_640x480_JPG, "rb") as f:
+            revision = EvidenceRevision.objects.create(
+                evidence=evidence,
+                version=1,
+                attachment=SimpleUploadedFile(SAMPLE_640x480_JPG.name, f.read()),
+            )
+
+        assert evidence.name == "test evidence"
+        assert evidence.description == "test evidence description"
+        assert list(evidence.applied_controls.all()) == [applied_control]
+        assert evidence.last_revision == revision
+        # Django may add a unique suffix to avoid filename conflicts
+        assert evidence.filename().startswith(
+            "sample_640x480"
+        ) and evidence.filename().endswith(".jpg")
+        assert evidence.get_size().endswith("KB") or evidence.get_size().endswith("MB")
+        assert evidence.attachment_hash is not None
+
+    def test_evidence_with_no_revision(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        applied_control = AppliedControl.objects.create(
+            name="test applied control",
+            description="test applied control description",
+            folder=folder,
+        )
+
+        evidence = Evidence.objects.create(
+            folder=folder,
+            name="test evidence",
+            description="test evidence description",
+        )
+        evidence.applied_controls.add(applied_control)
+
+        # No revision
+        assert evidence.last_revision is None
+        assert evidence.filename() is None
+        assert evidence.get_size() is None
+        assert evidence.attachment_hash is None
+
+
+@pytest.mark.django_db
+class TestAppliedControlDisplayCost:
+    """display_cost is a pure property over self.cost."""
+
+    def test_empty_cost_returns_empty_string(self):
+        assert AppliedControl(cost=None).display_cost == ""
+        assert AppliedControl(cost={}).display_cost == ""
+
+    def test_cost_type_with_neither_fixed_nor_people_is_skipped(self):
+        control = AppliedControl(
+            cost={"currency": "EUR", "build": {"fixed_cost": 0, "people_days": 0}}
+        )
+        assert control.display_cost == ""
+
+    def test_people_days_only_is_displayed(self):
+        # Regression: a cost expressed purely in people-days used to be dropped
+        # because the row was skipped whenever fixed_cost was 0.
+        control = AppliedControl(
+            cost={"currency": "EUR", "build": {"fixed_cost": 0, "people_days": 5}}
+        )
+        assert control.display_cost == "Build: 5 people days"
+
+    def test_fixed_cost_only_is_displayed_without_people_days(self):
+        control = AppliedControl(
+            cost={"currency": "EUR", "build": {"fixed_cost": 500, "people_days": 0}}
+        )
+        result = control.display_cost
+        assert result.startswith("Build: ")
+        assert "500" in result
+        assert "people days" not in result
+
+    def test_fixed_cost_and_people_days_are_both_displayed(self):
+        control = AppliedControl(
+            cost={"currency": "EUR", "build": {"fixed_cost": 500, "people_days": 5}}
+        )
+        result = control.display_cost
+        assert result.startswith("Build: ")
+        assert "500" in result
+        assert "5 people days" in result
+
+    def test_build_and_run_are_joined(self):
+        control = AppliedControl(
+            cost={
+                "currency": "EUR",
+                "build": {"fixed_cost": 0, "people_days": 5},
+                "run": {"fixed_cost": 0, "people_days": 2},
+            }
+        )
+        assert control.display_cost == "Build: 5 people days | Run: 2 people days"
+
+
+@pytest.mark.django_db
+class TestRiskAssessment:
+    pytestmark = pytest.mark.django_db
+
+    def test_risk_assessment_parameters(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.create(
+            name="test risk matrix",
+            description="test risk matrix description",
+            json_definition=RISK_MATRIX_JSON_DEFINITION,
+            folder=folder,
+        )
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+
+        assert risk_assessment.name == "test risk_assessment"
+        assert risk_assessment.description == "test risk_assessment description"
+        assert risk_assessment.perimeter == Perimeter.objects.get(name="test perimeter")
+        assert risk_assessment.risk_matrix == RiskMatrix.objects.get(
+            name="test risk matrix"
+        )
+
+    def test_risk_assessment_get_scenario_count_null_when_no_scenario_inside_risk_assessment(
+        self,
+    ):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.create(
+            name="test risk matrix",
+            description="test risk matrix description",
+            json_definition=RISK_MATRIX_JSON_DEFINITION,
+            folder=folder,
+        )
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+
+        assert risk_assessment.get_scenario_count() == 0
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_risk_assessment_get_scenario_count_one_when_one_scenario_inside_risk_assessment(
+        self,
+    ):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.all()[0]
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        Threat.objects.create(
+            name="test threat", description="test threat description", folder=folder
+        )
+        RiskScenario.objects.create(
+            name="test scenario",
+            description="test scenario description",
+            risk_assessment=risk_assessment,
+        )
+
+        assert risk_assessment.get_scenario_count() == 1
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_risk_assessment_get_scenario_count_is_decremented_when_child_scenario_is_deleted(
+        self,
+    ):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.all()[0]
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        Threat.objects.create(
+            name="test threat", description="test threat description", folder=folder
+        )
+        scenario = RiskScenario.objects.create(
+            name="test scenario",
+            description="test scenario description",
+            risk_assessment=risk_assessment,
+        )
+
+        assert risk_assessment.get_scenario_count() == 1
+
+        scenario.delete()
+
+        assert risk_assessment.get_scenario_count() == 0
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_risk_assessment_get_scenario_count_is_incremented_when_child_scenario_is_created(
+        self,
+    ):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.all()[0]
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        Threat.objects.create(
+            name="test threat", description="test threat description", folder=folder
+        )
+
+        assert risk_assessment.get_scenario_count() == 0
+
+        RiskScenario.objects.create(
+            name="test scenario",
+            description="test scenario description",
+            risk_assessment=risk_assessment,
+        )
+
+        assert risk_assessment.get_scenario_count() == 1
+
+    def test_risk_assessment_id_is_of_type_uuid(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.create(
+            name="test risk matrix",
+            description="test risk matrix description",
+            json_definition=RISK_MATRIX_JSON_DEFINITION,
+            folder=folder,
+        )
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+
+        assert isinstance(risk_assessment.id, UUID)
+
+    def test_risk_assessment_is_unique_in_perimeter(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.create(
+            name="test risk matrix",
+            description="test risk matrix description",
+            json_definition=RISK_MATRIX_JSON_DEFINITION,
+            folder=folder,
+        )
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        RiskAssessment.objects.create(
+            name="test risk assessment",
+            description="test risk assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        with pytest.raises(ValidationError):
+            RiskAssessment.objects.create(
+                name="test risk assessment",
+                description="test risk assessment description",
+                perimeter=perimeter,
+                risk_matrix=risk_matrix,
+            )
+
+    def test_risk_assessment_can_have_same_name_but_different_version(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.create(
+            name="test risk matrix",
+            description="test risk matrix description",
+            json_definition=RISK_MATRIX_JSON_DEFINITION,
+            folder=folder,
+        )
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+            version="1",
+        )
+        RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+            version="2",
+        )
+
+    def test_risk_assessment_can_have_same_name_and_version_in_a_different_perimeter(
+        self,
+    ):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.create(
+            name="test risk matrix",
+            description="test risk matrix description",
+            json_definition=RISK_MATRIX_JSON_DEFINITION,
+            folder=folder,
+        )
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+            version="1",
+        )
+
+        perimeter2 = Perimeter.objects.create(name="test perimeter 2", folder=folder)
+        RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter2,
+            risk_matrix=risk_matrix,
+            version="1",
+        )
+
+    def test_risk_assessment_scope_is_risk_assessments_in_perimeter(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.create(
+            name="test risk matrix",
+            description="test risk matrix description",
+            json_definition=RISK_MATRIX_JSON_DEFINITION,
+            folder=folder,
+        )
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        risk_assessment2 = RiskAssessment.objects.create(
+            name="test risk_assessment 2",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        risk_assessment3 = RiskAssessment.objects.create(
+            name="test risk_assessment 3",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+
+        perimeter2 = Perimeter.objects.create(name="test perimeter 2", folder=folder)
+        RiskAssessment.objects.create(
+            name="test risk_assessment 4",
+            description="test risk_assessment description",
+            perimeter=perimeter2,
+            risk_matrix=risk_matrix,
+        )
+        RiskAssessment.objects.create(
+            name="test risk_assessment 5",
+            description="test risk_assessment description",
+            perimeter=perimeter2,
+            risk_matrix=risk_matrix,
+        )
+
+        assert list(risk_assessment.get_scope()) == [
+            risk_assessment,
+            risk_assessment2,
+            risk_assessment3,
+        ]
+
+
+@pytest.mark.django_db
+class TestRiskScenario:
+    pytestmark = pytest.mark.django_db
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_risk_scenario_parameters(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.all()[0]
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        threat = Threat.objects.create(
+            name="test threat", description="test threat description", folder=folder
+        )
+        scenario = RiskScenario.objects.create(
+            name="test scenario",
+            description="test scenario description",
+            risk_assessment=risk_assessment,
+        )
+        scenario.threats.add(threat)
+
+        assert scenario.name == "test scenario"
+        assert scenario.description == "test scenario description"
+        assert scenario.risk_assessment == RiskAssessment.objects.get(
+            name="test risk_assessment"
+        )
+        assert Threat.objects.get(name="test threat") in scenario.threats.all()
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_risk_scenario_parent_perimeter(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.all()[0]
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        Threat.objects.create(
+            name="test threat", description="test threat description", folder=folder
+        )
+        scenario = RiskScenario.objects.create(
+            name="test scenario",
+            description="test scenario description",
+            risk_assessment=risk_assessment,
+        )
+
+        assert scenario.parent_perimeter() == Perimeter.objects.get(
+            name="test perimeter"
+        )
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_risk_scenario_is_deleted_when_risk_assessment_is_deleted(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.all()[0]
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        Threat.objects.create(
+            name="test threat", description="test threat description", folder=folder
+        )
+        scenario = RiskScenario.objects.create(
+            name="test scenario",
+            description="test scenario description",
+            risk_assessment=risk_assessment,
+        )
+
+        queryset = RiskScenario.objects.filter(id=scenario.id)
+
+        assert queryset.exists()
+
+        risk_assessment.delete()
+
+        assert not queryset.exists()
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_risk_scenario_is__not_deleted_when_threat_is_deleted(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.all()[0]
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        threat = Threat.objects.create(
+            name="test threat", description="test threat description", folder=folder
+        )
+        scenario = RiskScenario.objects.create(
+            name="test scenario",
+            description="test scenario description",
+            risk_assessment=risk_assessment,
+        )
+        scenario.threats.add(threat)
+
+        queryset = RiskScenario.objects.filter(id=scenario.id)
+
+        assert queryset.exists()
+
+        threat.delete()
+
+        assert queryset.exists()
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_risk_scenario_id_is_of_type_uuid(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.all()[0]
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        Threat.objects.create(
+            name="test threat", description="test threat description", folder=folder
+        )
+        scenario = RiskScenario.objects.create(
+            name="test scenario",
+            description="test scenario description",
+            risk_assessment=risk_assessment,
+        )
+
+        assert isinstance(scenario.id, UUID)
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_risk_scenario_scope_is_scenarios_in_risk_assessment(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.all()[0]
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        Threat.objects.create(
+            name="test threat", description="test threat description", folder=folder
+        )
+        scenario = RiskScenario.objects.create(
+            name="test scenario",
+            description="test scenario description",
+            risk_assessment=risk_assessment,
+        )
+        scenario2 = RiskScenario.objects.create(
+            name="test scenario 2",
+            description="test scenario description",
+            risk_assessment=risk_assessment,
+        )
+        scenario3 = RiskScenario.objects.create(
+            name="test scenario 3",
+            description="test scenario description",
+            risk_assessment=risk_assessment,
+        )
+
+        risk_assessment2 = RiskAssessment.objects.create(
+            name="test risk_assessment 2",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        RiskScenario.objects.create(
+            name="test scenario 4",
+            description="test scenario description",
+            risk_assessment=risk_assessment2,
+        )
+        RiskScenario.objects.create(
+            name="test scenario 5",
+            description="test scenario description",
+            risk_assessment=risk_assessment2,
+        )
+
+        assert list(scenario.get_scope()) == [scenario, scenario2, scenario3]
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_risk_scenario_rid_is_deterministic(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.all()[0]
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        Threat.objects.create(
+            name="test threat", description="test threat description", folder=folder
+        )
+        scenario = RiskScenario.objects.create(
+            name="test scenario",
+            description="test scenario description",
+            ref_id="R.1",
+            risk_assessment=risk_assessment,
+        )
+        scenario2 = RiskScenario.objects.create(
+            name="test scenario 2",
+            description="test scenario description",
+            ref_id="R.2",
+            risk_assessment=risk_assessment,
+        )
+        scenario3 = RiskScenario.objects.create(
+            name="test scenario 3",
+            description="test scenario description",
+            ref_id="R.3",
+            risk_assessment=risk_assessment,
+        )
+
+        assert scenario.ref_id == "R.1"
+        assert scenario2.ref_id == "R.2"
+        assert scenario3.ref_id == "R.3"
+
+
+@pytest.mark.django_db
+class TestRiskMatrix:
+    pytestmark = pytest.mark.django_db
+
+    ...
+
+
+@pytest.mark.django_db
+class TestAppliedControl:
+    pytestmark = pytest.mark.django_db
+
+    def test_measure_creation(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+        measure = AppliedControl.objects.create(name="Measure", folder=root_folder)
+        assert measure.name == "Measure"
+        assert measure.folder == root_folder
+
+    def test_measure_creation_same_name(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+        AppliedControl.objects.create(name="Measure", folder=root_folder)
+        with pytest.raises(ValidationError):
+            AppliedControl.objects.create(name="Measure", folder=root_folder)
+
+    def test_measure_creation_same_name_different_folder(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+        folder = Folder.objects.create(name="Parent", folder=root_folder)
+        measure1 = AppliedControl.objects.create(name="Measure", folder=root_folder)
+        measure2 = AppliedControl.objects.create(name="Measure", folder=folder)
+        assert measure1.name == "Measure"
+        assert measure2.name == "Measure"
+        assert measure1.folder == root_folder
+        assert measure2.folder == folder
+
+    def test_applied_control_inherited_from_reference_control(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+        folder = Folder.objects.create(name="Parent", folder=root_folder)
+        reference_control = ReferenceControl.objects.create(
+            name="Function",
+            folder=root_folder,
+            category="technical",
+            csf_function="identify",
+        )
+        applied_control = AppliedControl.objects.create(
+            name="Measure", folder=folder, reference_control=reference_control
+        )
+        assert applied_control.category == "technical"
+        assert applied_control.csf_function == "identify"
+
+
+@pytest.mark.django_db
+class TestPolicy:
+    pytestmark = pytest.mark.django_db
+
+    def test_policy_creation(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+        policy = Policy.objects.create(name="Policy", folder=root_folder)
+        assert Policy.objects.count() == 1
+        assert AppliedControl.objects.count() == 1
+        assert policy.name == "Policy"
+        assert policy.folder == root_folder
+        assert policy.category == "policy"
+
+    def test_policy_does_not_inherit_category_from_reference_control(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+        folder = Folder.objects.create(name="Parent", folder=root_folder)
+        function = ReferenceControl.objects.create(
+            name="Function", folder=root_folder, category="technical"
+        )
+        policy = Policy.objects.create(
+            name="Policy", folder=folder, reference_control=function
+        )
+        assert policy.category == "policy"
+
+    def test_policy_creation_same_name(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+        Policy.objects.create(name="Policy", folder=root_folder)
+        with pytest.raises(ValidationError):
+            Policy.objects.create(name="Policy", folder=root_folder)
+
+    def test_policy_creation_same_name_different_folder(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+        folder = Folder.objects.create(name="Parent", folder=root_folder)
+        policy1 = Policy.objects.create(name="Policy", folder=root_folder)
+        policy2 = Policy.objects.create(name="Policy", folder=folder)
+        assert policy1.name == "Policy"
+        assert policy2.name == "Policy"
+        assert policy1.folder == root_folder
+        assert policy2.folder == folder
+
+
+@pytest.mark.django_db
+class TestRiskAcceptance:
+    pytestmark = pytest.mark.django_db
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_acceptance_creation(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.all()[0]
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        Threat.objects.create(
+            name="test threat", description="test threat description", folder=folder
+        )
+        scenario = RiskScenario.objects.create(
+            name="test scenario",
+            description="test scenario description",
+            risk_assessment=risk_assessment,
+        )
+        acceptance = RiskAcceptance.objects.create(
+            name="test acceptance",
+            description="test acceptance description",
+            folder=folder,
+        )
+        acceptance.risk_scenarios.add(scenario)
+        acceptance.save()
+
+        assert isinstance(acceptance.id, UUID)
+        assert acceptance.name == "test acceptance"
+        assert acceptance.description == "test acceptance description"
+        assert acceptance.folder == folder
+        assert acceptance.risk_scenarios.count() == 1
+        assert acceptance.risk_scenarios.all()[0] == scenario
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_acceptance_creation_same_name_different_folder(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        folder2 = Folder.objects.create(
+            name="test folder 2", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.all()[0]
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        Threat.objects.create(
+            name="test threat", description="test threat description", folder=folder
+        )
+        scenario = RiskScenario.objects.create(
+            name="test scenario",
+            description="test scenario description",
+            risk_assessment=risk_assessment,
+        )
+        acceptance = RiskAcceptance.objects.create(
+            name="test acceptance",
+            description="test acceptance description",
+            folder=folder,
+        )
+        acceptance.risk_scenarios.add(scenario)
+        acceptance.save()
+
+        acceptance2 = RiskAcceptance.objects.create(
+            name="test acceptance",
+            description="test acceptance description",
+            folder=folder2,
+        )
+        acceptance2.risk_scenarios.add(scenario)
+        acceptance2.save()
+
+        assert isinstance(acceptance2.id, UUID)
+        assert acceptance2.name == "test acceptance"
+        assert acceptance2.description == "test acceptance description"
+        assert acceptance2.folder == folder2
+        assert acceptance2.risk_scenarios.count() == 1
+        assert acceptance2.risk_scenarios.all()[0] == scenario
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_acceptance_creation_same_name_same_folder(self):
+        folder = Folder.objects.create(
+            name="test folder", description="test folder description"
+        )
+        risk_matrix = RiskMatrix.objects.all()[0]
+        perimeter = Perimeter.objects.create(name="test perimeter", folder=folder)
+        risk_assessment = RiskAssessment.objects.create(
+            name="test risk_assessment",
+            description="test risk_assessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+        Threat.objects.create(
+            name="test threat", description="test threat description", folder=folder
+        )
+        scenario = RiskScenario.objects.create(
+            name="test scenario",
+            description="test scenario description",
+            risk_assessment=risk_assessment,
+        )
+        acceptance = RiskAcceptance.objects.create(
+            name="test acceptance",
+            description="test acceptance description",
+            folder=folder,
+        )
+        acceptance.risk_scenarios.add(scenario)
+        acceptance.save()
+
+        with pytest.raises(ValidationError):
+            acceptance2 = RiskAcceptance.objects.create(
+                name="test acceptance",
+                description="test acceptance description",
+                folder=folder,
+            )
+            acceptance2.risk_scenarios.add(scenario)
+            acceptance2.save()
+
+
+@pytest.mark.django_db
+class TestAsset:
+    pytestmark = pytest.mark.django_db
+
+    def test_asset_creation(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+        asset = Asset.objects.create(name="Asset", folder=root_folder)
+        assert asset.name == "Asset"
+        assert asset.folder == root_folder
+        assert asset.type == Asset.Type.SUPPORT
+
+    def test_asset_creation_same_name(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+        Asset.objects.create(name="Asset", folder=root_folder)
+        with pytest.raises(ValidationError):
+            Asset.objects.create(name="Asset", folder=root_folder)
+
+    def test_asset_creation_same_name_different_folder(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+        folder = Folder.objects.create(name="Parent", folder=root_folder)
+
+        asset1 = Asset.objects.create(name="Asset", folder=root_folder)
+        asset2 = Asset.objects.create(name="Asset", folder=folder)
+        assert asset1.name == "Asset"
+        assert asset2.name == "Asset"
+        assert asset1.type == Asset.Type.SUPPORT
+        assert asset2.type == Asset.Type.SUPPORT
+        assert asset1.folder == root_folder
+        assert asset2.folder == folder
+
+    def test_asset_creation_valid_security_objectives(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+
+        security_objectives = {
+            "objectives": {
+                "confidentiality": {
+                    "value": 1,
+                    "is_enabled": True,
+                },
+                "integrity": {
+                    "value": 0,
+                    "is_enabled": False,
+                },
+                "availability": {
+                    "value": 2,
+                    "is_enabled": True,
+                },
+                "proof": {
+                    "value": 0,
+                    "is_enabled": True,
+                },
+            }
+        }
+
+        asset = Asset.objects.create(
+            name="Asset",
+            description="Asset description",
+            folder=root_folder,
+            security_objectives=security_objectives,
+        )
+
+        assert asset.security_objectives == security_objectives
+
+    def test_asset_creation_invalid_security_objectives(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+
+        security_objectives = {
+            "objectives": {
+                "confidentiality": {
+                    "value": "toto",
+                    "is_enabled": True,
+                },
+                "integrity": {
+                    "value": 0,
+                    "is_enabled": False,
+                },
+                "availability": {
+                    "value": 2,
+                    "is_enabled": True,
+                },
+                "proof": {
+                    "value": 0,
+                    "is_enabled": True,
+                },
+            }
+        }
+
+        with pytest.raises(ValidationError):
+            Asset.objects.create(
+                name="Asset",
+                description="Asset description",
+                folder=root_folder,
+                security_objectives=security_objectives,
+            )
+
+    def test_asset_get_descendants(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+        primary_asset = Asset.objects.create(
+            name="Primary", type=Asset.Type.PRIMARY, folder=root_folder
+        )
+        child1 = Asset.objects.create(
+            name="Child 1", type=Asset.Type.SUPPORT, folder=root_folder
+        )
+        child1.parent_assets.add(primary_asset)
+        child2 = Asset.objects.create(
+            name="Child 2", type=Asset.Type.SUPPORT, folder=root_folder
+        )
+        child2.parent_assets.add(child1)
+        assert primary_asset.get_descendants() == {child1, child2}
+
+    def test_asset_ancestors_plus_self(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+        primary_asset = Asset.objects.create(
+            name="Primary", type=Asset.Type.PRIMARY, folder=root_folder
+        )
+        child1 = Asset.objects.create(
+            name="Child 1", type=Asset.Type.SUPPORT, folder=root_folder
+        )
+        child1.parent_assets.add(primary_asset)
+        child2 = Asset.objects.create(
+            name="Child 2", type=Asset.Type.SUPPORT, folder=root_folder
+        )
+        child2.parent_assets.add(child1)
+        assert child2.ancestors_plus_self() == {child1, child2, primary_asset}
+
+    def test_primary_asset_chaining(self):
+        """Test that primary assets can have other primary assets as parents"""
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+
+        # Create primary asset hierarchy
+        parent_primary = Asset.objects.create(
+            name="Parent Primary", type=Asset.Type.PRIMARY, folder=root_folder
+        )
+        child_primary = Asset.objects.create(
+            name="Child Primary", type=Asset.Type.PRIMARY, folder=root_folder
+        )
+        support_asset = Asset.objects.create(
+            name="Support Asset", type=Asset.Type.SUPPORT, folder=root_folder
+        )
+
+        # Create relationships: parent_primary <- child_primary <- support_asset
+        child_primary.parent_assets.add(parent_primary)
+        support_asset.parent_assets.add(child_primary)
+
+        # Verify relationships
+        assert parent_primary in child_primary.parent_assets.all()
+        assert child_primary.get_descendants() == {support_asset}
+        assert parent_primary.get_descendants() == {child_primary, support_asset}
+        assert support_asset.ancestors_plus_self() == {
+            support_asset,
+            child_primary,
+            parent_primary,
+        }
+
+    def test_primary_asset_capabilities_aggregation(self):
+        """Test that primary assets aggregate capabilities from all descendants including other primaries"""
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+
+        # Create asset hierarchy
+        parent_primary = Asset.objects.create(
+            name="Parent Primary", type=Asset.Type.PRIMARY, folder=root_folder
+        )
+        child_primary = Asset.objects.create(
+            name="Child Primary",
+            type=Asset.Type.PRIMARY,
+            folder=root_folder,
+            security_capabilities={
+                "objectives": {"confidentiality": {"value": 3, "is_enabled": True}}
+            },
+        )
+        support_asset = Asset.objects.create(
+            name="Support Asset",
+            type=Asset.Type.SUPPORT,
+            folder=root_folder,
+            security_capabilities={
+                "objectives": {"confidentiality": {"value": 2, "is_enabled": True}}
+            },
+        )
+
+        # Create relationships
+        child_primary.parent_assets.add(parent_primary)
+        support_asset.parent_assets.add(child_primary)
+
+        # Parent primary should aggregate capabilities from both child primary and support
+        parent_capabilities = parent_primary.get_security_capabilities()
+        assert "objectives" in parent_capabilities
+        # Should take minimum value (worst case) = 2
+        assert parent_capabilities["objectives"]["confidentiality"]["value"] == 2
+
+    def test_cycle_detection_support_assets(self):
+        """Test that cycles are detected and prevented in support asset chains"""
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+
+        # Create three support assets
+        asset_a = Asset.objects.create(
+            name="Support A", type=Asset.Type.SUPPORT, folder=root_folder
+        )
+        asset_b = Asset.objects.create(
+            name="Support B", type=Asset.Type.SUPPORT, folder=root_folder
+        )
+        asset_c = Asset.objects.create(
+            name="Support C", type=Asset.Type.SUPPORT, folder=root_folder
+        )
+
+        # Create chain: A -> B -> C
+        asset_b.parent_assets.add(asset_a)
+        asset_c.parent_assets.add(asset_b)
+
+        # Attempting to create cycle: C -> A should be prevented
+        # This would create: A -> B -> C -> A (cycle)
+        from rest_framework.exceptions import ValidationError
+        from core.serializers import AssetWriteSerializer
+
+        serializer = AssetWriteSerializer(
+            asset_a,
+            data={
+                "name": "Support A",
+                "type": "SP",
+                "folder": str(root_folder.id),
+                "parent_assets": [str(asset_c.id)],  # This creates a cycle
+            },
+            partial=True,
+        )
+
+        assert serializer.is_valid() is False
+        assert "errorAssetGraphMustNotContainCycles" in str(serializer.errors)
+
+    def test_cycle_detection_primary_assets(self):
+        """Test that cycles are detected and prevented in primary asset chains"""
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+
+        # Create three primary assets
+        primary_a = Asset.objects.create(
+            name="Primary A", type=Asset.Type.PRIMARY, folder=root_folder
+        )
+        primary_b = Asset.objects.create(
+            name="Primary B", type=Asset.Type.PRIMARY, folder=root_folder
+        )
+        primary_c = Asset.objects.create(
+            name="Primary C", type=Asset.Type.PRIMARY, folder=root_folder
+        )
+
+        # Create chain: A -> B -> C
+        primary_b.parent_assets.add(primary_a)
+        primary_c.parent_assets.add(primary_b)
+
+        # Attempting to create cycle: C -> A should be prevented
+        from core.serializers import AssetWriteSerializer
+
+        serializer = AssetWriteSerializer(
+            primary_a,
+            data={
+                "name": "Primary A",
+                "type": "PR",
+                "folder": str(root_folder.id),
+                "parent_assets": [str(primary_c.id)],  # This creates a cycle
+            },
+            partial=True,
+        )
+
+        assert serializer.is_valid() is False
+        assert "errorAssetGraphMustNotContainCycles" in str(serializer.errors)
+
+    def test_cycle_detection_mixed_asset_types(self):
+        """Test that cycles are detected in mixed primary/support asset chains"""
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+
+        # Create mixed asset chain
+        primary_asset = Asset.objects.create(
+            name="Primary Asset", type=Asset.Type.PRIMARY, folder=root_folder
+        )
+        support_asset = Asset.objects.create(
+            name="Support Asset", type=Asset.Type.SUPPORT, folder=root_folder
+        )
+
+        # Create: Primary -> Support
+        support_asset.parent_assets.add(primary_asset)
+
+        # Attempting to create cycle: Support -> Primary should be prevented
+        from core.serializers import AssetWriteSerializer
+
+        serializer = AssetWriteSerializer(
+            primary_asset,
+            data={
+                "name": "Primary Asset",
+                "type": "PR",
+                "folder": str(root_folder.id),
+                "parent_assets": [str(support_asset.id)],  # This creates a cycle
+            },
+            partial=True,
+        )
+
+        assert serializer.is_valid() is False
+        assert "errorAssetGraphMustNotContainCycles" in str(serializer.errors)
+
+
+@pytest.mark.django_db
+class TestLibrary:
+    pytestmark = pytest.mark.django_db
+
+    def test_library_creation(self):
+        library = LoadedLibrary.objects.create(
+            name="Library",
+            description="Library description",
+            folder=Folder.get_root_folder(),
+            locale="en",
+            version=1,
+            objects_meta={},
+        )
+        assert library.name == "Library"
+        assert library.description == "Library description"
+        assert library.locale == "en"
+        assert library.version == 1
+        assert library.folder == Folder.get_root_folder()
+
+    def test_library_reference_count_zero_if_unused(self):
+        library = LoadedLibrary.objects.create(
+            name="Library",
+            description="Library description",
+            folder=Folder.get_root_folder(),
+            locale="en",
+            version=1,
+            objects_meta={},
+        )
+        assert library.reference_count == 0
+
+    @pytest.mark.usefixtures("domain_perimeter_fixture")
+    def test_library_reference_count_incremented_when_framework_is_referenced_by_compliance_assessment_and_decremented_when_compliance_assessment_is_deleted(
+        self,
+    ):
+        library = LoadedLibrary.objects.create(
+            name="Library",
+            description="Library description",
+            folder=Folder.get_root_folder(),
+            locale="en",
+            version=1,
+            objects_meta={},
+        )
+        framework = Framework.objects.create(
+            name="Framework",
+            description="Framework description",
+            folder=Folder.get_root_folder(),
+            library=library,
+        )
+
+        assert library.reference_count == 0
+
+        compliance_assessment = ComplianceAssessment.objects.create(
+            name="ComplianceAssessment",
+            description="ComplianceAssessment description",
+            perimeter=Perimeter.objects.last(),
+            framework=framework,
+        )
+
+        assert library.reference_count == 1
+
+        compliance_assessment.delete()
+
+        assert library.reference_count == 0
+
+    @pytest.mark.usefixtures("domain_perimeter_fixture")
+    def test_library_reference_count_incremented_when_reference_control_is_referenced_by_complance_assessment_and_decremented_when_compliance_assessment_is_deleted(
+        self,
+    ):
+        library = LoadedLibrary.objects.create(
+            name="Library",
+            description="Library description",
+            folder=Folder.get_root_folder(),
+            locale="en",
+            version=1,
+            objects_meta={},
+        )
+        framework = Framework.objects.create(
+            name="Framework",
+            description="Framework description",
+            folder=Folder.get_root_folder(),
+            library=library,
+        )
+        requirement_node = RequirementNode.objects.create(
+            name="RequirementNode",
+            description="RequirementNode description",
+            folder=Folder.get_root_folder(),
+            framework=framework,
+            assessable=True,
+        )
+        assert library.reference_count == 0
+        compliance_assessment = ComplianceAssessment.objects.create(
+            name="ComplianceAssessment",
+            description="ComplianceAssessment description",
+            perimeter=Perimeter.objects.last(),
+            framework=framework,
+        )
+
+        requirement_assessment = RequirementAssessment.objects.create(
+            requirement=requirement_node,
+            compliance_assessment=compliance_assessment,
+            folder=Folder.get_root_folder(),
+        )
+
+        reference_control = ReferenceControl.objects.create(
+            name="ReferenceControl",
+            description="ReferenceControl description",
+            folder=Folder.get_root_folder(),
+            library=library,
+        )
+        applied_control = AppliedControl.objects.create(
+            name="AppliedControl",
+            description="AppliedControl description",
+            folder=Folder.get_root_folder(),
+            reference_control=reference_control,
+        )
+
+        requirement_assessment.applied_controls.add(applied_control)
+
+        assert library.reference_count == 1
+        compliance_assessment.delete()
+        assert library.reference_count == 0
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_library_reference_count_incremented_when_risk_matrix_is_referenced_by_risk_assessment_and_decremented_when_risk_assessment_is_deleted(
+        self,
+    ):
+        domain = Folder.objects.create(name="Domain", description="Domain description")
+        perimeter = Perimeter.objects.create(name="Perimeter", folder=domain)
+
+        risk_matrix = RiskMatrix.objects.get()
+        library = risk_matrix.library
+
+        assert library.reference_count == 0
+
+        risk_assessment = RiskAssessment.objects.create(
+            name="RiskAssessment",
+            description="RiskAssessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+
+        assert library.reference_count == 1
+
+        risk_assessment.delete()
+
+        assert library.reference_count == 0
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_library_reference_count_incremented_when_threat_is_referenced_by_risk_scenario_and_decremented_when_risk_scenario_is_deleted(
+        self,
+    ):
+        domain = Folder.objects.create(name="Domain", description="Domain description")
+        perimeter = Perimeter.objects.create(name="Perimeter", folder=domain)
+
+        risk_matrix = RiskMatrix.objects.get()
+
+        library = LoadedLibrary.objects.create(
+            name="Library",
+            description="Library description",
+            folder=Folder.get_root_folder(),
+            locale="en",
+            version=1,
+            objects_meta={},
+        )
+        threat = Threat.objects.create(
+            name="Threat",
+            description="Threat description",
+            folder=Folder.get_root_folder(),
+            library=library,
+        )
+
+        risk_assessment = RiskAssessment.objects.create(
+            name="RiskAssessment",
+            description="RiskAssessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+
+        assert library.reference_count == 0
+
+        risk_scenario = RiskScenario.objects.create(
+            name="RiskScenario",
+            description="RiskScenario description",
+            risk_assessment=risk_assessment,
+        )
+        risk_scenario.threats.add(threat)
+
+        assert library.reference_count == 1
+
+        risk_scenario.delete()
+
+        assert library.reference_count == 0
+
+    @pytest.mark.usefixtures("risk_matrix_fixture")
+    def test_library_reference_count_incremented_when_reference_control_is_referenced_by_risk_scenario_and_decremented_when_risk_scenario_is_deleted(
+        self,
+    ):
+        domain = Folder.objects.create(name="Domain", description="Domain description")
+        perimeter = Perimeter.objects.create(name="Perimeter", folder=domain)
+
+        risk_matrix = RiskMatrix.objects.get()
+
+        library = LoadedLibrary.objects.create(
+            name="Library",
+            description="Library description",
+            folder=Folder.get_root_folder(),
+            locale="en",
+            version=1,
+            objects_meta={},
+        )
+        reference_control = ReferenceControl.objects.create(
+            name="ReferenceControl",
+            description="ReferenceControl description",
+            folder=Folder.get_root_folder(),
+            library=library,
+        )
+        applied_control = AppliedControl.objects.create(
+            name="AppliedControl",
+            description="AppliedControl description",
+            folder=Folder.get_root_folder(),
+            reference_control=reference_control,
+        )
+
+        risk_assessment = RiskAssessment.objects.create(
+            name="RiskAssessment",
+            description="RiskAssessment description",
+            perimeter=perimeter,
+            risk_matrix=risk_matrix,
+        )
+
+        assert library.reference_count == 0
+
+        risk_scenario = RiskScenario.objects.create(
+            name="RiskScenario",
+            description="RiskScenario description",
+            risk_assessment=risk_assessment,
+        )
+        risk_scenario.applied_controls.add(applied_control)
+
+        assert library.reference_count == 1
+
+        risk_scenario.delete()
+
+        assert library.reference_count == 0
+
+    @pytest.mark.usefixtures("domain_perimeter_fixture")
+    def test_library_reference_count_must_be_zero_for_library_deletion(
+        self,
+    ):
+        baseline = LoadedLibrary.objects.filter(
+            objects_meta__requirement_mapping_sets__isnull=True,
+            objects_meta__requirement_mapping_set__isnull=True,
+        ).count()
+        library = LoadedLibrary.objects.create(
+            name="Library",
+            description="Library description",
+            folder=Folder.get_root_folder(),
+            locale="en",
+            version=1,
+            objects_meta={},
+        )
+        framework = Framework.objects.create(
+            name="Framework",
+            description="Framework description",
+            folder=Folder.get_root_folder(),
+            library=library,
+        )
+        compliance_assessment = ComplianceAssessment.objects.create(
+            name="ComplianceAssessment",
+            description="ComplianceAssessment description",
+            perimeter=Perimeter.objects.last(),
+            framework=framework,
+        )
+
+        assert library.reference_count == 1
+
+        with pytest.raises(ValueError):
+            library.delete()
+
+        compliance_assessment.delete()
+
+        assert library.reference_count == 0
+
+        try:  # wrapping in try/except to avoid raising exception due to StoredLibrary not existing
+            library.delete()
+        except:
+            None
+
+        assert (
+            LoadedLibrary.objects.filter(
+                objects_meta__requirement_mapping_sets__isnull=True,
+                objects_meta__requirement_mapping_set__isnull=True,
+            ).count()
+            == baseline
+        )
+
+    @pytest.mark.usefixtures("domain_perimeter_fixture")
+    def test_library_cannot_be_deleted_if_it_is_a_dependency_of_other_libraries(self):
+        baseline = LoadedLibrary.objects.filter(
+            objects_meta__requirement_mapping_sets__isnull=True,
+            objects_meta__requirement_mapping_set__isnull=True,
+        ).count()
+        dependency_library = LoadedLibrary.objects.create(
+            name="Dependency Library",
+            description="Dependency Library description",
+            folder=Folder.get_root_folder(),
+            locale="en",
+            version=1,
+            objects_meta={},
+        )
+        library = LoadedLibrary.objects.create(
+            name="Library",
+            description="Library description",
+            folder=Folder.get_root_folder(),
+            locale="en",
+            version=1,
+            objects_meta={},
+        )
+        library.dependencies.add(dependency_library)
+
+        with pytest.raises(ValueError):
+            dependency_library.delete()
+
+        try:  # wrapping in try/except to avoid raising exception due to StoredLibrary not existing
+            library.delete()
+        except:
+            None
+
+        assert (
+            LoadedLibrary.objects.filter(
+                objects_meta__requirement_mapping_sets__isnull=True,
+                objects_meta__requirement_mapping_set__isnull=True,
+            ).count()
+            == baseline + 1
+        )
+
+        try:  # wrapping in try/except to avoid raising exception due to StoredLibrary not existing
+            dependency_library.delete()
+        except:
+            None
+
+        assert (
+            LoadedLibrary.objects.filter(
+                objects_meta__requirement_mapping_sets__isnull=True,
+                objects_meta__requirement_mapping_set__isnull=True,
+            ).count()
+        ) == baseline
+
+
+@pytest.mark.django_db
+class TestRequirementMapping:
+    pytestmark = pytest.mark.django_db
+
+    @pytest.mark.usefixtures("iso27001_csf1_1_frameworks_fixture")
+    def test_requirement_mapping_creation(self):
+        target_framework = Framework.objects.get(
+            urn="urn:intuitem:risk:framework:iso27001-2022"
+        )
+        source_framework = Framework.objects.get(
+            urn="urn:intuitem:risk:framework:nist-csf-1.1"
+        )
+        mapping_set = RequirementMappingSet.objects.create(
+            source_framework=source_framework,
+            target_framework=target_framework,
+        )
+
+        target_requirement = RequirementNode.objects.filter(
+            urn="urn:intuitem:risk:req_node:nist-csf-1.1:pr.ac-1"
+        ).last()
+        source_requirement = RequirementNode.objects.get(
+            urn="urn:intuitem:risk:req_node:iso27001-2022:a.5.15"
+        )
+
+        mapping = RequirementMapping.objects.create(
+            target_requirement=target_requirement,
+            source_requirement=source_requirement,
+            relationship=RequirementMapping.Relationship.INTERSECT,
+            mapping_set=mapping_set,
+        )
+
+        assert mapping.target_requirement == target_requirement
+        assert mapping.relationship == RequirementMapping.Relationship.INTERSECT
+        assert mapping.source_requirement == source_requirement
+
+
+@pytest.mark.django_db
+class TestRequirementMappingSet:
+    pytestmark = pytest.mark.django_db
+
+    @pytest.mark.usefixtures("iso27001_csf1_1_frameworks_fixture")
+    def test_requirement_mapping_set_creation(self):
+        root_folder = Folder.objects.get(content_type=Folder.ContentType.ROOT)
+        iso27001 = Framework.objects.get(
+            urn="urn:intuitem:risk:framework:iso27001-2022"
+        )
+        csf1_1 = Framework.objects.get(urn="urn:intuitem:risk:framework:nist-csf-1.1")
+        requirement_mapping_set = RequirementMappingSet.objects.create(
+            name="Requirement Mapping Set",
+            description="Requirement Mapping Set description",
+            source_framework=csf1_1,
+            target_framework=iso27001,
+        )
+        assert requirement_mapping_set.name == "Requirement Mapping Set"
+        assert (
+            requirement_mapping_set.description == "Requirement Mapping Set description"
+        )
+        assert requirement_mapping_set.folder == root_folder
+        assert requirement_mapping_set.target_framework == iso27001
+        assert requirement_mapping_set.source_framework == csf1_1
+        assert requirement_mapping_set.mappings.count() == 0
+
+    @pytest.mark.usefixtures("iso27001_csf1_1_frameworks_fixture")
+    def test_requirement_mapping_set_source_and_target_frameworks_must_be_distinct(
+        self,
+    ):
+        csf1_1 = Framework.objects.get(urn="urn:intuitem:risk:framework:nist-csf-1.1")
+        with pytest.raises(ValidationError):
+            RequirementMappingSet.objects.create(
+                name="Requirement Mapping Set",
+                description="Requirement Mapping Set description",
+                source_framework=csf1_1,
+                target_framework=csf1_1,
+            )

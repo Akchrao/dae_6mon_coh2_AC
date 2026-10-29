@@ -1,0 +1,95 @@
+import { BASE_API_URL } from '#lib/utils/constants.js';
+import { fetchAllPages } from '#lib/utils/pagination.js';
+import { pickWorkingRevision } from '#lib/utils/documentRevisions.js';
+import { error, redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+
+export const load: PageServerLoad = async (event) => {
+	const { fetch, params, cookies, locals } = event;
+
+	if (!(await locals.getFeatureFlags())?.policy_documents) {
+		redirect(302, `/policies/${params.id}`);
+	}
+
+	// Load the policy — this is required, fail if unavailable
+	const policyRes = await fetch(`${BASE_API_URL}/policies/${params.id}/`);
+	if (!policyRes.ok) {
+		error(policyRes.status, 'Failed to load policy');
+	}
+	const policy = await policyRes.json();
+
+	// Determine user's preferred locale
+	const userLocale = cookies.get('LOCALE') || 'en';
+
+	// Fetch all documents for this policy (for locale switcher)
+	// Gracefully degrade if doc_management is unavailable
+	let allDocuments: any[] = [];
+	try {
+		allDocuments = await fetchAllPages(
+			fetch,
+			`${BASE_API_URL}/managed-documents/?container__policies=${params.id}`
+		);
+	} catch {
+		// doc_management app may not be available
+	}
+
+	// Extract available locales from existing documents
+	const availableLocales: string[] = allDocuments.map((d: any) => d.locale || 'en');
+
+	// Try to find the document matching user's locale
+	let document =
+		allDocuments.find((d: any) => d.locale === userLocale) ||
+		allDocuments.find((d: any) => d.default_locale) ||
+		allDocuments[0] ||
+		null;
+
+	let revisions: any[] = [];
+	let currentRevision: any = null;
+
+	if (document) {
+		// Load revisions
+		try {
+			revisions = await fetchAllPages(
+				fetch,
+				`${BASE_API_URL}/document-revisions/?document=${document.id}&ordering=-version_number`
+			);
+		} catch {
+			// Gracefully degrade
+		}
+
+		const working = pickWorkingRevision(revisions);
+		try {
+			if (working) {
+				const fullRes = await fetch(`${BASE_API_URL}/document-revisions/${working.id}/`);
+				if (fullRes.ok) {
+					currentRevision = await fullRes.json();
+				}
+			}
+		} catch {
+			// Gracefully degrade
+		}
+	}
+
+	// Load available templates
+	let templates: any[] = [];
+	try {
+		const templatesRes = await fetch(
+			`${BASE_API_URL}/managed-documents/templates/?document_type=policy`
+		);
+		if (templatesRes.ok) {
+			templates = await templatesRes.json();
+		}
+	} catch {
+		// Templates are optional
+	}
+
+	return {
+		policy,
+		document,
+		revisions,
+		currentRevision,
+		templates,
+		availableLocales,
+		userLocale
+	};
+};

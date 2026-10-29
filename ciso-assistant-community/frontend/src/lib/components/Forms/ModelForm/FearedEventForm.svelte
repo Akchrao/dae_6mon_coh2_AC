@@ -1,0 +1,89 @@
+<script lang="ts">
+	import type { SuperValidated } from 'sveltekit-superforms';
+	import type { ModelInfo, CacheLock } from '#lib/utils/types.js';
+	import TextField from '#lib/components/Forms/TextField.svelte';
+	import AutocompleteSelect from '#lib/components/Forms/AutocompleteSelect.svelte';
+	import Select from '#lib/components/Forms/Select.svelte';
+	import { m } from '#paraglide/messages.js';
+	import { safeTranslate } from '#lib/utils/i18n.js';
+	import TextArea from '../TextArea.svelte';
+	import Checkbox from '#lib/components/Forms/Checkbox.svelte';
+	import MarkdownField from '#lib/components/Forms/MarkdownField.svelte';
+
+	interface Props {
+		form: SuperValidated<any>;
+		model: ModelInfo;
+		cacheLocks?: Record<string, CacheLock>;
+		formDataCache?: Record<string, any>;
+		initialData?: Record<string, any>;
+	}
+
+	let {
+		form,
+		model,
+		cacheLocks = {},
+		formDataCache = $bindable({}),
+		initialData = {}
+	}: Props = $props();
+</script>
+
+<p class="text-sm text-surface-600-400">{m.fearedEventHelpText()}</p>
+<AutocompleteSelect
+	{form}
+	field="ebios_rm_study"
+	cacheLock={cacheLocks['ebios_rm_study']}
+	bind:cachedValue={formDataCache['ebios_rm_study']}
+	label={m.ebiosRmStudy()}
+	hidden={initialData.ebios_rm_study}
+/>
+<Select
+	{form}
+	options={model.selectOptions['gravity']}
+	field="gravity"
+	label={m.gravity()}
+	cacheLock={cacheLocks['gravity']}
+	bind:cachedValue={formDataCache['gravity']}
+	helpText={m.gravityHelpText()}
+/>
+<MarkdownField
+	{form}
+	field="justification"
+	label={m.justification()}
+	cacheLock={cacheLocks['justification']}
+	bind:cachedValue={formDataCache['justification']}
+	data-focusindex="1"
+/>
+<AutocompleteSelect
+	multiple
+	{form}
+	optionsEndpoint="assets"
+	optionsDetailedUrlParameters={[['ebios_rm_studies', initialData.ebios_rm_study]]}
+	optionsExtraFields={[['folder', 'str']]}
+	optionsInfoFields={{
+		fields: [
+			{
+				field: 'type'
+			}
+		],
+		classes: 'text-blue-500'
+	}}
+	optionsLabelField="auto"
+	field="assets"
+	label={m.assets()}
+	helpText={m.fearedEventAssetHelpText()}
+/>
+<AutocompleteSelect
+	multiple
+	{form}
+	optionsEndpoint="terminologies?field_path=qualifications&is_visible=true"
+	field="qualifications"
+	optionsLabelField="translated_name"
+	label={safeTranslate('qualifications')}
+	helpText={m.fearedEventQualificationHelpText()}
+/>
+<Checkbox
+	{form}
+	field="is_selected"
+	label={m.isSelected()}
+	helpText={m.fearedEventIsSelectedHelpText()}
+/>

@@ -1,0 +1,105 @@
+name: Backend migrations check
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize]
+    paths:
+      - "backend/**"
+      - "enterprise/backend/**"
+      - ".github/workflows/backend-migrations-check.yaml"
+  workflow_dispatch:
+
+# Cancel older in-progress runs for the same PR or the same ref (branch)
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GITHUB_WORKFLOW: github_actions
+  backend-directory: ./backend
+  enterprise-backend-directory: ./enterprise/backend
+  enterprise-backend-settings-module: enterprise_core.settings
+  UBUNTU_VERSION: "ubuntu-24.04"
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  migrations-check:
+    runs-on: ubuntu-24.04
+    env:
+      DJANGO_DEBUG: "True"
+      DJANGO_SUPERUSER_EMAIL: admin@tests.com
+      DJANGO_SUPERUSER_PASSWORD: 1234
+      DB_HOST: localhost
+      CISO_ASSISTANT_SUPERUSER_EMAIL: ""
+      CISO_ASSISTANT_URL: http://localhost:4173
+      DEFAULT_FROM_EMAIL: "ciso-assistant@tests.net"
+      EMAIL_HOST: localhost
+      EMAIL_HOST_USER: user@tests.com
+      EMAIL_HOST_PASSWORD: password
+      EMAIL_PORT: 1025
+
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ["3.14"]
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Install uv and set up python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - name: Install backend requirements
+        working-directory: ${{ env.backend-directory }}
+        run: uv sync --locked
+      - name: Check that migrations were made
+        working-directory: ${{ env.backend-directory }}
+        run: uv run python manage.py makemigrations --check --dry-run --verbosity=3
+
+  enterprise-migrations-check:
+    runs-on: ubuntu-24.04
+    env:
+      DJANGO_DEBUG: "True"
+      DJANGO_SUPERUSER_EMAIL: admin@tests.com
+      DJANGO_SUPERUSER_PASSWORD: 1234
+      DB_HOST: localhost
+      CISO_ASSISTANT_SUPERUSER_EMAIL: ""
+      CISO_ASSISTANT_URL: http://localhost:4173
+      DEFAULT_FROM_EMAIL: "ciso-assistant@tests.net"
+      EMAIL_HOST: localhost
+      EMAIL_HOST_USER: user@tests.com
+      EMAIL_HOST_PASSWORD: password
+      EMAIL_PORT: 1025
+      DJANGO_SETTINGS_MODULE: enterprise_core.settings
+      LICENSE_SEATS: 999
+
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: ["3.14"]
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Install uv and set up python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+        with:
+          python-version: ${{ matrix.python-version }}
+          enable-cache: true
+      - name: Install enterprise backend requirements
+        working-directory: ${{ env.enterprise-backend-directory }}
+        run: uv sync --locked
+      - name: Check that migrations were made
+        working-directory: ${{ env.backend-directory }}
+        env:
+          SETTINGS_MODULE: ${{ env.enterprise-backend-settings-module }}
+        run: |
+          uv run --project ../enterprise/backend python manage.py makemigrations --check --dry-run --verbosity=3 --settings="$SETTINGS_MODULE"
+          if [ $? -ne 0 ]; then echo "::error Migrations were not made, please run the makemigrations command." && exit 1; fi

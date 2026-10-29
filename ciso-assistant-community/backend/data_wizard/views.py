@@ -1,0 +1,9745 @@
+import csv
+import enum
+import importlib
+import io
+import logging
+import math
+import structlog
+import re
+from abc import ABC, abstractmethod
+from collections import defaultdict
+from dataclasses import dataclass, field, replace
+from datetime import date, datetime
+from functools import cached_property
+from pathlib import Path
+from types import MappingProxyType
+from typing import Any, ClassVar, Final, Mapping, Optional
+from uuid import UUID
+
+import pandas as pd
+import structlog
+from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.files.uploadedfile import UploadedFile
+from django.db import IntegrityError, models, transaction
+from django.db.models import Q
+from django.http import FileResponse, HttpRequest
+from django.utils import timezone
+from rest_framework import status
+from rest_framework.parsers import FileUploadParser
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from core.base_models import AbstractBaseModel
+from core.constants import COUNTRY_CHOICES
+from core.cyfun import CYFUN_2025_URN
+from core.models import (
+    Actor,
+    AppliedControl,
+    Assessment,
+    Asset,
+    AssetClass,
+    ComplianceAssessment,
+    Evidence,
+    FilteringLabel,
+    FindingsAssessment,
+    Folder,
+    Framework,
+    Incident,
+    LoadedLibrary,
+    Perimeter,
+    Policy,
+    RequirementAssessment,
+    RequirementNode,
+    RiskAssessment,
+    RiskMatrix,
+    RiskScenario,
+    SecurityException,
+    StoredLibrary,
+    TaskNode,
+    TaskTemplate,
+    Terminology,
+    Threat,
+    Vulnerability,
+)
+from core.serializers import (
+    AppliedControlWriteSerializer,
+    AssetWriteSerializer,
+    BaseModelSerializer,
+    ComplianceAssessmentWriteSerializer,
+    EvidenceWriteSerializer,
+    FindingsAssessmentWriteSerializer,
+    FindingWriteSerializer,
+    FolderWriteSerializer,
+    IncidentWriteSerializer,
+    PerimeterWriteSerializer,
+    PolicyWriteSerializer,
+    ReferenceControlWriteSerializer,
+    RequirementAssessmentWriteSerializer,
+    RiskAssessmentWriteSerializer,
+    RiskScenarioWriteSerializer,
+    SecurityExceptionWriteSerializer,
+    TaskTemplateWriteSerializer,
+    ThreatWriteSerializer,
+    UserWriteSerializer,
+    VulnerabilityWriteSerializer,
+)
+from core.utils import (
+    build_questions_dict,
+    get_global_currency,
+    parse_answers_cell,
+    unescape_excel_formula,
+)
+from data_wizard.arm_helpers import process_arm_file
+from data_wizard.cyfun_helpers import (
+    CYFUN_LIBRARY_URN,
+    LEVEL_TO_GROUP,
+    process_cyfun_file,
+)
+from ebios_rm.models import (
+    AttackPath,
+    EbiosRMStudy,
+    ElementaryAction,
+    FearedEvent,
+    KillChain,
+    RoTo,
+    Stakeholder,
+    StrategicScenario,
+)
+from ebios_rm.serializers import (
+    EbiosRMStudyWriteSerializer,
+    ElementaryActionWriteSerializer,
+)
+from rest_framework.exceptions import APIException, PermissionDenied
+
+from core.views import check_folder_add_permission
+from iam.models import Permission, RoleAssignment, User
+from privacy.models import (
+    ART6_LAWFUL_BASIS_CHOICES,
+    ART9_SPECIAL_CATEGORY_CONDITION_CHOICES,
+    TRANSFER_MECHANISM_CHOICES,
+    DataContractor,
+    DataRecipient,
+    DataSubject,
+    PersonalData,
+    Processing,
+)
+from privacy.serializers import (
+    DataContractorWriteSerializer,
+    DataRecipientWriteSerializer,
+    DataSubjectWriteSerializer,
+    DataTransferWriteSerializer,
+    PersonalDataWriteSerializer,
+    ProcessingWriteSerializer,
+    PurposeWriteSerializer,
+)
+from resilience.models import (
+    AssetAssessment,
+    BusinessImpactAnalysis,
+    EscalationThreshold,
+)
+from resilience.serializers import (
+    AssetAssessmentWriteSerializer,
+    BusinessImpactAnalysisWriteSerializer,
+    EscalationThresholdWriteSerializer,
+)
+from tprm.models import Contract, Entity, EntityAssessment, Representative, Solution
+from tprm.serializers import (
+    ContractWriteSerializer,
+    EntityAssessmentWriteSerializer,
+    EntityWriteSerializer,
+    RepresentativeWriteSerializer,
+    SolutionWriteSerializer,
+)
+
+from .ebios_rm_excel_helpers import (
+    extract_elementary_actions,
+)
+from .ebios_rm_excel_helpers import (
+    process_excel_file as process_ebios_rm_excel,
+)
+from .egerie_xml_helpers import (
+    map_egerie_status,
+    quartile_to_index,
+)
+from .egerie_xml_helpers import (
+    process_xml_file as process_egerie_xml,
+)
+from metrology.models import MetricDefinition, MetricInstance
+from metrology.serializers import (
+    CustomMetricSampleWriteSerializer,
+    MetricInstanceWriteSerializer,
+)
+
+from .serializers import LoadFileSerializer
+
+logger = structlog.get_logger(__name__)
+
+
+def resolve_container_name(
+    request, default_prefix: str, override: Optional[str] = None
+) -> str:
+    """Return a user-supplied name for an imported container object (assessment,
+    study, etc.) or a timestamped fallback.
+
+    Data Wizard imports that create a single parent object (e.g. compliance /
+    risk / findings assessments, EBIOS RM studies) let the client override the
+    auto-generated name via the ``X-Name`` header, or the caller pass one
+    directly. When both are absent or blank,
+    ``{default_prefix}_{YYYYMMDD_HHMMSS}`` is used.
+    """
+    if override and override.strip():
+        return override.strip()
+    custom_name = ""
+    if request is not None:
+        custom_name = (request.headers.get("X-Name") or "").strip()
+    if custom_name:
+        return custom_name
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    return f"{default_prefix}_{timestamp}"
+
+
+def may_import(user: User, model_name: str, folder_id) -> bool:
+    """Does *user* hold ``add_<model_name>`` where the import would write?"""
+    # No target folder is legitimate: rows may carry their own `domain`, and
+    # the per-record serializer check is what scopes those writes.
+    if not folder_id:
+        return RoleAssignment.has_permission_anywhere(user, f"add_{model_name}")
+
+    try:
+        folder = Folder.objects.filter(id=UUID(str(folder_id))).first()
+    except ValueError:
+        return False
+    if folder is None:
+        return False
+    try:
+        perm = Permission.objects.get(codename=f"add_{model_name}")
+    except Permission.DoesNotExist:
+        logger.error("No import permission defined", model_name=model_name)
+        return False
+    return RoleAssignment.is_access_allowed(user=user, perm=perm, folder=folder)
+
+
+def resolve_accessible_target(model_class, target_id, user):
+    """Resolve a client-supplied reconciliation target, scoped to the objects the
+    user may change. Returns None when the id is unknown or out of reach."""
+    if not target_id:
+        return None
+    change_ids = RoleAssignment.get_changeable_object_ids(user, model_class)
+    return model_class.objects.filter(id=target_id, id__in=change_ids).first()
+
+
+def get_accessible_folders_map(user: User) -> dict[str, UUID]:
+    """
+    Build a map of folder names to IDs that the provided user can access.
+    Used by the data wizard import flow to validate targets.
+
+    Deliberately view-scoped: consumers fall back to the request folder for any
+    name absent from this map, so narrowing it to add-permitted folders would
+    silently redirect a row instead of failing it. The write serializers reject
+    the unauthorized folder loudly, which is the behaviour we want.
+    """
+    viewable_folders_ids = RoleAssignment.get_viewable_object_ids(user, Folder)
+    folders_map = {
+        f.name.lower(): f.id for f in Folder.objects.filter(id__in=viewable_folders_ids)
+    }
+    return folders_map
+
+
+ZIP_MAGIC_NUMBER: Final[bytes] = bytes([0x50, 0x4B, 0x03, 0x04])
+
+# Characters Excel forbids in sheet names, stripped by the task export
+# (mirror of INVALID_CHARS in TaskTemplateViewSet.export_xlsx).
+SHEET_NAME_INVALID_CHARS: Final[str] = r"[\\\/\?\*\[\]:]"
+
+
+def is_excel_file(file: io.BytesIO) -> bool:
+    file_data = file.read(len(ZIP_MAGIC_NUMBER))
+    is_excel = file_data == ZIP_MAGIC_NUMBER
+    file.seek(0)
+    return is_excel
+
+
+def read_csv_file(file: io.BytesIO) -> pd.DataFrame:
+    """Read a CSV, detecting the delimiter among ``, ; \\t |`` (defaults to comma).
+
+    Avoids pandas' ``sep=None`` sniffing, which treats any character as a
+    candidate and misreads single-column files (e.g. picking ``n`` in ``name``).
+    utf-8-sig transparently strips the BOM our CSV exports prepend for Excel,
+    so the first column header is not corrupted.
+    """
+    sample = file.read(8192).decode("utf-8-sig", errors="replace")
+    file.seek(0)
+    try:
+        sep = csv.Sniffer().sniff(sample, delimiters=",;\t|").delimiter
+    except csv.Error:
+        sep = ","
+    # Keep ref_ids as text: parsed as floats, "X.10" collapses onto "X.1".
+    header = pd.read_csv(io.StringIO(sample), sep=sep, nrows=0).columns
+    dtype = {c: str for c in header if str(c).strip().lower().endswith("ref_id")}
+    return pd.read_csv(file, sep=sep, encoding="utf-8-sig", dtype=dtype).fillna("")
+
+
+def read_excel_sheet(file: io.BytesIO, sheet_name=0) -> pd.DataFrame:
+    """Read a sheet keeping text cells as text (pandas would turn "1.10" into 1.1),
+    while numeric, boolean and date cells keep their inferred dtypes.
+    ref_id columns are always text, even when typed as numbers in Excel."""
+    df = pd.read_excel(file, sheet_name=sheet_name, dtype=object)
+    for c in df.columns:
+        if str(c).strip().lower().endswith("ref_id"):
+            df[c] = df[c].map(lambda v: v if pd.isna(v) else str(v))
+    return df.infer_objects()
+
+
+def normalize_datetime_columns(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Convert datetime columns to ISO format strings.
+    Uses date-only format (YYYY-MM-DD) when there is no time component,
+    full ISO format otherwise. NaT values become empty strings.
+    """
+    for col in df.select_dtypes(include=["datetime64", "datetimetz"]).columns:
+        df[col] = df[col].apply(
+            lambda x: (
+                x.strftime("%Y-%m-%d")
+                if pd.notna(x) and x == x.normalize()
+                else (x.isoformat() if pd.notna(x) else "")
+            )
+        )
+    return df
+
+
+def _parse_date(value: "datetime | date | str | int | bool | None") -> Optional[str]:
+    """Normalize a value to a YYYY-MM-DD string for DRF DateField."""
+    if not value or value == "":
+        return None
+    if isinstance(value, datetime):  # datetime first — it is a subclass of date
+        return value.strftime("%Y-%m-%d")
+    if isinstance(value, date):
+        return value.strftime("%Y-%m-%d")
+    if isinstance(value, str) and "T" in value:
+        return value.split("T")[0]
+    return str(value)
+
+
+def _parse_datetime(value) -> Optional[str]:
+    """Normalize a value to an ISO datetime string for DRF DateTimeField."""
+    if not value or value == "":
+        return None
+    if isinstance(value, datetime):
+        return value.isoformat()
+    return value
+
+
+def _parse_time_to_seconds(s: str) -> int | None:
+    """Parse a time string like '4h', '2h30m', '24h10s', '01m30s' to seconds."""
+    if not s:
+        return None
+    s = s.strip()
+    try:
+        return int(s)
+    except ValueError:
+        pass
+    m = re.fullmatch(r"(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?", s)
+    if not m or not any(m.groups()):
+        return None
+    h, mn, sc = (int(x) if x else 0 for x in m.groups())
+    return h * 3600 + mn * 60 + sc
+
+
+def _get_security_objective_scale() -> list:
+    """Return the active security-objective scale from GlobalSettings."""
+    from global_settings.models import GlobalSettings
+
+    settings = GlobalSettings.objects.filter(name="general").first()
+    scale_key = (
+        settings.value.get("security_objective_scale", "1-4") if settings else "1-4"
+    )
+    return Asset.SECURITY_OBJECTIVES_SCALES[scale_key]
+
+
+def _reverse_scale_value(display_val: str, scale: list) -> int | None:
+    """Map a display value back to its raw 0-based index.
+
+    The scale list maps raw index → display value.  We need the reverse:
+    find the *first* index whose display value matches.
+    Supports both numeric scales (1-4, 0-3, …) and string scales (FIPS-199).
+    """
+    # Try numeric comparison first
+    try:
+        numeric = int(display_val)
+        for idx, sv in enumerate(scale):
+            if isinstance(sv, (int, float)) and int(sv) == numeric:
+                return idx
+    except ValueError, TypeError:
+        pass
+
+    # Fall back to case-insensitive string comparison (e.g. FIPS-199)
+    display_lower = display_val.strip().lower()
+    for idx, sv in enumerate(scale):
+        if str(sv).lower() == display_lower:
+            return idx
+
+    return None
+
+
+def _parse_security_objectives(raw: str, scale: list | None = None) -> dict:
+    """Parse 'confidentiality: 3,integrity: 2' → {key: {"value": int, "is_enabled": True}}.
+
+    Values in the input are *display* values (scale-mapped).  They are
+    reverse-mapped back to the raw 0-based index before storage so that
+    an export → import round-trip is lossless.
+    """
+    result = {}
+    if not raw:
+        return result
+    if scale is None:
+        scale = _get_security_objective_scale()
+    for part in str(raw).split(","):
+        part = part.strip()
+        if ":" not in part:
+            continue
+        key, _, val = part.partition(":")
+        key = key.strip()
+        v = _reverse_scale_value(val.strip(), scale)
+        if v is not None and 0 <= v <= 4:
+            result[key] = {"value": v, "is_enabled": True}
+    return result
+
+
+def _parse_recovery_objectives(raw: str) -> dict:
+    """Parse 'rto: 4h,rpo: 5h,mtd: 6h' → {key: {"value": seconds}}."""
+    result = {}
+    if not raw:
+        return result
+    for part in str(raw).split(","):
+        part = part.strip()
+        if ":" not in part:
+            continue
+        key, _, val = part.partition(":")
+        key = key.strip()
+        secs = _parse_time_to_seconds(val.strip())
+        if secs is not None and secs >= 0:
+            result[key] = {"value": secs}
+    return result
+
+
+def _resolve_asset_class(value: Any, path_index: dict) -> Optional[AssetClass]:
+    """Resolve a canonical asset class path, or an unambiguous leaf name."""
+    if not isinstance(value, str):
+        return None
+    token = value.strip()
+    if not token:
+        return None
+
+    normalized = "/".join(part.strip() for part in token.split("/") if part.strip())
+    match = path_index.get(normalized.lower())
+    if match is not None:
+        return match
+
+    # A path that names its parents is explicit: falling back to a leaf match
+    # elsewhere in the tree would silently reclassify the asset.
+    if "/" in normalized:
+        return None
+
+    candidates = [
+        node
+        for key, node in path_index.items()
+        if key.split("/")[-1] == normalized.lower()
+    ]
+    return candidates[0] if len(candidates) == 1 else None
+
+
+def _split_label_names(value: Any) -> set[str]:
+    """Split a pipe-, comma- or newline-separated cell into label names."""
+    if not isinstance(value, str):
+        return set()
+    return {name.strip() for name in re.split(r"[|,\n]", value) if name.strip()}
+
+
+def _invalid_label_names(names: set[str]) -> list[str]:
+    """Names FilteringLabel would reject, so a row can fail with a clear message."""
+    field = FilteringLabel._meta.get_field("label")
+    invalid = []
+    for name in names:
+        try:
+            field.run_validators(name)
+        except ValidationError:
+            invalid.append(name)
+    return sorted(invalid)
+
+
+def _resolve_filtering_labels(value: Any) -> list[UUID]:
+    """Parse pipe- or comma-separated label names and return list of FilteringLabel IDs.
+
+    Labels that do not yet exist are created on the fly.
+    """
+    label_names = _split_label_names(value)
+    label_ids: list[UUID] = []
+    for label_name in label_names:
+        label = FilteringLabel.objects.filter(label=label_name).first()
+        if label is None:
+            try:
+                label = FilteringLabel(label=label_name)
+                label.full_clean()
+                label.save()
+            except Exception:
+                logging.error(f"Failed to save label: {value}")
+        label_ids.append(label.id)
+    return label_ids
+
+
+def _resolve_actors(value: Any, unresolved: list[str] | None = None) -> list[UUID]:
+    """Resolve separated user emails or team names to Actor IDs.
+
+    Each entry is matched as a user email first, then as a team name; entries that
+    match neither are skipped, since a typo must not silently become a new actor.
+    Skipped entries are added to *unresolved* when given, to warn the importer.
+    """
+    if not isinstance(value, str):
+        return []
+
+    actor_ids: list[UUID] = []
+    for entry in re.split(r"[|,;\n]", value):
+        entry = entry.strip()
+        if not entry:
+            continue
+        actor = (
+            Actor.objects.filter(user__email__iexact=entry).first()
+            or Actor.objects.filter(team__name__iexact=entry).first()
+        )
+        if actor is not None:
+            actor_ids.append(actor.id)
+        else:
+            if unresolved is not None:
+                unresolved.append(entry)
+            # Masked: owner entries are emails, which have no place in the logs.
+            logger.warning(
+                "Import: could not resolve owner entry (masked: %s***); skipping.",
+                entry[:4],
+            )
+    return actor_ids
+
+
+def _resolve_vulnerabilities(
+    value: str | None, folder: "Folder"
+) -> tuple[list[UUID], list[str]]:
+    """
+    Parse pipe- or comma-separated vulnerability identifiers and return a tuple of
+    (list of resolved Vulnerability IDs, list of values that failed to resolve).
+
+    Each token is matched against existing vulnerabilities in the given folder by
+    ref_id first, then by name.  If no match is found a new Vulnerability is created
+    using the token as its name.
+    """
+    if not value or not isinstance(value, str):
+        return [], []
+    tokens = [t.strip() for t in re.split(r"[|,\n]", value) if t.strip()]
+    vuln_ids: list[UUID] = []
+    failed_tokens: list[str] = []
+    for token in tokens:
+        try:
+            vuln = (
+                Vulnerability.objects.filter(ref_id=token, folder=folder).first()
+                or Vulnerability.objects.filter(
+                    name__iexact=token, folder=folder
+                ).first()
+            )
+            if vuln is None:
+                create_kwargs = {"name": token, "folder": folder}
+                ref_id_max = Vulnerability._meta.get_field("ref_id").max_length
+                if len(token) <= ref_id_max:
+                    create_kwargs["ref_id"] = token
+                vuln = Vulnerability.objects.create(**create_kwargs)
+            vuln_ids.append(vuln.id)
+        except Exception:
+            logging.exception(f"Failed to resolve vulnerability {token}")
+            failed_tokens.append(token)
+    return vuln_ids, failed_tokens
+
+
+def _split_multi_separator(text: Any) -> list[str]:
+    """Split a cell on newline, pipe, semicolon or comma; trimmed, non-empty."""
+    if not text or not isinstance(text, str):
+        return []
+    return [item.strip() for item in re.split(r"[\n|;,]", text) if item.strip()]
+
+
+@dataclass
+class SideObjects:
+    ids: list[UUID] = field(default_factory=list)
+    failed: list[str] = field(default_factory=list)
+    created: list[str] = field(default_factory=list)
+    # Tokens matching several objects with none a better fit; left unlinked.
+    ambiguous: list[str] = field(default_factory=list)
+
+
+def _resolve_named_objects(
+    value: Any,
+    folder: "Folder",
+    request,
+    model_class,
+    serializer_class,
+    extra_create_data: Optional[dict] = None,
+    linked=None,
+) -> SideObjects:
+    """Resolve object names on a row to ids in *folder*, by ref_id then name.
+
+    The *linked* objects (already on the record, wherever they live) are
+    matched first, so re-importing an export does not duplicate them. Misses
+    are created through the write serializer, and only when the user may add
+    that model there; otherwise the token comes back in `failed`.
+    """
+    resolved = SideObjects()
+    tokens = _split_multi_separator(value)
+    if not tokens:
+        return resolved
+
+    may_create: Optional[bool] = None
+    model_name = model_class._meta.model_name
+    scopes = [model_class.objects.filter(folder=folder)]
+    if linked is not None:
+        scopes.insert(0, linked)
+    for token in tokens:
+        obj = next(
+            (
+                found
+                for scope in scopes
+                if (
+                    found := scope.filter(ref_id=token).first()
+                    or scope.filter(name__iexact=token).first()
+                )
+            ),
+            None,
+        )
+        if obj is None:
+            if may_create is None:
+                may_create = may_import(request.user, model_name, folder.id)
+            if not may_create:
+                resolved.failed.append(token)
+                continue
+            serializer = serializer_class(
+                data={
+                    "name": token,
+                    "folder": str(folder.id),
+                    **(extra_create_data or {}),
+                },
+                context={"request": request},
+            )
+            if not serializer.is_valid():
+                logger.warning(
+                    "import_side_object_invalid",
+                    model=model_name,
+                    token=token,
+                    errors=serializer.errors,
+                )
+                resolved.failed.append(token)
+                continue
+            obj = serializer.save()
+            resolved.created.append(token)
+        resolved.ids.append(obj.id)
+    return resolved
+
+
+def _resolve_assets(value: Any, folder: "Folder", request) -> SideObjects:
+    return _resolve_named_objects(
+        value,
+        folder,
+        request,
+        Asset,
+        AssetWriteSerializer,
+        extra_create_data={"type": Asset.Type.SUPPORT},
+    )
+
+
+def _resolve_applied_controls(
+    value: Any, folder: "Folder", request, linked=None
+) -> SideObjects:
+    return _resolve_named_objects(
+        value,
+        folder,
+        request,
+        AppliedControl,
+        AppliedControlWriteSerializer,
+        extra_create_data={"status": "to_do"},
+        linked=linked,
+    )
+
+
+@dataclass(frozen=True)
+class ThreatLookup:
+    """The threats a risk import may link, keyed by ref_id and by lowered name.
+
+    Candidates are the threats the user may view in the assessment's folder or
+    one of its ancestors, the root folder holding the library ones; a sibling
+    domain's threat is never a candidate. Each key maps to (distance, id)
+    pairs, distance 0 being the assessment's folder itself.
+    """
+
+    by_ref_id: Mapping[str, list[tuple[int, UUID]]]
+    by_name: Mapping[str, list[tuple[int, UUID]]]
+
+    @classmethod
+    def build(cls, user, folder: "Folder") -> "ThreatLookup":
+        distances = {
+            f.id: distance
+            for distance, f in enumerate(folder.get_parent_folders(include_self=True))
+        }
+        by_ref_id: dict[str, list[tuple[int, UUID]]] = defaultdict(list)
+        by_name: dict[str, list[tuple[int, UUID]]] = defaultdict(list)
+        rows = Threat.objects.filter(
+            folder_id__in=distances.keys(),
+            id__in=RoleAssignment.get_viewable_object_ids(user, Threat),
+        ).values_list("id", "ref_id", "name", "folder_id")
+        for threat_id, ref_id, name, folder_id in rows:
+            entry = (distances[folder_id], threat_id)
+            if ref_id:
+                by_ref_id[ref_id].append(entry)
+            if name:
+                by_name[name.casefold()].append(entry)
+        return cls(by_ref_id=dict(by_ref_id), by_name=dict(by_name))
+
+
+def _resolve_threats(value: Any, lookup: ThreatLookup) -> SideObjects:
+    """Link threats by ref_id, then by name; never creates one.
+
+    The match in the nearest folder wins, so a domain's own threat shadows an
+    inherited one; a tie there is reported as ambiguous instead of linking
+    one of them arbitrarily.
+    """
+    resolved = SideObjects()
+    for token in _split_multi_separator(value):
+        matches = lookup.by_ref_id.get(token) or lookup.by_name.get(token.casefold())
+        if not matches:
+            resolved.failed.append(token)
+            continue
+        nearest = min(distance for distance, _ in matches)
+        candidates = {
+            threat_id for distance, threat_id in matches if distance == nearest
+        }
+        if len(candidates) > 1:
+            resolved.ambiguous.append(token)
+        else:
+            resolved.ids.append(candidates.pop())
+    return resolved
+
+
+def _resolve_owners(value: Any, unresolved: list[str] | None = None) -> list[UUID]:
+    """Owners: user emails or team names separated like any actor list, each
+    actor kept once."""
+    return list(dict.fromkeys(_resolve_actors(value, unresolved)))
+
+
+def _owner_warning(record: dict, unresolved: list[str]) -> Optional["Error"]:
+    """The row is still imported, without the owners nobody could be found for."""
+    if not unresolved:
+        return None
+    return Error(
+        record=record,
+        error=f"owner: no user or team found for {', '.join(sorted(unresolved))}",
+        is_warning=True,
+    )
+
+
+def build_matrix_mappings(risk_matrix: RiskMatrix) -> dict:
+    """Label-to-value mappings for probability and impact, translations included.
+
+    A level's value is its position in the matrix definition, which is how
+    risk scenarios index levels everywhere else. Levels carry no reliable
+    "id": built-in libraries and builder-published matrices omit it.
+    """
+    mappings: dict[str, dict[str, int]] = {"probability": {}, "impact": {}}
+
+    try:
+        matrix_definition = risk_matrix.json_definition
+        for dimension in ("probability", "impact"):
+            for index, entry in enumerate(matrix_definition.get(dimension, [])):
+                name = entry.get("name", "")
+                if name:
+                    mappings[dimension][name.strip().lower()] = index
+                for translation in (entry.get("translations") or {}).values():
+                    translated = translation.get("name", "")
+                    if translated:
+                        mappings[dimension][translated.strip().lower()] = index
+    except Exception:
+        logger.warning("matrix_mappings_build_failed", exc_info=True)
+
+    return mappings
+
+
+# Label the exports write for an unrated level (see RiskScenario._get_risk_data).
+NOT_RATED_LABEL = "--"
+
+
+def is_blank_cell(value: Any) -> bool:
+    return value is None or (isinstance(value, str) and not value.strip())
+
+
+def map_risk_value(value: Any, mapping_dict: dict) -> int:
+    """Map a probability/impact label to its matrix value, -1 when undefined."""
+    if is_blank_cell(value):
+        return -1
+    clean_value = str(value).strip().lower()
+    if clean_value == NOT_RATED_LABEL:
+        return -1
+    if clean_value in mapping_dict:
+        return mapping_dict[clean_value]
+    logger.warning(
+        "risk_value_unmapped",
+        value=str(value),
+        available=list(mapping_dict.keys()),
+    )
+    return -1
+
+
+class RecordFileType(enum.StrEnum):
+    XLSX = "Excel"
+    CSV = "CSV"
+    XML = "XML"
+
+    def get_error(self) -> str:
+        match self:
+            case RecordFileType.XLSX:
+                return "ExcelParsingFailed"
+            case RecordFileType.CSV:
+                return "CSVParsingFailed"
+            case RecordFileType.XML:
+                return "XMLParsingFailed"
+            case _:
+                raise NotImplementedError(
+                    f"Unreachable code detected (unknown {type(self).__name__} enum variant)."
+                )
+
+
+class ConflictMode(enum.StrEnum):
+    STOP = "stop"
+    SKIP = "skip"
+    UPDATE = "update"
+
+
+class ModelType(enum.StrEnum):
+    TPRM = "TPRM"
+    EBIOS_RM_STUDY_ARM = "EbiosRMStudyARM"
+    EBIOS_RM_STUDY_EXCEL = "EbiosRMStudyExcel"
+    EBIOS_RM_STUDY_EGERIE_XML = "EbiosRMStudyEgerieXML"
+    ASSET = "Asset"
+    APPLIED_CONTROL = "AppliedControl"
+    PERIMETER = "Perimeter"
+    USER = "User"
+    COMPLIANCE_ASSESSMENT = "ComplianceAssessment"
+    CYFUN_ASSESSMENT = "CyFunAssessment"
+    FINDINGS_ASSESSMENT = "FindingsAssessment"
+    RISK_ASSESSMENT = "RiskAssessment"
+    ELEMENTARY_ACTION = "ElementaryAction"
+    REFERENCE_CONTROL = "ReferenceControl"
+    THREAT = "Threat"
+    PROCESSING = "Processing"
+    FOLDER = "Folder"
+    EVIDENCE = "Evidence"
+    POLICY = "Policy"
+    SECURITY_EXCEPTION = "SecurityException"
+    INCIDENT = "Incident"
+    TASK_TEMPLATE = "TaskTemplate"
+    VULNERABILITY = "Vulnerability"
+    BUSINESS_IMPACT_ANALYSIS = "BusinessImpactAnalysis"
+    METRIC_INSTANCE = "MetricInstance"
+    METRIC_SAMPLE = "CustomMetricSample"
+
+    @staticmethod
+    def from_string(model_type: str) -> Optional["ModelType"]:
+        """Returns a ModelType on success, otherwise return None."""
+        try:
+            return ModelType(model_type)
+        except ValueError:
+            return
+
+
+# ModelType values are model class names; only multi-object imports need an entry here.
+IMPORT_ROOT_MODEL: dict[ModelType, str] = {
+    ModelType.TPRM: "entity",
+    ModelType.EBIOS_RM_STUDY_ARM: "ebiosrmstudy",
+    ModelType.EBIOS_RM_STUDY_EXCEL: "ebiosrmstudy",
+    ModelType.EBIOS_RM_STUDY_EGERIE_XML: "ebiosrmstudy",
+    ModelType.CYFUN_ASSESSMENT: "complianceassessment",
+}
+
+
+IMPORT_TEMPLATES_DIR = Path(__file__).resolve().parent / "import_templates"
+
+# Models without an entry (ComplianceAssessment, CyFun, EBIOS variants) have no
+# generic template: their file depends on a framework or comes from an external tool.
+IMPORT_TEMPLATES: dict[ModelType, str] = {
+    ModelType.ASSET: "assets_template.xlsx",
+    ModelType.APPLIED_CONTROL: "applied_controls_template.xlsx",
+    ModelType.PERIMETER: "perimeters_template.xlsx",
+    ModelType.USER: "users_template.xlsx",
+    ModelType.ELEMENTARY_ACTION: "elementary_actions_template.xlsx",
+    ModelType.REFERENCE_CONTROL: "reference_controls_template.xlsx",
+    ModelType.THREAT: "threats_template.xlsx",
+    ModelType.FOLDER: "domains_template.xlsx",
+    ModelType.SECURITY_EXCEPTION: "security_exceptions_template.xlsx",
+    ModelType.INCIDENT: "incidents_template.xlsx",
+    ModelType.POLICY: "policies_template.xlsx",
+    ModelType.VULNERABILITY: "vulnerabilities_template.xlsx",
+    ModelType.PROCESSING: "processings_template.xlsx",
+    ModelType.TPRM: "third_parties_template.xlsx",
+    ModelType.FINDINGS_ASSESSMENT: "findings_assessment_template.xlsx",
+    ModelType.RISK_ASSESSMENT: "risk_assessment_template.xlsx",
+    ModelType.BUSINESS_IMPACT_ANALYSIS: "business_impact_analysis_template.xlsx",
+    ModelType.TASK_TEMPLATE: "tasks_template.xlsx",
+    ModelType.EVIDENCE: "evidences_template.xlsx",
+    ModelType.METRIC_INSTANCE: "metric_instances_template.xlsx",
+    ModelType.METRIC_SAMPLE: "metric_samples_template.xlsx",
+}
+
+
+class ImportTemplateView(APIView):
+    def get(self, request, model_type: str):
+        parsed = ModelType.from_string(model_type)
+        filename = IMPORT_TEMPLATES.get(parsed) if parsed else None
+        if filename is None:
+            return Response(
+                {"error": "noTemplateAvailable"}, status=status.HTTP_404_NOT_FOUND
+            )
+        return FileResponse(
+            (IMPORT_TEMPLATES_DIR / filename).open("rb"),
+            as_attachment=True,
+            filename=filename,
+        )
+
+
+@dataclass(frozen=True)
+class Error:
+    record: dict
+    error: str
+    is_warning: bool = False
+
+    def to_dict(self) -> dict:
+        return {"record": self.record, "error": self.error}
+
+
+def readable_error(error: Any) -> str:
+    """'field: message' text for a validation error, whatever its shape, instead
+    of the repr of DRF's ErrorDetail objects."""
+    if isinstance(error, APIException):
+        error = error.detail
+    elif isinstance(error, ValidationError):
+        error = getattr(error, "message_dict", None) or error.messages
+    elif isinstance(error, Exception):
+        # Any other exception may carry database or code internals.
+        logger.error("Unexpected import error", error=error)
+        return "Unexpected error, see the server logs"
+    if isinstance(error, dict):
+        # "a: x; b: y", without the ".;" a period-ending message would leave.
+        return "; ".join(
+            (
+                readable_error(v)
+                if k == "non_field_errors"
+                else f"{k}: {readable_error(v)}"
+            ).rstrip(".")
+            for k, v in error.items()
+        )
+    if isinstance(error, (list, tuple)):
+        return " ".join(readable_error(v) for v in error)
+    return str(error)
+
+
+class FolderScopeError(ValueError):
+    """Raised when an existing-record lookup cannot be scoped to a folder."""
+
+
+def _parse_bool_cell(value: object, *, binary_only: bool = False) -> Optional[bool]:
+    """Parse a boolean cell. Returns None when the value is unrecognized.
+
+    binary_only additionally rejects numbers other than 0/1, for columns where
+    a stray 2 is a data error rather than spreadsheet truthiness.
+    """
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        if math.isnan(value) or math.isinf(value):
+            return None
+        if binary_only and value not in (0, 1):
+            return None
+        return value != 0
+    if isinstance(value, str):
+        token = value.strip().lower()
+        if token in {"true", "yes", "y", "1", "1.0", "oui", "vrai", "x"}:
+            return True
+        if token in {"false", "no", "n", "0", "0.0", "non", "faux"}:
+            return False
+    return None
+
+
+def _bool_cell_or_false(value: object) -> bool:
+    """Lenient variant: blanks and unrecognized values read as False."""
+    return _parse_bool_cell(value) is True
+
+
+@dataclass
+class Result:
+    created: int = 0
+    updated: int = 0
+    skipped: int = 0
+    failed: int = 0
+    stopped: bool = False
+    errors: list[Error] = field(default_factory=list)
+    warnings: list[Error] = field(default_factory=list)
+    details: dict = field(default_factory=dict)
+
+    @property
+    def successful(self) -> int:
+        return self.created + self.updated
+
+    def add_created(self):
+        self.created += 1
+
+    def add_updated(self):
+        self.updated += 1
+
+    def add_skipped(self):
+        self.skipped += 1
+
+    def add_error(self, error: Error, fail_count: int = 1):
+        self.failed += fail_count
+        self.errors.append(error)
+
+    def to_dict(self) -> dict:
+        return {
+            "successful": self.successful,
+            "created": self.created,
+            "updated": self.updated,
+            "skipped": self.skipped,
+            "failed": self.failed,
+            "stopped": self.stopped,
+            "errors": [error.to_dict() for error in self.errors],
+            **(
+                {"warnings": [w.to_dict() for w in self.warnings]}
+                if self.warnings
+                else {}
+            ),
+            **({"details": self.details} if self.details else {}),
+        }
+
+
+@dataclass(frozen=True)
+class BaseContext:
+    request: HttpRequest
+    folders_map: dict[str, UUID] = field(default_factory=dict)
+    folder_id: Optional[str] = None
+    perimeter_id: Optional[str] = None
+    matrix_id: Optional[str] = None
+    framework_id: Optional[str] = None
+    on_conflict: ConflictMode = ConflictMode.STOP
+    # Existing composite container to reconcile the import into, if any.
+    target_id: Optional[str] = None
+    # Name for a container this import creates, overriding the timestamped one.
+    container_name: Optional[str] = None
+
+
+class RecordConsumer[Context = None](ABC):
+    SERIALIZER_CLASS: ClassVar[type[BaseModelSerializer]]
+    # Maps record_data keys to possible source record keys when they differ.
+    # Override in subclasses that use alternative/aliased column names.
+    SOURCE_KEY_MAP: ClassVar[Mapping[str, list[str]]] = MappingProxyType({})
+
+    def __init__(self, base_context: BaseContext):
+        self.request = base_context.request
+        self.folders_map = base_context.folders_map
+        self.folder_id = base_context.folder_id
+        self.perimeter_id = base_context.perimeter_id
+        self.matrix_id = base_context.matrix_id
+        self.framework_id = base_context.framework_id
+        self.on_conflict = base_context.on_conflict
+        self.target_id = base_context.target_id
+        self.container_name = base_context.container_name
+        self.side_effects: dict[str, list[str]] = {}
+
+    def __init_subclass__(cls):
+        provided_class = getattr(cls, "SERIALIZER_CLASS", None)
+        is_defined = provided_class is not None
+        is_serializer = is_defined and issubclass(provided_class, BaseModelSerializer)
+
+        assert is_serializer, f"Invalid serializer for class {cls.__name__}"
+
+    @classmethod
+    def get_serializer_class(cls) -> type[BaseModelSerializer]:
+        """Resolve the edition's serializer, mirroring what `SerializerFactory`
+        does for viewsets. `SERIALIZER_CLASS` is bound at import time, so without
+        this the enterprise override never reaches the importer and nested domains
+        are rejected with `subDomainsRequirePro` even on PRO.
+        """
+        override_module = settings.MODULE_PATHS.get("serializers")
+        if not override_module:
+            return cls.SERIALIZER_CLASS
+        module = importlib.import_module(override_module)
+        return getattr(module, cls.SERIALIZER_CLASS.__name__, cls.SERIALIZER_CLASS)
+
+    @abstractmethod
+    def create_context(self) -> tuple[Context, Optional[Error]]:
+        pass
+
+    @abstractmethod
+    def prepare_create(
+        self, record: dict, context: Context
+    ) -> tuple[dict, Optional[Error]]:
+        pass
+
+    def find_existing(self, record_data: dict):
+        """Find an existing record matching this data based on the model's fields_to_check.
+
+        When ref_id is listed in fields_to_check and a non-empty ref_id is supplied,
+        it is tried first (exact match + folder).  On miss the lookup falls back to
+        the remaining fields (typically name) so that either identifier alone is
+        sufficient to detect a duplicate.
+        """
+        model_class = self.SERIALIZER_CLASS.Meta.model
+        fields_to_check = getattr(model_class, "fields_to_check", [])
+        if not fields_to_check:
+            return None
+
+        folder_filter = {}
+        if hasattr(model_class, "folder"):
+            folder = record_data.get("folder") or self.folder_id
+            if folder is None:
+                raise FolderScopeError(
+                    "Cannot resolve existing record without folder context: "
+                    "provide an X-Folder-Id header or a 'domain' column"
+                )
+            folder_filter["folder"] = folder
+
+        if "ref_id" in fields_to_check:
+            ref_id = record_data.get("ref_id")
+            if ref_id:
+                existing = model_class.objects.filter(
+                    ref_id=ref_id, **folder_filter
+                ).first()
+                if existing:
+                    return existing
+
+        query = {}
+        for f in fields_to_check:
+            if f == "ref_id":
+                continue
+            value = record_data.get(f)
+            if value is None or value == "":
+                continue
+            if isinstance(value, str):
+                query[f"{f}__iexact"] = value
+            else:
+                query[f] = value
+        if not query:
+            return None
+        query.update(folder_filter)
+        return model_class.objects.filter(**query).first()
+
+    def _build_update_data(self, record: dict, record_data: dict) -> dict:
+        """
+        Filter record_data to only include fields that the user actually
+        provided with non-empty values in the source record.
+        Identity fields (used for matching) are always preserved.
+        """
+        model_class = self.SERIALIZER_CLASS.Meta.model
+        identity_fields = set(getattr(model_class, "fields_to_check", []))
+        if hasattr(model_class, "folder"):
+            identity_fields.add("folder")
+
+        update_data = {}
+        for key, value in record_data.items():
+            if key in identity_fields:
+                update_data[key] = value
+                continue
+            source_keys = self.SOURCE_KEY_MAP.get(key, [key])
+            # For M2M owner, propagate even when blank so UPDATE mode clears stale owners.
+            # Names that resolved to nobody are not a blank: keep the owners (the
+            # row's warning reports the names).
+            if key == "owner" and any(sk in record for sk in source_keys):
+                blank = all(not str(record.get(sk) or "").strip() for sk in source_keys)
+                if value or blank:
+                    update_data[key] = value
+                continue
+            if any(record.get(sk) not in (None, "") for sk in source_keys):
+                update_data[key] = value
+
+        return update_data
+
+    def process_records(self, records: list[dict]) -> Result:
+        results = Result()
+
+        context, error = self.create_context()
+        if error is not None:
+            results.add_error(error, fail_count=len(records))
+            return results
+
+        model_class = self.SERIALIZER_CLASS.Meta.model
+        viewable_ids = RoleAssignment.get_viewable_object_ids(
+            self.request.user, model_class
+        )
+        viewable_ids = set(viewable_ids)
+
+        for record in records:
+            record_data, error = self.prepare_create(record, context)
+            if error is not None:
+                if error.is_warning:
+                    results.warnings.append(error)
+                else:
+                    results.add_error(error)
+                    if self.on_conflict == ConflictMode.STOP:
+                        results.stopped = True
+                        break
+                    continue
+
+            existing = None
+            internal_id = record.get("internal_id")
+            if internal_id:
+                try:
+                    existing = model_class.objects.filter(
+                        pk=internal_id, id__in=viewable_ids
+                    ).first()
+                except ValidationError, ValueError:
+                    # A hand-edited id would otherwise abort the whole file.
+                    results.add_error(
+                        Error(
+                            record=record, error=f"Invalid internal_id '{internal_id}'"
+                        )
+                    )
+                    if self.on_conflict == ConflictMode.STOP:
+                        results.stopped = True
+                        break
+                    continue
+            if existing is None:
+                try:
+                    existing = self.find_existing(record_data)
+                except FolderScopeError as e:
+                    results.add_error(Error(record=record, error=str(e)))
+                    if self.on_conflict == ConflictMode.STOP:
+                        results.stopped = True
+                        break
+                    continue
+
+            if existing:
+                match self.on_conflict:
+                    case ConflictMode.SKIP:
+                        results.add_skipped()
+                        continue
+                    case ConflictMode.STOP:
+                        results.add_error(
+                            Error(record=record, error="Record already exists")
+                        )
+                        results.stopped = True
+                        break
+                    case ConflictMode.UPDATE:
+                        update_data = self._build_update_data(record, record_data)
+                        error = self._write_record(update_data, instance=existing)
+                        if error:
+                            results.add_error(Error(record=record, error=error))
+                        else:
+                            results.add_updated()
+                        continue
+
+            error = self._write_record(record_data)
+            if error:
+                results.add_error(Error(record=record, error=error))
+                if self.on_conflict == ConflictMode.STOP:
+                    results.stopped = True
+                    break
+            else:
+                results.add_created()
+
+        for key, names in self.side_effects.items():
+            if names:
+                results.details[key] = len(names)
+
+        logger.info(
+            f"{self.__class__.__name__} record processing complete. "
+            f"Created: {results.created}, Updated: {results.updated}, "
+            f"Skipped: {results.skipped}, Failed: {results.failed}"
+        )
+        return results
+
+    def resolve_deferred(self, data: dict, instance=None) -> dict:
+        """Resolve values whose resolution writes to the database.
+
+        Runs only once a row is known to be written, inside the transaction of
+        that write, so a skipped or rejected row leaves nothing behind.
+        *instance* is the record being updated, None on creation.
+        """
+        return data
+
+    def after_write(self, instance, created: bool) -> None:
+        """Follow-up writes for a saved row, inside the transaction of that write."""
+
+    def _write_record(self, data: dict, instance=None) -> Optional[str]:
+        """Create, or update *instance*, from *data*; return an error or None."""
+        with transaction.atomic():
+            # Validation can raise too (e.g. PermissionDenied when linking an
+            # object the user cannot view): that must fail the row, not the file.
+            try:
+                serializer = self.get_serializer_class()(
+                    instance=instance,
+                    data=self.resolve_deferred(data, instance),
+                    partial=instance is not None,
+                    context={"request": self.request},
+                )
+                if not serializer.is_valid():
+                    transaction.set_rollback(True)
+                    return readable_error(serializer.errors)
+                saved = serializer.save()
+                self.after_write(saved, created=instance is None)
+            except Exception as e:
+                transaction.set_rollback(True)
+                return readable_error(e)
+        return None
+
+    def _record_side_effects(self, key: str, resolved: SideObjects) -> None:
+        self.side_effects.setdefault(key, []).extend(resolved.created)
+
+
+class AssetRecordConsumer(RecordConsumer[list]):
+    """
+    Consumer for importing Asset records.
+    Supports parent_assets linking via ref_id in a second pass.
+    """
+
+    SERIALIZER_CLASS = AssetWriteSerializer
+    SOURCE_KEY_MAP: ClassVar[Mapping[str, list[str]]] = MappingProxyType(
+        {
+            "reference_link": ["reference_link", "link"],
+            "filtering_labels": ["filtering_labels", "labels", "étiquette", "label"],
+            "asset_class": ["asset_class", "class", "classe"],
+        }
+    )
+    TYPE_MAP: Final[dict[str, str]] = {
+        "primary": "PR",
+        "pr": "PR",
+        "support": "SP",
+        "sp": "SP",
+    }
+
+    @cached_property
+    def asset_class_index(self) -> dict:
+        return AssetClass.path_index()
+
+    def create_context(self):
+        return _get_security_objective_scale(), None
+
+    def prepare_create(
+        self, record: dict, context: list
+    ) -> tuple[dict, Optional[Error]]:
+        domain = self.folder_id
+        domain_name = record.get("domain")
+        if domain_name is not None:
+            domain = self.folders_map.get(domain_name.lower(), self.folder_id)
+
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        # Map type field
+        asset_type = record.get("type", "SP")
+        if isinstance(asset_type, str):
+            asset_type = self.TYPE_MAP.get(
+                asset_type.lower().strip(), asset_type.upper()
+            )
+
+        record_is_business_function = record.get("is_business_function", False)
+        is_business_function = False
+        if isinstance(record_is_business_function, str):
+            is_business_function = record_is_business_function.strip().lower() in [
+                "true",
+                "yes",
+            ]
+        elif isinstance(record_is_business_function, bool):
+            is_business_function = record_is_business_function
+
+        data = {
+            "ref_id": record.get("ref_id", ""),
+            "name": name,
+            "type": asset_type,
+            "folder": domain,
+            "description": record.get("description", ""),
+            "business_value": record.get("business_value", ""),
+            "reference_link": record.get("reference_link", "")
+            or record.get("link", ""),
+            "observation": record.get("observation", ""),
+            "is_business_function": is_business_function,
+        }
+
+        raw_labels = (
+            record.get("filtering_labels")
+            or record.get("labels")
+            or record.get("étiquette")
+            or record.get("label")
+        )
+        filtering_labels = _resolve_filtering_labels(raw_labels)
+        if filtering_labels:
+            data["filtering_labels"] = filtering_labels
+
+        # Accept both export column names and native field names for support assets
+        raw_sec = record.get("security_objectives") or record.get(
+            "security_capabilities", ""
+        )
+        raw_rec = record.get("disaster_recovery_objectives") or record.get(
+            "recovery_capabilities", ""
+        )
+
+        sec_objectives = _parse_security_objectives(raw_sec, scale=context)
+        rec_objectives = _parse_recovery_objectives(raw_rec)
+
+        parse_warning_msgs = []
+        if raw_sec and not sec_objectives:
+            parse_warning_msgs.append(
+                f"Could not parse security_objectives: '{raw_sec}'"
+            )
+        if raw_rec and not rec_objectives:
+            parse_warning_msgs.append(
+                f"Could not parse disaster_recovery_objectives: '{raw_rec}'"
+            )
+
+        raw_asset_class = (
+            record.get("asset_class") or record.get("class") or record.get("classe")
+        )
+        if raw_asset_class:
+            asset_class = _resolve_asset_class(raw_asset_class, self.asset_class_index)
+            if asset_class is not None:
+                data["asset_class"] = asset_class.id
+            else:
+                parse_warning_msgs.append(f"Unknown asset_class: '{raw_asset_class}'")
+
+        if asset_type == "PR":
+            if sec_objectives:
+                data["security_objectives"] = {"objectives": sec_objectives}
+            if rec_objectives:
+                data["disaster_recovery_objectives"] = {"objectives": rec_objectives}
+        else:  # SP (support)
+            if sec_objectives:
+                data["security_capabilities"] = {"objectives": sec_objectives}
+            if rec_objectives:
+                data["recovery_capabilities"] = {"objectives": rec_objectives}
+
+        if parse_warning_msgs:
+            return data, Error(
+                record=record,
+                error="; ".join(parse_warning_msgs),
+                is_warning=True,
+            )
+        return data, None
+
+    def process_records(self, records: list[dict]) -> Result:
+        """
+        Override to add second pass for parent_assets linking.
+        """
+        # First pass: create all assets
+        results = super().process_records(records)
+
+        # Second pass: link parent_assets by ref_id
+        for record in records:
+            parent_assets_ref = record.get("parent_assets") or record.get(
+                "parent_asset_ref_id"
+            )
+            if not parent_assets_ref:
+                continue
+
+            asset_ref_id = record.get("ref_id")
+            if not asset_ref_id:
+                continue
+
+            domain_name = record.get("domain")
+            record_folder_id = (
+                self.folders_map.get(domain_name.lower(), self.folder_id)
+                if domain_name is not None
+                else self.folder_id
+            )
+
+            # Find the created asset (scoped to its folder)
+            asset = Asset.objects.filter(
+                ref_id=asset_ref_id, folder_id=record_folder_id
+            ).first()
+            if not asset:
+                continue
+
+            # Parse parent ref_ids (comma or pipe separated)
+            if isinstance(parent_assets_ref, str):
+                parent_ref_ids = [
+                    ref.strip()
+                    for ref in parent_assets_ref.replace("|", ",").split(",")
+                    if ref.strip()
+                ]
+            else:
+                parent_ref_ids = [str(parent_assets_ref)]
+
+            # Link parent assets (scoped to same folder)
+            for parent_ref_id in parent_ref_ids:
+                parent_asset = Asset.objects.filter(
+                    ref_id=parent_ref_id, folder_id=record_folder_id
+                ).first()
+                if parent_asset and parent_asset.id != asset.id:
+                    asset.parent_assets.add(parent_asset)
+
+        return results
+
+
+@dataclass(frozen=True)
+class AppliedControlContext:
+    currency: str = field(default_factory=get_global_currency)
+
+
+class AppliedControlRecordConsumer(RecordConsumer[AppliedControlContext]):
+    """
+    Consumer for importing AppliedControl records.
+    Supports reference_control linking via ref_id and owner resolution
+    by user email or team name.
+    """
+
+    SERIALIZER_CLASS = AppliedControlWriteSerializer
+    SOURCE_KEY_MAP: ClassVar[dict[str, tuple[str, ...]]] = {
+        "control_impact": ("control_impact", "impact"),
+        "reference_control": ("reference_control", "reference_control_ref_id"),
+        "owner": ("owner",),
+        "cost": (
+            "cost_currency",
+            "cost_amortization_period",
+            "cost_build_fixed",
+            "cost_build_people_days",
+            "cost_run_fixed",
+            "cost_run_people_days",
+        ),
+    }
+    IMPACT_MAP: Final[dict[str, int]] = {
+        "very low": 1,
+        "low": 2,
+        "medium": 3,
+        "high": 4,
+        "very high": 5,
+    }
+    EFFORT_MAP: Final[dict[str, str]] = {
+        "extra small": "XS",
+        "extrasmall": "XS",
+        "xs": "XS",
+        "small": "S",
+        "s": "S",
+        "medium": "M",
+        "m": "M",
+        "large": "L",
+        "l": "L",
+        "extra large": "XL",
+        "extralarge": "XL",
+        "xl": "XL",
+    }
+    COST_KEYS: Final[frozenset[str]] = frozenset(
+        {
+            "cost_amortization_period",
+            "cost_build_fixed",
+            "cost_build_people_days",
+            "cost_run_fixed",
+            "cost_run_people_days",
+        }
+    )
+
+    def create_context(self) -> tuple[AppliedControlContext, Optional[Error]]:
+        return AppliedControlContext(), None
+
+    def prepare_create(
+        self, record: dict, context: AppliedControlContext
+    ) -> tuple[dict, Optional[Error]]:
+        domain = self.folder_id
+        domain_name = record.get("domain")
+        if domain_name is not None:
+            domain = self.folders_map.get(domain_name.lower(), self.folder_id)
+
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        # Parse priority
+        priority = record.get("priority")
+        if isinstance(priority, (int, float)):
+            priority = int(priority)
+        elif isinstance(priority, str) and priority.isdigit():
+            priority = int(priority)
+        else:
+            priority = None
+
+        # Parse effort
+        effort = record.get("effort")
+        if isinstance(effort, str):
+            effort = self.EFFORT_MAP.get(effort.lower().strip(), effort.upper())
+            if effort not in ("XS", "S", "M", "L", "XL"):
+                effort = None
+
+        # Parse control_impact (1-5 scale)
+        control_impact = record.get("control_impact") or record.get("impact")
+        if isinstance(control_impact, (int, float)):
+            control_impact = int(control_impact)
+        elif isinstance(control_impact, str):
+            if control_impact.isdigit():
+                control_impact = int(control_impact)
+            else:
+                control_impact = self.IMPACT_MAP.get(control_impact.lower().strip())
+        if isinstance(control_impact, int) and not (1 <= control_impact <= 5):
+            control_impact = None
+
+        # Look up reference_control by ref_id
+        reference_control_id = None
+        reference_control_ref = record.get("reference_control") or record.get(
+            "reference_control_ref_id"
+        )
+        if reference_control_ref:
+            from core.models import ReferenceControl
+
+            ref_control = ReferenceControl.objects.filter(
+                ref_id=reference_control_ref
+            ).first()
+            if ref_control:
+                reference_control_id = ref_control.id
+
+        csf_function = record.get("csf_function", "govern")
+        if isinstance(csf_function, str):
+            csf_function = csf_function.lower()
+
+        category = record.get("category", "")
+        if isinstance(category, str):
+            category = category.lower()
+
+        data = {
+            "ref_id": record.get("ref_id", ""),
+            "name": name,
+            "description": record.get("description", ""),
+            "category": category,
+            "folder": domain,
+            "status": record.get("status", "to_do"),
+            "priority": priority,
+            "csf_function": csf_function,
+            "effort": effort,
+            "control_impact": control_impact,
+            "link": record.get("link", ""),
+            "eta": _parse_date(record.get("eta")),
+            "expiry_date": _parse_date(record.get("expiry_date")),
+            "start_date": _parse_date(record.get("start_date")),
+            "observation": record.get("observation", ""),
+        }
+
+        if reference_control_id:
+            data["reference_control"] = reference_control_id
+
+        has_cost_related_key = any(
+            key in self.COST_KEYS and record.get(key) not in (None, "")
+            for key in record.keys()
+        )
+        if has_cost_related_key:
+            cost = {
+                "currency": record.get("cost_currency") or context.currency,
+                "amortization_period": int(record.get("cost_amortization_period") or 1),
+                "build": {
+                    "fixed_cost": int(record.get("cost_build_fixed") or 0),
+                    "people_days": int(record.get("cost_build_people_days") or 0),
+                },
+                "run": {
+                    "fixed_cost": int(record.get("cost_run_fixed") or 0),
+                    "people_days": int(record.get("cost_run_people_days") or 0),
+                },
+            }
+            data["cost"] = cost
+
+        filtering_labels = _resolve_filtering_labels(record.get("filtering_labels"))
+        if filtering_labels:
+            data["filtering_labels"] = filtering_labels
+
+        # Resolve owner field (semicolon-separated user emails or team names).
+        # Always set data["owner"] when the column is present, even if blank,
+        # so that UPDATE mode can clear the M2M instead of silently preserving it.
+        unresolved: list[str] = []
+        if "owner" in record:
+            data["owner"] = _resolve_owners(record.get("owner"), unresolved)
+
+        return data, _owner_warning(record, unresolved)
+
+
+class EvidenceRecordConsumer(RecordConsumer):
+    """Consumer for importing Evidence definitions.
+
+    Definitions only: an evidence is declared here (what is expected, who owns it,
+    when it expires), while the artifact itself lands later as a revision. The
+    import therefore carries no attachment or link — those belong to a revision.
+    """
+
+    SERIALIZER_CLASS = EvidenceWriteSerializer
+    SOURCE_KEY_MAP: ClassVar[Mapping[str, list[str]]] = MappingProxyType(
+        {"folder": ["domain"]}
+    )
+
+    _STATUS_BY_KEY: ClassVar[dict[str, str]] = {
+        key.lower(): key for key, _ in Evidence.Status.choices
+    }
+    _STATUS_BY_LABEL: ClassVar[dict[str, str]] = {
+        str(label).strip().lower(): key for key, label in Evidence.Status.choices
+    }
+
+    def create_context(self):
+        return None, None
+
+    def find_existing(self, record_data: dict) -> Optional[Evidence]:
+        # Case-insensitive, matching how a task import resolves an evidence name:
+        # an exact match would import "audit log" as a second "Audit Log".
+        return Evidence.objects.filter(
+            name__iexact=record_data.get("name"),
+            folder_id=record_data.get("folder"),
+        ).first()
+
+    @classmethod
+    def _normalize_status(cls, value) -> Optional[str]:
+        normalized = str(value or "").strip().lower()
+        if not normalized:
+            return None
+        return cls._STATUS_BY_KEY.get(normalized) or cls._STATUS_BY_LABEL.get(
+            normalized
+        )
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        domain = self.folder_id
+        domain_name = record.get("domain")
+        if domain_name:
+            domain = self.folders_map.get(str(domain_name).lower(), self.folder_id)
+
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        data = {
+            "name": name,
+            "description": record.get("description", ""),
+            "folder": domain,
+            "expiry_date": _parse_date(record.get("expiry_date")),
+        }
+
+        raw_status = record.get("status")
+        if str(raw_status or "").strip():
+            status_value = self._normalize_status(raw_status)
+            if status_value is None:
+                return {}, Error(
+                    record=record, error=f"Invalid status value: '{raw_status}'"
+                )
+            data["status"] = status_value
+
+        filtering_labels = _resolve_filtering_labels(record.get("filtering_labels"))
+        if filtering_labels:
+            data["filtering_labels"] = filtering_labels
+
+        # Present-but-blank has to reach the serializer so UPDATE mode can clear it.
+        unresolved: list[str] = []
+        if "owner" in record:
+            data["owner"] = _resolve_actors(record.get("owner"), unresolved)
+
+        return data, _owner_warning(record, unresolved)
+
+
+class UserRecordConsumer(RecordConsumer):
+    SERIALIZER_CLASS = UserWriteSerializer
+
+    def find_existing(self, record_data: dict) -> Optional[User]:
+        email = record_data.get("email")
+        if not email:
+            return None
+        return User.objects.filter(email__iexact=email).first()
+
+    def create_context(self):
+        return None, None
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        email = record.get("email")
+        if email is None:
+            return {}, Error(record=record, error="email field is mandatory")
+
+        return {
+            "email": email,
+            # Optional columns: absent ones must not reach the serializer as null.
+            "first_name": record.get("first_name") or "",
+            "last_name": record.get("last_name") or "",
+        }, None
+
+
+class PerimeterRecordConsumer(RecordConsumer):
+    SERIALIZER_CLASS = PerimeterWriteSerializer
+    SOURCE_KEY_MAP: ClassVar[dict[str, tuple[str, ...]]] = {
+        "lc_status": ("lc_status", "status"),
+        "default_assignee": ("default_assignee",),
+    }
+    _LC_STATUS_BY_KEY: ClassVar[dict[str, str]] = {
+        key.lower(): key for key, _ in Perimeter.PRJ_LC_STATUS
+    }
+    _LC_STATUS_BY_LABEL: ClassVar[dict[str, str]] = {
+        str(label).strip().lower(): key for key, label in Perimeter.PRJ_LC_STATUS
+    }
+
+    @classmethod
+    def _normalize_lc_status(cls, value: str) -> Optional[str]:
+        normalized = value.strip().lower()
+        if not normalized:
+            return None
+        return cls._LC_STATUS_BY_KEY.get(normalized) or cls._LC_STATUS_BY_LABEL.get(
+            normalized
+        )
+
+    def _build_update_data(self, record: dict, record_data: dict) -> dict:
+        update_data = super()._build_update_data(record, record_data)
+
+        # Keep parity with AppliedControl.owner behavior: if the column is
+        # present (even empty), propagate it so UPDATE mode can clear stale M2M.
+        if "default_assignee" not in update_data and "default_assignee" in record:
+            update_data["default_assignee"] = record_data.get("default_assignee", [])
+
+        return update_data
+
+    @staticmethod
+    def _resolve_default_assignees(value) -> list[UUID]:
+        if not isinstance(value, str):
+            return []
+
+        entries = [entry.strip() for entry in value.split(";") if entry.strip()]
+        actor_ids = []
+
+        for entry in entries:
+            actor = Actor.objects.filter(user__email__iexact=entry).first()
+            if actor is None:
+                actor = Actor.objects.filter(team__name__iexact=entry).first()
+            if actor is not None:
+                actor_ids.append(actor.id)
+            else:
+                logger.warning(
+                    "Could not resolve perimeter default assignee %r; skipping.",
+                    entry,
+                )
+
+        return actor_ids
+
+    def create_context(self):
+        return None, None
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        domain = self.folder_id
+        domain_name = record.get("domain")
+        if domain_name is not None:
+            domain = self.folders_map.get(domain_name.lower(), self.folder_id)
+
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        raw_lc_status = record.get("lc_status") or record.get("status")
+        lc_status = "in_design"
+        if raw_lc_status not in (None, ""):
+            normalized_status = self._normalize_lc_status(str(raw_lc_status))
+            if normalized_status is None:
+                allowed = ", ".join(k for k, _ in Perimeter.PRJ_LC_STATUS)
+                return {}, Error(
+                    record=record,
+                    error=(
+                        f"Unsupported perimeter status '{raw_lc_status}'. "
+                        f"Allowed values: {allowed}"
+                    ),
+                )
+            lc_status = normalized_status
+
+        default_assignee = self._resolve_default_assignees(
+            record.get("default_assignee")
+        )
+
+        data = {
+            "name": name,
+            "folder": domain,
+            "ref_id": record.get("ref_id", ""),
+            "description": record.get("description", ""),
+            "lc_status": lc_status,
+        }
+
+        if "default_assignee" in record:
+            data["default_assignee"] = default_assignee
+
+        return data, None
+
+
+class ThreatRecordConsumer(RecordConsumer):
+    SERIALIZER_CLASS = ThreatWriteSerializer
+
+    def create_context(self):
+        return None, None
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        domain = self.folder_id
+        domain_name = record.get("domain")
+        if domain_name is not None:
+            domain = self.folders_map.get(domain_name.lower(), self.folder_id)
+
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        return {
+            "name": name,
+            "description": record.get("description", ""),
+            "folder": domain,
+            "ref_id": record.get("ref_id", ""),
+        }, None
+
+
+def _find_one(records, wanted: str, fields: tuple[str, ...], folder_id, label: str):
+    """The record a cell names, trying *fields* in order. Names repeat across
+    domains: several matches resolve to the one in the import's domain, or not
+    at all. Returns (record, error)."""
+    noun = label.replace("_", " ")
+    for name in fields:
+        matches = list(records.filter(**{f"{name}__iexact": wanted})[:50])
+        if len(matches) > 1:
+            matches = [m for m in matches if str(m.folder_id) == str(folder_id)]
+            if len(matches) != 1:
+                return None, (
+                    f"{label}: several {noun}s are named '{wanted}'; choose the"
+                    f" domain the right one is in"
+                )
+        if matches:
+            return matches[0], None
+    return None, f"{label}: no {noun} '{wanted}'"
+
+
+class MetricInstanceRecordConsumer(RecordConsumer):
+    """Metric instances, each tied to a metric definition of the library or the
+    instance, found by ref_id, urn or name."""
+
+    SERIALIZER_CLASS = MetricInstanceWriteSerializer
+
+    def create_context(self):
+        viewable = RoleAssignment.get_viewable_object_ids(
+            self.request.user, MetricDefinition
+        )
+        return MetricDefinition.objects.filter(id__in=viewable), None
+
+    def prepare_create(self, record: dict, definitions) -> tuple[dict, Optional[Error]]:
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="name: this field is mandatory")
+        wanted = str(record.get("metric_definition") or "").strip()
+        if not wanted:
+            return {}, Error(
+                record=record, error="metric_definition: this field is mandatory"
+            )
+        domain = self.folder_id
+        if record.get("domain"):
+            domain = self.folders_map.get(str(record["domain"]).lower(), domain)
+        definition, error = _find_one(
+            definitions, wanted, ("ref_id", "urn", "name"), domain, "metric_definition"
+        )
+        if definition is None:
+            return {}, Error(record=record, error=error)
+        data = {
+            "name": name,
+            "ref_id": record.get("ref_id") or "",
+            "description": record.get("description") or "",
+            "metric_definition": definition.id,
+            "folder": domain,
+        }
+        for key in ("status", "collection_frequency"):
+            if record.get(key) not in (None, ""):
+                data[key] = record[key]
+        if record.get("target_value") not in (None, ""):
+            data["target_value"] = record["target_value"]
+        unresolved: list[str] = []
+        if "owner" in record:
+            data["owner"] = _resolve_owners(record.get("owner"), unresolved)
+        return data, _owner_warning(record, unresolved)
+
+
+class MetricSampleRecordConsumer(RecordConsumer):
+    """Values of metric instances over time. A number for a quantitative metric;
+    for a qualitative one, a level's name or its 1-based position. A sample for
+    a metric and second that already holds one replaces it."""
+
+    SERIALIZER_CLASS = CustomMetricSampleWriteSerializer
+
+    def create_context(self):
+        viewable = RoleAssignment.get_viewable_object_ids(
+            self.request.user, MetricInstance
+        )
+        return MetricInstance.objects.filter(id__in=viewable).select_related(
+            "metric_definition"
+        ), None
+
+    @staticmethod
+    def _value(raw, definition) -> tuple[Optional[dict], Optional[str]]:
+        if definition.category == MetricDefinition.Category.QUALITATIVE:
+            levels = [
+                str(c.get("name", "")).strip().lower()
+                for c in definition.choices_definition or []
+            ]
+            text = str(raw).strip()
+            if text.lower() in levels:
+                return {"choice_index": levels.index(text.lower()) + 1}, None
+            if text.isdigit() and 1 <= int(text) <= len(levels):
+                return {"choice_index": int(text)}, None
+            return None, f"value: '{raw}' is none of {', '.join(levels)}"
+        try:
+            number = float(str(raw).replace(",", ".").strip())
+        except ValueError:
+            number = math.nan
+        if not math.isfinite(number):
+            return None, f"value: '{raw}' is not a number"
+        return {"result": number}, None
+
+    def prepare_create(self, record: dict, instances) -> tuple[dict, Optional[Error]]:
+        wanted = str(record.get("metric_instance") or "").strip()
+        if not wanted:
+            return {}, Error(
+                record=record, error="metric_instance: this field is mandatory"
+            )
+        instance, error = _find_one(
+            instances, wanted, ("ref_id", "name"), self.folder_id, "metric_instance"
+        )
+        if instance is None:
+            return {}, Error(record=record, error=error)
+        if record.get("value") in (None, ""):
+            return {}, Error(record=record, error="value: this field is mandatory")
+        value, error = self._value(record["value"], instance.metric_definition)
+        if error:
+            return {}, Error(record=record, error=error)
+        timestamp = _parse_datetime(record.get("timestamp"))
+        if not timestamp:
+            return {}, Error(record=record, error="timestamp: this field is mandatory")
+        if not isinstance(timestamp, str):
+            return {}, Error(
+                record=record, error=f"timestamp: '{timestamp}' is not a date"
+            )
+        if len(timestamp) == 10:
+            # A date alone: the sample stands for that day.
+            timestamp = f"{timestamp}T00:00:00"
+        return {
+            "metric_instance": instance.id,
+            "timestamp": timestamp,
+            "value": value,
+            "observation": record.get("observation") or "",
+        }, None
+
+
+class ReferenceControlRecordConsumer(RecordConsumer):
+    SERIALIZER_CLASS = ReferenceControlWriteSerializer
+    SOURCE_KEY_MAP: ClassVar[Mapping[str, list[str]]] = MappingProxyType(
+        {
+            "csf_function": ["function"],
+        }
+    )
+    CATEGORY_MAP: Final[dict[str, str]] = {
+        "policy": "policy",
+        "process": "process",
+        "technical": "technical",
+        "physical": "physical",
+        "procedure": "procedure",
+    }
+    FUNCTION_MAP: Final[dict[str, str]] = {
+        "govern": "govern",
+        "identify": "identify",
+        "protect": "protect",
+        "detect": "detect",
+        "respond": "respond",
+        "recover": "recover",
+        "governance": "govern",
+    }
+
+    def create_context(self):
+        return None, None
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        domain = self.folder_id
+        domain_name = record.get("domain")
+        if domain_name is not None:
+            domain = self.folders_map.get(domain_name.lower(), self.folder_id)
+
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        category = None
+        if record.get("category", ""):
+            category_value = str(record.get("category")).strip().lower()
+            category = self.CATEGORY_MAP.get(category_value)
+
+        csf_function = None
+        if record.get("function", ""):
+            function_value = str(record.get("function")).strip().lower()
+            csf_function = self.FUNCTION_MAP.get(function_value)
+
+        reference_control_data = {
+            "name": name,
+            "description": record.get("description", ""),
+            "ref_id": record.get("ref_id", ""),
+            "folder": domain,
+        }
+
+        if category:
+            reference_control_data["category"] = category
+        if csf_function:
+            reference_control_data["csf_function"] = csf_function
+
+        return reference_control_data, None
+
+
+@dataclass(frozen=True)
+class FindingsAssessmentContext:
+    findings_assessment: FindingsAssessment
+    folder: Folder
+
+
+class FindingsAssessmentRecordConsumer(RecordConsumer[FindingsAssessmentContext]):
+    SERIALIZER_CLASS = FindingWriteSerializer
+    SOURCE_KEY_MAP: ClassVar[Mapping[str, list[str]]] = MappingProxyType(
+        {
+            "asset": ["asset", "assets", "actif", "actifs"],
+            "filtering_labels": ["filtering_labels", "labels", "label"],
+            "applied_controls": ["applied_controls", "controls"],
+            "owner": ["owner"],
+        }
+    )
+    SEVERITY_MAP: Final[dict[Optional[str], int]] = {
+        None: -1,
+        "info": 0,
+        "low": 1,
+        "medium": 2,
+        "high": 3,
+        "critical": 4,
+    }
+
+    def create_context(self):
+        try:
+            if self.target_id:
+                # Reconcile into an existing follow-up instead of creating one.
+                findings_assessment = resolve_accessible_target(
+                    FindingsAssessment, self.target_id, self.request.user
+                )
+                if findings_assessment is None:
+                    return None, Error(
+                        record={},
+                        error=f"Target findings assessment with ID {self.target_id} does not exist",
+                    )
+                self._container = findings_assessment
+                return FindingsAssessmentContext(
+                    findings_assessment=findings_assessment,
+                    folder=findings_assessment.folder,
+                ), None
+
+            # Perimeter is optional: fall back to the explicit folder when absent.
+            perimeter = None
+            if self.perimeter_id:
+                perimeter = Perimeter.objects.get(id=self.perimeter_id)
+
+            if perimeter is not None:
+                folder = perimeter.folder
+            elif self.folder_id:
+                folder = Folder.objects.get(id=self.folder_id)
+            else:
+                return None, Error(
+                    record={},
+                    error="A folder must be specified when there's no perimeter!",
+                )
+
+            assessment_name = resolve_container_name(
+                self.request, "Followup", self.container_name
+            )
+            assessment_data = {
+                "name": assessment_name,
+                "perimeter": self.perimeter_id,
+                "folder": folder.id,
+            }
+
+            serializer = FindingsAssessmentWriteSerializer(
+                data=assessment_data,
+                context={"request": self.request},
+            )
+
+            if serializer.is_valid():
+                findings_assessment: FindingsAssessment = serializer.save()
+                logger.info(
+                    f"Created follow-up: {assessment_name} with ID {findings_assessment.id}"
+                )
+
+                self._container = findings_assessment
+                return FindingsAssessmentContext(
+                    findings_assessment=findings_assessment,
+                    folder=folder,
+                ), None
+            return None, Error(
+                record=assessment_data, error=readable_error(serializer.errors)
+            )
+
+        except Exception as e:
+            return None, Error(record={}, error=str(e))
+
+    def find_existing(self, record_data: dict):
+        # Match only within this follow-up, never a sibling assessment's finding.
+        container = getattr(self, "_container", None)
+        if container is None:
+            return None
+        model_class = self.SERIALIZER_CLASS.Meta.model
+        ref_id = record_data.get("ref_id")
+        if ref_id:
+            existing = model_class.objects.filter(
+                findings_assessment=container, ref_id=ref_id
+            ).first()
+            if existing:
+                return existing
+        name = record_data.get("name")
+        if name:
+            return model_class.objects.filter(
+                findings_assessment=container, name__iexact=name
+            ).first()
+        return None
+
+    def prepare_create(
+        self, record: dict, context: FindingsAssessmentContext
+    ) -> tuple[dict, Optional[Error]]:
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        record_severity = record.get("severity")
+        severity = self.SEVERITY_MAP.get(record_severity, -1)
+
+        # Parse priority: 1-4, or the "P1".."P4" labels the export writes
+        priority = record.get("priority")
+        if isinstance(priority, str):
+            priority = priority.strip().upper().removeprefix("P")
+        if isinstance(priority, (int, float)):
+            priority = int(priority)
+        elif isinstance(priority, str) and priority.isdigit():
+            priority = int(priority)
+        else:
+            priority = None
+        if isinstance(priority, int) and not (1 <= priority <= 4):
+            priority = None
+
+        filtering_label_ids = _resolve_filtering_labels(
+            record.get("filtering_labels") or record.get("labels")
+        )
+        vulnerabilities, failed_vulnerabilities = _resolve_vulnerabilities(
+            record.get("vulnerabilities"), context.folder
+        )
+        # Resolve only the first: Finding.asset is a single FK, and the others
+        # would be created and left attached to nothing.
+        asset_tokens = _split_multi_separator(
+            record.get("asset")
+            or record.get("assets")
+            or record.get("actif")
+            or record.get("actifs")
+        )
+        assets = _resolve_assets(
+            asset_tokens[0] if asset_tokens else None, context.folder, self.request
+        )
+        self._record_side_effects("assets_created", assets)
+
+        # With SKIP/STOP, a row matching an existing Finding never reaches the
+        # serializer — so resolving applied_controls unconditionally would
+        # create (and never link) a control for a row that's about to be
+        # discarded. Peek for that duplicate first, using only the raw
+        # ref_id/name (identical to what find_existing() will check again in
+        # process_records), and skip control resolution entirely when it's
+        # going to be skipped or stop the whole import anyway.
+        is_discarded_duplicate = self.on_conflict in (
+            ConflictMode.SKIP,
+            ConflictMode.STOP,
+        ) and self.find_existing({"ref_id": record.get("ref_id"), "name": name})
+
+        if is_discarded_duplicate:
+            applied_controls = SideObjects()
+        else:
+            applied_controls = _resolve_applied_controls(
+                record.get("applied_controls") or record.get("controls"),
+                context.folder,
+                self.request,
+            )
+            self._record_side_effects("applied_controls_created", applied_controls)
+
+        finding_data = {
+            "name": name,
+            "description": record.get("description"),
+            "ref_id": record.get("ref_id"),
+            "findings_assessment": context.findings_assessment.id,
+            "severity": severity,
+            "filtering_labels": filtering_label_ids,
+            "eta": _parse_date(record.get("eta")),
+            "due_date": _parse_date(record.get("due_date")),
+            "observation": record.get("observation", ""),
+            "recommendation": record.get("recommendation", ""),
+            "vulnerabilities": vulnerabilities,
+            "applied_controls": applied_controls.ids,
+        }
+
+        # Only pass status when the source provides one — a None status fails
+        # serializer validation, so files without a status column keep the
+        # model default.
+        if record.get("status"):
+            finding_data["status"] = record.get("status")
+
+        if priority is not None:
+            finding_data["priority"] = priority
+
+        if assets.ids:
+            finding_data["asset"] = assets.ids[0]
+
+        # Resolve owner field (semicolon-separated user emails or team names).
+        # Always set finding_data["owner"] when the column is present, even if
+        # blank, so that UPDATE mode can clear the M2M instead of silently
+        # preserving it.
+        unresolved_owners: list[str] = []
+        if "owner" in record:
+            finding_data["owner"] = _resolve_owners(
+                record.get("owner"), unresolved_owners
+            )
+
+        unresolved = []
+        if warning := _owner_warning(record, unresolved_owners):
+            unresolved.append(warning.error)
+        if failed_vulnerabilities:
+            unresolved.append(
+                f"Could not resolve vulnerabilities: {', '.join(failed_vulnerabilities)}"
+            )
+        if assets.failed:
+            unresolved.append(f"Could not resolve assets: {', '.join(assets.failed)}")
+        if applied_controls.failed:
+            unresolved.append(
+                f"Could not resolve applied controls: {', '.join(applied_controls.failed)}"
+            )
+        if len(asset_tokens) > 1:
+            unresolved.append(
+                f"A finding takes a single asset: ignored {', '.join(asset_tokens[1:])}"
+            )
+        if unresolved:
+            return finding_data, Error(
+                record=record,
+                error="; ".join(unresolved),
+                is_warning=True,
+            )
+
+        return finding_data, None
+
+
+@dataclass(frozen=True)
+class RiskAssessmentContext:
+    risk_assessment: RiskAssessment
+    folder: Folder
+    matrix_mappings: dict
+    # Candidates for the `threats` column, see ThreatLookup.
+    threats: ThreatLookup
+
+
+class RiskAssessmentRecordConsumer(RecordConsumer[RiskAssessmentContext]):
+    """Import risk scenarios into a risk assessment, creating the assessment
+    itself unless the caller reconciles into an existing one."""
+
+    SERIALIZER_CLASS = RiskScenarioWriteSerializer
+    # Legacy column names alongside the ones the CSV/XLSX export writes.
+    SOURCE_KEY_MAP: ClassVar[Mapping[str, list[str]]] = MappingProxyType(
+        {
+            "inherent_proba": ["inherent_proba", "inherent_probability"],
+            "current_proba": ["current_proba", "current_probability"],
+            "residual_proba": ["residual_proba", "residual_probability"],
+            "existing_applied_controls": [
+                "existing_applied_controls",
+                "existing_controls",
+            ],
+            "applied_controls": ["applied_controls", "additional_controls"],
+            "assets": ["assets", "asset"],
+            "threats": ["threats", "threat"],
+            "filtering_labels": ["filtering_labels", "labels", "label"],
+        }
+    )
+    RISK_LEVEL_FIELDS: ClassVar[tuple[str, ...]] = (
+        "inherent_impact",
+        "inherent_proba",
+        "current_impact",
+        "current_proba",
+        "residual_impact",
+        "residual_proba",
+    )
+
+    def create_context(self) -> tuple[Optional[RiskAssessmentContext], Optional[Error]]:
+        try:
+            if self.target_id:
+                risk_assessment = resolve_accessible_target(
+                    RiskAssessment, self.target_id, self.request.user
+                )
+                if risk_assessment is None:
+                    return None, Error(
+                        record={},
+                        error=f"Target risk assessment with ID {self.target_id} does not exist",
+                    )
+                logger.info(
+                    "Reconciling import into existing risk assessment",
+                    risk_assessment_id=str(risk_assessment.id),
+                )
+            else:
+                perimeter = None
+                if self.perimeter_id:
+                    perimeter = Perimeter.objects.get(id=self.perimeter_id)
+
+                if perimeter is not None:
+                    folder = perimeter.folder
+                elif self.folder_id:
+                    folder = Folder.objects.get(id=self.folder_id)
+                else:
+                    return None, Error(
+                        record={},
+                        error="A folder must be specified when there's no perimeter!",
+                    )
+
+                if not self.matrix_id:
+                    return None, Error(
+                        record={},
+                        error="A risk matrix is required to create a risk assessment.",
+                    )
+                RiskMatrix.objects.get(id=self.matrix_id)
+
+                assessment_name = resolve_container_name(
+                    self.request, "Risk_Assessment", self.container_name
+                )
+                assessment_data = {
+                    "name": assessment_name,
+                    "perimeter": self.perimeter_id,
+                    "risk_matrix": self.matrix_id,
+                    "folder": folder.id,
+                }
+                serializer = RiskAssessmentWriteSerializer(
+                    data=assessment_data, context={"request": self.request}
+                )
+                if not serializer.is_valid():
+                    return None, Error(
+                        record=assessment_data,
+                        error=readable_error(serializer.errors),
+                    )
+                risk_assessment = serializer.save()
+                logger.info(
+                    "Created risk assessment",
+                    name=assessment_name,
+                    risk_assessment_id=str(risk_assessment.id),
+                )
+
+            self._container = risk_assessment
+            return RiskAssessmentContext(
+                risk_assessment=risk_assessment,
+                folder=risk_assessment.folder,
+                matrix_mappings=build_matrix_mappings(risk_assessment.risk_matrix),
+                threats=ThreatLookup.build(self.request.user, risk_assessment.folder),
+            ), None
+
+        except Perimeter.DoesNotExist:
+            return None, Error(
+                record={},
+                error=f"Perimeter with ID {self.perimeter_id} does not exist",
+            )
+        except RiskMatrix.DoesNotExist:
+            return None, Error(
+                record={},
+                error=f"Risk matrix with ID {self.matrix_id} does not exist",
+            )
+        except Exception as e:
+            return None, Error(record={}, error=str(e))
+
+    def find_existing(self, record_data: dict):
+        # Match only within this assessment, never a sibling's scenario.
+        container = getattr(self, "_container", None)
+        if container is None:
+            return None
+        model_class = self.SERIALIZER_CLASS.Meta.model
+        ref_id = record_data.get("ref_id")
+        if ref_id:
+            existing = model_class.objects.filter(
+                risk_assessment=container, ref_id=ref_id
+            ).first()
+            if existing:
+                return existing
+        name = record_data.get("name")
+        if name:
+            return model_class.objects.filter(
+                risk_assessment=container, name__iexact=name
+            ).first()
+        return None
+
+    def prepare_create(
+        self, record: dict, context: RiskAssessmentContext
+    ) -> tuple[dict, Optional[Error]]:
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Risk scenario name is required")
+
+        impact = context.matrix_mappings["impact"]
+        probability = context.matrix_mappings["probability"]
+        treatment = str(record.get("treatment") or "").strip().lower()
+
+        existing_controls = _resolve_applied_controls(
+            record.get("existing_applied_controls") or record.get("existing_controls"),
+            context.folder,
+            self.request,
+        )
+        additional_controls = _resolve_applied_controls(
+            record.get("applied_controls") or record.get("additional_controls"),
+            context.folder,
+            self.request,
+        )
+        assets = _resolve_assets(
+            record.get("assets") or record.get("asset"), context.folder, self.request
+        )
+        threats = _resolve_threats(
+            record.get("threats") or record.get("threat"), context.threats
+        )
+        self._record_side_effects("assets_created", assets)
+        self._record_side_effects("applied_controls_created", existing_controls)
+        self._record_side_effects("applied_controls_created", additional_controls)
+
+        scenario_data = {
+            "name": name,
+            "ref_id": record.get("ref_id", ""),
+            "description": record.get("description", ""),
+            "risk_assessment": context.risk_assessment.id,
+            "treatment": next(
+                (opt for opt, _ in RiskScenario.TREATMENT_OPTIONS if treatment == opt),
+                "open",
+            ),
+            "justification": record.get("justification", "") or "",
+            "existing_applied_controls": existing_controls.ids,
+            "applied_controls": additional_controls.ids,
+            "assets": assets.ids,
+            "filtering_labels": _resolve_filtering_labels(
+                record.get("filtering_labels") or record.get("labels")
+            ),
+        }
+        # Only set when something resolved, so that on update a cell of
+        # unknown or ambiguous threats warns instead of wiping the links.
+        if threats.ids:
+            scenario_data["threats"] = threats.ids
+
+        # A level is only written when its cell holds a matrix label or the
+        # explicit "--" (unrated). Blank cells and unknown labels leave the
+        # field out: a new scenario gets the -1 default, an update keeps the
+        # existing rating. Unknown labels are reported on the row.
+        unmapped = []
+        for field_name in self.RISK_LEVEL_FIELDS:
+            raw = next(
+                (
+                    record[key]
+                    for key in self.SOURCE_KEY_MAP.get(field_name, [field_name])
+                    if not is_blank_cell(record.get(key))
+                ),
+                None,
+            )
+            if raw is None:
+                continue
+            mapping = impact if field_name.endswith("_impact") else probability
+            value = map_risk_value(raw, mapping)
+            if value == -1 and str(raw).strip() != NOT_RATED_LABEL:
+                unmapped.append(f"{field_name} '{str(raw).strip()}'")
+                continue
+            scenario_data[field_name] = value
+
+        unresolved = existing_controls.failed + additional_controls.failed
+        messages = []
+        if unmapped:
+            messages.append(f"Not in the risk matrix: {', '.join(unmapped)}")
+        if unresolved:
+            messages.append(f"Could not resolve controls: {', '.join(unresolved)}")
+        if assets.failed:
+            messages.append(f"Could not resolve assets: {', '.join(assets.failed)}")
+        if threats.failed:
+            messages.append(f"Could not resolve threats: {', '.join(threats.failed)}")
+        if threats.ambiguous:
+            messages.append(
+                "Ambiguous threats, several match in the same domain: "
+                f"{', '.join(threats.ambiguous)}"
+            )
+        if messages:
+            return scenario_data, Error(
+                record=record, error="; ".join(messages), is_warning=True
+            )
+        return scenario_data, None
+
+
+class PolicyRecordConsumer(RecordConsumer):
+    """
+    Consumer for importing Policy records.
+    Policy is a proxy model of AppliedControl with category='policy'.
+    """
+
+    SERIALIZER_CLASS = PolicyWriteSerializer
+
+    def create_context(self):
+        return None, None
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        domain = self.folder_id
+        domain_name = record.get("domain")
+        if domain_name is not None:
+            domain = self.folders_map.get(domain_name.lower(), self.folder_id)
+
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        priority = record.get("priority")
+        if isinstance(priority, (int, float)):
+            priority = int(priority)
+        elif isinstance(priority, str) and priority.isdigit():
+            priority = int(priority)
+        else:
+            priority = None
+
+        data = {
+            "ref_id": record.get("ref_id", ""),
+            "name": name,
+            "description": record.get("description", ""),
+            "folder": domain,
+            "status": record.get("status", "to_do"),
+            "priority": priority,
+            "csf_function": record.get("csf_function", "govern"),
+            "eta": _parse_date(record.get("eta")),
+            "expiry_date": _parse_date(record.get("expiry_date")),
+            "link": record.get("link", ""),
+            "effort": record.get("effort"),
+        }
+
+        filtering_labels = _resolve_filtering_labels(record.get("filtering_labels"))
+        if filtering_labels:
+            data["filtering_labels"] = filtering_labels
+
+        # Present-but-blank has to reach the serializer so UPDATE mode can clear it.
+        unresolved: list[str] = []
+        if "owner" in record:
+            data["owner"] = _resolve_owners(record.get("owner"), unresolved)
+
+        return data, _owner_warning(record, unresolved)
+
+
+class SecurityExceptionRecordConsumer(RecordConsumer):
+    """
+    Consumer for importing SecurityException records.
+    """
+
+    SERIALIZER_CLASS = SecurityExceptionWriteSerializer
+    SEVERITY_MAP: Final[dict[Optional[str], int]] = {
+        None: -1,
+        "undefined": -1,
+        "info": 0,
+        "informational": 0,
+        "low": 1,
+        "medium": 2,
+        "high": 3,
+        "critical": 4,
+    }
+    STATUS_MAP: Final[dict[str, str]] = {
+        "draft": "draft",
+        "in_review": "in_review",
+        "in review": "in_review",
+        "approved": "approved",
+        "resolved": "resolved",
+        "expired": "expired",
+        "deprecated": "deprecated",
+    }
+
+    def create_context(self):
+        return None, None
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        domain = self.folder_id
+        domain_name = record.get("domain")
+        if domain_name is not None:
+            domain = self.folders_map.get(domain_name.lower(), self.folder_id)
+
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        # Map severity
+        record_severity = record.get("severity")
+        if isinstance(record_severity, str):
+            severity = self.SEVERITY_MAP.get(record_severity.lower().strip(), -1)
+        else:
+            severity = -1
+
+        # Map status
+        record_status = record.get("status")
+        if isinstance(record_status, str):
+            status_value = self.STATUS_MAP.get(record_status.lower().strip(), "draft")
+        else:
+            status_value = "draft"
+
+        return {
+            "ref_id": record.get("ref_id", ""),
+            "name": name,
+            "description": record.get("description", ""),
+            "folder": domain,
+            "severity": severity,
+            "status": status_value,
+            "expiration_date": _parse_date(record.get("expiration_date")),
+            "observation": record.get("observation", ""),
+        }, None
+
+
+class IncidentRecordConsumer(RecordConsumer):
+    """
+    Consumer for importing Incident records.
+    """
+
+    SERIALIZER_CLASS = IncidentWriteSerializer
+    SEVERITY_MAP: Final[dict[Optional[str], int]] = {
+        None: 6,
+        "undefined": 6,
+        "unknown": 6,
+        "critical": 1,
+        "sev1": 1,
+        "major": 2,
+        "sev2": 2,
+        "moderate": 3,
+        "sev3": 3,
+        "minor": 4,
+        "sev4": 4,
+        "low": 5,
+        "sev5": 5,
+    }
+    STATUS_MAP: Final[dict[str, str]] = {
+        "new": "new",
+        "ongoing": "ongoing",
+        "in progress": "ongoing",
+        "in_progress": "ongoing",
+        "resolved": "resolved",
+        "closed": "closed",
+        "dismissed": "dismissed",
+    }
+    DETECTION_MAP: Final[dict[str, str]] = {
+        "internal": "internally_detected",
+        "internally_detected": "internally_detected",
+        "external": "externally_detected",
+        "externally_detected": "externally_detected",
+    }
+
+    def create_context(self):
+        return None, None
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        domain = self.folder_id
+        domain_name = record.get("domain")
+        if domain_name is not None:
+            domain = self.folders_map.get(domain_name.lower(), self.folder_id)
+
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        # Map severity
+        record_severity = record.get("severity")
+        if isinstance(record_severity, str):
+            severity = self.SEVERITY_MAP.get(record_severity.lower().strip(), 6)
+        elif isinstance(record_severity, int) and 1 <= record_severity <= 6:
+            severity = record_severity
+        else:
+            severity = 6
+
+        # Map status
+        record_status = record.get("status")
+        if isinstance(record_status, str):
+            status_value = self.STATUS_MAP.get(record_status.lower().strip(), "new")
+        else:
+            status_value = "new"
+
+        # Map detection
+        record_detection = record.get("detection")
+        if isinstance(record_detection, str):
+            detection_value = self.DETECTION_MAP.get(
+                record_detection.lower().strip(), "internally_detected"
+            )
+        else:
+            detection_value = "internally_detected"
+
+        data = {
+            "ref_id": record.get("ref_id", ""),
+            "name": name,
+            "description": record.get("description", ""),
+            "folder": domain,
+            "severity": severity,
+            "status": status_value,
+            "detection": detection_value,
+            "link": record.get("link", ""),
+            "reported_at": _parse_datetime(record.get("reported_at")),
+        }
+
+        filtering_labels = _resolve_filtering_labels(record.get("filtering_labels"))
+        if filtering_labels:
+            data["filtering_labels"] = filtering_labels
+
+        return data, None
+
+
+class TaskTemplateRecordConsumer(RecordConsumer[None]):
+    """Consumer for importing TaskTemplate records (with optional task-node fields)."""
+
+    SERIALIZER_CLASS = TaskTemplateWriteSerializer
+
+    TASK_STATUS_MAP: ClassVar[Mapping[str, str]] = MappingProxyType(
+        {
+            "pending": "pending",
+            "in_progress": "in_progress",
+            "in progress": "in_progress",
+            "completed": "completed",
+            "cancelled": "cancelled",
+        }
+    )
+
+    # The prepared "schedule" dict is assembled from these columns; without this
+    # mapping, UPDATE mode would look for a "schedule" column and never update it.
+    SOURCE_KEY_MAP: ClassVar[Mapping[str, list[str]]] = MappingProxyType(
+        {
+            "schedule": [
+                "schedule_frequency",
+                "schedule_interval",
+                "schedule_days_of_week",
+                "schedule_weeks_of_month",
+                "schedule_months_of_year",
+                "schedule_end_date",
+                "schedule_occurrences",
+                "schedule_overdue_behavior",
+            ],
+        }
+    )
+
+    _M2M_CLEARABLE: ClassVar[frozenset[str]] = frozenset(
+        {
+            "assigned_to",
+            "assets",
+            "applied_controls",
+            "evidences",
+            "compliance_assessments",
+            "risk_assessments",
+            "findings_assessment",
+        }
+    )
+
+    def create_context(self):
+        return None, None
+
+    def _build_update_data(self, record: dict, record_data: dict) -> dict:
+        update_data = super()._build_update_data(record, record_data)
+        for key in self._M2M_CLEARABLE:
+            if key in record_data and key in record:
+                update_data[key] = record_data[key]
+        return update_data
+
+    def find_existing(self, record_data: dict) -> Optional[TaskTemplate]:
+        folder_id = record_data.get("folder")
+        ref_id = record_data.get("ref_id")
+        if ref_id:
+            existing = TaskTemplate.objects.filter(
+                ref_id=ref_id, folder_id=folder_id
+            ).first()
+            if existing:
+                return existing
+        return TaskTemplate.objects.filter(
+            name=record_data.get("name"), folder_id=folder_id
+        ).first()
+
+    @staticmethod
+    def _resolve_actors(raw: str, unresolved: list[str]) -> list[UUID]:
+        """Resolve comma/semicolon-separated user emails or team names to Actor IDs.
+
+        Entries that cannot be matched are collected into ``unresolved`` and
+        reported back as a row warning.
+        """
+        actor_ids = set()
+        for entry in re.split(r"[|,;]", raw):
+            entry = entry.strip()
+            if not entry:
+                continue
+            actor = Actor.objects.filter(user__email__iexact=entry).first()
+            if actor is None:
+                actor = Actor.objects.filter(team__name__iexact=entry).first()
+            if actor is not None:
+                actor_ids.add(actor.id)
+            else:
+                unresolved.append(f"assigned_to '{entry}'")
+                # Mask the value to avoid leaking PII (emails) into application logs.
+                logger.warning(
+                    "Task import: could not resolve assigned_to entry (masked: %s***); skipping.",
+                    entry[:4],
+                )
+        return list(actor_ids)
+
+    @staticmethod
+    def _resolve_m2m_by_name(
+        model: type[models.Model],
+        raw: str,
+        accessible_folder_ids: set,
+        preferred_folder_id,
+        unresolved: list[str],
+    ) -> list[UUID]:
+        """Resolve comma/pipe-separated names or ref_ids to model IDs.
+
+        Lookups are scoped to the user's accessible folders; when several
+        folders hold an object with the same name, an exact ref_id match wins,
+        then the record's own folder. Assessments are also matched against
+        their ``str()`` form, so versioned exports resolve back (currently
+        only RiskAssessment renders ``"{name} - {version}"``; the other
+        assessments export their plain name). Entries that cannot be matched
+        are collected into ``unresolved`` and reported back as a row warning.
+        """
+        has_ref_id = any(f.name == "ref_id" for f in model._meta.fields)
+        ids = set()
+        for entry in re.split(r"[|,\n]", raw):
+            entry = entry.strip()
+            if not entry:
+                continue
+            name_query = Q(name__iexact=entry)
+            if has_ref_id:
+                name_query |= Q(ref_id=entry)
+            candidates = list(
+                model.objects.filter(name_query, folder_id__in=accessible_folder_ids)
+            )
+            obj = (
+                next((c for c in candidates if c.ref_id == entry), None)
+                if has_ref_id
+                else None
+            )
+            if obj is None:
+                obj = next(
+                    (
+                        c
+                        for c in candidates
+                        if str(c.folder_id) == str(preferred_folder_id)
+                    ),
+                    None,
+                ) or (candidates[0] if candidates else None)
+            if obj is None and issubclass(model, Assessment):
+                # Assessments export as "{name} - {version}".
+                name_part = entry.rsplit(" - ", 1)[0].strip()
+                for candidate in model.objects.filter(
+                    name__iexact=name_part, folder_id__in=accessible_folder_ids
+                ):
+                    if str(candidate) == entry:
+                        obj = candidate
+                        break
+            if obj is not None:
+                ids.add(obj.id)
+            else:
+                unresolved.append(f"{model._meta.model_name} '{entry}'")
+                logger.warning(
+                    "Task import: could not resolve %s '%s'; skipping.",
+                    model._meta.model_name,
+                    entry,
+                )
+        return list(ids)
+
+    def _resolve_or_create_evidences(
+        self, raw: str, accessible_folder_ids: set, folder_id
+    ) -> list[UUID]:
+        """Resolve evidence names to ids, creating the ones the domain lacks.
+
+        An existing evidence wins, preferring the task's own folder so a name reused
+        across domains binds locally; only when nothing matches is one created, in
+        the task's folder.
+
+        Creation is authorized here because it writes through the ORM, ahead of the
+        task's own permission check: without it, `add_tasktemplate` alone would be
+        enough to create evidence.
+        """
+        ids: list[UUID] = []
+        folder = None
+        for entry in re.split(r"[|,\n]", str(raw)):
+            entry = entry.strip()
+            if not entry:
+                continue
+            candidates = list(
+                Evidence.objects.filter(
+                    name__iexact=entry, folder_id__in=accessible_folder_ids
+                )
+            )
+            evidence = next(
+                (c for c in candidates if str(c.folder_id) == str(folder_id)), None
+            ) or (candidates[0] if candidates else None)
+            if evidence is None:
+                if folder is None:
+                    folder = Folder.objects.filter(id=folder_id).first()
+                check_folder_add_permission(self.request.user, folder, Evidence)
+                evidence = Evidence(name=entry, folder_id=folder_id)
+                evidence.full_clean()
+                evidence.save()
+            if evidence.id not in ids:
+                ids.append(evidence.id)
+        return ids
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        folder_id = self.folder_id
+        folder_name = record.get("folder")
+        if folder_name:
+            folder_id = self.folders_map.get(str(folder_name).lower(), self.folder_id)
+
+        raw_recurrent = record.get("is_recurrent", "")
+        if isinstance(raw_recurrent, bool):
+            is_recurrent = raw_recurrent
+        else:
+            is_recurrent = str(raw_recurrent).strip().lower() in {"yes", "true", "1"}
+
+        raw_enabled = record.get("enabled", "Yes")
+        if isinstance(raw_enabled, bool):
+            enabled = raw_enabled
+        else:
+            enabled = str(raw_enabled).strip().lower() not in {"no", "false", "0"}
+
+        schedule = None
+        freq = str(record.get("schedule_frequency") or "").strip().upper()
+        interval_raw = record.get("schedule_interval")
+        has_interval = str(interval_raw or "").strip() != ""
+        if bool(freq) != has_interval:
+            return {}, Error(
+                record=record,
+                error="schedule_frequency and schedule_interval must be provided together",
+            )
+        if freq and has_interval:
+            try:
+                interval = int(interval_raw)
+            except ValueError, TypeError:
+                return {}, Error(
+                    record=record,
+                    error=f"Invalid schedule_interval value: '{interval_raw}'",
+                )
+            schedule = {"frequency": freq, "interval": interval}
+            for opt_key, col in [
+                ("end_date", "schedule_end_date"),
+                ("overdue_behavior", "schedule_overdue_behavior"),
+                ("occurrences", "schedule_occurrences"),
+            ]:
+                raw_val = str(record.get(col) or "").strip()
+                if raw_val:
+                    if opt_key == "occurrences":
+                        try:
+                            schedule[opt_key] = int(raw_val)
+                        except ValueError, TypeError:
+                            return {}, Error(
+                                record=record,
+                                error=f"Invalid schedule_occurrences value: '{raw_val}'",
+                            )
+                    else:
+                        schedule[opt_key] = raw_val
+            for opt_key, col in [
+                ("days_of_week", "schedule_days_of_week"),
+                ("weeks_of_month", "schedule_weeks_of_month"),
+                ("months_of_year", "schedule_months_of_year"),
+            ]:
+                raw_val = str(record.get(col) or "").strip()
+                if raw_val:
+                    try:
+                        schedule[opt_key] = [
+                            int(v.strip()) for v in raw_val.split(",") if v.strip()
+                        ]
+                    except ValueError, TypeError:
+                        return {}, Error(
+                            record=record,
+                            error=f"Invalid {col} value: '{raw_val}' (expected comma-separated integers)",
+                        )
+
+        data: dict = {
+            "ref_id": record.get("ref_id") or "",
+            "name": name,
+            "description": record.get("description") or "",
+            "folder": folder_id,
+            "is_recurrent": is_recurrent,
+            "task_date": _parse_date(record.get("task_date")),
+            "enabled": enabled,
+            "link": record.get("link", ""),
+        }
+        if schedule is not None:
+            data["schedule"] = schedule
+
+        raw_status = str(record.get("status", "")).lower().strip()
+        status = self.TASK_STATUS_MAP.get(raw_status)
+        if status:
+            data["status"] = status
+        observation = record.get("observation")
+        if observation:
+            data["observation"] = str(observation)
+
+        accessible_folder_ids = set(self.folders_map.values())
+        if self.folder_id:
+            accessible_folder_ids.add(self.folder_id)
+        unresolved: list[str] = []
+
+        assigned_raw = record.get("assigned_to") or ""
+        data["assigned_to"] = (
+            self._resolve_actors(assigned_raw, unresolved) if assigned_raw else []
+        )
+
+        for col_name, model in [
+            ("assets", Asset),
+            ("applied_controls", AppliedControl),
+            ("compliance_assessments", ComplianceAssessment),
+            ("risk_assessments", RiskAssessment),
+            ("findings_assessment", FindingsAssessment),
+        ]:
+            raw = record.get(col_name) or ""
+            data[col_name] = (
+                self._resolve_m2m_by_name(
+                    model, raw, accessible_folder_ids, folder_id, unresolved
+                )
+                if raw
+                else []
+            )
+
+        # Expected evidence is a declaration, not a pre-existing artifact: naming one
+        # the domain does not have yet creates it there rather than dropping the link.
+        raw_evidences = record.get("evidences") or ""
+        if raw_evidences:
+            try:
+                data["evidences"] = self._resolve_or_create_evidences(
+                    raw_evidences, accessible_folder_ids, folder_id
+                )
+            except PermissionDenied:
+                return {}, Error(
+                    record=record,
+                    error="Not allowed to create evidence in this domain",
+                )
+        else:
+            data["evidences"] = []
+
+        if unresolved:
+            return data, Error(
+                record=record,
+                error="Unresolved linked records were skipped: "
+                + "; ".join(unresolved),
+                is_warning=True,
+            )
+        return data, None
+
+
+class FolderRecordConsumer(RecordConsumer):
+    """
+    Consumer for importing Folder (domain) records.
+    Supports stop/skip/update conflict management by name + parent_folder.
+    """
+
+    SERIALIZER_CLASS = FolderWriteSerializer
+    SOURCE_KEY_MAP: ClassVar[Mapping[str, list[str]]] = MappingProxyType(
+        {
+            "parent_folder": ["domain"],
+            "filtering_labels": ["filtering_labels", "labels", "étiquette", "label"],
+        }
+    )
+
+    def create_context(self):
+        return None, None
+
+    @cached_property
+    def may_add_labels(self) -> bool:
+        # New labels are created in the root folder (FolderMixin's default).
+        return RoleAssignment.is_access_allowed(
+            user=self.request.user,
+            perm=Permission.objects.get(codename="add_filteringlabel"),
+            folder=Folder.get_root_folder(),
+        )
+
+    def _resolve_parent(self, record: dict) -> tuple[Optional[UUID], Optional[Error]]:
+        """Resolve the `domain` column, a parent domain given by name."""
+        domain_name = str(record.get("domain", "")).strip()
+        if not domain_name:
+            return Folder.get_root_folder().id, None
+
+        # Names are not unique: a row exported with its internal_id keeps its
+        # current parent while that parent's name is unchanged.
+        internal_id = record.get("internal_id")
+        if internal_id:
+            try:
+                current = (
+                    Folder.objects.filter(id=internal_id)
+                    .select_related("parent_folder")
+                    .first()
+                )
+            except ValidationError, ValueError:
+                current = None  # reported when the row is matched
+            parent = current.parent_folder if current else None
+            if parent and parent.name.lower() == domain_name.lower():
+                return parent.id, None
+
+        # The root counts too: files may name it instead of leaving `domain` blank.
+        matching_folders = Folder.objects.filter(
+            name__iexact=domain_name,
+            content_type__in=[Folder.ContentType.DOMAIN, Folder.ContentType.ROOT],
+        )
+        count = matching_folders.count()
+        if count == 0:
+            return None, Error(
+                record=record, error=f"Parent folder '{domain_name}' not found"
+            )
+        if count > 1:
+            return None, Error(
+                record=record,
+                error=f"Multiple folders named '{domain_name}' found; please use a unique name",
+            )
+        return matching_folders.first().id, None
+
+    def find_existing(self, record_data: dict) -> Optional[Folder]:
+        name = record_data.get("name")
+        if not name:
+            return None
+        query: dict = {"name__iexact": name}
+        parent_folder = record_data.get("parent_folder")
+        if parent_folder:
+            query["parent_folder"] = parent_folder
+        return Folder.objects.filter(**query).first()
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        # A domains export escapes formula-like cells; undo it so they round-trip.
+        record = {key: unescape_excel_formula(value) for key, value in record.items()}
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        parent_folder_id, error = self._resolve_parent(record)
+        if error is not None:
+            return {}, error
+
+        data = {
+            "ref_id": record.get("ref_id", ""),
+            "name": name,
+            "description": record.get("description", ""),
+            "parent_folder": parent_folder_id,
+        }
+
+        raw_labels = (
+            record.get("filtering_labels")
+            or record.get("labels")
+            or record.get("étiquette")
+            or record.get("label")
+        )
+        label_names = _split_label_names(raw_labels)
+        invalid_labels = _invalid_label_names(label_names)
+        if invalid_labels:
+            return {}, Error(
+                record=record,
+                error=f"Invalid labels {', '.join(invalid_labels)}: use only "
+                "letters, digits, '_' or '-', 36 characters at most",
+            )
+        if label_names and not self.may_add_labels:
+            existing = set(
+                FilteringLabel.objects.filter(label__in=label_names).values_list(
+                    "label", flat=True
+                )
+            )
+            missing = sorted(label_names - existing)
+            if missing:
+                return {}, Error(
+                    record=record,
+                    error=f"You are not allowed to create labels: {', '.join(missing)}",
+                )
+        # Kept as names: missing labels are created only when the row is written.
+        if label_names:
+            data["filtering_labels"] = raw_labels
+
+        raw_iam_groups = record.get("create_iam_groups")
+        if not is_blank_cell(raw_iam_groups):
+            create_iam_groups = _parse_bool_cell(raw_iam_groups, binary_only=True)
+            if create_iam_groups is None:
+                return {}, Error(
+                    record=record,
+                    error=f"Invalid create_iam_groups '{raw_iam_groups}': "
+                    "use true or false",
+                )
+            data["create_iam_groups"] = create_iam_groups
+
+        return data, None
+
+    def after_write(self, instance: Folder, created: bool) -> None:
+        # The API provisions IAM groups in FolderViewSet.perform_create, which the
+        # import bypasses; on update, the serializer handles the flag change.
+        if created:
+            Folder.create_default_ug_and_ra(instance)
+
+    @cached_property
+    def viewable_label_ids(self) -> set:
+        return set(
+            RoleAssignment.get_viewable_object_ids(self.request.user, FilteringLabel)
+        )
+
+    def resolve_deferred(self, data: dict, instance=None) -> dict:
+        if "filtering_labels" not in data:
+            return data
+        label_ids = _resolve_filtering_labels(data["filtering_labels"])
+        if instance is not None:
+            # The export only lists the labels the user may view: the cell cannot
+            # mention the others, so it must not unlink them.
+            label_ids += instance.filtering_labels.exclude(
+                id__in=self.viewable_label_ids
+            ).values_list("id", flat=True)
+        return {**data, "filtering_labels": label_ids}
+
+
+class VulnerabilityRecordConsumer(RecordConsumer[None]):
+    """
+    Consumer for importing Vulnerability records.
+    """
+
+    SERIALIZER_CLASS = VulnerabilityWriteSerializer
+    SEVERITY_MAP: Final[dict[str, int]] = {
+        "undefined": -1,
+        "info": 0,
+        "low": 1,
+        "medium": 2,
+        "high": 3,
+        "critical": 4,
+    }
+    STATUS_MAP: Final[dict[str, str]] = {
+        "undefined": "--",
+        "potential": "potential",
+        "exploitable": "exploitable",
+        "mitigated": "mitigated",
+        "fixed": "fixed",
+        "not exploitable": "not_exploitable",
+        "unaffected": "unaffected",
+    }
+
+    def create_context(self):
+        return None, None
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        folder_id = self.folder_id
+
+        raw_severity = record.get("severity")
+        if isinstance(raw_severity, str):
+            severity = self.SEVERITY_MAP.get(raw_severity.lower().strip(), -1)
+        elif isinstance(raw_severity, int) and -1 <= raw_severity <= 4:
+            severity = raw_severity
+        else:
+            severity = -1
+
+        raw_status = record.get("status")
+        if isinstance(raw_status, str):
+            status = self.STATUS_MAP.get(raw_status.lower().strip(), "--")
+        else:
+            status = "--"
+
+        applied_controls = []
+        for token in re.split(r"[|,\n]", record.get("applied_controls") or ""):
+            token = token.strip()
+            if not token:
+                continue
+            candidates = list(
+                AppliedControl.objects.filter(
+                    Q(ref_id=token) | Q(name__iexact=token), folder_id=folder_id
+                )
+            )
+            obj = next(
+                (c for c in candidates if c.ref_id == token),
+                candidates[0] if candidates else None,
+            )
+            if obj:
+                applied_controls.append(obj.id)
+            else:
+                return {}, Error(
+                    record=record,
+                    error=f"No applied control with ref_id or name '{token}' found in folder",
+                )
+
+        assets = []
+        for token in re.split(r"[|,\n]", record.get("assets") or ""):
+            token = token.strip()
+            if not token:
+                continue
+            candidates = list(
+                Asset.objects.filter(
+                    Q(ref_id=token) | Q(name__iexact=token), folder_id=folder_id
+                )
+            )
+            obj = next(
+                (c for c in candidates if c.ref_id == token),
+                candidates[0] if candidates else None,
+            )
+            if obj:
+                assets.append(obj.id)
+            else:
+                return {}, Error(
+                    record=record,
+                    error=f"No asset with ref_id or name '{token}' found in folder",
+                )
+
+        security_exceptions = []
+        for token in re.split(r"[|,\n]", record.get("security_exceptions") or ""):
+            token = token.strip()
+            if not token:
+                continue
+            candidates = list(
+                SecurityException.objects.filter(
+                    Q(ref_id=token) | Q(name__iexact=token), folder_id=folder_id
+                )
+            )
+            obj = next(
+                (c for c in candidates if c.ref_id == token),
+                candidates[0] if candidates else None,
+            )
+            if obj:
+                security_exceptions.append(obj.id)
+            else:
+                return {}, Error(
+                    record=record,
+                    error=f"No security exception with ref_id or name '{token}' found in folder",
+                )
+
+        data = {
+            "ref_id": record.get("ref_id", ""),
+            "name": name,
+            "description": record.get("description", ""),
+            "observation": record.get("observation", ""),
+            "status": status,
+            "severity": severity,
+            "folder": folder_id,
+            "applied_controls": applied_controls,
+            "assets": assets,
+            "security_exceptions": security_exceptions,
+        }
+
+        detected_at = _parse_date(record.get("detected_at"))
+        if detected_at:
+            data["detected_at"] = detected_at
+
+        due_date = _parse_date(record.get("due_date"))
+        if due_date:
+            data["due_date"] = due_date
+
+        remediated_at = _parse_date(record.get("remediated_at"))
+        if remediated_at:
+            data["remediated_at"] = remediated_at
+
+        filtering_labels = _resolve_filtering_labels(record.get("filtering_labels"))
+        if filtering_labels:
+            data["filtering_labels"] = filtering_labels
+
+        # Present-but-blank still sets it, so UPDATE mode can clear the owners.
+        unresolved: list[str] = []
+        if "owner" in record:
+            data["owner"] = _resolve_owners(record.get("owner"), unresolved)
+
+        return data, _owner_warning(record, unresolved)
+
+
+class ElementaryActionRecordConsumer(RecordConsumer):
+    """
+    Consumer for importing ElementaryAction records.
+    Supports stop/skip/update conflict management by name + folder.
+    """
+
+    SERIALIZER_CLASS = ElementaryActionWriteSerializer
+    ATTACK_STAGE_MAP: ClassVar[Mapping[str, int]] = MappingProxyType(
+        {
+            # English
+            "know": 0,
+            "reconnaissance": 0,
+            "ebiosreconnaissance": 0,
+            "enter": 1,
+            "initial access": 1,
+            "ebiosinitialaccess": 1,
+            "discover": 2,
+            "discovery": 2,
+            "ebiosdiscovery": 2,
+            "exploit": 3,
+            "exploitation": 3,
+            "ebiosexploitation": 3,
+            # French
+            "connaitre": 0,
+            "connaître": 0,
+            "pénétrer": 1,
+            "penetrer": 1,
+            "entrer": 1,
+            "trouver": 2,
+            "découvrir": 2,
+            "decouvrir": 2,
+            "exploiter": 3,
+        }
+    )
+    ICON_MAP: ClassVar[Mapping[str, str]] = MappingProxyType(
+        {
+            icon.lower(): icon
+            for icon in [
+                "server",
+                "computer",
+                "cloud",
+                "file",
+                "diamond",
+                "phone",
+                "cube",
+                "blocks",
+                "shapes",
+                "network",
+                "database",
+                "key",
+                "search",
+                "carrot",
+                "money",
+                "skull",
+                "globe",
+                "usb",
+            ]
+        }
+    )
+
+    def create_context(self):
+        return None, None
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        domain = self.folder_id
+        domain_name = record.get("domain")
+        if domain_name:
+            domain = self.folders_map.get(str(domain_name).lower(), self.folder_id)
+
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        record_attack_stage = record.get("attack_stage")
+        attack_stage = 0
+
+        if record_attack_stage:
+            attack_stage = self.ATTACK_STAGE_MAP.get(
+                str(record_attack_stage).strip().lower(), 0
+            )
+
+        data: dict = {
+            "name": name,
+            "description": record.get("description", ""),
+            "ref_id": record.get("ref_id", ""),
+            "folder": domain,
+            "attack_stage": attack_stage,
+        }
+
+        record_icon = record.get("icon")
+        if record_icon:
+            icon = self.ICON_MAP.get(str(record_icon).strip().lower())
+            if icon is not None:
+                data["icon"] = icon
+
+        return data, None
+
+
+class ProcessingRecordConsumer(RecordConsumer):
+    """
+    Consumer for importing Processing (privacy) records.
+    Supports stop/skip/update conflict management by name + folder.
+    M2M fields (nature, assigned_to, filtering_labels) are resolved to IDs
+    and passed directly to the serializer.
+    """
+
+    SERIALIZER_CLASS = ProcessingWriteSerializer
+    SOURCE_KEY_MAP: ClassVar[Mapping[str, list[str]]] = MappingProxyType(
+        {
+            "nature": ["processing_nature"],
+            "filtering_labels": ["labels"],
+        }
+    )
+    _STATUS_KEYS: ClassVar[frozenset[str]] = frozenset(
+        k for k, _ in Processing.STATUS_CHOICES
+    )
+    _STATUS_BY_DISPLAY: ClassVar[Mapping[str, str]] = MappingProxyType(
+        {v.lower(): k for k, v in Processing.STATUS_CHOICES}
+    )
+    _ROLE_KEYS: ClassVar[frozenset[str]] = frozenset(
+        k for k, _ in Processing.ROLE_CHOICES
+    )
+    _ROLE_BY_DISPLAY: ClassVar[Mapping[str, str]] = MappingProxyType(
+        {v.lower(): k for k, v in Processing.ROLE_CHOICES}
+    )
+
+    def _build_update_data(self, record: dict, record_data: dict) -> dict:
+        update_data = super()._build_update_data(record, record_data)
+        for field in ("assigned_to", "controllers"):
+            if field not in update_data and field in record:
+                update_data[field] = record_data.get(field, [])
+        return update_data
+
+    def create_context(self):
+        return None, None
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        domain = self.folder_id
+        domain_name = record.get("domain")
+        if domain_name:
+            domain = self.folders_map.get(str(domain_name).lower(), self.folder_id)
+
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        # Accept both raw key (e.g. "privacy_draft") and display label (e.g. "Draft")
+        record_status_value = record.get("status", "")
+        if record_status_value in self._STATUS_KEYS:
+            status_value = record_status_value
+        elif str(record_status_value).lower() in self._STATUS_BY_DISPLAY:
+            status_value = self._STATUS_BY_DISPLAY[str(record_status_value).lower()]
+        else:
+            status_value = "privacy_draft"
+
+        record_role_value = str(record.get("role") or "").strip()
+        if not record_role_value:
+            role_value = "privacy_controller"
+        elif record_role_value in self._ROLE_KEYS:
+            role_value = record_role_value
+        elif record_role_value.lower() in self._ROLE_BY_DISPLAY:
+            role_value = self._ROLE_BY_DISPLAY[record_role_value.lower()]
+        else:
+            return {}, Error(record=record, error=f"Unknown role: {record_role_value}")
+
+        data = {
+            "name": name,
+            "description": record.get("description", ""),
+            "ref_id": record.get("ref_id", ""),
+            "folder": domain,
+            "status": status_value,
+            "role": role_value,
+            "information_channel": record.get("information_channel", ""),
+            "usage_channel": record.get("usage_channel", ""),
+            "dpia_required": record.get("dpia_required", False),
+            "dpia_reference": record.get("dpia_reference", ""),
+        }
+
+        # Resolve M2M: nature (by name)
+        record_processing_nature = record.get("processing_nature")
+        if record_processing_nature:
+            nature_names = [
+                nature_name.strip()
+                for nature_name in str(record_processing_nature).split(",")
+            ]
+            data["nature"] = list(
+                Terminology.objects.filter(
+                    field_path=Terminology.FieldPath.PROCESSING_NATURE,
+                    name__in=nature_names,
+                ).values_list("id", flat=True)
+            )
+
+        # Resolve M2M: controllers (by entity name)
+        lines = [
+            line.strip()
+            for line in str(record.get("controllers") or "").splitlines()
+            if line.strip()
+        ]
+        known = set(
+            Entity.objects.filter(name__in=lines).values_list("name", flat=True)
+        )
+        entity_names = set()
+        for line in lines:
+            if line in known:
+                entity_names.add(line)
+            else:
+                entity_names |= {n.strip() for n in line.split(",") if n.strip()}
+        entities = Entity.objects.filter(name__in=entity_names)
+        missing = entity_names - {e.name for e in entities}
+        if missing:
+            return {}, Error(
+                record=record,
+                error=f"Unknown controllers: {', '.join(sorted(missing))}",
+            )
+        data["controllers"] = [e.id for e in entities]
+
+        # Resolve M2M: assigned_to (by user email → Actor)
+        record_assigned_to = record.get("assigned_to")
+        if record_assigned_to:
+            emails = [email.strip() for email in str(record_assigned_to).split(",")]
+            data["assigned_to"] = list(
+                Actor.objects.filter(user__email__in=emails).values_list(
+                    "id", flat=True
+                )
+            )
+
+        # Resolve M2M: filtering_labels (by label name, create if missing)
+        label_ids = _resolve_filtering_labels(record.get("labels"))
+        if label_ids:
+            data["filtering_labels"] = label_ids
+
+        return data, None
+
+
+class ProcessingChildConsumerMixin:
+    """Shared resolution logic for Processing sub-object consumers."""
+
+    SOURCE_KEY_MAP: ClassVar[Mapping[str, list[str]]] = MappingProxyType(
+        {"processing": ["processing", "processing_name"]}
+    )
+
+    def create_context(self):
+        return None, None
+
+    _parse_bool = staticmethod(_bool_cell_or_false)
+
+    @staticmethod
+    def _choice_key(value: object, choices) -> Optional[str]:
+        if value in (None, ""):
+            return None
+        lowered = str(value).strip().lower()
+        for key, label in choices:
+            if lowered == str(key).lower() or lowered == str(label).lower():
+                return key
+        return None
+
+    def _resolve_choice(
+        self, record: dict, field_name: str, choices, default: str = ""
+    ) -> tuple[Optional[str], Optional[Error]]:
+        raw = record.get(field_name)
+        if raw in (None, ""):
+            return default, None
+        key = self._choice_key(raw, choices)
+        if key is None:
+            return None, Error(record=record, error=f"Unknown {field_name} '{raw}'")
+        return key, None
+
+    def _accessible_processings(self):
+        ids = getattr(self, "_accessible_processing_ids", None)
+        if ids is None:
+            ids = RoleAssignment.get_viewable_object_ids(self.request.user, Processing)
+            self._accessible_processing_ids = ids
+        return Processing.objects.filter(id__in=ids)
+
+    def _resolve_processing(
+        self, record: dict
+    ) -> tuple[Optional[Processing], Optional[Error]]:
+        value = record.get("processing") or record.get("processing_name")
+        if not value:
+            return None, Error(record=record, error="Processing is mandatory")
+
+        try:
+            processing = (
+                self._accessible_processings().filter(id=UUID(str(value))).first()
+            )
+            if processing:
+                return processing, None
+        except ValueError, TypeError:
+            # not a UUID; fall back to ref_id/name lookup
+            pass
+
+        queryset = self._accessible_processings()
+        if self.folder_id:
+            queryset = queryset.filter(folder_id=self.folder_id)
+        processing = (
+            queryset.filter(ref_id=value).first()
+            or queryset.filter(name__iexact=str(value)).first()
+        )
+        if processing is None:
+            return None, Error(record=record, error=f"Unknown processing '{value}'")
+        return processing, None
+
+    def _resolve_entity(self, record: dict) -> tuple[Optional[Entity], Optional[Error]]:
+        value = record.get("entity")
+        if value in (None, ""):
+            return None, None
+
+        try:
+            entity = Entity.objects.filter(id=UUID(str(value))).first()
+            if entity:
+                return entity, None
+        except ValueError, TypeError:
+            # not a UUID; fall back to name lookup
+            pass
+
+        entity = Entity.objects.filter(name__iexact=str(value)).first()
+        if entity is None:
+            return None, Error(record=record, error=f"Unknown entity '{value}'")
+        return entity, None
+
+    def find_existing(self, record_data: dict):
+        model_class = self.SERIALIZER_CLASS.Meta.model
+        processing_id = record_data.get("processing")
+        if not processing_id:
+            return None
+        query = {"processing_id": processing_id}
+        for field_name in model_class.fields_to_check:
+            if field_name == "processing":
+                continue
+            value = record_data.get(field_name)
+            if value in (None, ""):
+                continue
+            if isinstance(value, str):
+                query[f"{field_name}__iexact"] = value
+            else:
+                query[field_name] = value
+        if len(query) == 1:
+            return None
+        return model_class.objects.filter(**query).first()
+
+
+class PurposeRecordConsumer(ProcessingChildConsumerMixin, RecordConsumer):
+    SERIALIZER_CLASS = PurposeWriteSerializer
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        processing, error = self._resolve_processing(record)
+        if error:
+            return {}, error
+
+        legal_basis, error = self._resolve_choice(
+            record, "legal_basis", ART6_LAWFUL_BASIS_CHOICES, default="privacy_consent"
+        )
+        if error:
+            return {}, error
+
+        article_9_condition, error = self._resolve_choice(
+            record, "article_9_condition", ART9_SPECIAL_CATEGORY_CONDITION_CHOICES
+        )
+        if error:
+            return {}, error
+
+        data = {
+            "name": record.get("name", ""),
+            "description": record.get("description", ""),
+            "processing": processing.id,
+            "legal_basis": legal_basis,
+        }
+        if article_9_condition:
+            data["article_9_condition"] = article_9_condition
+        return data, None
+
+
+class PersonalDataRecordConsumer(ProcessingChildConsumerMixin, RecordConsumer):
+    SERIALIZER_CLASS = PersonalDataWriteSerializer
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        processing, error = self._resolve_processing(record)
+        if error:
+            return {}, error
+
+        category_value = record.get("category")
+        if category_value in (None, ""):
+            return {}, Error(record=record, error="Category is mandatory")
+        category = Terminology.objects.filter(
+            field_path=Terminology.FieldPath.PERSONAL_DATA_CATEGORY,
+            name__iexact=str(category_value).strip(),
+        ).first()
+        if category is None:
+            return {}, Error(
+                record=record,
+                error=f"Unknown personal data category '{category_value}'",
+            )
+
+        deletion_policy, error = self._resolve_choice(
+            record, "deletion_policy", PersonalData.DELETION_POLICY_CHOICES
+        )
+        if error:
+            return {}, error
+
+        data = {
+            "name": record.get("name", ""),
+            "description": record.get("description", ""),
+            "processing": processing.id,
+            "category": category.id,
+            "retention": record.get("retention", ""),
+            "deletion_policy": deletion_policy,
+            "is_sensitive": self._parse_bool(record.get("is_sensitive")),
+        }
+
+        asset_names = record.get("assets")
+        if asset_names:
+            names = [n.strip() for n in str(asset_names).split(",") if n.strip()]
+            assets = []
+            for asset_name in names:
+                asset = Asset.objects.filter(name__iexact=asset_name).first()
+                if asset is None:
+                    return {}, Error(
+                        record=record, error=f"Unknown asset '{asset_name}'"
+                    )
+                assets.append(asset.id)
+            data["assets"] = assets
+
+        return data, None
+
+
+class DataSubjectRecordConsumer(ProcessingChildConsumerMixin, RecordConsumer):
+    SERIALIZER_CLASS = DataSubjectWriteSerializer
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        processing, error = self._resolve_processing(record)
+        if error:
+            return {}, error
+
+        category = self._choice_key(
+            record.get("category"), DataSubject.CATEGORY_CHOICES
+        )
+        if category is None:
+            return {}, Error(
+                record=record,
+                error=f"Unknown data subject category '{record.get('category')}'",
+            )
+
+        return {
+            "name": record.get("name", ""),
+            "description": record.get("description", ""),
+            "processing": processing.id,
+            "category": category,
+        }, None
+
+
+class DataRecipientRecordConsumer(ProcessingChildConsumerMixin, RecordConsumer):
+    SERIALIZER_CLASS = DataRecipientWriteSerializer
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        processing, error = self._resolve_processing(record)
+        if error:
+            return {}, error
+
+        category = self._choice_key(
+            record.get("category"), DataRecipient.CATEGORY_CHOICES
+        )
+        if category is None:
+            return {}, Error(
+                record=record,
+                error=f"Unknown data recipient category '{record.get('category')}'",
+            )
+
+        return {
+            "name": record.get("name", ""),
+            "description": record.get("description", ""),
+            "processing": processing.id,
+            "category": category,
+        }, None
+
+
+class DataContractorRecordConsumer(ProcessingChildConsumerMixin, RecordConsumer):
+    SERIALIZER_CLASS = DataContractorWriteSerializer
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        processing, error = self._resolve_processing(record)
+        if error:
+            return {}, error
+
+        entity, error = self._resolve_entity(record)
+        if error:
+            return {}, error
+
+        relationship_type = self._choice_key(
+            record.get("relationship_type"), DataContractor.RELATIONSHIP_TYPE_CHOICES
+        )
+        if relationship_type is None:
+            return {}, Error(
+                record=record,
+                error=f"Unknown relationship type '{record.get('relationship_type')}'",
+            )
+
+        country = self._choice_key(record.get("country"), COUNTRY_CHOICES)
+        if country is None:
+            return {}, Error(
+                record=record, error=f"Unknown country '{record.get('country')}'"
+            )
+
+        data = {
+            "name": record.get("name", ""),
+            "description": record.get("description", ""),
+            "processing": processing.id,
+            "relationship_type": relationship_type,
+            "country": country,
+            "documentation_link": record.get("documentation_link", ""),
+        }
+        if entity:
+            data["entity"] = entity.id
+        return data, None
+
+
+class DataTransferRecordConsumer(ProcessingChildConsumerMixin, RecordConsumer):
+    SERIALIZER_CLASS = DataTransferWriteSerializer
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        processing, error = self._resolve_processing(record)
+        if error:
+            return {}, error
+
+        entity, error = self._resolve_entity(record)
+        if error:
+            return {}, error
+
+        country = self._choice_key(record.get("country"), COUNTRY_CHOICES)
+        if country is None:
+            return {}, Error(
+                record=record, error=f"Unknown country '{record.get('country')}'"
+            )
+
+        transfer_mechanism, error = self._resolve_choice(
+            record, "transfer_mechanism", TRANSFER_MECHANISM_CHOICES
+        )
+        if error:
+            return {}, error
+
+        data = {
+            "name": record.get("name", ""),
+            "description": record.get("description", ""),
+            "processing": processing.id,
+            "country": country,
+            "transfer_mechanism": transfer_mechanism,
+            "guarantees": record.get("guarantees", ""),
+            "documentation_link": record.get("documentation_link", ""),
+        }
+        if entity:
+            data["entity"] = entity.id
+        return data, None
+
+
+PROCESSING_CHILD_SHEETS = {
+    "purposes": ("purposes", PurposeRecordConsumer),
+    "personal data": ("personal_data", PersonalDataRecordConsumer),
+    "data subjects": ("data_subjects", DataSubjectRecordConsumer),
+    "data recipients": ("data_recipients", DataRecipientRecordConsumer),
+    "contractors": ("contractors", DataContractorRecordConsumer),
+    "transfers": ("transfers", DataTransferRecordConsumer),
+}
+
+
+class BusinessImpactAnalysisRecordConsumer(RecordConsumer):
+    SERIALIZER_CLASS = BusinessImpactAnalysisWriteSerializer
+    SOURCE_KEY_MAP: ClassVar[Mapping[str, list[str]]] = MappingProxyType(
+        {
+            "perimeter": ["perimeter", "perimeter_ref_id", "perimeter_name"],
+            "risk_matrix": [
+                "risk_matrix",
+                "risk_matrix_ref_id",
+                "risk_matrix_name",
+                "matrix",
+            ],
+            "bia": ["bia", "bia_name"],
+        }
+    )
+
+    def create_context(self):
+        return None, None
+
+    def _resolve_perimeter(
+        self, record: dict
+    ) -> tuple[Optional[Perimeter], Optional[Error]]:
+        perimeter_value = (
+            record.get("perimeter")
+            or record.get("perimeter_ref_id")
+            or record.get("perimeter_name")
+        )
+
+        if perimeter_value:
+            try:
+                perimeter_uuid = UUID(str(perimeter_value))
+                perimeter = Perimeter.objects.filter(id=perimeter_uuid).first()
+                if perimeter:
+                    return perimeter, None
+            except ValueError, TypeError:
+                pass
+
+            perimeter = Perimeter.objects.filter(ref_id=perimeter_value).first()
+            if perimeter is None:
+                perimeter = Perimeter.objects.filter(
+                    name__iexact=perimeter_value
+                ).first()
+
+            if perimeter is None:
+                return None, Error(
+                    record=record,
+                    error=f"Unknown perimeter '{perimeter_value}'",
+                )
+
+            return perimeter, None
+
+        if self.perimeter_id:
+            perimeter = Perimeter.objects.filter(id=self.perimeter_id).first()
+            if perimeter is None:
+                return None, Error(
+                    record=record,
+                    error=f"Perimeter with ID '{self.perimeter_id}' does not exist",
+                )
+            return perimeter, None
+
+        return None, None
+
+    def _resolve_risk_matrix(
+        self, record: dict
+    ) -> tuple[Optional[RiskMatrix], Optional[Error]]:
+        # Form-selected matrix takes priority over whatever is in the file.
+        if self.matrix_id:
+            risk_matrix = RiskMatrix.objects.filter(id=self.matrix_id).first()
+            if risk_matrix is None:
+                return None, Error(
+                    record=record,
+                    error=f"Risk matrix with ID '{self.matrix_id}' does not exist",
+                )
+            return risk_matrix, None
+
+        matrix_value = (
+            record.get("risk_matrix")
+            or record.get("risk_matrix_ref_id")
+            or record.get("risk_matrix_name")
+            or record.get("matrix")
+        )
+
+        if matrix_value:
+            try:
+                matrix_uuid = UUID(str(matrix_value))
+                risk_matrix = RiskMatrix.objects.filter(id=matrix_uuid).first()
+                if risk_matrix:
+                    return risk_matrix, None
+            except ValueError, TypeError:
+                pass
+
+            risk_matrix = RiskMatrix.objects.filter(ref_id=matrix_value).first()
+            if risk_matrix is None:
+                risk_matrix = RiskMatrix.objects.filter(
+                    name__iexact=matrix_value
+                ).first()
+
+            if risk_matrix is None:
+                return None, Error(
+                    record=record,
+                    error=f"Unknown risk matrix '{matrix_value}'",
+                )
+
+            return risk_matrix, None
+
+        return None, Error(record=record, error="Risk matrix is mandatory")
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        name = record.get("name")
+        if not name:
+            return {}, Error(record=record, error="Name field is mandatory")
+
+        perimeter, error = self._resolve_perimeter(record)
+        if error is not None:
+            return {}, error
+
+        risk_matrix, error = self._resolve_risk_matrix(record)
+        if error is not None:
+            return {}, error
+
+        domain = self.folder_id
+        domain_name = record.get("domain")
+        if domain_name is not None:
+            domain = self.folders_map.get(domain_name.lower(), self.folder_id)
+
+        if perimeter is not None:
+            domain = perimeter.folder.id
+
+        if not domain:
+            return {}, Error(record=record, error="Folder is mandatory")
+
+        return {
+            "name": name,
+            "description": record.get("description", ""),
+            "perimeter": perimeter.id if perimeter else None,
+            "risk_matrix": risk_matrix.id,
+            "folder": domain,
+            "version": record.get("version", "1.0"),
+            "status": record.get("status", "planned"),
+            "observation": record.get("observation", ""),
+            "eta": _parse_date(record.get("eta")),
+            "due_date": _parse_date(record.get("due_date")),
+        }, None
+
+
+class AssetAssessmentRecordConsumer(RecordConsumer):
+    SERIALIZER_CLASS = AssetAssessmentWriteSerializer
+    SOURCE_KEY_MAP: ClassVar[Mapping[str, list[str]]] = MappingProxyType(
+        {
+            "bia": ["bia", "bia_name"],
+            "asset": ["asset", "asset_ref_id", "asset_name"],
+        }
+    )
+
+    def create_context(self):
+        return None, None
+
+    @staticmethod
+    def _split_values(value: object) -> list[str]:
+        if isinstance(value, list):
+            return [str(v).strip() for v in value if str(v).strip()]
+        if isinstance(value, str):
+            return [v.strip() for v in value.split(",") if v.strip()]
+        return []
+
+    _parse_bool = staticmethod(_bool_cell_or_false)
+
+    def _resolve_bia(
+        self, record: dict
+    ) -> tuple[Optional[BusinessImpactAnalysis], Optional[Error]]:
+        bia_value = record.get("bia") or record.get("bia_name")
+
+        if not bia_value:
+            return None, Error(record=record, error="BIA is mandatory")
+
+        try:
+            bia_uuid = UUID(str(bia_value))
+            bia = BusinessImpactAnalysis.objects.filter(id=bia_uuid).first()
+            if bia:
+                return bia, None
+        except ValueError, TypeError:
+            pass
+
+        bia = BusinessImpactAnalysis.objects.filter(name__iexact=bia_value).first()
+
+        if bia is None:
+            return None, Error(record=record, error=f"Unknown BIA '{bia_value}'")
+
+        return bia, None
+
+    def _resolve_asset(self, record: dict) -> tuple[Optional[Asset], Optional[Error]]:
+        asset_value = (
+            record.get("asset")
+            or record.get("asset_ref_id")
+            or record.get("asset_name")
+        )
+
+        if not asset_value:
+            return None, Error(record=record, error="Asset is mandatory")
+
+        try:
+            asset_uuid = UUID(str(asset_value))
+            asset = Asset.objects.filter(id=asset_uuid).first()
+            if asset:
+                return asset, None
+        except ValueError, TypeError:
+            pass
+
+        asset = Asset.objects.filter(ref_id=asset_value).first()
+        if asset is None:
+            asset = Asset.objects.filter(name__iexact=asset_value).first()
+
+        if asset is None:
+            return None, Error(record=record, error=f"Unknown asset '{asset_value}'")
+
+        return asset, None
+
+    def _resolve_assets_list(
+        self, values: object, record: dict
+    ) -> tuple[list[UUID], Optional[Error]]:
+        items = self._split_values(values)
+        if not items:
+            return [], None
+        resolved = []
+        for item in items:
+            asset, error = self._resolve_asset({**record, "asset": item})
+            if error:
+                return [], error
+            resolved.append(asset.id)
+        return resolved, None
+
+    def _resolve_applied_controls_list(
+        self, values: object, record: dict
+    ) -> tuple[list[UUID], Optional[Error]]:
+        items = self._split_values(values)
+        if not items:
+            return [], None
+        resolved = []
+        for item in items:
+            try:
+                control_uuid = UUID(str(item))
+                control = AppliedControl.objects.filter(id=control_uuid).first()
+            except ValueError, TypeError:
+                control = None
+
+            if control is None:
+                control = AppliedControl.objects.filter(ref_id=item).first()
+            if control is None:
+                control = AppliedControl.objects.filter(name__iexact=item).first()
+            if control is None:
+                return [], Error(
+                    record=record,
+                    error=f"Unknown applied control '{item}'",
+                )
+            resolved.append(control.id)
+        return resolved, None
+
+    def _resolve_evidences_list(
+        self, values: object, record: dict
+    ) -> tuple[list[UUID], Optional[Error]]:
+        items = self._split_values(values)
+        if not items:
+            return [], None
+        resolved = []
+        for item in items:
+            try:
+                evidence_uuid = UUID(str(item))
+                evidence = Evidence.objects.filter(id=evidence_uuid).first()
+            except ValueError, TypeError:
+                evidence = None
+
+            if evidence is None:
+                evidence = Evidence.objects.filter(name__iexact=item).first()
+            if evidence is None:
+                return [], Error(
+                    record=record,
+                    error=f"Unknown evidence '{item}'",
+                )
+            resolved.append(evidence.id)
+        return resolved, None
+
+    def find_existing(self, record_data: dict) -> Optional[AssetAssessment]:
+        bia_id = record_data.get("bia")
+        asset_id = record_data.get("asset")
+        if not bia_id or not asset_id:
+            return None
+        return AssetAssessment.objects.filter(bia_id=bia_id, asset_id=asset_id).first()
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        bia, error = self._resolve_bia(record)
+        if error:
+            return {}, error
+
+        asset, error = self._resolve_asset(record)
+        if error:
+            return {}, error
+
+        dependencies, error = self._resolve_assets_list(
+            record.get("dependencies"), record
+        )
+        if error:
+            return {}, error
+
+        associated_controls, error = self._resolve_applied_controls_list(
+            record.get("associated_controls"), record
+        )
+        if error:
+            return {}, error
+
+        evidences, error = self._resolve_evidences_list(record.get("evidences"), record)
+        if error:
+            return {}, error
+
+        return {
+            "bia": bia.id,
+            "asset": asset.id,
+            "folder": bia.folder_id,
+            "recovery_documented": self._parse_bool(record.get("recovery_documented")),
+            "recovery_tested": self._parse_bool(record.get("recovery_tested")),
+            "recovery_targets_met": self._parse_bool(
+                record.get("recovery_targets_met")
+            ),
+            "dependencies": dependencies,
+            "associated_controls": associated_controls,
+            "evidences": evidences,
+            "observation": record.get("observation", ""),
+        }, None
+
+
+class EscalationThresholdRecordConsumer(RecordConsumer):
+    SERIALIZER_CLASS = EscalationThresholdWriteSerializer
+    SOURCE_KEY_MAP: ClassVar[Mapping[str, list[str]]] = MappingProxyType(
+        {
+            "bia": ["bia", "bia_name"],
+            "asset": ["asset", "asset_ref_id", "asset_name"],
+            "asset_assessment": ["asset_assessment"],
+        }
+    )
+
+    def create_context(self):
+        return None, None
+
+    def _resolve_bia(
+        self, record: dict
+    ) -> tuple[Optional[BusinessImpactAnalysis], Optional[Error]]:
+        bia_value = record.get("bia") or record.get("bia_name")
+
+        if not bia_value:
+            return None, Error(record=record, error="BIA is mandatory")
+
+        try:
+            bia_uuid = UUID(str(bia_value))
+            bia = BusinessImpactAnalysis.objects.filter(id=bia_uuid).first()
+            if bia:
+                return bia, None
+        except ValueError, TypeError:
+            pass
+
+        bia = BusinessImpactAnalysis.objects.filter(name__iexact=bia_value).first()
+
+        if bia is None:
+            return None, Error(record=record, error=f"Unknown BIA '{bia_value}'")
+
+        return bia, None
+
+    def _resolve_asset(self, record: dict) -> tuple[Optional[Asset], Optional[Error]]:
+        asset_value = (
+            record.get("asset")
+            or record.get("asset_ref_id")
+            or record.get("asset_name")
+        )
+
+        if not asset_value:
+            return None, Error(record=record, error="Asset is mandatory")
+
+        try:
+            asset_uuid = UUID(str(asset_value))
+            asset = Asset.objects.filter(id=asset_uuid).first()
+            if asset:
+                return asset, None
+        except ValueError, TypeError:
+            pass
+
+        asset = Asset.objects.filter(ref_id=asset_value).first()
+        if asset is None:
+            asset = Asset.objects.filter(name__iexact=asset_value).first()
+
+        if asset is None:
+            return None, Error(record=record, error=f"Unknown asset '{asset_value}'")
+
+        return asset, None
+
+    def _resolve_asset_assessment(
+        self, record: dict
+    ) -> tuple[Optional[AssetAssessment], Optional[Error]]:
+        asset_assessment_value = record.get("asset_assessment")
+
+        if asset_assessment_value:
+            try:
+                assessment_uuid = UUID(str(asset_assessment_value))
+                assessment = AssetAssessment.objects.filter(id=assessment_uuid).first()
+                if assessment:
+                    return assessment, None
+            except ValueError, TypeError:
+                pass
+
+        bia, error = self._resolve_bia(record)
+        if error:
+            return None, error
+
+        asset, error = self._resolve_asset(record)
+        if error:
+            return None, error
+
+        assessment, _ = AssetAssessment.objects.get_or_create(
+            bia=bia,
+            asset=asset,
+            defaults={"folder": bia.folder},
+        )
+        return assessment, None
+
+    def _resolve_qualifications(
+        self, value: object, record: dict
+    ) -> tuple[list[UUID], Optional[Error]]:
+        items = AssetAssessmentRecordConsumer._split_values(value)
+        if not items:
+            return [], None
+
+        resolved = []
+        for item in items:
+            qualification = Terminology.objects.filter(
+                field_path=Terminology.FieldPath.QUALIFICATIONS,
+                name__iexact=item,
+                is_visible=True,
+            ).first()
+            if qualification is None:
+                qualification = Terminology.objects.filter(
+                    field_path=Terminology.FieldPath.QUALIFICATIONS,
+                    ref_id=item,
+                ).first()
+            if qualification is None:
+                return [], Error(
+                    record=record,
+                    error=f"Unknown qualification '{item}'",
+                )
+            resolved.append(qualification.id)
+        return resolved, None
+
+    def find_existing(self, record_data: dict) -> Optional[EscalationThreshold]:
+        asset_assessment_id = record_data.get("asset_assessment")
+        point_in_time = record_data.get("point_in_time")
+        if not asset_assessment_id or point_in_time is None:
+            return None
+        return EscalationThreshold.objects.filter(
+            asset_assessment_id=asset_assessment_id, point_in_time=point_in_time
+        ).first()
+
+    def prepare_create(
+        self, record: dict, context: None
+    ) -> tuple[dict, Optional[Error]]:
+        asset_assessment, error = self._resolve_asset_assessment(record)
+        if error:
+            return {}, error
+
+        point_in_time = record.get("point_in_time")
+        if point_in_time in (None, ""):
+            return {}, Error(record=record, error="point_in_time is mandatory")
+        try:
+            point_in_time = int(float(point_in_time))
+        except ValueError, TypeError:
+            return {}, Error(
+                record=record,
+                error=f"Invalid point_in_time '{point_in_time}'",
+            )
+
+        quali_impact = record.get("quali_impact")
+        if quali_impact in (None, ""):
+            quali_impact_value = -1
+        else:
+            try:
+                quali_impact_value = int(float(quali_impact))
+            except ValueError, TypeError:
+                return {}, Error(
+                    record=record,
+                    error=f"Invalid quali_impact '{quali_impact}'",
+                )
+
+        if quali_impact_value != -1:
+            risk_matrix = asset_assessment.bia.risk_matrix
+            impacts = risk_matrix.impact if risk_matrix else []
+            n_impacts = len(impacts)
+            if n_impacts > 0 and not (0 <= quali_impact_value < n_impacts):
+                return {}, Error(
+                    record=record,
+                    error=(
+                        f"quali_impact {quali_impact_value} is out of range "
+                        f"[0, {n_impacts - 1}] for matrix '{risk_matrix.name}'"
+                    ),
+                )
+
+        quanti_impact = record.get("quanti_impact")
+        if quanti_impact in (None, ""):
+            quanti_impact_value = 0
+        else:
+            try:
+                quanti_impact_value = float(quanti_impact)
+            except ValueError, TypeError:
+                return {}, Error(
+                    record=record,
+                    error=f"Invalid quanti_impact '{quanti_impact}'",
+                )
+
+        qualifications, error = self._resolve_qualifications(
+            record.get("qualifications"), record
+        )
+        if error:
+            return {}, error
+
+        return {
+            "asset_assessment": asset_assessment.id,
+            "folder": asset_assessment.bia.folder_id,
+            "point_in_time": point_in_time,
+            "quali_impact": quali_impact_value,
+            "quanti_impact": quanti_impact_value,
+            "quanti_impact_unit": record.get("quanti_impact_unit") or "currency",
+            "qualifications": qualifications,
+            "justification": record.get("justification", ""),
+        }, None
+
+
+def normalize_df_columns(df: pd.DataFrame) -> pd.DataFrame:
+    normalized = [str(c).strip().lower() for c in df.columns]
+    seen, duplicates = set(), set()
+    for col in normalized:
+        (duplicates if col in seen else seen).add(col)
+    if duplicates:
+        raise ValueError(f"DuplicateColumns: {sorted(duplicates)}")
+    df = df.copy()
+    df.columns = normalized
+    return df
+
+
+@dataclass(frozen=True)
+class ImportOptions:
+    model_type: Optional[str]
+    folder_id: Optional[str] = None
+    perimeter_id: Optional[str] = None
+    framework_id: Optional[str] = None
+    matrix_id: Optional[str] = None
+    target_id: Optional[str] = None
+    on_conflict: str = ConflictMode.STOP
+    # Name of the container a single-container import creates (an audit, a
+    # risk assessment...); None falls back to the X-Name header, then a timestamp.
+    container_name: Optional[str] = None
+
+    @classmethod
+    def from_headers(cls, meta) -> "ImportOptions":
+        # Empty header -> None, so a blank optional selector never reaches get(id="").
+        return cls(
+            model_type=meta.get("HTTP_X_MODEL_TYPE"),
+            folder_id=meta.get("HTTP_X_FOLDER_ID") or None,
+            perimeter_id=meta.get("HTTP_X_PERIMETER_ID") or None,
+            framework_id=meta.get("HTTP_X_FRAMEWORK_ID") or None,
+            matrix_id=meta.get("HTTP_X_MATRIX_ID") or None,
+            target_id=meta.get("HTTP_X_TARGET_ID") or None,
+            on_conflict=meta.get("HTTP_X_ON_CONFLICT", ConflictMode.STOP),
+        )
+
+
+class LoadFileView(APIView):
+    parser_classes = (FileUploadParser,)
+    serializer_class = LoadFileSerializer
+
+    def _may_import(self, request, model_type: ModelType, folder_id) -> bool:
+        return may_import(
+            request.user,
+            IMPORT_ROOT_MODEL.get(model_type, model_type.value.lower()),
+            folder_id,
+        )
+
+    def process_excel_file(
+        self,
+        request,
+        record_file: io.BytesIO,
+        options: Optional[ImportOptions] = None,
+    ) -> Response:
+        options = options or ImportOptions.from_headers(request.META)
+        model_type_string = options.model_type
+        model_type = ModelType.from_string(model_type_string)
+        folder_id = options.folder_id
+        perimeter_id = options.perimeter_id
+        framework_id = options.framework_id
+        matrix_id = options.matrix_id
+        target_id = options.target_id
+        container_name = options.container_name
+        try:
+            on_conflict = ConflictMode(options.on_conflict)
+        except ValueError:
+            on_conflict = ConflictMode.STOP
+        logger.info(
+            f"Processing file with model: {model_type}, folder: {folder_id}, perimeter: {perimeter_id}, framework: {framework_id}, matrix: {matrix_id}"
+        )
+
+        # get viewable and actionable folders, perimeters and frameworks
+        # build a map from the name to the id
+
+        folders_map = get_accessible_folders_map(request.user)
+        file_type: RecordFileType = RecordFileType.XLSX
+        res = None
+        try:
+            if model_type is None:
+                logger.error(f"Unknown model type: {repr(model_type_string)}")
+                return Response(
+                    {"error": "UnknownModelType"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            if not self._may_import(request, model_type, folder_id):
+                logger.warning(
+                    "Unauthorized import attempt",
+                    user=request.user,
+                    model_type=model_type,
+                    folder_id=folder_id,
+                )
+                return Response(status=status.HTTP_403_FORBIDDEN)
+
+            # Special handling for TPRM multi-sheet import
+            match model_type:
+                case ModelType.TPRM:
+                    res = self._process_tprm_file(
+                        request,
+                        record_file,
+                        folders_map,
+                        folder_id,
+                        on_conflict,
+                    )
+                # Special handling for EBIOS RM Study ARM format (multi-sheet)
+                case ModelType.EBIOS_RM_STUDY_ARM:
+                    res = self._process_ebios_rm_study_arm(
+                        request, record_file, folder_id, matrix_id, on_conflict
+                    )
+                # Special handling for EBIOS RM Study Excel export format
+                case ModelType.EBIOS_RM_STUDY_EXCEL:
+                    res = self._process_ebios_rm_study_excel(
+                        request, record_file, folder_id, matrix_id, on_conflict
+                    )
+                # Special handling for Egerie Suite XML export
+                case ModelType.EBIOS_RM_STUDY_EGERIE_XML:
+                    file_type = RecordFileType.XML
+                    res = self._process_ebios_rm_study_egerie_xml(
+                        request, record_file, folder_id, matrix_id, on_conflict
+                    )
+                # Special handling for BIA multi-sheet import (assessments + thresholds)
+                case ModelType.BUSINESS_IMPACT_ANALYSIS:
+                    res = self._process_bia_excel(
+                        request,
+                        record_file,
+                        folders_map,
+                        folder_id,
+                        perimeter_id,
+                        matrix_id,
+                        on_conflict,
+                    )
+                # Special handling for TaskTemplate multi-sheet import (summary + task nodes)
+                case ModelType.TASK_TEMPLATE:
+                    if is_excel_file(record_file):
+                        res = self._process_task_template_excel(
+                            request,
+                            record_file,
+                            folders_map,
+                            folder_id,
+                            on_conflict,
+                        )
+                    else:
+                        # CSV: flat single-sheet import of task templates only
+                        file_type = RecordFileType.CSV
+                        df = read_csv_file(record_file)
+                        try:
+                            df = normalize_df_columns(df)
+                        except ValueError:
+                            logger.warning(
+                                "Invalid import file structure during column normalization",
+                                exc_info=True,
+                            )
+                            return Response(
+                                {"error": "Invalid file format or columns."},
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+                        base_context = BaseContext(
+                            request,
+                            folders_map=folders_map,
+                            folder_id=folder_id,
+                            perimeter_id=None,
+                            matrix_id=None,
+                            framework_id=None,
+                            on_conflict=on_conflict,
+                        )
+                        res = (
+                            TaskTemplateRecordConsumer(base_context)
+                            .process_records(df.to_dict(orient="records"))
+                            .to_dict()
+                        )
+                # Special handling for the official CyFun self-assessment workbook
+                case ModelType.CYFUN_ASSESSMENT:
+                    res = self._process_cyfun_assessment(
+                        request, record_file, folder_id, perimeter_id
+                    )
+                # Special handling for Processing multi-sheet import (record + sub-objects)
+                case ModelType.PROCESSING:
+                    if is_excel_file(record_file):
+                        res = self._process_processing_excel(
+                            request,
+                            record_file,
+                            folders_map,
+                            folder_id,
+                            on_conflict,
+                        )
+                    else:
+                        # CSV: flat single-sheet import of processings only
+                        file_type = RecordFileType.CSV
+                        df = read_csv_file(record_file)
+                        try:
+                            df = normalize_df_columns(df)
+                        except ValueError:
+                            logger.warning(
+                                "Invalid import file structure during column normalization",
+                                exc_info=True,
+                            )
+                            return Response(
+                                {"error": "Invalid file format or columns."},
+                                status=status.HTTP_400_BAD_REQUEST,
+                            )
+                        base_context = BaseContext(
+                            request,
+                            folders_map=folders_map,
+                            folder_id=folder_id,
+                            on_conflict=on_conflict,
+                        )
+                        res = (
+                            ProcessingRecordConsumer(base_context)
+                            .process_records(df.to_dict(orient="records"))
+                            .to_dict()
+                        )
+                case _:
+                    is_excel = is_excel_file(record_file)
+                    if is_excel:
+                        df = normalize_datetime_columns(
+                            read_excel_sheet(record_file)
+                        ).fillna("")
+                    else:
+                        file_type = RecordFileType.CSV
+                        # Detects the delimiter: our table exports use ';'.
+                        df = read_csv_file(record_file)
+
+                    try:
+                        df = normalize_df_columns(df)
+                    except ValueError:
+                        logger.warning(
+                            "Invalid import file structure during column normalization",
+                            exc_info=True,
+                        )
+                        return Response(
+                            {"error": "Invalid file format or columns."},
+                            status=status.HTTP_400_BAD_REQUEST,
+                        )
+                    base_context = BaseContext(
+                        request,
+                        folders_map=folders_map,
+                        folder_id=folder_id,
+                        perimeter_id=perimeter_id,
+                        matrix_id=matrix_id,
+                        framework_id=framework_id,
+                        on_conflict=on_conflict,
+                        target_id=target_id,
+                        container_name=container_name,
+                    )
+                    records = df.to_dict(orient="records")
+
+                    match model_type:
+                        case ModelType.ASSET:
+                            res = (
+                                AssetRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.APPLIED_CONTROL:
+                            res = (
+                                AppliedControlRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.EVIDENCE:
+                            res = (
+                                EvidenceRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.USER:
+                            res = (
+                                UserRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.PERIMETER:
+                            res = (
+                                PerimeterRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.THREAT:
+                            res = (
+                                ThreatRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.REFERENCE_CONTROL:
+                            res = (
+                                ReferenceControlRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.FINDINGS_ASSESSMENT:
+                            res = (
+                                FindingsAssessmentRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.RISK_ASSESSMENT:
+                            res = (
+                                RiskAssessmentRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.POLICY:
+                            res = (
+                                PolicyRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.SECURITY_EXCEPTION:
+                            res = (
+                                SecurityExceptionRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.INCIDENT:
+                            res = (
+                                IncidentRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.VULNERABILITY:
+                            res = (
+                                VulnerabilityRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.BUSINESS_IMPACT_ANALYSIS:
+                            res = (
+                                BusinessImpactAnalysisRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.FOLDER:
+                            res = (
+                                FolderRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.ELEMENTARY_ACTION:
+                            res = (
+                                ElementaryActionRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.METRIC_INSTANCE:
+                            res = (
+                                MetricInstanceRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case ModelType.METRIC_SAMPLE:
+                            res = (
+                                MetricSampleRecordConsumer(base_context)
+                                .process_records(records)
+                                .to_dict()
+                            )
+                        case _:
+                            res = self.process_data(
+                                request,
+                                records,
+                                model_type,
+                                folder_id,
+                                perimeter_id,
+                                framework_id,
+                                matrix_id,
+                                on_conflict,
+                                target_id,
+                                container_name,
+                            )
+
+        except Exception as e:
+            logger.error(f"Error parsing {file_type} file", exc_info=e)
+            return Response(
+                {"error": file_type.get_error()},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        return Response(
+            {"message": "File loaded successfully", "results": res},
+            status=status.HTTP_200_OK,
+        )
+
+    def process_data(
+        self,
+        request,
+        records,
+        model_type: ModelType,
+        folder_id,
+        perimeter_id,
+        framework_id,
+        matrix_id=None,
+        on_conflict=ConflictMode.STOP,
+        target_id=None,
+        container_name=None,
+    ):
+        # Dispatch to appropriate handler
+        match model_type:
+            case ModelType.COMPLIANCE_ASSESSMENT:
+                return self._process_compliance_assessment(
+                    request,
+                    records,
+                    folder_id,
+                    perimeter_id,
+                    framework_id,
+                    on_conflict,
+                    target_id,
+                    container_name,
+                )
+            case _:
+                return {
+                    "successful": 0,
+                    "failed": 0,
+                    "errors": [{"error": f"Unknown model type: {model_type}"}],
+                }
+
+    def _process_compliance_assessment(
+        self,
+        request,
+        records,
+        folder_id,
+        perimeter_id,
+        framework_id,
+        on_conflict=ConflictMode.STOP,
+        target_id=None,
+        container_name=None,
+    ):
+        results = {"successful": 0, "failed": 0, "errors": []}
+        try:
+            if target_id is not None:
+                # Reconcile into an existing audit (and its already generated
+                # requirement assessments); the framework is fixed by that audit.
+                compliance_assessment = resolve_accessible_target(
+                    ComplianceAssessment, target_id, request.user
+                )
+                if compliance_assessment is None:
+                    results["failed"] += 1
+                    results["errors"].append(
+                        {"error": f"Target audit with ID {target_id} does not exist"}
+                    )
+                    return results
+                framework_id = compliance_assessment.framework_id
+                logger.info(
+                    f"Reconciling import into existing compliance assessment {compliance_assessment.id}"
+                )
+                return self._reconcile_compliance_requirements(
+                    request, records, compliance_assessment, framework_id, results
+                )
+
+            # Get the perimeter object to extract its folder ID
+            perimeter = None
+            if perimeter_id is not None:
+                perimeter = Perimeter.objects.get(id=perimeter_id)
+
+            if perimeter is not None:
+                folder_id = perimeter.folder.id
+            elif folder_id is None:
+                results["failed"] += 1
+                results["errors"].append(
+                    {"error": "A folder must be specified when there's no perimeter!"}
+                )
+                return results
+
+            assessment_name = resolve_container_name(
+                request, "Assessment", container_name
+            )
+
+            # Prepare data for serializer
+            assessment_data = {
+                "name": assessment_name,
+                "perimeter": perimeter_id,
+                "framework": framework_id,
+                "folder": folder_id,
+            }
+
+            # Use the serializer for validation and saving
+            serializer = ComplianceAssessmentWriteSerializer(
+                data=assessment_data,
+                context={"request": request},
+            )
+
+            if serializer.is_valid(raise_exception=True):
+                # Save the compliance assessment
+                compliance_assessment = serializer.save()
+                compliance_assessment.create_requirement_assessments()
+                logger.info(
+                    f"Created compliance assessment: {assessment_name} with ID {compliance_assessment.id}"
+                )
+
+                # Reconcile the audit's requirement assessments from the rows.
+                return self._reconcile_compliance_requirements(
+                    request, records, compliance_assessment, framework_id, results
+                )
+
+        # Results, not a Response: the caller nests them in its own payload.
+        except Perimeter.DoesNotExist:
+            logger.error(f"Perimeter with ID {perimeter_id} does not exist")
+            results["failed"] += 1
+            results["errors"].append(
+                {"error": f"Perimeter with ID {perimeter_id} does not exist"}
+            )
+        except (APIException, ValidationError) as e:
+            results["failed"] += 1
+            results["errors"].append(
+                {
+                    "error": f"Failed to create compliance assessment: {readable_error(e)}"
+                }
+            )
+        except Exception as e:
+            logger.error("Error creating compliance assessment", error=e)
+            results["failed"] += 1
+            results["errors"].append(
+                {"error": "Failed to create compliance assessment"}
+            )
+
+        return results
+
+    def _process_cyfun_assessment(self, request, record_file, folder_id, perimeter_id):
+        results = {"successful": 0, "failed": 0, "errors": []}
+
+        def fail(code):
+            results["failed"] += 1
+            results["errors"].append({"error": code})
+            return results
+
+        try:
+            parsed = process_cyfun_file(record_file.getvalue())
+        except ValueError as e:
+            return fail(e.args[0] if e.args else "UnrecognizedCyfunWorkbook")
+
+        loaded_library = LoadedLibrary.objects.filter(urn=CYFUN_LIBRARY_URN).first()
+        if loaded_library is not None and (
+            StoredLibrary.objects.filter(
+                urn=CYFUN_LIBRARY_URN, version__gt=loaded_library.version
+            ).exists()
+        ):
+            # The import relies on the scoring settings of the current library
+            # (calculation method, visibility...): update the library first.
+            return fail("CyfunLibraryOutdated")
+        if loaded_library is None:
+            stored_library = StoredLibrary.objects.filter(urn=CYFUN_LIBRARY_URN).first()
+            if stored_library is None:
+                return fail("CyfunLibraryNotFound")
+            error = stored_library.load()
+            if error is not None:
+                logger.error("CyFun library import failed", error=error)
+                return fail("CyfunLibraryImportFailed")
+        try:
+            framework = Framework.objects.get(urn=CYFUN_2025_URN)
+        except Framework.DoesNotExist:
+            return fail("CyfunFrameworkNotFound")
+
+        perimeter = None
+        if perimeter_id is not None:
+            try:
+                perimeter = Perimeter.objects.get(id=perimeter_id)
+            except Perimeter.DoesNotExist:
+                return fail(f"Perimeter with ID {perimeter_id} does not exist")
+        if perimeter is not None:
+            folder_id = perimeter.folder.id
+        elif folder_id is None:
+            results["failed"] += 1
+            results["errors"].append(
+                {"error": "A folder must be specified when there's no perimeter!"}
+            )
+            return results
+
+        assessment_data = {
+            "name": resolve_container_name(request, "CyFun_Assessment"),
+            "perimeter": perimeter_id,
+            "framework": framework.id,
+            "folder": folder_id,
+        }
+        level = parsed["assurance_level"]
+        if level:
+            assessment_data["selected_implementation_groups"] = [LEVEL_TO_GROUP[level]]
+
+        serializer = ComplianceAssessmentWriteSerializer(
+            data=assessment_data, context={"request": request}
+        )
+        # One transaction: the outcome rules are evaluated once, at commit,
+        # instead of after every imported row.
+        with transaction.atomic():
+            try:
+                serializer.is_valid(raise_exception=True)
+                compliance_assessment = serializer.save()
+                compliance_assessment.create_requirement_assessments()
+            except Exception as e:
+                logger.error("Failed to create CyFun compliance assessment", error=e)
+                transaction.set_rollback(True)
+                return fail("CyfunAssessmentCreationFailed")
+            logger.info(
+                "Created CyFun compliance assessment",
+                id=compliance_assessment.id,
+                assurance_level=level,
+            )
+            return self._reconcile_compliance_requirements(
+                request, parsed["records"], compliance_assessment, framework.id, results
+            )
+
+    @staticmethod
+    def _resolve_summary_row_template(
+        rec: dict, folders_map, folder_id
+    ) -> Optional[TaskTemplate]:
+        """Resolve the TaskTemplate targeted by a summary row (ref_id first, then name)."""
+        rec_name = str(rec.get("name", "")).strip()
+        if not rec_name:
+            return None
+        row_folder_name = str(rec.get("folder", "")).lower()
+        row_folder_id = (
+            folders_map.get(row_folder_name, folder_id)
+            if row_folder_name
+            else folder_id
+        )
+        ref_id = str(rec.get("ref_id", "")).strip()
+        tmpl = None
+        if ref_id:
+            tmpl = TaskTemplate.objects.filter(
+                ref_id=ref_id, folder_id=row_folder_id
+            ).first()
+        if tmpl is None:
+            tmpl = TaskTemplate.objects.filter(
+                name=rec_name, folder_id=row_folder_id
+            ).first()
+        return tmpl
+
+    def _process_task_template_excel(
+        self,
+        request,
+        excel_file: io.BytesIO,
+        folders_map,
+        folder_id,
+        on_conflict=ConflictMode.STOP,
+    ):
+        """Import TaskTemplates from a multi-sheet XLSX.
+
+        Sheet layout (matches the export produced by TaskTemplateViewSet.export_xlsx):
+          - "Summary" sheet: one row per TaskTemplate
+          - Per-template sheets named "{N}-{template_name}": past TaskNode occurrences
+
+        A single-sheet file is treated as a Summary-only import (no task nodes).
+        """
+        task_nodes_result = Result()
+        overall_results: dict = {"templates": {}}
+        try:
+            excel_data = pd.ExcelFile(excel_file)
+            sheet_names = excel_data.sheet_names
+
+            base_context = BaseContext(
+                request,
+                folders_map=folders_map,
+                folder_id=folder_id,
+                perimeter_id=None,
+                matrix_id=None,
+                framework_id=None,
+                on_conflict=on_conflict,
+            )
+
+            summary_sheet = "Summary" if "Summary" in sheet_names else sheet_names[0]
+
+            summary_df = normalize_df_columns(
+                normalize_datetime_columns(
+                    read_excel_sheet(excel_data, sheet_name=summary_sheet)
+                )
+            ).fillna("")
+            summary_records = summary_df.to_dict(orient="records")
+
+            # Rows whose template exists before this import: node-sheet conflicts on
+            # them are real. Templates created by this run auto-sync a node from
+            # task_date (non-recurrent), which the node sheets legitimately update.
+            preexisting_rows = {
+                idx
+                for idx, rec in enumerate(summary_records, start=1)
+                if self._resolve_summary_row_template(rec, folders_map, folder_id)
+                is not None
+            }
+
+            template_results = (
+                TaskTemplateRecordConsumer(base_context)
+                .process_records(summary_records)
+                .to_dict()
+            )
+            overall_results["templates"] = template_results
+
+            if len(sheet_names) > 1 and not template_results.get("stopped"):
+                self._import_task_node_sheets(
+                    excel_data,
+                    sheet_names,
+                    summary_sheet,
+                    summary_records,
+                    preexisting_rows,
+                    folders_map,
+                    folder_id,
+                    on_conflict,
+                    task_nodes_result,
+                )
+        except Exception as exc:
+            logger.error("Task template import failed", exc_info=True)
+            task_nodes_result.add_error(
+                Error(record={}, error=f"Import aborted: {exc}")
+            )
+
+        overall_results["task_nodes"] = task_nodes_result.to_dict()
+        return overall_results
+
+    def _import_task_node_sheets(
+        self,
+        excel_data: pd.ExcelFile,
+        sheet_names: list[str],
+        summary_sheet: str,
+        summary_records: list[dict],
+        preexisting_rows: set[int],
+        folders_map,
+        folder_id,
+        on_conflict: ConflictMode,
+        result: Result,
+    ) -> None:
+        """Import past TaskNode occurrences from the per-template sheets."""
+        # Build counter → TaskTemplate map resolving each row's actual folder,
+        # so multi-folder imports match nodes to the correct template.
+        template_map: dict[int, TaskTemplate] = {}
+        for idx, rec in enumerate(summary_records, start=1):
+            tmpl = self._resolve_summary_row_template(rec, folders_map, folder_id)
+            if tmpl is not None:
+                template_map[idx] = tmpl
+
+        today = timezone.localdate()
+        collision_suffix = re.compile(r" \(\d+\)$")
+
+        def _matches_hint(tmpl: TaskTemplate, hint: str) -> bool:
+            sanitized = re.sub(SHEET_NAME_INVALID_CHARS, "", tmpl.name or "")
+            return sanitized.lower().startswith(hint.lower())
+
+        for sheet_name in sheet_names:
+            if sheet_name == summary_sheet:
+                continue
+
+            # Sheet names are exported as "{counter}-{name}" truncated to 31 chars,
+            # with an optional " (n)" suffix on name collisions.
+            dash_pos = sheet_name.find("-")
+            if dash_pos < 1:
+                continue
+            try:
+                counter = int(sheet_name[:dash_pos])
+            except ValueError:
+                continue
+
+            name_hint = collision_suffix.sub("", sheet_name[dash_pos + 1 :]).strip()
+
+            mapped = template_map.get(counter)
+            template = mapped
+            if (
+                template is not None
+                and name_hint
+                and not _matches_hint(template, name_hint)
+            ):
+                # Counter and sheet name disagree: files exported before sheet
+                # numbering was aligned with summary rows skipped templates
+                # without nodes. Prefer the name match, keep the counter as a
+                # last resort (the template may have been renamed in Summary).
+                by_name = next(
+                    (t for t in template_map.values() if _matches_hint(t, name_hint)),
+                    None,
+                )
+                if by_name is not None and by_name.pk != template.pk:
+                    result.warnings.append(
+                        Error(
+                            record={"sheet": sheet_name},
+                            error=(
+                                f"Sheet '{sheet_name}' does not match summary row"
+                                f" #{counter} ('{template.name}'); its task nodes were"
+                                f" imported into '{by_name.name}' based on the sheet name."
+                            ),
+                            is_warning=True,
+                        )
+                    )
+                    template = by_name
+            elif template is None:
+                if name_hint:
+                    template = next(
+                        (
+                            t
+                            for t in template_map.values()
+                            if _matches_hint(t, name_hint)
+                        ),
+                        None,
+                    )
+                if template is None:
+                    template = TaskTemplate.objects.filter(
+                        name__istartswith=sheet_name[dash_pos + 1 :].strip(),
+                        folder_id=folder_id,
+                    ).first()
+
+            if template is None:
+                result.add_error(
+                    Error(
+                        record={"sheet": sheet_name},
+                        error=f"TaskTemplate not found for sheet '{sheet_name}'; skipped.",
+                    )
+                )
+                continue
+
+            row_idx = next(
+                (i for i, t in template_map.items() if t.pk == template.pk), None
+            )
+            template_created = row_idx is not None and row_idx not in preexisting_rows
+
+            sheet_df = normalize_df_columns(
+                normalize_datetime_columns(
+                    read_excel_sheet(excel_data, sheet_name=sheet_name)
+                )
+            ).fillna("")
+
+            for row in sheet_df.to_dict(orient="records"):
+                due_date_raw = _parse_date(row.get("due_date"))
+                if not due_date_raw:
+                    continue
+                try:
+                    due_date = date.fromisoformat(str(due_date_raw))
+                except ValueError, TypeError:
+                    result.add_error(
+                        Error(
+                            record={"sheet": sheet_name, "due_date": str(due_date_raw)},
+                            error=f"Invalid due_date '{due_date_raw}' (expected YYYY-MM-DD)",
+                        )
+                    )
+                    continue
+                if due_date > today:
+                    # Future nodes are regenerated from the schedule.
+                    continue
+
+                raw_status = str(row.get("status", "")).lower().strip()
+                status_val = TaskTemplateRecordConsumer.TASK_STATUS_MAP.get(
+                    raw_status, "pending"
+                )
+                observation = str(row.get("observation", ""))
+                scheduled_raw = _parse_date(row.get("scheduled_date"))
+                try:
+                    scheduled_date = (
+                        date.fromisoformat(str(scheduled_raw))
+                        if scheduled_raw
+                        else due_date
+                    )
+                except ValueError, TypeError:
+                    logger.debug(
+                        "Falling back to due_date for unparsable scheduled_date",
+                        scheduled_date=str(scheduled_raw),
+                        sheet_name=sheet_name,
+                    )
+                    scheduled_date = due_date
+
+                existing_node = TaskNode.objects.filter(
+                    task_template=template, folder=template.folder, due_date=due_date
+                ).first()
+
+                # A node on a template created by this very import is the one
+                # auto-synced from task_date, not a pre-existing record: apply
+                # the row to it instead of treating it as a conflict.
+                if existing_node is not None and not template_created:
+                    match on_conflict:
+                        case ConflictMode.SKIP:
+                            result.add_skipped()
+                            continue
+                        case ConflictMode.STOP:
+                            result.add_error(
+                                Error(
+                                    record={"due_date": str(due_date)},
+                                    error=(
+                                        f"Task node for '{template.name}' on"
+                                        f" {due_date} already exists"
+                                    ),
+                                )
+                            )
+                            result.stopped = True
+                            break
+                        case ConflictMode.UPDATE:
+                            self._save_task_node_row(
+                                existing_node,
+                                status_val,
+                                observation,
+                                scheduled_date,
+                                result,
+                                created=False,
+                            )
+                elif existing_node is not None:
+                    self._save_task_node_row(
+                        existing_node,
+                        status_val,
+                        observation,
+                        scheduled_date,
+                        result,
+                        created=False,
+                    )
+                else:
+                    node = TaskNode(
+                        task_template=template,
+                        due_date=due_date,
+                        folder=template.folder,
+                        to_delete=False,
+                    )
+                    self._save_task_node_row(
+                        node,
+                        status_val,
+                        observation,
+                        scheduled_date,
+                        result,
+                        created=True,
+                    )
+
+            if result.stopped:
+                break
+
+    @staticmethod
+    def _save_task_node_row(
+        node: TaskNode,
+        status_val: str,
+        observation: str,
+        scheduled_date: date,
+        result: Result,
+        created: bool,
+    ) -> None:
+        node.status = status_val
+        node.observation = observation
+        node.scheduled_date = scheduled_date
+        node.to_delete = False
+        try:
+            node.save()
+        except (IntegrityError, ValidationError) as exc:
+            result.add_error(
+                Error(record={"due_date": str(node.due_date)}, error=str(exc))
+            )
+            return
+        if created:
+            result.add_created()
+        else:
+            result.add_updated()
+
+    def _reconcile_compliance_requirements(
+        self, request, records, compliance_assessment, framework_id, results
+    ):
+        """Update matched requirement assessments from the rows; only populated
+        cells are written, so blanks never clobber existing audit data."""
+        # Non-fatal per-line problems (an answer we could not match) land here
+        # rather than being dropped silently. Set here so every caller's results
+        # dict carries the key.
+        results.setdefault("warnings", [])
+        controls_created: list[str] = []
+        for record in records:
+            ref_id = record.get("ref_id")
+            urn = record.get("urn")
+            if not record.get("assessable"):
+                logger.debug("Skipping unassessable item.")
+                continue
+            if not (ref_id or urn):
+                results["failed"] += 1
+                results["errors"].append(
+                    {
+                        "record": record,
+                        "error": "Neither ref_id nor urn provided for requirement",
+                    }
+                )
+                continue
+
+            # Controls this row created; dropped if the row rolls back.
+            row_controls: list[str] = []
+            try:
+                # A savepoint per row: a failing row rolls back alone instead of
+                # aborting the caller's transaction for the rows after it.
+                with transaction.atomic():
+                    # ref_id wins, but a stale ref_id must still fall back to urn.
+                    ReqNode = None
+                    if ref_id:
+                        ReqNode = RequirementNode.objects.filter(
+                            framework__id=framework_id, ref_id=ref_id
+                        ).first()
+                    if ReqNode is None and urn:
+                        ReqNode = RequirementNode.objects.filter(
+                            framework__id=framework_id, urn=urn
+                        ).first()
+
+                    requirement_assessment = None
+                    if ReqNode:
+                        requirement_assessment = RequirementAssessment.objects.filter(
+                            compliance_assessment=compliance_assessment,
+                            requirement=ReqNode,
+                        ).first()
+                    else:
+                        logger.warning("Import attempt: unknown ref_id/urn")
+
+                    if requirement_assessment:
+                        compliance_result = record.get("compliance_result")
+                        extended_result = record.get("extended_result")
+                        requirement_progress = record.get("requirement_progress")
+                        observations = record.get("observations")
+                        requirement_data = {}
+
+                        if compliance_result not in (None, ""):
+                            requirement_data["result"] = compliance_result
+                        if extended_result not in (None, ""):
+                            requirement_data["extended_result"] = extended_result
+                        if requirement_progress not in (None, ""):
+                            requirement_data["status"] = requirement_progress
+                        if observations not in (None, ""):
+                            requirement_data["observation"] = observations
+                        controls_cell = record.get("applied_controls") or record.get(
+                            "controls"
+                        )
+                        if controls_cell not in (None, ""):
+                            controls = _resolve_applied_controls(
+                                controls_cell,
+                                compliance_assessment.folder,
+                                request,
+                                linked=requirement_assessment.applied_controls.all(),
+                            )
+                            row_controls.extend(controls.created)
+                            requirement_data["applied_controls"] = controls.ids
+                            if controls.failed:
+                                results["warnings"].append(
+                                    {
+                                        "requirement": ReqNode.ref_id or ReqNode.urn,
+                                        "warning": f"Could not resolve controls: {', '.join(controls.failed)}",
+                                    }
+                                )
+                        impl_score = record.get("implementation_score")
+                        doc_score = record.get("documentation_score")
+                        score = record.get("score")
+                        enable_doc_score = False
+                        if impl_score not in (None, "") and doc_score not in (None, ""):
+                            requirement_data.update(
+                                {
+                                    "score": impl_score,
+                                    "documentation_score": doc_score,
+                                    "is_scored": True,
+                                }
+                            )
+                            enable_doc_score = True
+                        elif score not in (None, ""):
+                            requirement_data.update({"score": score, "is_scored": True})
+
+                        # Build answers from the "answers" cell
+                        answers_cell = record.get("answers")
+                        questions_dict = (
+                            build_questions_dict(ReqNode) if ReqNode else None
+                        )
+                        if answers_cell not in (None, "") and questions_dict:
+                            answers, answer_warnings = parse_answers_cell(
+                                answers_cell, questions_dict
+                            )
+                            for warning in answer_warnings:
+                                results["warnings"].append(
+                                    {
+                                        "requirement": ReqNode.ref_id or ReqNode.urn,
+                                        "warning": warning,
+                                    }
+                                )
+                            # An empty dict means every line was a hint or was
+                            # skipped; sending it would be a no-op write.
+                            if answers:
+                                requirement_data["answers"] = answers
+
+                        override_cell = record.get("is_score_overridden")
+                        if override_cell not in (None, ""):
+                            override_value = _parse_bool_cell(
+                                override_cell, binary_only=True
+                            )
+                            if override_value is None:
+                                results["failed"] += 1
+                                results["errors"].append(
+                                    {
+                                        "record": record,
+                                        "error": f"Invalid is_score_overridden value '{override_cell}': expected a boolean",
+                                    }
+                                )
+                                continue
+                            requirement_data["is_score_overridden"] = override_value
+                        elif (
+                            requirement_data.get("score") not in (None, "")
+                            and requirement_assessment.requirement.questions.exists()
+                        ):
+                            # Imported score on question-driven requirement = override
+                            requirement_data["is_score_overridden"] = True
+
+                        req_serializer = RequirementAssessmentWriteSerializer(
+                            instance=requirement_assessment,
+                            data=requirement_data,
+                            partial=True,
+                            context={"request": request},
+                        )
+                        if req_serializer.is_valid():
+                            req_serializer.save()
+                            if (
+                                enable_doc_score
+                                and not compliance_assessment.show_documentation_score
+                            ):
+                                # show_documentation_score is a @property backed by
+                                # `field_visibility`; the setter mutates that JSON
+                                # column, so update_fields must point at the concrete
+                                # field.
+                                compliance_assessment.show_documentation_score = True
+                                compliance_assessment.save(
+                                    update_fields=["field_visibility"]
+                                )
+                            results["successful"] += 1
+                        else:
+                            results["failed"] += 1
+                            results["errors"].append(
+                                {
+                                    "record": record,
+                                    "error": readable_error(req_serializer.errors),
+                                }
+                            )
+                    else:
+                        results["failed"] += 1
+                        results["errors"].append(
+                            {
+                                "record": record,
+                                "error": f"No matching requirement found with ref_id '{ref_id}'"
+                                + (f" or urn '{urn}'" if urn else ""),
+                            }
+                        )
+            except Exception as e:
+                row_controls = []
+                logger.warning(f"Error updating requirement assessment: {str(e)}")
+                results["failed"] += 1
+                results["errors"].append({"record": record, "error": str(e)})
+            finally:
+                # Also after a row's early `continue`, which keeps its savepoint.
+                controls_created.extend(row_controls)
+
+        if controls_created:
+            results.setdefault("details", {})["applied_controls_created"] = len(
+                controls_created
+            )
+        logger.info(
+            f"Compliance Assessment import complete. Success: {results['successful']}, Failed: {results['failed']}"
+        )
+        return results
+
+    def _process_bia_excel(
+        self,
+        request,
+        excel_file: io.BytesIO,
+        folders_map,
+        folder_id,
+        perimeter_id,
+        matrix_id,
+        on_conflict=ConflictMode.STOP,
+    ):
+        try:
+            excel_data = pd.ExcelFile(excel_file)
+            sheet_names = excel_data.sheet_names
+
+            if len(sheet_names) == 1:
+                # Single-sheet file: treat it as a Summary-only import.
+                df = normalize_datetime_columns(
+                    read_excel_sheet(excel_file, sheet_name=sheet_names[0])
+                ).fillna("")
+                records = df.to_dict(orient="records")
+                base_context = BaseContext(
+                    request,
+                    folders_map=folders_map,
+                    folder_id=folder_id,
+                    perimeter_id=perimeter_id,
+                    matrix_id=matrix_id,
+                    framework_id=None,
+                    on_conflict=on_conflict,
+                )
+                return (
+                    BusinessImpactAnalysisRecordConsumer(base_context)
+                    .process_records(records)
+                    .to_dict()
+                )
+
+            if "Summary" not in sheet_names:
+                return {
+                    "error": (
+                        "Invalid BIA workbook: expected a 'Summary' sheet but only found: "
+                        + ", ".join(sheet_names)
+                    )
+                }
+
+            overall_results = {
+                "bia": {"successful": 0, "failed": 0, "errors": []},
+                "asset_assessments": {"successful": 0, "failed": 0, "errors": []},
+                "escalation_thresholds": {"successful": 0, "failed": 0, "errors": []},
+            }
+
+            summary_df = normalize_datetime_columns(
+                read_excel_sheet(excel_file, sheet_name="Summary")
+            ).fillna("")
+            summary_records = summary_df.to_dict(orient="records")
+
+            base_context = BaseContext(
+                request,
+                folders_map=folders_map,
+                folder_id=folder_id,
+                perimeter_id=perimeter_id,
+                matrix_id=matrix_id,
+                framework_id=None,
+                on_conflict=on_conflict,
+            )
+
+            bia_results = (
+                BusinessImpactAnalysisRecordConsumer(base_context)
+                .process_records(summary_records)
+                .to_dict()
+            )
+            overall_results["bia"] = bia_results
+            if bia_results.get("stopped"):
+                return overall_results
+
+            def _inject_bia_hint(records: list[dict], bia_value: str) -> list[dict]:
+                for record in records:
+                    if not record.get("bia") and not record.get("bia_name"):
+                        record["bia_name"] = bia_value
+                return records
+
+            for sheet_name in sheet_names:
+                if sheet_name == "Summary":
+                    continue
+
+                is_threshold_sheet = sheet_name.lower().endswith(" - thresholds")
+                base_name = (
+                    sheet_name[: -len(" - thresholds")]
+                    if is_threshold_sheet
+                    else sheet_name
+                )
+
+                sheet_df = normalize_datetime_columns(
+                    read_excel_sheet(excel_file, sheet_name=sheet_name)
+                ).fillna("")
+                sheet_records = sheet_df.to_dict(orient="records")
+
+                sheet_records = _inject_bia_hint(sheet_records, base_name)
+
+                if is_threshold_sheet:
+                    thresholds_result = (
+                        EscalationThresholdRecordConsumer(base_context)
+                        .process_records(sheet_records)
+                        .to_dict()
+                    )
+                    overall_results["escalation_thresholds"]["successful"] += (
+                        thresholds_result.get("successful", 0)
+                    )
+                    overall_results["escalation_thresholds"]["failed"] += (
+                        thresholds_result.get("failed", 0)
+                    )
+                    overall_results["escalation_thresholds"]["errors"].extend(
+                        thresholds_result.get("errors", [])
+                    )
+                    if thresholds_result.get("stopped"):
+                        overall_results["escalation_thresholds"]["stopped"] = True
+                        return overall_results
+                else:
+                    assessments_result = (
+                        AssetAssessmentRecordConsumer(base_context)
+                        .process_records(sheet_records)
+                        .to_dict()
+                    )
+                    overall_results["asset_assessments"]["successful"] += (
+                        assessments_result.get("successful", 0)
+                    )
+                    overall_results["asset_assessments"]["failed"] += (
+                        assessments_result.get("failed", 0)
+                    )
+                    overall_results["asset_assessments"]["errors"].extend(
+                        assessments_result.get("errors", [])
+                    )
+                    if assessments_result.get("stopped"):
+                        overall_results["asset_assessments"]["stopped"] = True
+                        return overall_results
+
+            return overall_results
+        except Exception as e:
+            logger.error(f"Error processing BIA Excel file: {str(e)}")
+            return {
+                "bia": {
+                    "successful": 0,
+                    "failed": 1,
+                    "errors": [
+                        {"error": f"Failed to process BIA Excel file: {str(e)}"}
+                    ],
+                },
+                "asset_assessments": {"successful": 0, "failed": 0, "errors": []},
+                "escalation_thresholds": {"successful": 0, "failed": 0, "errors": []},
+            }
+
+    def _process_processing_excel(
+        self,
+        request,
+        excel_file: io.BytesIO,
+        folders_map,
+        folder_id,
+        on_conflict=ConflictMode.STOP,
+    ):
+        try:
+            excel_data = pd.ExcelFile(excel_file)
+            sheet_names = excel_data.sheet_names
+
+            base_context = BaseContext(
+                request,
+                folders_map=folders_map,
+                folder_id=folder_id,
+                on_conflict=on_conflict,
+            )
+
+            parent_sheet = next(
+                (s for s in sheet_names if s.strip().lower() == "processing"), None
+            )
+            has_child_sheets = any(
+                s.strip().lower() in PROCESSING_CHILD_SHEETS for s in sheet_names
+            )
+
+            if parent_sheet is None and not has_child_sheets:
+                # Flat list of processings (legacy single-sheet format)
+                df = normalize_df_columns(
+                    normalize_datetime_columns(read_excel_sheet(excel_file)).fillna("")
+                )
+                return (
+                    ProcessingRecordConsumer(base_context)
+                    .process_records(df.to_dict(orient="records"))
+                    .to_dict()
+                )
+
+            if parent_sheet is None:
+                return {
+                    "error": (
+                        "Invalid processing workbook: expected a 'Processing' sheet but only found: "
+                        + ", ".join(sheet_names)
+                    )
+                }
+
+            parent_df = normalize_df_columns(
+                normalize_datetime_columns(
+                    read_excel_sheet(excel_file, sheet_name=parent_sheet)
+                ).fillna("")
+            )
+            parent_records = parent_df.to_dict(orient="records")
+
+            overall_results = {
+                "processing": (
+                    ProcessingRecordConsumer(base_context)
+                    .process_records(parent_records)
+                    .to_dict()
+                )
+            }
+            if overall_results["processing"].get("stopped"):
+                return overall_results
+
+            if len(parent_records) > 1:
+                overall_results["warning"] = (
+                    "Multiple rows found on the 'Processing' sheet; "
+                    "sub-object sheets are attached to the first row"
+                )
+
+            processing = None
+            if parent_records:
+                hint = parent_records[0]
+                domain_name = str(hint.get("domain") or "").lower()
+                scope_folder = folders_map.get(domain_name, folder_id)
+                viewable_processings = RoleAssignment.get_viewable_object_ids(
+                    request.user, Processing
+                )
+
+                queryset = Processing.objects.filter(id__in=viewable_processings)
+                if scope_folder:
+                    queryset = queryset.filter(folder_id=scope_folder)
+                if hint.get("ref_id"):
+                    processing = queryset.filter(ref_id=hint["ref_id"]).first()
+                if processing is None and hint.get("name"):
+                    processing = queryset.filter(name__iexact=str(hint["name"])).first()
+
+            if processing is None:
+                overall_results["error"] = (
+                    "Could not resolve the processing record; sub-object sheets were not imported"
+                )
+                return overall_results
+
+            for sheet_name in sheet_names:
+                key = sheet_name.strip().lower()
+                if sheet_name == parent_sheet or key not in PROCESSING_CHILD_SHEETS:
+                    continue
+
+                result_key, consumer_class = PROCESSING_CHILD_SHEETS[key]
+                sheet_df = normalize_df_columns(
+                    normalize_datetime_columns(
+                        read_excel_sheet(excel_file, sheet_name=sheet_name)
+                    ).fillna("")
+                )
+                sheet_records = sheet_df.to_dict(orient="records")
+                for record in sheet_records:
+                    if not record.get("processing") and not record.get(
+                        "processing_name"
+                    ):
+                        record["processing"] = str(processing.id)
+
+                child_result = (
+                    consumer_class(base_context)
+                    .process_records(sheet_records)
+                    .to_dict()
+                )
+                overall_results[result_key] = child_result
+                if child_result.get("stopped"):
+                    return overall_results
+
+            return overall_results
+        except Exception as e:
+            logger.error("Error processing Processing Excel file", exc_info=e)
+            return {
+                "error": "Failed to process the processing Excel file",
+            }
+
+    def _process_tprm_file(
+        self,
+        request,
+        excel_file: io.BytesIO,
+        folders_map,
+        folder_id,
+        on_conflict=ConflictMode.STOP,
+    ):
+        """
+        Process TPRM multi-sheet Excel file with Entities, Solutions, and Contracts
+        """
+        try:
+            # Read all sheets from Excel file
+            excel_data = pd.ExcelFile(excel_file)
+
+            # Track overall results
+            overall_results = {
+                "entities": {"successful": 0, "failed": 0, "errors": []},
+                "solutions": {"successful": 0, "failed": 0, "errors": []},
+                "entity_assessments": {"successful": 0, "failed": 0, "errors": []},
+                "contracts": {"successful": 0, "failed": 0, "errors": []},
+                "representatives": {"successful": 0, "failed": 0, "errors": []},
+            }
+
+            # Track ref_id to actual ID mappings
+            entity_ref_map = {}  # ref_id -> actual UUID
+            entity_name_map = {}  # lowercased name -> actual UUID (fallback)
+            solution_ref_map = {}  # ref_id -> actual UUID
+
+            # Process Entities sheet first
+            if "Entities" in excel_data.sheet_names:
+                logger.info("Processing Entities sheet")
+                entities_df = normalize_datetime_columns(
+                    read_excel_sheet(excel_file, sheet_name="Entities")
+                ).fillna("")
+                entities_records = entities_df.to_dict(orient="records")
+                entities_result, entity_ref_map, entity_name_map = (
+                    self._process_entities(
+                        request, entities_records, folders_map, folder_id, on_conflict
+                    )
+                )
+                overall_results["entities"] = entities_result
+                if entities_result.get("stopped"):
+                    return overall_results
+            else:
+                logger.warning("No 'Entities' sheet found in Excel file")
+
+            # Process Solutions sheet second (requires entities to exist)
+            if "Solutions" in excel_data.sheet_names:
+                logger.info("Processing Solutions sheet")
+                solutions_df = normalize_datetime_columns(
+                    read_excel_sheet(excel_file, sheet_name="Solutions")
+                ).fillna("")
+                solutions_records = solutions_df.to_dict(orient="records")
+                solutions_result, solution_ref_map = self._process_solutions(
+                    request,
+                    solutions_records,
+                    entity_ref_map,
+                    entity_name_map,
+                    on_conflict,
+                )
+                overall_results["solutions"] = solutions_result
+                if solutions_result.get("stopped"):
+                    return overall_results
+            else:
+                logger.warning("No 'Solutions' sheet found in Excel file")
+
+            # Process EntityAssessments sheet (requires entities, may reference solutions)
+            if "EntityAssessments" in excel_data.sheet_names:
+                logger.info("Processing EntityAssessments sheet")
+                entity_assessments_df = normalize_datetime_columns(
+                    read_excel_sheet(excel_file, sheet_name="EntityAssessments")
+                ).fillna("")
+                entity_assessments_records = entity_assessments_df.to_dict(
+                    orient="records"
+                )
+                entity_assessments_result = self._process_entity_assessments(
+                    request,
+                    entity_assessments_records,
+                    folders_map,
+                    folder_id,
+                    entity_ref_map,
+                    entity_name_map,
+                    solution_ref_map,
+                    on_conflict,
+                )
+                overall_results["entity_assessments"] = entity_assessments_result
+                if entity_assessments_result.get("stopped"):
+                    return overall_results
+            else:
+                logger.warning("No 'EntityAssessments' sheet found in Excel file")
+
+            # Process Contracts sheet last (requires entities and solutions)
+            if "Contracts" in excel_data.sheet_names:
+                logger.info("Processing Contracts sheet")
+                contracts_df = normalize_datetime_columns(
+                    read_excel_sheet(excel_file, sheet_name="Contracts")
+                ).fillna("")
+                contracts_records = contracts_df.to_dict(orient="records")
+                contracts_result = self._process_contracts(
+                    request,
+                    contracts_records,
+                    folders_map,
+                    folder_id,
+                    entity_ref_map,
+                    entity_name_map,
+                    solution_ref_map,
+                    on_conflict,
+                )
+                overall_results["contracts"] = contracts_result
+                if contracts_result.get("stopped"):
+                    return overall_results
+            else:
+                logger.warning("No 'Contracts' sheet found in Excel file")
+
+            # Process Representatives sheet last (requires entities to exist)
+            if "Representatives" in excel_data.sheet_names:
+                logger.info("Processing Representatives sheet")
+                representatives_df = normalize_datetime_columns(
+                    read_excel_sheet(excel_file, sheet_name="Representatives")
+                ).fillna("")
+                representatives_records = representatives_df.to_dict(orient="records")
+                representatives_result = self._process_representatives(
+                    request,
+                    representatives_records,
+                    entity_ref_map,
+                    entity_name_map,
+                    on_conflict,
+                )
+                overall_results["representatives"] = representatives_result
+            else:
+                logger.warning("No 'Representatives' sheet found in Excel file")
+
+            # Calculate totals
+            total_successful = (
+                overall_results["entities"]["successful"]
+                + overall_results["solutions"]["successful"]
+                + overall_results["contracts"]["successful"]
+                + overall_results["representatives"]["successful"]
+            )
+            total_failed = (
+                overall_results["entities"]["failed"]
+                + overall_results["solutions"]["failed"]
+                + overall_results["contracts"]["failed"]
+                + overall_results["representatives"]["failed"]
+            )
+
+            logger.info(
+                f"TPRM import complete. Total success: {total_successful}, Total failed: {total_failed}"
+            )
+
+            return overall_results
+
+        except Exception as e:
+            logger.error(f"Error processing TPRM file: {str(e)}")
+            return {
+                "entities": {
+                    "successful": 0,
+                    "failed": 0,
+                    "errors": [{"error": str(e)}],
+                },
+                "solutions": {"successful": 0, "failed": 0, "errors": []},
+                "contracts": {"successful": 0, "failed": 0, "errors": []},
+                "representatives": {"successful": 0, "failed": 0, "errors": []},
+            }
+
+    def _empty_tprm_results(self) -> dict[str, Any]:
+        return {
+            "successful": 0,
+            "failed": 0,
+            "skipped": 0,
+            "updated": 0,
+            "errors": [],
+        }
+
+    def _add_tprm_record_error(self, results, record, error) -> None:
+        results["failed"] += 1
+        results["errors"].append({"record": record, "error": error})
+
+    def _check_missing_tprm_required_fields(self, record, required_fields) -> list[str]:
+        missing_fields = []
+        for field in required_fields:
+            value = record.get(field, "")
+            if value is None or not str(value).strip():
+                missing_fields.append(field)
+        return missing_fields
+
+    def _add_tprm_missing_fields_error(self, results, record, missing_fields) -> None:
+        if len(missing_fields) == 1:
+            error = f"{missing_fields[0]} field is mandatory"
+        else:
+            error = "Missing mandatory fields: " + ", ".join(missing_fields)
+        self._add_tprm_record_error(results, record, error)
+
+    def _resolve_tprm_entity(
+        self, record, ref_field, name_field, entity_ref_map, entity_name_map
+    ):
+        """Resolve an entity by ref_id, or by name when no ref_id is given.
+
+        A ref_id that is present but unknown fails the lookup instead of
+        falling back to the name: a typo'd ref must surface as a row error,
+        not silently bind to a same-named entity.
+        """
+        ref = str(record.get(ref_field, "")).strip()
+        name = str(record.get(name_field, "")).strip()
+        if ref:
+            return entity_ref_map.get(ref), ref, name
+        if name:
+            return entity_name_map.get(name.lower()), ref, name
+        return None, ref, name
+
+    def _log_tprm_import_results(self, label, results) -> None:
+        logger.info(
+            f"{label} import complete. "
+            f"Success: {results['successful']}, Failed: {results['failed']}"
+        )
+
+    def _handle_tprm_conflict(
+        self,
+        request,
+        results,
+        record,
+        on_conflict,
+        label,
+        serializer_class,
+        instance,
+        data,
+        post_update=None,
+    ) -> str:
+        """Apply the conflict policy to an existing record.
+
+        Returns the action taken: "skipped", "stopped", "updated" or "failed".
+        """
+        match on_conflict:
+            case ConflictMode.SKIP:
+                results["skipped"] += 1
+                return "skipped"
+            case ConflictMode.STOP:
+                self._add_tprm_record_error(
+                    results,
+                    record,
+                    f"{label} already exists (conflict policy: stop)",
+                )
+                results["stopped"] = True
+                return "stopped"
+            case ConflictMode.UPDATE:
+                serializer = serializer_class(
+                    instance=instance,
+                    data=data,
+                    partial=True,
+                    context={"request": request},
+                )
+                if not serializer.is_valid():
+                    results["failed"] += 1
+                    results["errors"].append(
+                        {"record": record, "error": readable_error(serializer.errors)}
+                    )
+                    return "failed"
+                updated_instance = serializer.save()
+                if post_update:
+                    post_update(updated_instance)
+                results["updated"] += 1
+                return "updated"
+            case _:
+                self._add_tprm_record_error(
+                    results,
+                    record,
+                    f"Unsupported conflict policy: {on_conflict}",
+                )
+                results["stopped"] = True
+                return "stopped"
+
+    def _process_entities(
+        self, request, records, folders_map, folder_id, on_conflict=ConflictMode.STOP
+    ):
+        """Process entities from TPRM import"""
+        results = self._empty_tprm_results()
+        ref_id_map = {}  # Map ref_id to actual UUID
+        name_map = {}  # Map lowercased name to actual UUID — fallback when ref_id is absent
+
+        for record in records:
+            try:
+                missing_fields = self._check_missing_tprm_required_fields(
+                    record, ["name"]
+                )
+                if missing_fields:
+                    self._add_tprm_missing_fields_error(results, record, missing_fields)
+                    continue
+
+                ref_id = record.get("ref_id", "").strip()
+                name = record.get("name", "").strip()
+
+                # Get domain from record or use fallback
+                domain = folder_id
+                if record.get("domain") != "":
+                    domain = folders_map.get(
+                        str(record.get("domain")).lower(), folder_id
+                    )
+
+                # Prepare entity data (used by both update and create)
+                entity_data = {
+                    "ref_id": ref_id,
+                    "name": record.get("name"),
+                    "description": record.get("description", ""),
+                    "mission": record.get("mission", ""),
+                    "folder": domain,
+                }
+
+                # Add optional fields
+                if record.get("country"):
+                    entity_data["country"] = record.get("country")
+                if record.get("currency"):
+                    entity_data["currency"] = record.get("currency")
+
+                # Add EBIOS RM fields with type conversion
+                for field in ["dependency", "penetration", "maturity", "trust"]:
+                    value = record.get(field)
+                    if value != "" and value is not None:
+                        try:
+                            entity_data[f"default_{field}"] = int(value)
+                        except ValueError, TypeError:
+                            pass
+
+                # Handle legal identifiers (LEI, EUID, DUNS, VAT, etc.)
+                legal_identifiers = {}
+                for identifier_type in ["lei", "euid", "duns", "vat"]:
+                    value = record.get(identifier_type, "")
+                    if value and str(value).strip():
+                        legal_identifiers[identifier_type.upper()] = str(value).strip()
+
+                if legal_identifiers:
+                    entity_data["legal_identifiers"] = legal_identifiers
+
+                # Check for existing entity by ref_id (if provided), else by name
+                existing_entity = None
+                if ref_id:
+                    existing_entity = Entity.objects.filter(ref_id=ref_id).first()
+                if not existing_entity:
+                    existing_entity = Entity.objects.filter(
+                        name__iexact=name,
+                        folder_id=domain,
+                    ).first()
+
+                if existing_entity:
+                    if ref_id:
+                        ref_id_map[ref_id] = str(existing_entity.id)
+                    name_map[name.lower()] = str(existing_entity.id)
+                    action = self._handle_tprm_conflict(
+                        request,
+                        results,
+                        record,
+                        on_conflict,
+                        label="Entity",
+                        serializer_class=EntityWriteSerializer,
+                        instance=existing_entity,
+                        data=entity_data,
+                    )
+                    if action == "stopped":
+                        break
+                    continue
+
+                # Create the entity first, then handle parent relationship
+                serializer = EntityWriteSerializer(
+                    data=entity_data, context={"request": request}
+                )
+
+                serializer.is_valid(raise_exception=True)
+                entity = serializer.save()
+                if ref_id:
+                    ref_id_map[ref_id] = str(entity.id)
+                name_map[name.lower()] = str(entity.id)
+                results["successful"] += 1
+                logger.debug(f"Created entity: {entity.name} with ref_id: {ref_id}")
+
+            except Exception as e:
+                logger.warning(f"Error creating entity: {str(e)}")
+                self._add_tprm_record_error(results, record, readable_error(e))
+
+        # Second pass: handle parent_entity relationships
+        for record in records:
+            try:
+                ref_id = record.get("ref_id", "").strip()
+                parent_ref_id = record.get("parent_entity_ref_id", "").strip()
+
+                if ref_id and parent_ref_id and ref_id in ref_id_map:
+                    if parent_ref_id in ref_id_map:
+                        entity = Entity.objects.get(id=ref_id_map[ref_id])
+                        entity.parent_entity_id = ref_id_map[parent_ref_id]
+                        entity.save()
+                        logger.debug(
+                            f"Linked entity {ref_id} to parent {parent_ref_id}"
+                        )
+                    else:
+                        logger.warning(
+                            f"Parent entity ref_id '{parent_ref_id}' not found for entity '{ref_id}'"
+                        )
+            except Exception as e:
+                logger.warning(f"Error linking parent entity: {str(e)}")
+
+        self._log_tprm_import_results("Entity", results)
+        return results, ref_id_map, name_map
+
+    def _process_solutions(
+        self,
+        request,
+        records,
+        entity_ref_map,
+        entity_name_map,
+        on_conflict=ConflictMode.STOP,
+    ):
+        """Process solutions from TPRM import"""
+        results = self._empty_tprm_results()
+        ref_id_map = {}  # Map ref_id to actual UUID
+
+        for record in records:
+            try:
+                missing_fields = self._check_missing_tprm_required_fields(
+                    record, ["ref_id", "name"]
+                )
+                if missing_fields:
+                    self._add_tprm_missing_fields_error(results, record, missing_fields)
+                    continue
+
+                ref_id = record.get("ref_id", "").strip()
+                provider_entity_id, provider_ref_id, provider_name = (
+                    self._resolve_tprm_entity(
+                        record,
+                        "provider_entity_ref_id",
+                        "provider_entity_name",
+                        entity_ref_map,
+                        entity_name_map,
+                    )
+                )
+                if provider_entity_id is None:
+                    self._add_tprm_record_error(
+                        results,
+                        record,
+                        f"Provider entity with ref_id '{provider_ref_id}' or name '{provider_name}' not found",
+                    )
+                    continue
+
+                # Prepare solution data (used by both update and create)
+                solution_data = {
+                    "ref_id": ref_id,
+                    "name": record.get("name"),
+                    "description": record.get("description", ""),
+                    "provider_entity": provider_entity_id,
+                }
+
+                # Add criticality if provided
+                if (
+                    record.get("criticality") != ""
+                    and record.get("criticality") is not None
+                ):
+                    try:
+                        solution_data["criticality"] = int(record.get("criticality"))
+                    except ValueError, TypeError:
+                        pass
+                    # Kept for existing files: the 1-4 value also sets the tier.
+                    from tprm.tiers import tier_for_criticality
+
+                    if tier := tier_for_criticality(record.get("criticality")):
+                        solution_data["tier"] = tier.id
+
+                # Check for existing solution by ref_id or name
+                existing_solution = Solution.objects.filter(ref_id=ref_id).first()
+                if not existing_solution:
+                    existing_solution = Solution.objects.filter(
+                        name__iexact=record.get("name"),
+                    ).first()
+
+                if existing_solution:
+                    ref_id_map[ref_id] = str(existing_solution.id)
+                    action = self._handle_tprm_conflict(
+                        request,
+                        results,
+                        record,
+                        on_conflict,
+                        label="Solution",
+                        serializer_class=SolutionWriteSerializer,
+                        instance=existing_solution,
+                        data=solution_data,
+                    )
+                    if action == "stopped":
+                        break
+                    continue
+
+                # Create the solution
+                serializer = SolutionWriteSerializer(
+                    data=solution_data, context={"request": request}
+                )
+
+                serializer.is_valid(raise_exception=True)
+                solution = serializer.save()
+                ref_id_map[ref_id] = str(solution.id)
+                results["successful"] += 1
+                logger.debug(f"Created solution: {solution.name} with ref_id: {ref_id}")
+
+            except Exception as e:
+                logger.warning(f"Error creating solution: {str(e)}")
+                self._add_tprm_record_error(results, record, readable_error(e))
+
+        self._log_tprm_import_results("Solution", results)
+        return results, ref_id_map
+
+    def _resolve_tprm_perimeter(self, record) -> tuple[Optional[Perimeter], str | None]:
+        """Blank column is not an error — perimeter is optional here."""
+        value = str(
+            record.get("perimeter") or record.get("perimeter_ref_id") or ""
+        ).strip()
+        if not value:
+            return None, None
+
+        try:
+            perimeter = Perimeter.objects.filter(id=value).first()
+            if perimeter:
+                return perimeter, None
+        except (ValueError, ValidationError) as exc:
+            # Invalid UUID/ID format is expected for some imports; fall back to ref_id lookup.
+            logger.debug(
+                "Failed perimeter lookup by id, falling back to ref_id",
+                value=value,
+                error=str(exc),
+            )
+
+        perimeter = Perimeter.objects.filter(ref_id=value).first()
+        if perimeter is None:
+            return None, f"Perimeter '{value}' not found"
+        return perimeter, None
+
+    def _process_entity_assessments(
+        self,
+        request,
+        records,
+        folders_map,
+        folder_id,
+        entity_ref_map,
+        entity_name_map,
+        solution_ref_map,
+        on_conflict=ConflictMode.STOP,
+    ):
+        results = self._empty_tprm_results()
+        changeable_audit_ids = RoleAssignment.get_changeable_object_ids(
+            request.user, ComplianceAssessment
+        )
+
+        for record in records:
+            try:
+                missing_fields = self._check_missing_tprm_required_fields(
+                    record, ["name"]
+                )
+                if missing_fields:
+                    self._add_tprm_missing_fields_error(results, record, missing_fields)
+                    continue
+
+                entity_id, entity_ref_id, entity_name = self._resolve_tprm_entity(
+                    record,
+                    "entity_ref_id",
+                    "entity_name",
+                    entity_ref_map,
+                    entity_name_map,
+                )
+                if entity_id is None:
+                    self._add_tprm_record_error(
+                        results,
+                        record,
+                        f"Entity with ref_id '{entity_ref_id}' or name '{entity_name}' not found",
+                    )
+                    continue
+
+                # Get domain from record or use fallback
+                domain = folder_id
+                if record.get("domain") != "":
+                    domain = folders_map.get(
+                        str(record.get("domain")).lower(), folder_id
+                    )
+
+                assessment_data = {
+                    "name": record.get("name"),
+                    "description": record.get("description", ""),
+                    "entity": entity_id,
+                    "folder": domain,
+                }
+
+                perimeter, perimeter_error = self._resolve_tprm_perimeter(record)
+                if perimeter_error:
+                    self._add_tprm_record_error(results, record, perimeter_error)
+                    continue
+                if perimeter:
+                    assessment_data["perimeter"] = str(perimeter.id)
+
+                due_date = _parse_date(record.get("due_date"))
+                if due_date:
+                    assessment_data["due_date"] = due_date
+
+                if record.get("criticality") not in ("", None):
+                    try:
+                        assessment_data["criticality"] = int(record.get("criticality"))
+                    except ValueError, TypeError:
+                        logger.warning(
+                            "Invalid criticality value skipped during entity assessment import",
+                            criticality=record.get("criticality"),
+                        )
+
+                # Same parsing/error convention as the Contracts sheet.
+                solution_ids = []
+                missing_solution_refs = []
+                solution_ref_id_raw = str(record.get("solution_ref_id", "")).strip()
+                if solution_ref_id_raw:
+                    for sol_ref in re.split(r"[\n\r|,]+", solution_ref_id_raw):
+                        sol_ref = sol_ref.strip()
+                        if not sol_ref:
+                            continue
+                        if sol_ref in solution_ref_map:
+                            solution_ids.append(solution_ref_map[sol_ref])
+                        else:
+                            missing_solution_refs.append(sol_ref)
+                if missing_solution_refs:
+                    results["errors"].append(
+                        {
+                            "record": record,
+                            "error": (
+                                "Unknown solution_ref_id(s) skipped: "
+                                + ", ".join(missing_solution_refs)
+                            ),
+                        }
+                    )
+                if solution_ids:
+                    assessment_data["solutions"] = solution_ids
+
+                audit_ref = str(record.get("audit_ref_id", "")).strip()
+                audit_name = str(record.get("audit_name", "")).strip()
+                if audit_ref or audit_name:
+                    # Same strict convention as entity lookups: a provided but
+                    # unknown ref_id fails the row; the name is only consulted
+                    # when no ref_id is given.
+                    if audit_ref:
+                        audit = ComplianceAssessment.objects.filter(
+                            ref_id=audit_ref, id__in=changeable_audit_ids
+                        ).first()
+                    else:
+                        audit = ComplianceAssessment.objects.filter(
+                            name__iexact=audit_name, id__in=changeable_audit_ids
+                        ).first()
+                    if audit is None:
+                        self._add_tprm_record_error(
+                            results,
+                            record,
+                            f"Audit with ref_id '{audit_ref}' or name '{audit_name}' not found",
+                        )
+                        continue
+                    assessment_data["link_audit"] = str(audit.id)
+
+                # Entity assessments dedupe by (entity, name, folder)
+                existing_assessment = EntityAssessment.objects.filter(
+                    name__iexact=record.get("name"),
+                    entity_id=entity_id,
+                    folder_id=domain,
+                ).first()
+
+                if existing_assessment:
+                    action = self._handle_tprm_conflict(
+                        request,
+                        results,
+                        record,
+                        on_conflict,
+                        label="Entity assessment",
+                        serializer_class=EntityAssessmentWriteSerializer,
+                        instance=existing_assessment,
+                        data=assessment_data,
+                    )
+                    if action == "stopped":
+                        break
+                    continue
+
+                serializer = EntityAssessmentWriteSerializer(
+                    data=assessment_data, context={"request": request}
+                )
+
+                serializer.is_valid(raise_exception=True)
+                assessment = serializer.save()
+                results["successful"] += 1
+                logger.debug(f"Created entity assessment: {assessment.name}")
+
+            except Exception as e:
+                logger.warning(f"Error creating entity assessment: {str(e)}")
+                self._add_tprm_record_error(results, record, readable_error(e))
+
+        self._log_tprm_import_results("Entity assessment", results)
+        return results
+
+    def _process_contracts(
+        self,
+        request,
+        records,
+        folders_map,
+        folder_id,
+        entity_ref_map,
+        entity_name_map,
+        solution_ref_map,
+        on_conflict=ConflictMode.STOP,
+    ):
+        """Process contracts from TPRM import"""
+        results = self._empty_tprm_results()
+
+        for record in records:
+            try:
+                missing_fields = self._check_missing_tprm_required_fields(
+                    record, ["ref_id", "name"]
+                )
+                if missing_fields:
+                    self._add_tprm_missing_fields_error(results, record, missing_fields)
+                    continue
+
+                ref_id = record.get("ref_id", "").strip()
+                provider_entity_id, provider_ref_id, provider_name = (
+                    self._resolve_tprm_entity(
+                        record,
+                        "provider_entity_ref_id",
+                        "provider_entity_name",
+                        entity_ref_map,
+                        entity_name_map,
+                    )
+                )
+                if provider_entity_id is None:
+                    self._add_tprm_record_error(
+                        results,
+                        record,
+                        f"Provider entity with ref_id '{provider_ref_id}' or name '{provider_name}' not found",
+                    )
+                    continue
+
+                # Get domain from record or use fallback
+                domain = folder_id
+                if record.get("domain") != "":
+                    domain = folders_map.get(
+                        str(record.get("domain")).lower(), folder_id
+                    )
+
+                # Prepare contract data
+                contract_data = {
+                    "ref_id": ref_id,
+                    "name": record.get("name"),
+                    "description": record.get("description", ""),
+                    "provider_entity": provider_entity_id,
+                    "folder": domain,
+                }
+
+                # Parse solution references (newline, pipe, or comma-separated).
+                # Unknown refs are reported in results["errors"] but do not block
+                # contract creation — known refs are still linked, matching the
+                # pre-multi-solution lenient behavior.
+                solution_ids = []
+                missing_solution_refs = []
+                solution_ref_id_raw = str(record.get("solution_ref_id", "")).strip()
+                if solution_ref_id_raw:
+                    for sol_ref in re.split(r"[\n\r|,]+", solution_ref_id_raw):
+                        sol_ref = sol_ref.strip()
+                        if not sol_ref:
+                            continue
+                        if sol_ref in solution_ref_map:
+                            solution_ids.append(solution_ref_map[sol_ref])
+                        else:
+                            missing_solution_refs.append(sol_ref)
+                            logger.warning(
+                                f"Solution with ref_id '{sol_ref}' not found for contract '{ref_id}'"
+                            )
+
+                if missing_solution_refs:
+                    results["errors"].append(
+                        {
+                            "record": record,
+                            "error": (
+                                "Unknown solution_ref_id(s) skipped: "
+                                + ", ".join(missing_solution_refs)
+                            ),
+                        }
+                    )
+
+                # Add optional fields
+                if record.get("status"):
+                    contract_data["status"] = record.get("status")
+                start_date = _parse_date(record.get("start_date"))
+                if start_date:
+                    contract_data["start_date"] = start_date
+                end_date = _parse_date(record.get("end_date"))
+                if end_date:
+                    contract_data["end_date"] = end_date
+                if (
+                    record.get("annual_expense") != ""
+                    and record.get("annual_expense") is not None
+                ):
+                    try:
+                        contract_data["annual_expense"] = float(
+                            record.get("annual_expense")
+                        )
+                    except ValueError, TypeError:
+                        pass
+                if record.get("currency"):
+                    contract_data["currency"] = record.get("currency")
+
+                def link_solutions(contract):
+                    if solution_ids:
+                        contract.solutions.set(solution_ids)
+
+                # Check for existing contract by ref_id or name
+                existing_contract = Contract.objects.filter(ref_id=ref_id).first()
+                if not existing_contract:
+                    existing_contract = Contract.objects.filter(
+                        name__iexact=record.get("name"),
+                        folder_id=domain,
+                    ).first()
+
+                if existing_contract:
+                    action = self._handle_tprm_conflict(
+                        request,
+                        results,
+                        record,
+                        on_conflict,
+                        label="Contract",
+                        serializer_class=ContractWriteSerializer,
+                        instance=existing_contract,
+                        data=contract_data,
+                        post_update=link_solutions,
+                    )
+                    if action == "stopped":
+                        break
+                    continue
+
+                # Create the contract
+                serializer = ContractWriteSerializer(
+                    data=contract_data, context={"request": request}
+                )
+
+                serializer.is_valid(raise_exception=True)
+                contract = serializer.save()
+                link_solutions(contract)
+                results["successful"] += 1
+                logger.debug(f"Created contract: {contract.name} with ref_id: {ref_id}")
+
+            except Exception as e:
+                logger.warning(f"Error creating contract: {str(e)}")
+                self._add_tprm_record_error(results, record, readable_error(e))
+
+        self._log_tprm_import_results("Contract", results)
+        return results
+
+    def _process_representatives(
+        self,
+        request,
+        records,
+        entity_ref_map,
+        entity_name_map,
+        on_conflict=ConflictMode.STOP,
+    ):
+        """Process representatives from TPRM import."""
+        results = self._empty_tprm_results()
+
+        for record in records:
+            try:
+                missing_fields = self._check_missing_tprm_required_fields(
+                    record, ["email"]
+                )
+                if missing_fields:
+                    self._add_tprm_missing_fields_error(results, record, missing_fields)
+                    continue
+
+                email = str(record.get("email", "")).strip()
+                provider_entity_id, provider_ref_id, provider_name = (
+                    self._resolve_tprm_entity(
+                        record,
+                        "provider_entity_ref_id",
+                        "provider_entity_name",
+                        entity_ref_map,
+                        entity_name_map,
+                    )
+                )
+
+                if not provider_entity_id:
+                    self._add_tprm_record_error(
+                        results,
+                        record,
+                        f"Provider entity with ref_id '{provider_ref_id}' or name '{provider_name}' not found",
+                    )
+                    continue
+
+                representative_data = {
+                    "email": email,
+                    "entity": provider_entity_id,
+                    "first_name": str(record.get("first_name", "")).strip(),
+                    "last_name": str(record.get("last_name", "")).strip(),
+                    "description": str(record.get("description", "")).strip(),
+                    "phone": str(record.get("phone", "")).strip(),
+                    "role": str(record.get("role", "")).strip(),
+                }
+
+                existing_representative = Representative.objects.filter(
+                    email__iexact=email
+                ).first()
+
+                if existing_representative:
+                    action = self._handle_tprm_conflict(
+                        request,
+                        results,
+                        record,
+                        on_conflict,
+                        label="Representative",
+                        serializer_class=RepresentativeWriteSerializer,
+                        instance=existing_representative,
+                        data=representative_data,
+                    )
+                    if action == "stopped":
+                        break
+                    continue
+
+                serializer = RepresentativeWriteSerializer(
+                    data=representative_data, context={"request": request}
+                )
+
+                serializer.is_valid(raise_exception=True)
+                representative = serializer.save()
+                results["successful"] += 1
+                logger.debug(
+                    f"Created representative: {representative.email} for entity ref_id: {provider_ref_id}"
+                )
+
+            except Exception as e:
+                logger.warning(f"Error creating representative: {str(e)}")
+                self._add_tprm_record_error(results, record, readable_error(e))
+
+        self._log_tprm_import_results("Representative", results)
+        return results
+
+    def post(self, request, *args, **kwargs) -> Response:
+        if not request.data:
+            logger.error("Request has no data")
+            return Response(
+                {"error": "fileLoadNoData"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        file_obj: Optional[UploadedFile] = request.data.get("file")
+        if file_obj is None:
+            logger.error("No file provided")
+            return Response(
+                {"error": "noFileProvided"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Check if the file is an Excel file
+        file_extension = file_obj.name.split(".")[-1].lower()
+        if file_extension not in ["xlsx", "xls", "csv", "xml"]:
+            logger.error(f"Unsupported file format: {repr(file_extension)}")
+            return Response(
+                {"error": "unsupportedFileFormat"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Read the file content
+        file_data = file_obj.read()
+
+        # Process the Excel file
+        return self.process_excel_file(request, io.BytesIO(file_data))
+
+    def _build_matrix_mappings(self, risk_matrix):
+        return build_matrix_mappings(risk_matrix)
+
+    def _map_risk_value(self, value, mapping_dict):
+        return map_risk_value(value, mapping_dict)
+
+    def _process_ebios_rm_study_arm(
+        self,
+        request,
+        excel_file: io.BytesIO,
+        folder_id,
+        matrix_id,
+        on_conflict=ConflictMode.STOP,
+    ):
+        """
+        Process EBIOS RM Study import from ARM Excel format.
+        This creates an EbiosRMStudy with Workshop 1, 2, and 3 objects:
+        - Workshop 1: Assets, Feared Events, Applied Controls
+        - Workshop 2: RoTo Couples
+        - Workshop 3: Stakeholders, Strategic Scenarios, Attack Paths
+        """
+
+        results = {
+            "successful": 0,
+            "failed": 0,
+            "errors": [],
+            "details": {
+                "study": None,
+                "assets_created": 0,
+                "assets_updated": 0,
+                "assets_skipped": 0,
+                "feared_events_created": 0,
+                "feared_events_updated": 0,
+                "feared_events_skipped": 0,
+                "applied_controls_created": 0,
+                "applied_controls_updated": 0,
+                "applied_controls_skipped": 0,
+            },
+        }
+
+        try:
+            # Validate folder exists
+            folder = Folder.objects.get(id=folder_id)
+
+            # Validate matrix exists
+            risk_matrix = None
+            if matrix_id:
+                risk_matrix = RiskMatrix.objects.get(id=matrix_id)
+
+            # Parse ARM Excel file
+            excel_file.seek(0)
+            arm_data = process_arm_file(excel_file.read())
+
+            missing_sheets = arm_data.get("missing_sheets", [])
+            if missing_sheets:
+                results["warnings"] = [
+                    {
+                        "sheet": key,
+                        "warning": "Sheet not found in the ARM file, related data was not imported",
+                    }
+                    for key in missing_sheets
+                ]
+
+            # Generate study name
+            study_name = resolve_container_name(request, "EBIOS_RM_Study")
+
+            # Use missions as description
+            study_description = arm_data.get("study_description", "")
+
+            # =========================================================
+            # Step 1: Create Assets (primary and supporting)
+            # =========================================================
+            stopped = False
+            asset_name_to_id = {}
+            # Track parent relationships to set up after all assets are created
+            # Format: {child_name_lower: parent_name}
+            supporting_asset_parents = {}
+            # Track primary -> supporting relationships from Base de valeurs métier
+            # Format: {primary_name_lower: [supporting_name1, supporting_name2, ...]}
+            primary_to_supporting = {}
+
+            # Create supporting assets first (from dedicated sheet)
+            for asset_data in arm_data.get("supporting_assets", []):
+                try:
+                    asset_name = asset_data["name"]
+                    # Check for existing asset with the same name in this folder
+                    existing_asset = Asset.objects.filter(
+                        name__iexact=asset_name,
+                        folder=folder,
+                    ).first()
+
+                    if existing_asset:
+                        match on_conflict:
+                            case ConflictMode.SKIP:
+                                asset_name_to_id[asset_name.lower()] = existing_asset.id
+                                results["details"]["assets_skipped"] += 1
+                                if asset_data.get("parent_name"):
+                                    supporting_asset_parents[asset_name.lower()] = (
+                                        asset_data["parent_name"]
+                                    )
+                                continue
+                            case ConflictMode.STOP:
+                                results["errors"].append(
+                                    {
+                                        "asset": asset_name,
+                                        "error": "Asset already exists (conflict policy: stop)",
+                                    }
+                                )
+                                stopped = True
+                                break
+                            case ConflictMode.UPDATE:
+                                existing_asset.description = asset_data.get(
+                                    "description", existing_asset.description
+                                )
+                                existing_asset.type = "SP"
+                                existing_asset.save()
+                                asset_name_to_id[asset_name.lower()] = existing_asset.id
+                                results["details"]["assets_updated"] += 1
+                                if asset_data.get("parent_name"):
+                                    supporting_asset_parents[asset_name.lower()] = (
+                                        asset_data["parent_name"]
+                                    )
+                                continue
+
+                    serializer = AssetWriteSerializer(
+                        data={
+                            "name": asset_name,
+                            "description": asset_data["description"],
+                            "type": "SP",
+                            "folder": folder_id,
+                        },
+                        context={"request": request},
+                    )
+                    if serializer.is_valid():
+                        asset = serializer.save()
+                        asset_name_to_id[asset_name.lower()] = asset.id
+                        results["details"]["assets_created"] += 1
+
+                        # Track parent relationship if specified
+                        if asset_data.get("parent_name"):
+                            supporting_asset_parents[asset_name.lower()] = asset_data[
+                                "parent_name"
+                            ]
+                    else:
+                        results["errors"].append(
+                            {"asset": asset_name, "error": serializer.errors}
+                        )
+                except Exception as e:
+                    results["errors"].append(
+                        {"asset": asset_data["name"], "error": str(e)}
+                    )
+
+            # Create primary assets and their linked supporting assets
+            for asset_data in arm_data.get("primary_assets", []):
+                try:
+                    # Track supporting assets for this primary asset
+                    supporting_names = asset_data.get("supporting_asset_names", [])
+                    if supporting_names:
+                        primary_to_supporting[asset_data["name"].lower()] = (
+                            supporting_names
+                        )
+
+                    # Create any supporting assets mentioned in this primary asset
+                    for supporting_name in supporting_names:
+                        if supporting_name.lower() not in asset_name_to_id:
+                            # Check for existing asset
+                            existing_sp = Asset.objects.filter(
+                                name__iexact=supporting_name,
+                                folder=folder,
+                            ).first()
+
+                            if existing_sp:
+                                asset_name_to_id[supporting_name.lower()] = (
+                                    existing_sp.id
+                                )
+                                match on_conflict:
+                                    case ConflictMode.SKIP:
+                                        results["details"]["assets_skipped"] += 1
+                                    case ConflictMode.STOP:
+                                        results["errors"].append(
+                                            {
+                                                "asset": supporting_name,
+                                                "error": "Asset already exists (conflict policy: stop)",
+                                            }
+                                        )
+                                        stopped = True
+                                        break
+                                    case ConflictMode.UPDATE:
+                                        existing_sp.type = "SP"
+                                        existing_sp.save()
+                                        results["details"]["assets_updated"] += 1
+                                continue
+
+                            serializer = AssetWriteSerializer(
+                                data={
+                                    "name": supporting_name,
+                                    "type": "SP",
+                                    "folder": folder_id,
+                                },
+                                context={"request": request},
+                            )
+                            if serializer.is_valid():
+                                asset = serializer.save()
+                                asset_name_to_id[supporting_name.lower()] = asset.id
+                                results["details"]["assets_created"] += 1
+
+                    if stopped:
+                        break
+
+                    # Check for existing primary asset
+                    primary_name = asset_data["name"]
+                    existing_primary = Asset.objects.filter(
+                        name__iexact=primary_name,
+                        folder=folder,
+                    ).first()
+
+                    if existing_primary:
+                        match on_conflict:
+                            case ConflictMode.SKIP:
+                                asset_name_to_id[primary_name.lower()] = (
+                                    existing_primary.id
+                                )
+                                results["details"]["assets_skipped"] += 1
+                                continue
+                            case ConflictMode.STOP:
+                                results["errors"].append(
+                                    {
+                                        "asset": primary_name,
+                                        "error": "Asset already exists (conflict policy: stop)",
+                                    }
+                                )
+                                stopped = True
+                                break
+                            case ConflictMode.UPDATE:
+                                existing_primary.description = asset_data.get(
+                                    "description", existing_primary.description
+                                )
+                                existing_primary.type = "PR"
+                                existing_primary.save()
+                                asset_name_to_id[primary_name.lower()] = (
+                                    existing_primary.id
+                                )
+                                results["details"]["assets_updated"] += 1
+                                continue
+
+                    # Create the primary asset
+                    serializer = AssetWriteSerializer(
+                        data={
+                            "name": primary_name,
+                            "description": asset_data["description"],
+                            "type": "PR",
+                            "folder": folder_id,
+                        },
+                        context={"request": request},
+                    )
+                    if serializer.is_valid():
+                        asset = serializer.save()
+                        asset_name_to_id[primary_name.lower()] = asset.id
+                        results["details"]["assets_created"] += 1
+                    else:
+                        results["errors"].append(
+                            {"asset": primary_name, "error": serializer.errors}
+                        )
+                except Exception as e:
+                    results["errors"].append(
+                        {"asset": asset_data["name"], "error": str(e)}
+                    )
+
+            if stopped:
+                return results
+
+            # =========================================================
+            # Step 1b: Set up asset parent relationships
+            # =========================================================
+            logger.info(
+                f"Setting up asset hierarchy: "
+                f"{len(supporting_asset_parents)} explicit parents, "
+                f"{len(primary_to_supporting)} primary->supporting mappings"
+            )
+
+            # First, apply explicit parent relationships from "Bien support parent"
+            for child_name_lower, parent_name in supporting_asset_parents.items():
+                child_id = asset_name_to_id.get(child_name_lower)
+                parent_id = asset_name_to_id.get(parent_name.lower())
+                if child_id and parent_id:
+                    try:
+                        child_asset = Asset.objects.get(id=child_id)
+                        child_asset.parent_assets.add(parent_id)
+                        logger.info(
+                            f"Set explicit parent '{parent_name}' for asset '{child_name_lower}'"
+                        )
+                    except Exception as e:
+                        logger.warning(f"Failed to set parent for asset: {e}")
+
+            # Then, for supporting assets, use primary asset from "Base de valeurs métier" as parent
+            for primary_name_lower, supporting_names in primary_to_supporting.items():
+                primary_id = asset_name_to_id.get(primary_name_lower)
+                if not primary_id:
+                    logger.warning(
+                        f"Primary asset '{primary_name_lower}' not found in asset_name_to_id"
+                    )
+                    continue
+
+                primary_asset = Asset.objects.get(id=primary_id)
+
+                for supporting_name in supporting_names:
+                    supporting_name_lower = supporting_name.lower()
+                    supporting_id = asset_name_to_id.get(supporting_name_lower)
+
+                    if supporting_id:
+                        try:
+                            supporting_asset = Asset.objects.get(id=supporting_id)
+                            # Add primary as parent of supporting (supporting.parent_assets contains primary)
+                            supporting_asset.parent_assets.add(primary_id)
+                            logger.info(
+                                f"Linked: '{supporting_name}' -> parent: '{primary_asset.name}'"
+                            )
+                        except Exception as e:
+                            logger.warning(
+                                f"Failed to set parent for asset '{supporting_name}': {e}"
+                            )
+                    else:
+                        logger.debug(
+                            f"Supporting asset '{supporting_name}' not found in asset_name_to_id"
+                        )
+
+            if stopped:
+                return results
+
+            # =========================================================
+            # Step 2: Create Applied Controls
+            # =========================================================
+            for control_data in arm_data.get("applied_controls", []):
+                try:
+                    control_name = control_data["name"]
+                    # Check for existing applied control with the same name in this folder
+                    existing_control = AppliedControl.objects.filter(
+                        name__iexact=control_name,
+                        folder=folder,
+                    ).first()
+
+                    if existing_control:
+                        match on_conflict:
+                            case ConflictMode.SKIP:
+                                results["details"]["applied_controls_skipped"] += 1
+                                continue
+                            case ConflictMode.STOP:
+                                results["errors"].append(
+                                    {
+                                        "control": control_name,
+                                        "error": "Applied control already exists (conflict policy: stop)",
+                                    }
+                                )
+                                stopped = True
+                                break
+                            case ConflictMode.UPDATE:
+                                existing_control.description = control_data.get(
+                                    "description", existing_control.description
+                                )
+                                if control_data.get("ref_id"):
+                                    existing_control.ref_id = control_data["ref_id"]
+                                existing_control.save()
+                                results["details"]["applied_controls_updated"] += 1
+                                continue
+
+                    serializer = AppliedControlWriteSerializer(
+                        data={
+                            "name": control_name,
+                            "description": control_data["description"],
+                            "ref_id": control_data["ref_id"] or None,
+                            "folder": folder_id,
+                        },
+                        context={"request": request},
+                    )
+                    if serializer.is_valid():
+                        serializer.save()
+                        results["details"]["applied_controls_created"] += 1
+                    else:
+                        results["errors"].append(
+                            {
+                                "control": control_name,
+                                "error": serializer.errors,
+                            }
+                        )
+                except Exception as e:
+                    results["errors"].append(
+                        {"control": control_data["name"], "error": str(e)}
+                    )
+
+            if stopped:
+                return results
+
+            # =========================================================
+            # Step 3: Create EBIOS RM Study
+            # =========================================================
+            study_data = {
+                "name": study_name,
+                "folder": folder_id,
+                "description": study_description,
+            }
+
+            if risk_matrix:
+                study_data["risk_matrix"] = matrix_id
+
+            serializer = EbiosRMStudyWriteSerializer(
+                data=study_data, context={"request": request}
+            )
+
+            if serializer.is_valid(raise_exception=True):
+                study = serializer.save()
+                results["details"]["study"] = study.id
+                logger.info(f"Created EBIOS RM Study: {study_name} with ID {study.id}")
+
+                # Track workshop progress
+                meta_updated = False
+
+                # Mark step 1 (index 0) as done if we have a description
+                if study_description:
+                    study.meta["workshops"][0]["steps"][0]["status"] = "done"
+                    meta_updated = True
+
+                # Link assets to study
+                asset_ids = list(asset_name_to_id.values())
+                if asset_ids:
+                    study.assets.set(asset_ids)
+                    # Mark step 2 (index 1) as done if we have assets
+                    study.meta["workshops"][0]["steps"][1]["status"] = "done"
+                    meta_updated = True
+
+                # =========================================================
+                # Step 4: Create Feared Events
+                # =========================================================
+                for fe_data in arm_data.get("feared_events", []):
+                    try:
+                        fe_name = fe_data["name"]
+                        # Find linked assets
+                        linked_asset_ids = []
+                        for asset_name in fe_data.get("asset_names", []):
+                            asset_id = asset_name_to_id.get(asset_name.lower())
+                            if asset_id:
+                                linked_asset_ids.append(asset_id)
+
+                        # Check for existing feared event
+                        existing_fe = FearedEvent.objects.filter(
+                            ebios_rm_study=study,
+                            name__iexact=fe_name,
+                        ).first()
+
+                        if existing_fe:
+                            match on_conflict:
+                                case ConflictMode.SKIP:
+                                    results["details"]["feared_events_skipped"] += 1
+                                    continue
+                                case ConflictMode.STOP:
+                                    results["errors"].append(
+                                        {
+                                            "feared_event": fe_name,
+                                            "error": "Feared event already exists (conflict policy: stop)",
+                                        }
+                                    )
+                                    stopped = True
+                                    break
+                                case ConflictMode.UPDATE:
+                                    existing_fe.justification = fe_data.get(
+                                        "justification", existing_fe.justification
+                                    )
+                                    existing_fe.gravity = fe_data.get(
+                                        "gravity", existing_fe.gravity
+                                    )
+                                    existing_fe.is_selected = fe_data.get(
+                                        "is_selected", existing_fe.is_selected
+                                    )
+                                    existing_fe.save()
+                                    if linked_asset_ids:
+                                        existing_fe.assets.set(linked_asset_ids)
+                                    results["details"]["feared_events_updated"] += 1
+                                    continue
+
+                        # Create feared event
+                        feared_event = FearedEvent.objects.create(
+                            ebios_rm_study=study,
+                            name=fe_name,
+                            justification=fe_data.get("justification", ""),
+                            gravity=fe_data.get("gravity", -1),
+                            is_selected=fe_data.get("is_selected", False),
+                        )
+
+                        # Link assets
+                        if linked_asset_ids:
+                            feared_event.assets.set(linked_asset_ids)
+
+                        results["details"]["feared_events_created"] += 1
+
+                    except Exception as e:
+                        results["errors"].append(
+                            {"feared_event": fe_data["name"], "error": str(e)}
+                        )
+
+                # Mark step 3 (index 2) as done if we created or updated feared events
+                fe_count = (
+                    results["details"]["feared_events_created"]
+                    + results["details"]["feared_events_updated"]
+                )
+                if fe_count > 0:
+                    study.meta["workshops"][0]["steps"][2]["status"] = "done"
+                    meta_updated = True
+
+                if stopped:
+                    if meta_updated:
+                        study.save()
+                    return results
+
+                # =========================================================
+                # Step 5: Create RoTo Couples (Workshop 2)
+                # =========================================================
+                results["details"]["roto_couples_created"] = 0
+                results["details"]["roto_couples_updated"] = 0
+                results["details"]["roto_couples_skipped"] = 0
+
+                roto_couples_data = arm_data.get("roto_couples", [])
+                logger.info(
+                    f"[RoTo Import] Received {len(roto_couples_data)} RoTo couples from extraction"
+                )
+                for idx, roto_data in enumerate(roto_couples_data):
+                    logger.info(f"[RoTo Import] Processing #{idx + 1}: {roto_data}")
+
+                for roto_data in roto_couples_data:
+                    try:
+                        # Find or create the risk origin terminology
+                        risk_origin_name = roto_data["risk_origin"]
+                        normalized_name = risk_origin_name.lower().replace(" ", "_")
+
+                        # Try to find existing terminology by name (case-insensitive)
+                        # Check both the original name and the normalized form
+                        risk_origin = Terminology.objects.filter(
+                            field_path=Terminology.FieldPath.ROTO_RISK_ORIGIN,
+                            name__iexact=risk_origin_name,
+                        ).first()
+
+                        if not risk_origin:
+                            risk_origin = Terminology.objects.filter(
+                                field_path=Terminology.FieldPath.ROTO_RISK_ORIGIN,
+                                name__iexact=normalized_name,
+                            ).first()
+
+                        if not risk_origin:
+                            # Create a new terminology entry for this risk origin
+                            risk_origin = Terminology.objects.create(
+                                field_path=Terminology.FieldPath.ROTO_RISK_ORIGIN,
+                                name=normalized_name,
+                                is_visible=True,
+                                builtin=False,
+                            )
+                            logger.info(
+                                f"Created new risk origin terminology: {risk_origin_name}"
+                            )
+
+                        # Check if a RoTo couple already exists for this study + risk_origin + target_objective
+                        existing_roto = RoTo.objects.filter(
+                            ebios_rm_study=study,
+                            risk_origin=risk_origin,
+                            target_objective__iexact=roto_data["target_objective"],
+                        ).first()
+
+                        if existing_roto:
+                            match on_conflict:
+                                case ConflictMode.SKIP:
+                                    results["details"]["roto_couples_skipped"] += 1
+                                    logger.info(
+                                        f"[RoTo Import] Skipped existing RoTo couple: "
+                                        f"{risk_origin_name} - {roto_data['target_objective']}"
+                                    )
+                                    continue
+                                case ConflictMode.STOP:
+                                    results["errors"].append(
+                                        {
+                                            "roto_couple": f"{roto_data.get('risk_origin', 'unknown')} - {roto_data.get('target_objective', 'unknown')}",
+                                            "error": "RoTo couple already exists (conflict policy: stop)",
+                                        }
+                                    )
+                                    stopped = True
+                                    break
+                                case ConflictMode.UPDATE:
+                                    existing_roto.motivation = roto_data.get(
+                                        "motivation", existing_roto.motivation
+                                    )
+                                    existing_roto.resources = roto_data.get(
+                                        "resources", existing_roto.resources
+                                    )
+                                    existing_roto.activity = roto_data.get(
+                                        "activity", existing_roto.activity
+                                    )
+                                    existing_roto.is_selected = roto_data.get(
+                                        "is_selected", existing_roto.is_selected
+                                    )
+                                    existing_roto.justification = roto_data.get(
+                                        "justification", existing_roto.justification
+                                    )
+                                    existing_roto.save()
+                                    results["details"]["roto_couples_updated"] += 1
+                                    logger.info(
+                                        f"[RoTo Import] Updated existing RoTo couple: "
+                                        f"{risk_origin_name} - {roto_data['target_objective']}"
+                                    )
+                                    continue
+                        else:
+                            # Create the RoTo couple
+                            RoTo.objects.create(
+                                ebios_rm_study=study,
+                                risk_origin=risk_origin,
+                                target_objective=roto_data["target_objective"],
+                                motivation=roto_data.get("motivation", 0),
+                                resources=roto_data.get("resources", 0),
+                                activity=roto_data.get("activity", 0),
+                                is_selected=roto_data.get("is_selected", False),
+                                justification=roto_data.get("justification", ""),
+                            )
+
+                            results["details"]["roto_couples_created"] += 1
+                            logger.debug(
+                                f"Created RoTo couple: {risk_origin_name} - {roto_data['target_objective']}"
+                            )
+
+                    except Exception as e:
+                        results["errors"].append(
+                            {
+                                "roto_couple": f"{roto_data.get('risk_origin', 'unknown')} - {roto_data.get('target_objective', 'unknown')}",
+                                "error": str(e),
+                            }
+                        )
+
+                # Mark workshop 2 step 1 (index 0) as done if we created or updated RoTo couples
+                roto_count = (
+                    results["details"]["roto_couples_created"]
+                    + results["details"]["roto_couples_updated"]
+                )
+                if roto_count > 0:
+                    study.meta["workshops"][1]["steps"][0]["status"] = "done"
+                    meta_updated = True
+                    logger.info(
+                        f"Created {results['details']['roto_couples_created']} RoTo couples"
+                    )
+
+                    # Check if any RoTo couple has motivation or resources data
+                    # If so, mark workshop 2 step 2 (index 1) as done
+                    has_quotation_data = any(
+                        roto.get("motivation", 0) > 0 or roto.get("resources", 0) > 0
+                        for roto in arm_data.get("roto_couples", [])
+                    )
+                    if has_quotation_data:
+                        study.meta["workshops"][1]["steps"][1]["status"] = "done"
+                        logger.info(
+                            "Marked workshop 2 step 2 as done (motivation/resources data captured)"
+                        )
+
+                if stopped:
+                    if meta_updated:
+                        study.save()
+                    return results
+
+                # =========================================================
+                # Step 6: Create Stakeholders (Workshop 3)
+                # =========================================================
+                results["details"]["entities_created"] = 0
+                results["details"]["stakeholders_created"] = 0
+                results["details"]["stakeholders_updated"] = 0
+                results["details"]["stakeholders_skipped"] = 0
+
+                # First, create or find category terminologies
+                category_name_to_terminology = {}
+                for cat_data in arm_data.get("stakeholder_categories", []):
+                    normalized_name = cat_data["normalized_name"]
+                    if not normalized_name:
+                        continue
+
+                    # Try to find existing terminology
+                    terminology = Terminology.objects.filter(
+                        field_path=Terminology.FieldPath.ENTITY_RELATIONSHIP,
+                        name__iexact=normalized_name,
+                    ).first()
+
+                    if not terminology:
+                        # Also try without the trailing 's' stripped
+                        terminology = Terminology.objects.filter(
+                            field_path=Terminology.FieldPath.ENTITY_RELATIONSHIP,
+                            name__iexact=cat_data["name"].lower(),
+                        ).first()
+
+                    if not terminology:
+                        # Create a new terminology entry
+                        terminology = Terminology.objects.create(
+                            field_path=Terminology.FieldPath.ENTITY_RELATIONSHIP,
+                            name=normalized_name,
+                            is_visible=True,
+                            builtin=False,
+                        )
+                        logger.info(
+                            f"Created new stakeholder category: {normalized_name}"
+                        )
+
+                    category_name_to_terminology[normalized_name] = terminology
+                    # Also map the raw name for direct lookups
+                    category_name_to_terminology[cat_data["name"].lower()] = terminology
+
+                # Now create entities and stakeholders
+                for stakeholder_data in arm_data.get("stakeholders", []):
+                    try:
+                        entity_name = stakeholder_data["name"]
+
+                        # Create or get the entity
+                        entity, created = Entity.objects.get_or_create(
+                            name=entity_name,
+                            defaults={
+                                "folder": folder,
+                                "description": stakeholder_data.get("description", ""),
+                            },
+                        )
+                        if created:
+                            results["details"]["entities_created"] += 1
+                            logger.debug(f"Created entity: {entity_name}")
+
+                        # Find the category terminology
+                        category_normalized = stakeholder_data.get("category", "")
+                        category = category_name_to_terminology.get(category_normalized)
+
+                        if not category:
+                            # Try to find by normalized name directly
+                            category = Terminology.objects.filter(
+                                field_path=Terminology.FieldPath.ENTITY_RELATIONSHIP,
+                                name__iexact=category_normalized,
+                            ).first()
+
+                        if not category:
+                            # Use 'other' as fallback
+                            category = Terminology.objects.filter(
+                                field_path=Terminology.FieldPath.ENTITY_RELATIONSHIP,
+                                name="other",
+                            ).first()
+
+                        if category:
+                            # Check for existing stakeholder
+                            existing_stakeholder = Stakeholder.objects.filter(
+                                ebios_rm_study=study,
+                                entity=entity,
+                                category=category,
+                            ).first()
+
+                            if existing_stakeholder:
+                                match on_conflict:
+                                    case ConflictMode.SKIP:
+                                        results["details"]["stakeholders_skipped"] += 1
+                                        continue
+                                    case ConflictMode.STOP:
+                                        results["errors"].append(
+                                            {
+                                                "stakeholder": entity_name,
+                                                "error": "Stakeholder already exists (conflict policy: stop)",
+                                            }
+                                        )
+                                        stopped = True
+                                        break
+                                    case ConflictMode.UPDATE:
+                                        existing_stakeholder.is_selected = (
+                                            stakeholder_data.get(
+                                                "is_selected",
+                                                existing_stakeholder.is_selected,
+                                            )
+                                        )
+                                        existing_stakeholder.current_dependency = (
+                                            stakeholder_data.get(
+                                                "current_dependency",
+                                                existing_stakeholder.current_dependency,
+                                            )
+                                        )
+                                        existing_stakeholder.current_penetration = stakeholder_data.get(
+                                            "current_penetration",
+                                            existing_stakeholder.current_penetration,
+                                        )
+                                        existing_stakeholder.current_maturity = (
+                                            stakeholder_data.get(
+                                                "current_maturity",
+                                                existing_stakeholder.current_maturity,
+                                            )
+                                        )
+                                        existing_stakeholder.current_trust = (
+                                            stakeholder_data.get(
+                                                "current_trust",
+                                                existing_stakeholder.current_trust,
+                                            )
+                                        )
+                                        existing_stakeholder.residual_dependency = stakeholder_data.get(
+                                            "residual_dependency",
+                                            existing_stakeholder.residual_dependency,
+                                        )
+                                        existing_stakeholder.residual_penetration = stakeholder_data.get(
+                                            "residual_penetration",
+                                            existing_stakeholder.residual_penetration,
+                                        )
+                                        existing_stakeholder.residual_maturity = (
+                                            stakeholder_data.get(
+                                                "residual_maturity",
+                                                existing_stakeholder.residual_maturity,
+                                            )
+                                        )
+                                        existing_stakeholder.residual_trust = (
+                                            stakeholder_data.get(
+                                                "residual_trust",
+                                                existing_stakeholder.residual_trust,
+                                            )
+                                        )
+                                        existing_stakeholder.save()
+                                        results["details"]["stakeholders_updated"] += 1
+                                        logger.debug(
+                                            f"Updated stakeholder: {entity_name} ({category.name})"
+                                        )
+                                        continue
+
+                            # Create the stakeholder
+                            stakeholder = Stakeholder.objects.create(
+                                ebios_rm_study=study,
+                                entity=entity,
+                                category=category,
+                                is_selected=stakeholder_data.get("is_selected", False),
+                                current_dependency=stakeholder_data.get(
+                                    "current_dependency", 0
+                                ),
+                                current_penetration=stakeholder_data.get(
+                                    "current_penetration", 0
+                                ),
+                                current_maturity=stakeholder_data.get(
+                                    "current_maturity", 1
+                                ),
+                                current_trust=stakeholder_data.get("current_trust", 1),
+                                # Set residual to same as current initially
+                                residual_dependency=stakeholder_data.get(
+                                    "current_dependency", 0
+                                ),
+                                residual_penetration=stakeholder_data.get(
+                                    "current_penetration", 0
+                                ),
+                                residual_maturity=stakeholder_data.get(
+                                    "current_maturity", 1
+                                ),
+                                residual_trust=stakeholder_data.get("current_trust", 1),
+                            )
+
+                            results["details"]["stakeholders_created"] += 1
+                            logger.debug(
+                                f"Created stakeholder: {entity_name} ({category.name})"
+                            )
+                        else:
+                            results["errors"].append(
+                                {
+                                    "stakeholder": entity_name,
+                                    "error": "Could not find or create category terminology",
+                                }
+                            )
+
+                    except Exception as e:
+                        results["errors"].append(
+                            {
+                                "stakeholder": stakeholder_data.get("name", "unknown"),
+                                "error": str(e),
+                            }
+                        )
+
+                # Mark workshop 3 step 1 (index 0) as done if we created or updated stakeholders
+                stakeholder_count = (
+                    results["details"]["stakeholders_created"]
+                    + results["details"]["stakeholders_updated"]
+                )
+                if stakeholder_count > 0:
+                    study.meta["workshops"][2]["steps"][0]["status"] = "done"
+                    meta_updated = True
+                    logger.info(
+                        f"Created {results['details']['stakeholders_created']} stakeholders "
+                        f"({results['details']['entities_created']} new entities)"
+                    )
+
+                    # Check if any stakeholder has assessment data (dependency or penetration > 0)
+                    has_assessment_data = any(
+                        s.get("current_dependency", 0) > 0
+                        or s.get("current_penetration", 0) > 0
+                        for s in arm_data.get("stakeholders", [])
+                    )
+                    if has_assessment_data:
+                        study.meta["workshops"][2]["steps"][1]["status"] = "done"
+                        logger.info(
+                            "Marked workshop 3 step 2 as done (assessment data captured)"
+                        )
+
+                if stopped:
+                    if meta_updated:
+                        study.save()
+                    return results
+
+                # =========================================================
+                # Step 7: Create Strategic Scenarios and Attack Paths (Workshop 3)
+                # =========================================================
+                results["details"]["strategic_scenarios_created"] = 0
+                results["details"]["strategic_scenarios_updated"] = 0
+                results["details"]["strategic_scenarios_skipped"] = 0
+                results["details"]["attack_paths_created"] = 0
+
+                logger.info(
+                    "[Strategic Scenarios Import] Starting strategic scenario creation"
+                )
+
+                # Build a lookup for RoTo couples by risk_origin + target_objective
+                roto_lookup = {}
+                for roto in study.roto_set.all():
+                    # Store both the normalized name and the original for flexible matching
+                    key = (
+                        roto.risk_origin.name.lower(),
+                        roto.target_objective.lower(),
+                    )
+                    roto_lookup[key] = roto
+                    logger.info(
+                        f"[Strategic Scenarios Import] RoTo lookup entry: "
+                        f"key={key}, roto_id={roto.id}, "
+                        f"risk_origin_name='{roto.risk_origin.name}', "
+                        f"target_objective='{roto.target_objective}'"
+                    )
+
+                logger.info(
+                    f"[Strategic Scenarios Import] RoTo lookup built with {len(roto_lookup)} entries"
+                )
+                logger.info(
+                    f"[Strategic Scenarios Import] RoTo lookup keys: {list(roto_lookup.keys())}"
+                )
+
+                scenarios_from_arm = arm_data.get("strategic_scenarios", [])
+                logger.info(
+                    f"[Strategic Scenarios Import] Processing {len(scenarios_from_arm)} scenarios from ARM data"
+                )
+
+                for scenario_data in scenarios_from_arm:
+                    try:
+                        scenario_name = scenario_data["name"]
+                        if not scenario_name:
+                            logger.debug(
+                                "[Strategic Scenarios Import] Skipping scenario with no name"
+                            )
+                            continue
+
+                        logger.info(
+                            f"[Strategic Scenarios Import] Processing scenario: '{scenario_name}'"
+                        )
+
+                        # Find the matching RoTo couple
+                        # Normalize the risk origin name the same way we do when creating terminologies
+                        risk_origin_raw = scenario_data.get("risk_origin", "")
+                        risk_origin_name = risk_origin_raw.lower().replace(" ", "_")
+                        target_objective = scenario_data.get(
+                            "target_objective", ""
+                        ).lower()
+
+                        logger.info(
+                            f"[Strategic Scenarios Import] Looking for RoTo match: "
+                            f"risk_origin_raw='{risk_origin_raw}', "
+                            f"risk_origin_normalized='{risk_origin_name}', "
+                            f"target_objective='{target_objective}'"
+                        )
+
+                        # Attempt 1: Exact match with underscore normalization
+                        lookup_key_1 = (risk_origin_name, target_objective)
+                        roto = roto_lookup.get(lookup_key_1)
+                        logger.info(
+                            f"[Strategic Scenarios Import] Attempt 1 (underscore normalized): "
+                            f"key={lookup_key_1}, found={roto is not None}"
+                        )
+
+                        if not roto:
+                            # Attempt 2: Try without underscore normalization
+                            risk_origin_name_alt = risk_origin_raw.lower()
+                            lookup_key_2 = (risk_origin_name_alt, target_objective)
+                            roto = roto_lookup.get(lookup_key_2)
+                            logger.info(
+                                f"[Strategic Scenarios Import] Attempt 2 (lowercase only): "
+                                f"key={lookup_key_2}, found={roto is not None}"
+                            )
+
+                        if not roto:
+                            # Attempt 3: Try partial matching on target objective
+                            logger.info(
+                                f"[Strategic Scenarios Import] Attempt 3 (partial match): "
+                                f"searching for risk_origin containing '{risk_origin_name}' "
+                                f"and target_objective containing '{target_objective}'"
+                            )
+                            for key, r in roto_lookup.items():
+                                if (
+                                    key[0] == risk_origin_name
+                                    and target_objective in key[1]
+                                ):
+                                    roto = r
+                                    logger.info(
+                                        f"[Strategic Scenarios Import] Attempt 3: Partial match found with key={key}"
+                                    )
+                                    break
+
+                        if not roto:
+                            error_msg = f"Could not find RoTo couple for '{risk_origin_name}' - '{target_objective}'"
+                            logger.warning(
+                                f"[Strategic Scenarios Import] FAILED to match scenario '{scenario_name}': {error_msg}"
+                            )
+                            results["errors"].append(
+                                {
+                                    "strategic_scenario": scenario_name,
+                                    "error": error_msg,
+                                }
+                            )
+                            continue
+
+                        logger.info(
+                            f"[Strategic Scenarios Import] SUCCESS: Matched scenario '{scenario_name}' "
+                            f"to RoTo id={roto.id} ('{roto.risk_origin.name}' - '{roto.target_objective}')"
+                        )
+
+                        # Check if a strategic scenario already exists for this study + name + ref_id
+                        existing_scenario = StrategicScenario.objects.filter(
+                            ebios_rm_study=study,
+                            name__iexact=scenario_name,
+                        ).first()
+
+                        if existing_scenario:
+                            match on_conflict:
+                                case ConflictMode.SKIP:
+                                    results["details"][
+                                        "strategic_scenarios_skipped"
+                                    ] += 1
+                                    logger.info(
+                                        f"[Strategic Scenarios Import] Skipped existing scenario: '{scenario_name}'"
+                                    )
+                                    continue
+                                case ConflictMode.STOP:
+                                    results["errors"].append(
+                                        {
+                                            "strategic_scenario": scenario_name,
+                                            "error": "Strategic scenario already exists (conflict policy: stop)",
+                                        }
+                                    )
+                                    stopped = True
+                                    break
+                                case ConflictMode.UPDATE:
+                                    existing_scenario.ro_to_couple = roto
+                                    existing_scenario.ref_id = scenario_data.get(
+                                        "ref_id", existing_scenario.ref_id
+                                    )
+                                    existing_scenario.save()
+                                    results["details"][
+                                        "strategic_scenarios_updated"
+                                    ] += 1
+                                    logger.info(
+                                        f"[Strategic Scenarios Import] Updated existing scenario: '{scenario_name}'"
+                                    )
+                                    # Still create attack path if missing
+                                    attack_path_name = scenario_data.get(
+                                        "attack_path_name", ""
+                                    )
+                                    if (
+                                        attack_path_name
+                                        and not AttackPath.objects.filter(
+                                            ebios_rm_study=study,
+                                            strategic_scenario=existing_scenario,
+                                            name__iexact=attack_path_name,
+                                        ).exists()
+                                    ):
+                                        AttackPath.objects.create(
+                                            ebios_rm_study=study,
+                                            strategic_scenario=existing_scenario,
+                                            name=attack_path_name,
+                                            ref_id=scenario_data.get(
+                                                "attack_path_ref_id", ""
+                                            ),
+                                        )
+                                        results["details"]["attack_paths_created"] += 1
+                                    continue
+
+                        # Create the strategic scenario
+                        strategic_scenario = StrategicScenario.objects.create(
+                            ebios_rm_study=study,
+                            ro_to_couple=roto,
+                            name=scenario_name,
+                            ref_id=scenario_data.get("ref_id", ""),
+                        )
+                        results["details"]["strategic_scenarios_created"] += 1
+                        logger.info(
+                            f"[Strategic Scenarios Import] Created StrategicScenario id={strategic_scenario.id}, name='{scenario_name}'"
+                        )
+
+                        # Create the attack path if provided
+                        attack_path_name = scenario_data.get("attack_path_name", "")
+                        if attack_path_name:
+                            attack_path = AttackPath.objects.create(
+                                ebios_rm_study=study,
+                                strategic_scenario=strategic_scenario,
+                                name=attack_path_name,
+                                ref_id=scenario_data.get("attack_path_ref_id", ""),
+                            )
+                            results["details"]["attack_paths_created"] += 1
+                            logger.info(
+                                f"[Strategic Scenarios Import] Created AttackPath id={attack_path.id}, name='{attack_path_name}'"
+                            )
+
+                    except Exception as e:
+                        logger.error(
+                            f"[Strategic Scenarios Import] Exception processing scenario '{scenario_data.get('name', 'unknown')}': {str(e)}",
+                            exc_info=True,
+                        )
+                        results["errors"].append(
+                            {
+                                "strategic_scenario": scenario_data.get(
+                                    "name", "unknown"
+                                ),
+                                "error": str(e),
+                            }
+                        )
+
+                # Mark workshop 3 step 3 (index 2) as done if we created or updated strategic scenarios
+                scenario_count = (
+                    results["details"]["strategic_scenarios_created"]
+                    + results["details"]["strategic_scenarios_updated"]
+                )
+                if scenario_count > 0:
+                    study.meta["workshops"][2]["steps"][2]["status"] = "done"
+                    meta_updated = True
+                    logger.info(
+                        f"Created {results['details']['strategic_scenarios_created']} strategic scenarios, "
+                        f"{results['details']['attack_paths_created']} attack paths"
+                    )
+
+                if stopped:
+                    if meta_updated:
+                        study.save()
+                    return results
+
+                # =========================================================
+                # Step 8: Create Elementary Actions (Workshop 4)
+                # =========================================================
+                results["details"]["elementary_actions_created"] = 0
+                results["details"]["elementary_actions_updated"] = 0
+                results["details"]["elementary_actions_skipped"] = 0
+
+                for ea_data in arm_data.get("elementary_actions", []):
+                    try:
+                        ea_name = ea_data["name"]
+                        if not ea_name:
+                            continue
+
+                        # Check for existing elementary action
+                        existing_ea = ElementaryAction.objects.filter(
+                            name__iexact=ea_name,
+                            folder=folder,
+                        ).first()
+
+                        if existing_ea:
+                            match on_conflict:
+                                case ConflictMode.SKIP:
+                                    results["details"][
+                                        "elementary_actions_skipped"
+                                    ] += 1
+                                    continue
+                                case ConflictMode.STOP:
+                                    results["errors"].append(
+                                        {
+                                            "elementary_action": ea_name,
+                                            "error": "Elementary action already exists (conflict policy: stop)",
+                                        }
+                                    )
+                                    stopped = True
+                                    break
+                                case ConflictMode.UPDATE:
+                                    existing_ea.description = ea_data.get(
+                                        "description", existing_ea.description
+                                    )
+                                    if ea_data.get("ref_id"):
+                                        existing_ea.ref_id = ea_data["ref_id"]
+                                    existing_ea.save()
+                                    results["details"][
+                                        "elementary_actions_updated"
+                                    ] += 1
+                                    continue
+
+                        # Create the elementary action
+                        elementary_action = ElementaryAction.objects.create(
+                            name=ea_name,
+                            description=ea_data.get("description", ""),
+                            ref_id=ea_data.get("ref_id", ""),
+                            folder=folder,
+                        )
+
+                        results["details"]["elementary_actions_created"] += 1
+                        logger.debug(f"Created elementary action: {ea_name}")
+
+                    except Exception as e:
+                        results["errors"].append(
+                            {
+                                "elementary_action": ea_data.get("name", "unknown"),
+                                "error": str(e),
+                            }
+                        )
+
+                # Mark workshop 4 step 1 (index 0) as done if we created or updated elementary actions
+                ea_count = (
+                    results["details"]["elementary_actions_created"]
+                    + results["details"]["elementary_actions_updated"]
+                )
+                if ea_count > 0:
+                    study.meta["workshops"][3]["steps"][0]["status"] = "done"
+                    meta_updated = True
+                    logger.info(
+                        f"Created {results['details']['elementary_actions_created']} elementary actions"
+                    )
+
+                # Save the study if meta was updated
+                if meta_updated:
+                    study.save()
+
+                if not stopped:
+                    results["successful"] = 1
+
+            else:
+                results["failed"] = 1
+                results["errors"].append(
+                    {"error": "Failed to create study", "details": serializer.errors}
+                )
+
+        except Folder.DoesNotExist:
+            results["failed"] = 1
+            results["errors"].append(
+                {"error": f"Folder with ID {folder_id} does not exist"}
+            )
+        except RiskMatrix.DoesNotExist:
+            results["failed"] = 1
+            results["errors"].append(
+                {"error": f"Risk matrix with ID {matrix_id} does not exist"}
+            )
+        except Exception as e:
+            logger.error(f"Error processing EBIOS RM Study: {str(e)}", exc_info=True)
+            results["failed"] = 1
+            results["errors"].append({"error": str(e)})
+
+        return results
+
+    def _process_ebios_rm_study_excel(
+        self,
+        request,
+        excel_file: io.BytesIO,
+        folder_id,
+        matrix_id,
+        on_conflict=ConflictMode.STOP,
+    ):
+        """
+        Process EBIOS RM Study from the Excel export format.
+        This format uses sheet prefixes like "1.1 Study", "1.3 Feared Events", etc.
+        """
+        from ebios_rm.models import OperatingMode
+
+        results = {
+            "successful": 0,
+            "failed": 0,
+            "errors": [],
+            "details": {
+                "study": None,
+                "assets_created": 0,
+                "assets_updated": 0,
+                "assets_skipped": 0,
+                "feared_events_created": 0,
+                "feared_events_updated": 0,
+                "feared_events_skipped": 0,
+                "ro_to_couples_created": 0,
+                "ro_to_couples_updated": 0,
+                "ro_to_couples_skipped": 0,
+                "stakeholders_created": 0,
+                "stakeholders_updated": 0,
+                "stakeholders_skipped": 0,
+                "strategic_scenarios_created": 0,
+                "strategic_scenarios_updated": 0,
+                "strategic_scenarios_skipped": 0,
+                "attack_paths_created": 0,
+                "attack_paths_updated": 0,
+                "attack_paths_skipped": 0,
+                "elementary_actions_created": 0,
+                "elementary_actions_updated": 0,
+                "elementary_actions_skipped": 0,
+                "operational_scenarios_created": 0,
+                "operational_scenarios_updated": 0,
+                "operational_scenarios_skipped": 0,
+                "operating_modes_created": 0,
+                "operating_modes_updated": 0,
+                "operating_modes_skipped": 0,
+            },
+        }
+
+        try:
+            folder = Folder.objects.get(id=folder_id)
+            risk_matrix = RiskMatrix.objects.get(id=matrix_id) if matrix_id else None
+
+            # Build matrix mappings for looking up likelihood/gravity by display name
+            matrix_mappings = {"probability": {}, "impact": {}}
+            if risk_matrix:
+                matrix_mappings = self._build_matrix_mappings(risk_matrix)
+
+            # Parse the Excel file
+            data = process_ebios_rm_excel(excel_file.read())
+            study_data = data.get("study", {})
+
+            # Create the study. Header override wins over the value parsed
+            # from the Excel file, which in turn wins over the generic fallback.
+            override_name = (request.headers.get("X-Name") or "").strip()
+            study_payload = {
+                "name": override_name or study_data.get("name") or "Imported Study",
+                "description": study_data.get("description", ""),
+                "ref_id": study_data.get("ref_id", ""),
+                "version": study_data.get("version", ""),
+                "folder": str(folder.id),
+            }
+            if risk_matrix:
+                study_payload["risk_matrix"] = str(risk_matrix.id)
+
+            serializer = EbiosRMStudyWriteSerializer(
+                data=study_payload, context={"request": request}
+            )
+
+            if serializer.is_valid():
+                study = serializer.save()
+                results["details"]["study"] = str(study.id)
+                stopped = False
+
+                # Create assets and build name->id mapping
+                asset_name_to_id = {}
+                for asset_data in data.get("assets", []):
+                    existing_asset = Asset.objects.filter(
+                        name__iexact=asset_data["name"],
+                        folder=folder,
+                    ).first()
+
+                    if existing_asset:
+                        match on_conflict:
+                            case ConflictMode.SKIP:
+                                asset_name_to_id[existing_asset.name] = existing_asset
+                                results["details"]["assets_skipped"] += 1
+                                continue
+                            case ConflictMode.STOP:
+                                results["errors"].append(
+                                    {
+                                        "asset": asset_data["name"],
+                                        "error": "Asset already exists (conflict policy: stop)",
+                                    }
+                                )
+                                stopped = True
+                                break
+                            case ConflictMode.UPDATE:
+                                if asset_data.get("description"):
+                                    existing_asset.description = asset_data[
+                                        "description"
+                                    ]
+                                if asset_data.get("ref_id"):
+                                    existing_asset.ref_id = asset_data["ref_id"]
+                                if asset_data.get("type"):
+                                    existing_asset.type = asset_data["type"]
+                                existing_asset.save()
+                                asset_name_to_id[existing_asset.name] = existing_asset
+                                results["details"]["assets_updated"] += 1
+                                continue
+
+                    asset, created = Asset.objects.get_or_create(
+                        name=asset_data["name"],
+                        folder=folder,
+                        defaults={
+                            "ref_id": asset_data.get("ref_id", ""),
+                            "description": asset_data.get("description", ""),
+                            "type": asset_data.get("type", ""),
+                        },
+                    )
+                    asset_name_to_id[asset.name] = asset
+                    if created:
+                        results["details"]["assets_created"] += 1
+
+                # Link assets to study
+                study.assets.set(asset_name_to_id.values())
+
+                if stopped:
+                    return results
+
+                # Create feared events and build name lookup
+                feared_event_lookup = {}
+                for fe_data in data.get("feared_events", []):
+                    fe_name = fe_data["name"]
+                    # Map gravity display name to value
+                    gravity_val = self._map_risk_value(
+                        fe_data.get("gravity", ""), matrix_mappings["impact"]
+                    )
+
+                    existing_fe = FearedEvent.objects.filter(
+                        ebios_rm_study=study,
+                        name__iexact=fe_name,
+                    ).first()
+
+                    if existing_fe:
+                        feared_event_lookup[existing_fe.name] = existing_fe
+                        match on_conflict:
+                            case ConflictMode.SKIP:
+                                results["details"]["feared_events_skipped"] += 1
+                                continue
+                            case ConflictMode.STOP:
+                                results["errors"].append(
+                                    {
+                                        "feared_event": fe_name,
+                                        "error": "Feared event already exists (conflict policy: stop)",
+                                    }
+                                )
+                                stopped = True
+                                break
+                            case ConflictMode.UPDATE:
+                                existing_fe.gravity = gravity_val
+                                existing_fe.is_selected = fe_data.get(
+                                    "is_selected", existing_fe.is_selected
+                                )
+                                existing_fe.justification = fe_data.get(
+                                    "justification", existing_fe.justification
+                                )
+                                existing_fe.description = fe_data.get(
+                                    "description", existing_fe.description
+                                )
+                                existing_fe.save()
+                                for asset_name in fe_data.get("assets", []):
+                                    if asset_name in asset_name_to_id:
+                                        existing_fe.assets.add(
+                                            asset_name_to_id[asset_name]
+                                        )
+                                results["details"]["feared_events_updated"] += 1
+                                continue
+
+                    fe = FearedEvent.objects.create(
+                        ebios_rm_study=study,
+                        name=fe_name,
+                        ref_id=fe_data.get("ref_id", ""),
+                        description=fe_data.get("description", ""),
+                        gravity=gravity_val,
+                        is_selected=fe_data.get("is_selected", False),
+                        justification=fe_data.get("justification", ""),
+                        folder=folder,
+                    )
+                    # Link assets to feared event
+                    for asset_name in fe_data.get("assets", []):
+                        if asset_name in asset_name_to_id:
+                            fe.assets.add(asset_name_to_id[asset_name])
+                    feared_event_lookup[fe.name] = fe
+                    results["details"]["feared_events_created"] += 1
+
+                if stopped:
+                    return results
+
+                # Create RO/TO couples
+                roto_lookup = {}
+                for roto_data in data.get("ro_to_couples", []):
+                    risk_origin_name = roto_data.get("risk_origin", "")
+                    # Find or create risk origin terminology
+                    risk_origin = None
+                    if risk_origin_name:
+                        # Try to find existing terminology by name (case-insensitive)
+                        risk_origin = Terminology.objects.filter(
+                            field_path=Terminology.FieldPath.ROTO_RISK_ORIGIN,
+                            name__iexact=risk_origin_name,
+                        ).first()
+                        if not risk_origin:
+                            risk_origin = Terminology.objects.create(
+                                name=risk_origin_name,
+                                field_path=Terminology.FieldPath.ROTO_RISK_ORIGIN,
+                                folder=Folder.get_root_folder(),
+                                is_visible=True,
+                            )
+
+                    target_objective = roto_data.get("target_objective", "")
+
+                    # Check for existing RoTo couple
+                    existing_roto = (
+                        RoTo.objects.filter(
+                            ebios_rm_study=study,
+                            risk_origin=risk_origin,
+                            target_objective__iexact=target_objective,
+                        ).first()
+                        if risk_origin
+                        else None
+                    )
+
+                    if existing_roto:
+                        key = (
+                            risk_origin_name.lower() if risk_origin_name else "",
+                            target_objective.lower(),
+                        )
+                        roto_lookup[key] = existing_roto
+                        match on_conflict:
+                            case ConflictMode.SKIP:
+                                results["details"]["ro_to_couples_skipped"] += 1
+                                continue
+                            case ConflictMode.STOP:
+                                results["errors"].append(
+                                    {
+                                        "roto_couple": f"{risk_origin_name} - {target_objective}",
+                                        "error": "RoTo couple already exists (conflict policy: stop)",
+                                    }
+                                )
+                                stopped = True
+                                break
+                            case ConflictMode.UPDATE:
+                                existing_roto.is_selected = roto_data.get(
+                                    "is_selected", existing_roto.is_selected
+                                )
+                                existing_roto.justification = roto_data.get(
+                                    "justification", existing_roto.justification
+                                )
+                                existing_roto.save()
+                                for fe_name in roto_data.get("feared_events", []):
+                                    if fe_name in feared_event_lookup:
+                                        existing_roto.feared_events.add(
+                                            feared_event_lookup[fe_name]
+                                        )
+                                results["details"]["ro_to_couples_updated"] += 1
+                                continue
+
+                    roto = RoTo.objects.create(
+                        ebios_rm_study=study,
+                        risk_origin=risk_origin,
+                        target_objective=target_objective,
+                        is_selected=roto_data.get("is_selected", False),
+                        justification=roto_data.get("justification", ""),
+                        folder=folder,
+                    )
+                    # Link feared events to RO/TO
+                    for fe_name in roto_data.get("feared_events", []):
+                        if fe_name in feared_event_lookup:
+                            roto.feared_events.add(feared_event_lookup[fe_name])
+                    # Build lookup key
+                    key = (
+                        risk_origin_name.lower() if risk_origin_name else "",
+                        target_objective.lower(),
+                    )
+                    roto_lookup[key] = roto
+                    results["details"]["ro_to_couples_created"] += 1
+
+                if stopped:
+                    return results
+
+                # Create stakeholders
+                stakeholder_lookup = {}
+                for sh_data in data.get("stakeholders", []):
+                    entity_name = sh_data.get("entity", "")
+                    entity = None
+                    if entity_name:
+                        entity, _ = Entity.objects.get_or_create(
+                            name=entity_name,
+                            folder=folder,
+                        )
+
+                    category_name = sh_data.get("category", "")
+                    category = None
+                    if category_name:
+                        # Try to find existing terminology by name (case-insensitive)
+                        category = Terminology.objects.filter(
+                            field_path=Terminology.FieldPath.ENTITY_RELATIONSHIP,
+                            name__iexact=category_name,
+                        ).first()
+                        if not category:
+                            category = Terminology.objects.create(
+                                name=category_name,
+                                field_path=Terminology.FieldPath.ENTITY_RELATIONSHIP,
+                                folder=Folder.get_root_folder(),
+                                is_visible=True,
+                            )
+
+                    # Check for existing stakeholder
+                    existing_sh = None
+                    if entity and category:
+                        existing_sh = Stakeholder.objects.filter(
+                            ebios_rm_study=study,
+                            entity=entity,
+                            category=category,
+                        ).first()
+
+                    if existing_sh:
+                        stakeholder_lookup[str(existing_sh)] = existing_sh
+                        match on_conflict:
+                            case ConflictMode.SKIP:
+                                results["details"]["stakeholders_skipped"] += 1
+                                continue
+                            case ConflictMode.STOP:
+                                results["errors"].append(
+                                    {
+                                        "stakeholder": entity_name,
+                                        "error": "Stakeholder already exists (conflict policy: stop)",
+                                    }
+                                )
+                                stopped = True
+                                break
+                            case ConflictMode.UPDATE:
+                                val = sh_data.get("current_dependency")
+                                if val is not None:
+                                    existing_sh.current_dependency = val
+                                val = sh_data.get("current_penetration")
+                                if val is not None:
+                                    existing_sh.current_penetration = val
+                                val = sh_data.get("current_maturity")
+                                if val is not None:
+                                    existing_sh.current_maturity = val
+                                val = sh_data.get("current_trust")
+                                if val is not None:
+                                    existing_sh.current_trust = val
+                                val = sh_data.get("residual_dependency")
+                                if val is not None:
+                                    existing_sh.residual_dependency = val
+                                val = sh_data.get("residual_penetration")
+                                if val is not None:
+                                    existing_sh.residual_penetration = val
+                                val = sh_data.get("residual_maturity")
+                                if val is not None:
+                                    existing_sh.residual_maturity = val
+                                val = sh_data.get("residual_trust")
+                                if val is not None:
+                                    existing_sh.residual_trust = val
+                                existing_sh.is_selected = sh_data.get(
+                                    "is_selected", existing_sh.is_selected
+                                )
+                                existing_sh.justification = sh_data.get(
+                                    "justification", existing_sh.justification
+                                )
+                                existing_sh.save()
+                                results["details"]["stakeholders_updated"] += 1
+                                continue
+
+                    stakeholder = Stakeholder.objects.create(
+                        ebios_rm_study=study,
+                        entity=entity,
+                        category=category,
+                        current_dependency=sh_data.get("current_dependency") or 0,
+                        current_penetration=sh_data.get("current_penetration") or 0,
+                        current_maturity=sh_data.get("current_maturity") or 0,
+                        current_trust=sh_data.get("current_trust") or 0,
+                        residual_dependency=sh_data.get("residual_dependency") or 0,
+                        residual_penetration=sh_data.get("residual_penetration") or 0,
+                        residual_maturity=sh_data.get("residual_maturity") or 0,
+                        residual_trust=sh_data.get("residual_trust") or 0,
+                        is_selected=sh_data.get("is_selected", False),
+                        justification=sh_data.get("justification", ""),
+                        folder=folder,
+                    )
+                    stakeholder_lookup[str(stakeholder)] = stakeholder
+                    results["details"]["stakeholders_created"] += 1
+
+                if stopped:
+                    return results
+
+                # Create strategic scenarios
+                scenario_lookup = {}
+                for ss_data in data.get("strategic_scenarios", []):
+                    ro_name = ss_data.get("risk_origin", "").lower()
+                    to_name = ss_data.get("target_objective", "").lower()
+                    roto = roto_lookup.get((ro_name, to_name))
+                    ss_name = ss_data["name"]
+
+                    existing_ss = StrategicScenario.objects.filter(
+                        ebios_rm_study=study,
+                        name__iexact=ss_name,
+                    ).first()
+
+                    if existing_ss:
+                        scenario_lookup[existing_ss.name] = existing_ss
+                        match on_conflict:
+                            case ConflictMode.SKIP:
+                                results["details"]["strategic_scenarios_skipped"] += 1
+                                continue
+                            case ConflictMode.STOP:
+                                results["errors"].append(
+                                    {
+                                        "strategic_scenario": ss_name,
+                                        "error": "Strategic scenario already exists (conflict policy: stop)",
+                                    }
+                                )
+                                stopped = True
+                                break
+                            case ConflictMode.UPDATE:
+                                if roto:
+                                    existing_ss.ro_to_couple = roto
+                                if ss_data.get("ref_id"):
+                                    existing_ss.ref_id = ss_data["ref_id"]
+                                if ss_data.get("description"):
+                                    existing_ss.description = ss_data["description"]
+                                existing_ss.save()
+                                results["details"]["strategic_scenarios_updated"] += 1
+                                continue
+
+                    scenario = StrategicScenario.objects.create(
+                        ebios_rm_study=study,
+                        name=ss_name,
+                        ref_id=ss_data.get("ref_id", ""),
+                        description=ss_data.get("description", ""),
+                        ro_to_couple=roto,
+                        folder=folder,
+                    )
+                    scenario_lookup[scenario.name] = scenario
+                    results["details"]["strategic_scenarios_created"] += 1
+
+                if stopped:
+                    return results
+
+                # Create attack paths
+                attack_path_lookup = {}
+                for ap_data in data.get("attack_paths", []):
+                    scenario_name = ap_data.get("strategic_scenario", "")
+                    scenario = scenario_lookup.get(scenario_name)
+                    ap_name = ap_data["name"]
+
+                    existing_ap = AttackPath.objects.filter(
+                        ebios_rm_study=study,
+                        name__iexact=ap_name,
+                    ).first()
+
+                    if existing_ap:
+                        attack_path_lookup[existing_ap.name] = existing_ap
+                        match on_conflict:
+                            case ConflictMode.SKIP:
+                                results["details"]["attack_paths_skipped"] += 1
+                                continue
+                            case ConflictMode.STOP:
+                                results["errors"].append(
+                                    {
+                                        "attack_path": ap_name,
+                                        "error": "Attack path already exists (conflict policy: stop)",
+                                    }
+                                )
+                                stopped = True
+                                break
+                            case ConflictMode.UPDATE:
+                                if scenario:
+                                    existing_ap.strategic_scenario = scenario
+                                if ap_data.get("ref_id"):
+                                    existing_ap.ref_id = ap_data["ref_id"]
+                                if ap_data.get("description"):
+                                    existing_ap.description = ap_data["description"]
+                                existing_ap.is_selected = ap_data.get(
+                                    "is_selected", existing_ap.is_selected
+                                )
+                                existing_ap.justification = ap_data.get(
+                                    "justification", existing_ap.justification
+                                )
+                                existing_ap.save()
+                                for sh_str in ap_data.get("stakeholders", []):
+                                    if sh_str in stakeholder_lookup:
+                                        existing_ap.stakeholders.add(
+                                            stakeholder_lookup[sh_str]
+                                        )
+                                results["details"]["attack_paths_updated"] += 1
+                                continue
+
+                    attack_path = AttackPath.objects.create(
+                        ebios_rm_study=study,
+                        name=ap_name,
+                        ref_id=ap_data.get("ref_id", ""),
+                        description=ap_data.get("description", ""),
+                        strategic_scenario=scenario,
+                        is_selected=ap_data.get("is_selected", False),
+                        justification=ap_data.get("justification", ""),
+                        folder=folder,
+                    )
+                    # Link stakeholders
+                    for sh_str in ap_data.get("stakeholders", []):
+                        if sh_str in stakeholder_lookup:
+                            attack_path.stakeholders.add(stakeholder_lookup[sh_str])
+                    attack_path_lookup[attack_path.name] = attack_path
+                    results["details"]["attack_paths_created"] += 1
+
+                if stopped:
+                    return results
+
+                # Create elementary actions
+                ea_lookup = {}
+                for ea_data in data.get("elementary_actions", []):
+                    ea_name = ea_data["name"]
+                    # Map attack_stage display name back to value
+                    attack_stage = 0  # Default to KNOW
+                    stage_name = ea_data.get("attack_stage", "").lower()
+                    if "initial" in stage_name or "enter" in stage_name:
+                        attack_stage = 1
+                    elif "discovery" in stage_name or "discover" in stage_name:
+                        attack_stage = 2
+                    elif "exploit" in stage_name:
+                        attack_stage = 3
+
+                    existing_ea = ElementaryAction.objects.filter(
+                        name__iexact=ea_name,
+                        folder=folder,
+                    ).first()
+
+                    if existing_ea:
+                        ea_lookup[existing_ea.name] = existing_ea
+                        match on_conflict:
+                            case ConflictMode.SKIP:
+                                results["details"]["elementary_actions_skipped"] += 1
+                                continue
+                            case ConflictMode.STOP:
+                                results["errors"].append(
+                                    {
+                                        "elementary_action": ea_name,
+                                        "error": "Elementary action already exists (conflict policy: stop)",
+                                    }
+                                )
+                                stopped = True
+                                break
+                            case ConflictMode.UPDATE:
+                                if ea_data.get("ref_id"):
+                                    existing_ea.ref_id = ea_data["ref_id"]
+                                if ea_data.get("description"):
+                                    existing_ea.description = ea_data["description"]
+                                existing_ea.attack_stage = attack_stage
+                                existing_ea.save()
+                                results["details"]["elementary_actions_updated"] += 1
+                                continue
+
+                    ea = ElementaryAction.objects.create(
+                        name=ea_name,
+                        ref_id=ea_data.get("ref_id", ""),
+                        description=ea_data.get("description", ""),
+                        attack_stage=attack_stage,
+                        folder=folder,
+                    )
+                    ea_lookup[ea.name] = ea
+                    results["details"]["elementary_actions_created"] += 1
+
+                if stopped:
+                    return results
+
+                # Create operational scenarios
+                # Note: OperationalScenario.name is a computed property from attack_path
+                op_scenario_lookup = {}
+                for os_data in data.get("operational_scenarios", []):
+                    from ebios_rm.models import OperationalScenario
+
+                    ap_name = os_data.get("attack_path", "")
+                    attack_path = attack_path_lookup.get(ap_name)
+
+                    if not attack_path:
+                        continue
+
+                    # Map likelihood display name to value
+                    likelihood_val = self._map_risk_value(
+                        os_data.get("likelihood", ""), matrix_mappings["probability"]
+                    )
+
+                    # Check for existing operational scenario by attack_path
+                    existing_os = OperationalScenario.objects.filter(
+                        ebios_rm_study=study,
+                        attack_path=attack_path,
+                    ).first()
+
+                    if existing_os:
+                        op_scenario_lookup[existing_os.name] = existing_os
+                        match on_conflict:
+                            case ConflictMode.SKIP:
+                                results["details"]["operational_scenarios_skipped"] += 1
+                                continue
+                            case ConflictMode.STOP:
+                                results["errors"].append(
+                                    {
+                                        "operational_scenario": ap_name,
+                                        "error": "Operational scenario already exists (conflict policy: stop)",
+                                    }
+                                )
+                                stopped = True
+                                break
+                            case ConflictMode.UPDATE:
+                                existing_os.operating_modes_description = os_data.get(
+                                    "operating_modes_description",
+                                    existing_os.operating_modes_description,
+                                )
+                                existing_os.likelihood = likelihood_val
+                                existing_os.is_selected = os_data.get(
+                                    "is_selected", existing_os.is_selected
+                                )
+                                existing_os.justification = os_data.get(
+                                    "justification", existing_os.justification
+                                )
+                                existing_os.save()
+                                results["details"]["operational_scenarios_updated"] += 1
+                                continue
+
+                    op_scenario = OperationalScenario.objects.create(
+                        ebios_rm_study=study,
+                        attack_path=attack_path,
+                        operating_modes_description=os_data.get(
+                            "operating_modes_description", ""
+                        ),
+                        likelihood=likelihood_val,
+                        is_selected=os_data.get("is_selected", False),
+                        justification=os_data.get("justification", ""),
+                        folder=folder,
+                    )
+                    op_scenario_lookup[op_scenario.name] = op_scenario
+                    results["details"]["operational_scenarios_created"] += 1
+
+                if stopped:
+                    return results
+
+                # Create operating modes
+                for om_data in data.get("operating_modes", []):
+                    os_name = om_data.get("operational_scenario", "")
+                    op_scenario = op_scenario_lookup.get(os_name)
+                    om_name = om_data["name"]
+
+                    if op_scenario:
+                        # Map likelihood display name to value
+                        om_likelihood = self._map_risk_value(
+                            om_data.get("likelihood", ""),
+                            matrix_mappings["probability"],
+                        )
+
+                        # Check for existing operating mode
+                        existing_om = OperatingMode.objects.filter(
+                            name__iexact=om_name,
+                            operational_scenario=op_scenario,
+                        ).first()
+
+                        if existing_om:
+                            match on_conflict:
+                                case ConflictMode.SKIP:
+                                    results["details"]["operating_modes_skipped"] += 1
+                                    continue
+                                case ConflictMode.STOP:
+                                    results["errors"].append(
+                                        {
+                                            "operating_mode": om_name,
+                                            "error": "Operating mode already exists (conflict policy: stop)",
+                                        }
+                                    )
+                                    stopped = True
+                                    break
+                                case ConflictMode.UPDATE:
+                                    if om_data.get("ref_id"):
+                                        existing_om.ref_id = om_data["ref_id"]
+                                    if om_data.get("description"):
+                                        existing_om.description = om_data["description"]
+                                    existing_om.likelihood = om_likelihood
+                                    existing_om.save()
+                                    for ea_name in om_data.get(
+                                        "elementary_actions", []
+                                    ):
+                                        if ea_name in ea_lookup:
+                                            ea = ea_lookup[ea_name]
+                                            if not KillChain.objects.filter(
+                                                operating_mode=existing_om,
+                                                elementary_action=ea,
+                                            ).exists():
+                                                KillChain.objects.create(
+                                                    operating_mode=existing_om,
+                                                    elementary_action=ea,
+                                                    folder=folder,
+                                                )
+                                    results["details"]["operating_modes_updated"] += 1
+                                    continue
+
+                        om = OperatingMode.objects.create(
+                            name=om_name,
+                            ref_id=om_data.get("ref_id", ""),
+                            description=om_data.get("description", ""),
+                            operational_scenario=op_scenario,
+                            likelihood=om_likelihood,
+                            folder=folder,
+                        )
+                        # Create kill chain steps for elementary actions
+                        for ea_name in om_data.get("elementary_actions", []):
+                            if ea_name in ea_lookup:
+                                KillChain.objects.create(
+                                    operating_mode=om,
+                                    elementary_action=ea_lookup[ea_name],
+                                    folder=folder,
+                                )
+                        results["details"]["operating_modes_created"] += 1
+
+                if stopped:
+                    return results
+
+                # Workshop 5: risk assessment, security measures, then scenarios
+                ra_data = data.get("risk_assessment") or {}
+                if ra_data or data.get("risk_scenarios"):
+                    ra_serializer = RiskAssessmentWriteSerializer(
+                        data={
+                            "name": ra_data.get("name") or study.name,
+                            "ref_id": ra_data.get("ref_id", ""),
+                            "version": ra_data.get("version", ""),
+                            "description": ra_data.get("description", ""),
+                            "folder": str(folder.id),
+                            "risk_matrix": str(study.risk_matrix_id),
+                            "ebios_rm_study": str(study.id),
+                        },
+                        context={"request": request},
+                    )
+                    if not ra_serializer.is_valid():
+                        results["errors"].append(
+                            {
+                                "risk_assessment": ra_data.get("name", ""),
+                                "error": readable_error(ra_serializer.errors),
+                            }
+                        )
+                        return results
+                    risk_assessment = ra_serializer.save()
+                    results["details"]["risk_assessment"] = str(risk_assessment.id)
+
+                    base_context = BaseContext(
+                        request, folder_id=str(folder.id), on_conflict=on_conflict
+                    )
+                    for key, consumer, records, context in (
+                        (
+                            "security_measures",
+                            AppliedControlRecordConsumer,
+                            data.get("security_measures", []),
+                            base_context,
+                        ),
+                        (
+                            "risk_scenarios",
+                            RiskAssessmentRecordConsumer,
+                            data.get("risk_scenarios", []),
+                            replace(base_context, target_id=str(risk_assessment.id)),
+                        ),
+                    ):
+                        res = consumer(context).process_records(records).to_dict()
+                        results["details"][key] = res
+                        results["errors"].extend(res["errors"])
+                        if res["stopped"]:
+                            return results
+
+                    for rs_data in data.get("risk_scenarios", []):
+                        op_scenario = op_scenario_lookup.get(
+                            rs_data.get("operational_scenario")
+                        )
+                        if op_scenario:
+                            risk_assessment.risk_scenarios.filter(
+                                name__iexact=rs_data.get("name")
+                            ).update(operational_scenario=op_scenario)
+
+                results["successful"] = 1
+
+            else:
+                results["failed"] = 1
+                results["errors"].append(
+                    {"error": "Failed to create study", "details": serializer.errors}
+                )
+
+        except Folder.DoesNotExist:
+            results["failed"] = 1
+            results["errors"].append(
+                {"error": f"Folder with ID {folder_id} does not exist"}
+            )
+        except RiskMatrix.DoesNotExist:
+            results["failed"] = 1
+            results["errors"].append(
+                {"error": f"Risk matrix with ID {matrix_id} does not exist"}
+            )
+        except Exception as e:
+            logger.error(
+                f"Error processing EBIOS RM Study Excel: {str(e)}", exc_info=True
+            )
+            results["failed"] = 1
+            results["errors"].append({"error": str(e)})
+
+        return results
+
+    def _process_ebios_rm_study_egerie_xml(
+        self,
+        request,
+        xml_file: io.BytesIO,
+        folder_id,
+        matrix_id,
+        on_conflict=ConflictMode.STOP,
+    ):
+        """Import an EBIOS RM study from an Egerie Suite XML export.
+
+        Cross-references in the XML use Egerie internal IDs (PA_, SA_, FE_, RS_, etc.).
+        We build id→model maps as we go and resolve floats to matrix indices using
+        the chosen risk matrix's size (quartile mapping).
+        """
+        from ebios_rm.models import OperationalScenario
+
+        results = {
+            "successful": 0,
+            "failed": 0,
+            "errors": [],
+            "warnings": [],
+            "details": {
+                "study": None,
+                "primary_assets_created": 0,
+                "primary_assets_updated": 0,
+                "primary_assets_skipped": 0,
+                "supporting_assets_created": 0,
+                "supporting_assets_updated": 0,
+                "supporting_assets_skipped": 0,
+                "feared_events_created": 0,
+                "feared_events_updated": 0,
+                "feared_events_skipped": 0,
+                "ro_to_couples_created": 0,
+                "ro_to_couples_updated": 0,
+                "ro_to_couples_skipped": 0,
+                "stakeholders_created": 0,
+                "stakeholders_updated": 0,
+                "stakeholders_skipped": 0,
+                "strategic_scenarios_created": 0,
+                "strategic_scenarios_updated": 0,
+                "strategic_scenarios_skipped": 0,
+                "attack_paths_created": 0,
+                "attack_paths_updated": 0,
+                "attack_paths_skipped": 0,
+                "operational_scenarios_created": 0,
+                "operational_scenarios_updated": 0,
+                "operational_scenarios_skipped": 0,
+                "elementary_actions_created": 0,
+                "elementary_actions_updated": 0,
+                "elementary_actions_skipped": 0,
+                "applied_controls_created": 0,
+                "applied_controls_updated": 0,
+                "applied_controls_skipped": 0,
+            },
+        }
+
+        def _warn(
+            entity_type: str, name: str, reason: str, egerie_id: str = ""
+        ) -> None:
+            results["warnings"].append(
+                {
+                    "entity_type": entity_type,
+                    "name": name,
+                    "reason": reason,
+                    "egerie_id": egerie_id,
+                }
+            )
+
+        try:
+            folder = Folder.objects.get(id=folder_id)
+            risk_matrix = RiskMatrix.objects.get(id=matrix_id) if matrix_id else None
+
+            # Matrix size drives quartile mapping (Egerie's 0..1 floats -> 0..n-1 index)
+            impact_size = 4
+            probability_size = 4
+            if risk_matrix is not None:
+                try:
+                    matrix_def = risk_matrix.json_definition
+                    impact_size = len(matrix_def.get("impact", [])) or 4
+                    probability_size = len(matrix_def.get("probability", [])) or 4
+                except (AttributeError, TypeError) as e:
+                    logger.warning("Falling back to 4-level matrix sizes: %s", e)
+
+            data = process_egerie_xml(xml_file.read())
+            study_data = data.get("study", {})
+
+            override_name = (request.headers.get("X-Name") or "").strip()
+            study_payload = {
+                "name": override_name
+                or study_data.get("name")
+                or "Imported Egerie Study",
+                "description": study_data.get("description", ""),
+                "ref_id": study_data.get("ref_id", "")[:100],
+                "version": (study_data.get("version", "") or "")[:100],
+                "folder": str(folder.id),
+            }
+            if risk_matrix:
+                study_payload["risk_matrix"] = str(risk_matrix.id)
+
+            serializer = EbiosRMStudyWriteSerializer(
+                data=study_payload, context={"request": request}
+            )
+            if not serializer.is_valid():
+                results["failed"] = 1
+                results["errors"].append(
+                    {"error": "Failed to create study", "details": serializer.errors}
+                )
+                return results
+
+            study = serializer.save()
+            results["details"]["study"] = str(study.id)
+            stopped = False
+
+            asset_by_egerie_id: dict[str, Asset] = {}
+            for kind, key_c, key_u, key_s in [
+                (
+                    "primary_assets",
+                    "primary_assets_created",
+                    "primary_assets_updated",
+                    "primary_assets_skipped",
+                ),
+                (
+                    "supporting_assets",
+                    "supporting_assets_created",
+                    "supporting_assets_updated",
+                    "supporting_assets_skipped",
+                ),
+            ]:
+                if stopped:
+                    break
+                for a in data.get(kind, []):
+                    egerie_id = a["id"]
+                    name = a["name"] or egerie_id
+                    existing = None
+                    if egerie_id:
+                        existing = Asset.objects.filter(
+                            ref_id=egerie_id, folder=folder
+                        ).first()
+                    if existing is None:
+                        existing = Asset.objects.filter(
+                            name__iexact=name, folder=folder
+                        ).first()
+                    if existing:
+                        asset_by_egerie_id[egerie_id] = existing
+                        match on_conflict:
+                            case ConflictMode.STOP:
+                                results["errors"].append(
+                                    {
+                                        "asset": name,
+                                        "error": "already exists (conflict policy: stop)",
+                                    }
+                                )
+                                stopped = True
+                                break
+                            case ConflictMode.UPDATE:
+                                if a.get("description"):
+                                    existing.description = a["description"]
+                                existing.type = a["type"]
+                                if egerie_id and not existing.ref_id:
+                                    existing.ref_id = egerie_id
+                                existing.save()
+                                results["details"][key_u] += 1
+                                continue
+                            case _:
+                                results["details"][key_s] += 1
+                                _warn(
+                                    kind.rstrip("s"),
+                                    name,
+                                    "asset already exists in folder (or duplicate in XML)",
+                                    egerie_id,
+                                )
+                                continue
+                    asset = Asset.objects.create(
+                        name=name,
+                        ref_id=egerie_id,
+                        description=a.get("description", ""),
+                        type=a["type"],
+                        folder=folder,
+                    )
+                    asset_by_egerie_id[egerie_id] = asset
+                    results["details"][key_c] += 1
+
+            if stopped:
+                return results
+            study.assets.set(asset_by_egerie_id.values())
+
+            fe_by_egerie_id: dict[str, FearedEvent] = {}
+            for fe in data.get("feared_events", []):
+                if stopped:
+                    break
+                egerie_id = fe["id"]
+                name = fe["name"] or egerie_id
+                gravity = quartile_to_index(fe.get("severity"), impact_size)
+                if gravity is None:
+                    gravity = -1
+                existing = None
+                if egerie_id:
+                    existing = FearedEvent.objects.filter(
+                        ebios_rm_study=study, ref_id=egerie_id
+                    ).first()
+                if existing is None:
+                    existing = FearedEvent.objects.filter(
+                        ebios_rm_study=study, name__iexact=name
+                    ).first()
+                if existing:
+                    fe_by_egerie_id[egerie_id] = existing
+                    match on_conflict:
+                        case ConflictMode.STOP:
+                            results["errors"].append(
+                                {
+                                    "feared_event": name,
+                                    "error": "already exists (conflict policy: stop)",
+                                }
+                            )
+                            stopped = True
+                            break
+                        case ConflictMode.UPDATE:
+                            existing.description = fe.get(
+                                "description", existing.description
+                            )
+                            existing.gravity = gravity
+                            if egerie_id and not existing.ref_id:
+                                existing.ref_id = egerie_id
+                            existing.save()
+                            pa_id = fe.get("primary_asset_id")
+                            if pa_id and pa_id in asset_by_egerie_id:
+                                existing.assets.add(asset_by_egerie_id[pa_id])
+                            results["details"]["feared_events_updated"] += 1
+                            continue
+                        case _:
+                            results["details"]["feared_events_skipped"] += 1
+                            _warn(
+                                "feared_event",
+                                name,
+                                "feared event already exists in study",
+                                egerie_id,
+                            )
+                            continue
+                obj = FearedEvent.objects.create(
+                    ebios_rm_study=study,
+                    name=name,
+                    ref_id=egerie_id,
+                    description=fe.get("description", ""),
+                    gravity=gravity,
+                    is_selected=True,
+                    folder=folder,
+                )
+                pa_id = fe.get("primary_asset_id")
+                if pa_id and pa_id in asset_by_egerie_id:
+                    obj.assets.add(asset_by_egerie_id[pa_id])
+                fe_by_egerie_id[egerie_id] = obj
+                results["details"]["feared_events_created"] += 1
+
+            if stopped:
+                return results
+
+            # --- RO/TO couples: derived from strategic scenarios' (riskSource, objective) pairs ---
+            risk_sources_by_id = {rs["id"]: rs for rs in data.get("risk_sources", [])}
+            objectives_by_id = {ob["id"]: ob for ob in data.get("objectives", [])}
+
+            def _get_or_create_risk_origin(name: str) -> Optional["Terminology"]:
+                if not name:
+                    return None
+                t = Terminology.objects.filter(
+                    field_path=Terminology.FieldPath.ROTO_RISK_ORIGIN,
+                    name__iexact=name,
+                ).first()
+                if t:
+                    return t
+                return Terminology.objects.create(
+                    name=name,
+                    field_path=Terminology.FieldPath.ROTO_RISK_ORIGIN,
+                    folder=Folder.get_root_folder(),
+                    is_visible=True,
+                )
+
+            # Keyed by (risk_source_egerie_id, objective_egerie_id) so we reuse the same RoTo
+            # when multiple Egerie strategic scenarios share the same pair (rare but possible).
+            roto_by_pair: dict[tuple[str, str], RoTo] = {}
+
+            def _get_or_create_roto(rs_id: str, ob_id: str) -> Optional[RoTo]:
+                nonlocal stopped
+                if stopped or not rs_id or not ob_id:
+                    return None
+                key = (rs_id, ob_id)
+                if key in roto_by_pair:
+                    return roto_by_pair[key]
+                rs = risk_sources_by_id.get(rs_id, {})
+                ob = objectives_by_id.get(ob_id, {})
+                risk_origin = _get_or_create_risk_origin(rs.get("name", ""))
+                target_objective = ob.get("name", "") or "(unspecified)"
+                existing = (
+                    RoTo.objects.filter(
+                        ebios_rm_study=study,
+                        risk_origin=risk_origin,
+                        target_objective__iexact=target_objective,
+                    ).first()
+                    if risk_origin
+                    else None
+                )
+                if existing:
+                    roto_by_pair[key] = existing
+                    match on_conflict:
+                        case ConflictMode.STOP:
+                            results["errors"].append(
+                                {
+                                    "ro_to_couple": f"{rs.get('name', '')} / {target_objective}",
+                                    "error": "already exists (conflict policy: stop)",
+                                }
+                            )
+                            stopped = True
+                            return None
+                        case ConflictMode.UPDATE:
+                            results["details"]["ro_to_couples_updated"] += 1
+                            return existing
+                        case _:
+                            results["details"]["ro_to_couples_skipped"] += 1
+                            _warn(
+                                "ro_to_couple",
+                                f"{rs.get('name', '')} / {target_objective}",
+                                "RO/TO couple already exists in study",
+                            )
+                            return existing
+                roto = RoTo.objects.create(
+                    ebios_rm_study=study,
+                    risk_origin=risk_origin,
+                    target_objective=target_objective,
+                    is_selected=True,
+                    folder=folder,
+                )
+                roto_by_pair[key] = roto
+                results["details"]["ro_to_couples_created"] += 1
+                return roto
+
+            # --- Stakeholders ---
+            sh_by_egerie_id: dict[str, Stakeholder] = {}
+            default_category, _ = Terminology.objects.get_or_create(
+                field_path=Terminology.FieldPath.ENTITY_RELATIONSHIP,
+                name="third_party",
+                defaults={
+                    "folder": Folder.get_root_folder(),
+                    "is_visible": True,
+                },
+            )
+
+            for sh in data.get("stakeholders", []):
+                if stopped:
+                    break
+                egerie_id = sh["id"]
+                name = sh["name"] or egerie_id
+                entity, _ = Entity.objects.get_or_create(name=name, folder=folder)
+                dep = quartile_to_index(sh.get("dependence"), impact_size) or 0
+                pen = quartile_to_index(sh.get("penetration"), impact_size) or 0
+                mat = quartile_to_index(sh.get("maturity"), impact_size) or 0
+                trust = quartile_to_index(sh.get("trust"), impact_size) or 0
+                existing = Stakeholder.objects.filter(
+                    ebios_rm_study=study, entity=entity
+                ).first()
+                if existing:
+                    sh_by_egerie_id[egerie_id] = existing
+                    match on_conflict:
+                        case ConflictMode.STOP:
+                            results["errors"].append(
+                                {
+                                    "stakeholder": name,
+                                    "error": "already exists (conflict policy: stop)",
+                                }
+                            )
+                            stopped = True
+                            break
+                        case ConflictMode.UPDATE:
+                            existing.current_dependency = dep
+                            existing.current_penetration = pen
+                            existing.current_maturity = mat
+                            existing.current_trust = trust
+                            existing.save()
+                            results["details"]["stakeholders_updated"] += 1
+                            continue
+                        case _:
+                            results["details"]["stakeholders_skipped"] += 1
+                            _warn(
+                                "stakeholder",
+                                name,
+                                "stakeholder for this entity already exists",
+                                egerie_id,
+                            )
+                            continue
+                stakeholder = Stakeholder.objects.create(
+                    ebios_rm_study=study,
+                    entity=entity,
+                    category=default_category,
+                    current_dependency=dep,
+                    current_penetration=pen,
+                    current_maturity=mat,
+                    current_trust=trust,
+                    is_selected=True,
+                    folder=folder,
+                )
+                sh_by_egerie_id[egerie_id] = stakeholder
+                results["details"]["stakeholders_created"] += 1
+
+            if stopped:
+                return results
+
+            ss_by_egerie_id: dict[str, StrategicScenario] = {}
+            ap_by_egerie_id: dict[str, AttackPath] = {}
+            for ss in data.get("strategic_scenarios", []):
+                if stopped:
+                    break
+                roto = _get_or_create_roto(ss["risk_source_id"], ss["objective_id"])
+                if stopped:
+                    break
+                if roto is None:
+                    continue
+                for fe_id in ss.get("feared_event_ids", []):
+                    if fe_id in fe_by_egerie_id:
+                        roto.feared_events.add(fe_by_egerie_id[fe_id])
+
+                ss_egerie_id = ss["id"]
+                ss_name = ss["name"] or ss_egerie_id
+                existing_ss = None
+                if ss_egerie_id:
+                    existing_ss = StrategicScenario.objects.filter(
+                        ebios_rm_study=study, ref_id=ss_egerie_id
+                    ).first()
+                if existing_ss is None:
+                    existing_ss = StrategicScenario.objects.filter(
+                        ebios_rm_study=study, name__iexact=ss_name
+                    ).first()
+                if existing_ss:
+                    ss_by_egerie_id[ss_egerie_id] = existing_ss
+                    match on_conflict:
+                        case ConflictMode.STOP:
+                            results["errors"].append(
+                                {
+                                    "strategic_scenario": ss_name,
+                                    "error": "already exists (conflict policy: stop)",
+                                }
+                            )
+                            stopped = True
+                            break
+                        case ConflictMode.UPDATE:
+                            existing_ss.ro_to_couple = roto
+                            if ss_egerie_id and not existing_ss.ref_id:
+                                existing_ss.ref_id = ss_egerie_id
+                            existing_ss.save()
+                            results["details"]["strategic_scenarios_updated"] += 1
+                        case _:
+                            results["details"]["strategic_scenarios_skipped"] += 1
+                            _warn(
+                                "strategic_scenario",
+                                ss_name,
+                                "strategic scenario already exists in study",
+                                ss_egerie_id,
+                            )
+                else:
+                    existing_ss = StrategicScenario.objects.create(
+                        ebios_rm_study=study,
+                        name=ss_name,
+                        ref_id=ss_egerie_id,
+                        ro_to_couple=roto,
+                        folder=folder,
+                    )
+                    ss_by_egerie_id[ss_egerie_id] = existing_ss
+                    results["details"]["strategic_scenarios_created"] += 1
+
+                for ap in ss.get("attack_paths", []):
+                    if stopped:
+                        break
+                    ap_egerie_id = ap["id"]
+                    ap_name = f"{ss_name} - AP {len(ap_by_egerie_id) + 1:02d}"
+                    existing_ap = None
+                    if ap_egerie_id:
+                        existing_ap = AttackPath.objects.filter(
+                            ebios_rm_study=study, ref_id=ap_egerie_id
+                        ).first()
+                    if existing_ap is None:
+                        existing_ap = AttackPath.objects.filter(
+                            ebios_rm_study=study,
+                            strategic_scenario=existing_ss,
+                            name__iexact=ap_name,
+                        ).first()
+                    if existing_ap:
+                        ap_by_egerie_id[ap_egerie_id] = existing_ap
+                        match on_conflict:
+                            case ConflictMode.STOP:
+                                results["errors"].append(
+                                    {
+                                        "attack_path": ap_name,
+                                        "error": "already exists (conflict policy: stop)",
+                                    }
+                                )
+                                stopped = True
+                                break
+                            case ConflictMode.UPDATE:
+                                existing_ap.strategic_scenario = existing_ss
+                                if ap_egerie_id and not existing_ap.ref_id:
+                                    existing_ap.ref_id = ap_egerie_id
+                                existing_ap.save()
+                                results["details"]["attack_paths_updated"] += 1
+                                continue
+                            case _:
+                                results["details"]["attack_paths_skipped"] += 1
+                                _warn(
+                                    "attack_path",
+                                    ap_name,
+                                    "attack path already exists under this strategic scenario",
+                                    ap_egerie_id,
+                                )
+                                continue
+                    new_ap = AttackPath.objects.create(
+                        ebios_rm_study=study,
+                        strategic_scenario=existing_ss,
+                        name=ap_name,
+                        ref_id=ap_egerie_id,
+                        is_selected=True,
+                        folder=folder,
+                    )
+                    ap_by_egerie_id[ap_egerie_id] = new_ap
+                    results["details"]["attack_paths_created"] += 1
+
+            if stopped:
+                return results
+
+            ea_by_egerie_id: dict[str, ElementaryAction] = {}
+            for ea in data.get("elementary_actions", []):
+                if stopped:
+                    break
+                egerie_id = ea["id"]
+                name = ea["name"] or egerie_id
+                existing = None
+                if egerie_id:
+                    existing = ElementaryAction.objects.filter(
+                        ref_id=egerie_id, folder=folder
+                    ).first()
+                if existing is None:
+                    existing = ElementaryAction.objects.filter(
+                        name__iexact=name, folder=folder
+                    ).first()
+                if existing:
+                    ea_by_egerie_id[egerie_id] = existing
+                    match on_conflict:
+                        case ConflictMode.STOP:
+                            results["errors"].append(
+                                {
+                                    "elementary_action": name,
+                                    "error": "already exists (conflict policy: stop)",
+                                }
+                            )
+                            stopped = True
+                            break
+                        case ConflictMode.UPDATE:
+                            if ea.get("description"):
+                                existing.description = ea["description"]
+                            if egerie_id and not existing.ref_id:
+                                existing.ref_id = egerie_id
+                            existing.save()
+                            results["details"]["elementary_actions_updated"] += 1
+                            continue
+                        case _:
+                            results["details"]["elementary_actions_skipped"] += 1
+                            _warn(
+                                "elementary_action",
+                                name,
+                                "elementary action already exists in folder",
+                                egerie_id,
+                            )
+                            continue
+                obj = ElementaryAction.objects.create(
+                    name=name,
+                    ref_id=egerie_id,
+                    description=ea.get("description", ""),
+                    folder=folder,
+                )
+                ea_by_egerie_id[egerie_id] = obj
+                results["details"]["elementary_actions_created"] += 1
+
+            if stopped:
+                return results
+
+            for os_data in data.get("operational_scenarios", []):
+                if stopped:
+                    break
+                os_name = os_data.get("name", "") or os_data.get("id", "")
+                ap_ids = os_data.get("attack_path_ids", [])
+                first_ap = next(
+                    (
+                        ap_by_egerie_id[ap_id]
+                        for ap_id in ap_ids
+                        if ap_id in ap_by_egerie_id
+                    ),
+                    None,
+                )
+                if first_ap is None:
+                    results["details"]["operational_scenarios_skipped"] += 1
+                    _warn(
+                        "operational_scenario",
+                        os_name,
+                        "no importable attack path; CISO Assistant requires one",
+                        os_data.get("id", ""),
+                    )
+                    continue
+
+                likelihood = quartile_to_index(
+                    os_data.get("likelihood"), probability_size
+                )
+                if likelihood is None:
+                    likelihood = -1
+
+                desc_lines = [os_data.get("name", "")]
+                if len(ap_ids) > 1:
+                    desc_lines.append(
+                        f"(Egerie scenario also spans {len(ap_ids) - 1} other attack path(s); only the first is linked here.)"
+                    )
+                description = "\n".join(filter(None, desc_lines))
+
+                existing = OperationalScenario.objects.filter(
+                    ebios_rm_study=study, attack_path=first_ap
+                ).first()
+                if existing:
+                    match on_conflict:
+                        case ConflictMode.STOP:
+                            results["errors"].append(
+                                {
+                                    "operational_scenario": os_name,
+                                    "error": "already exists (conflict policy: stop)",
+                                }
+                            )
+                            stopped = True
+                            break
+                        case ConflictMode.UPDATE:
+                            existing.likelihood = likelihood
+                            existing.operating_modes_description = description
+                            existing.save()
+                            results["details"]["operational_scenarios_updated"] += 1
+                            continue
+                        case _:
+                            results["details"]["operational_scenarios_skipped"] += 1
+                            _warn(
+                                "operational_scenario",
+                                os_name,
+                                f"attack path '{first_ap.name}' is already linked to another OS (CISO Assistant enforces one OS per attack path)",
+                                os_data.get("id", ""),
+                            )
+                            continue
+
+                OperationalScenario.objects.create(
+                    ebios_rm_study=study,
+                    attack_path=first_ap,
+                    likelihood=likelihood,
+                    operating_modes_description=description,
+                    is_selected=True,
+                    folder=folder,
+                )
+                results["details"]["operational_scenarios_created"] += 1
+
+            if stopped:
+                return results
+
+            for ctl in data.get("controls", []):
+                if stopped:
+                    break
+                egerie_id = ctl["id"]
+                name = ctl["name"] or egerie_id
+                if not name:
+                    continue
+                status_val = map_egerie_status(ctl.get("egerie_status", ""))
+                existing = None
+                if egerie_id:
+                    existing = AppliedControl.objects.filter(
+                        ref_id=egerie_id, folder=folder
+                    ).first()
+                if existing is None:
+                    existing = AppliedControl.objects.filter(
+                        name__iexact=name, folder=folder
+                    ).first()
+                if existing:
+                    match on_conflict:
+                        case ConflictMode.STOP:
+                            results["errors"].append(
+                                {
+                                    "applied_control": name,
+                                    "error": "already exists (conflict policy: stop)",
+                                }
+                            )
+                            stopped = True
+                            break
+                        case ConflictMode.UPDATE:
+                            if ctl.get("description"):
+                                existing.description = ctl["description"]
+                            if status_val:
+                                existing.status = status_val
+                            if egerie_id and not existing.ref_id:
+                                existing.ref_id = egerie_id
+                            existing.save()
+                            results["details"]["applied_controls_updated"] += 1
+                            continue
+                        case _:
+                            results["details"]["applied_controls_skipped"] += 1
+                            _warn(
+                                "applied_control",
+                                name,
+                                "applied control already exists in folder",
+                                egerie_id,
+                            )
+                            continue
+                payload = {
+                    "name": name,
+                    "ref_id": egerie_id,
+                    "description": ctl.get("description", ""),
+                    "folder": str(folder.id),
+                }
+                if status_val:
+                    payload["status"] = status_val
+                ac_serializer = AppliedControlWriteSerializer(
+                    data=payload, context={"request": request}
+                )
+                if ac_serializer.is_valid():
+                    ac_serializer.save()
+                    results["details"]["applied_controls_created"] += 1
+                else:
+                    results["errors"].append(
+                        {
+                            "applied_control": name,
+                            "errors": ac_serializer.errors,
+                        }
+                    )
+
+            results["successful"] = 1
+
+        except Folder.DoesNotExist:
+            results["failed"] = 1
+            results["errors"].append(
+                {"error": f"Folder with ID {folder_id} does not exist"}
+            )
+        except RiskMatrix.DoesNotExist:
+            results["failed"] = 1
+            results["errors"].append(
+                {"error": f"Risk matrix with ID {matrix_id} does not exist"}
+            )
+        except Exception as e:
+            logger.error(f"Error processing Egerie XML: {str(e)}", exc_info=True)
+            results["failed"] = 1
+            results["errors"].append({"error": str(e)})
+
+        return results

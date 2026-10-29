@@ -1,0 +1,346 @@
+<script lang="ts">
+	import AutocompleteSelect from '../AutocompleteSelect.svelte';
+	import TextField from '../TextField.svelte';
+	import TextArea from '../TextArea.svelte';
+	import Select from '../Select.svelte';
+	import Checkbox from '../Checkbox.svelte';
+	import Dropdown from '#lib/components/Dropdown/Dropdown.svelte';
+	import type { SuperValidated } from 'sveltekit-superforms';
+	import type { ModelInfo, CacheLock } from '#lib/utils/types.js';
+	import * as m from '#paraglide/messages.js';
+	import { formFieldProxy } from 'sveltekit-superforms';
+	import NumberField from '../NumberField.svelte';
+	import MarkdownField from '#lib/components/Forms/MarkdownField.svelte';
+
+	interface Props {
+		form: SuperValidated<any>;
+		model: ModelInfo;
+		cacheLocks?: Record<string, CacheLock>;
+		context?: string;
+		formDataCache?: Record<string, any>;
+		initialData?: Record<string, any>;
+		object?: any;
+	}
+
+	let {
+		form,
+		model,
+		cacheLocks = {},
+		context = '',
+		formDataCache = $bindable({}),
+		initialData = {},
+		object = {}
+	}: Props = $props();
+
+	const { value: is_recurrent } = formFieldProxy(form, 'is_recurrent');
+	const { value: frequency } = formFieldProxy(form, 'schedule.frequency');
+	const { tainted: taskDateTainted } = formFieldProxy(form, 'task_date');
+	const { tainted: scheduleTainted } = formFieldProxy(form, 'schedule');
+
+	function scheduleTaintedHandler(data) {
+		if (Array.isArray(data)) {
+			return data.some((item) => scheduleTaintedHandler(item));
+		} else if (data !== null && typeof data === 'object') {
+			return Object.values(data).some((value) => scheduleTaintedHandler(value));
+		} else {
+			return data === true || $taskDateTainted === true;
+		}
+	}
+
+	let isScheduleTainted = $derived(scheduleTaintedHandler($scheduleTainted));
+</script>
+
+<AutocompleteSelect
+	{form}
+	multiple
+	optionsEndpoint="actors?user__is_third_party=False"
+	lazy
+	optionsLabelField="str"
+	optionsInfoFields={{
+		fields: [{ field: 'type', translate: true }],
+		position: 'prefix'
+	}}
+	field="assigned_to"
+	cacheLock={cacheLocks['assigned_to']}
+	bind:cachedValue={formDataCache['assigned_to']}
+	label={m.assignedTo()}
+/>
+{#if !$is_recurrent}
+	<TextField
+		type="date"
+		{form}
+		field="task_date"
+		label={m.date()}
+		cacheLock={cacheLocks['task_date']}
+		bind:cachedValue={formDataCache['task_date']}
+	/>
+{/if}
+<Checkbox
+	{form}
+	field="is_recurrent"
+	label={m.recurrent()}
+	helpText={m.isRecurrentHelpText()}
+	cacheLock={cacheLocks['is_recurrent']}
+	bind:cachedValue={formDataCache['is_recurrent']}
+/>
+{#if $is_recurrent}
+	<Dropdown
+		open={true}
+		style="hover:text-primary-700"
+		icon="fa-solid fa-calendar-days"
+		header={m.schedule()}
+	>
+		<TextField
+			type="date"
+			{form}
+			field="task_date"
+			label={m.startDate()}
+			cacheLock={cacheLocks['task_date']}
+			bind:cachedValue={formDataCache['task_date']}
+		/>
+		<div class="flex w-full items-center space-x-3">
+			<span class="mt-5 font-semibold text-sm text-surface-950-50">{m.each()}</span>
+			<NumberField
+				{form}
+				field="interval"
+				valuePath="schedule.interval"
+				label={m.interval()}
+				cacheLock={cacheLocks['interval']}
+				bind:cachedValue={formDataCache['interval']}
+			/>
+			<Select
+				{form}
+				field="frequency"
+				valuePath="schedule.frequency"
+				disableDoubleDash={true}
+				options={[
+					{ value: 'DAILY', label: m.day() },
+					{ value: 'WEEKLY', label: m.week() },
+					{ value: 'MONTHLY', label: m.month() },
+					{ value: 'YEARLY', label: m.year() }
+				]}
+				cacheLock={cacheLocks['frequency']}
+				bind:cachedValue={formDataCache['frequency']}
+				label={m.frequency()}
+			/>
+		</div>
+		<div class="flex w-full items-center space-x-3">
+			{#if $frequency == 'MONTHLY' || $frequency == 'YEARLY'}
+				<span class="mt-5 font-semibold text-sm text-surface-950-50">{m.the()}</span>
+				<AutocompleteSelect
+					{form}
+					multiple
+					baseClass="w-full"
+					translateOptions={false}
+					field="weeks_of_month"
+					valuePath="schedule.weeks_of_month"
+					disableDoubleDash={true}
+					options={[
+						{ value: 1, label: m.first() },
+						{ value: 2, label: m.second() },
+						{ value: 3, label: m.third() },
+						{ value: 4, label: m.fourth() },
+						{ value: -1, label: m.last() }
+					]}
+					cacheLock={cacheLocks['weeks_of_month']}
+					bind:cachedValue={formDataCache['weeks_of_month']}
+					label={m.weeks()}
+				/>
+			{/if}
+			{#if $frequency == 'WEEKLY' || $frequency == 'MONTHLY' || $frequency == 'YEARLY'}
+				<AutocompleteSelect
+					{form}
+					multiple
+					baseClass="w-full"
+					translateOptions={false}
+					field="days_of_week"
+					valuePath="schedule.days_of_week"
+					disableDoubleDash={true}
+					options={[
+						{ value: 1, label: m.monday() },
+						{ value: 2, label: m.tuesday() },
+						{ value: 3, label: m.wednesday() },
+						{ value: 4, label: m.thursday() },
+						{ value: 5, label: m.friday() },
+						{ value: 6, label: m.saturday() },
+						{ value: 7, label: m.sunday() }
+					]}
+					cacheLock={cacheLocks['days_of_week']}
+					bind:cachedValue={formDataCache['days_of_week']}
+					label={m.days()}
+				/>
+			{/if}
+		</div>
+		{#if $frequency == 'YEARLY'}
+			<div class="flex w-full items-center space-x-3">
+				<span class="mt-5 font-semibold text-sm text-surface-950-50">{m.of()}</span>
+				<AutocompleteSelect
+					{form}
+					multiple
+					translateOptions={false}
+					field="months_of_year"
+					valuePath="schedule.months_of_year"
+					disableDoubleDash={true}
+					options={[
+						{ value: 1, label: m.january() },
+						{ value: 2, label: m.february() },
+						{ value: 3, label: m.march() },
+						{ value: 4, label: m.april() },
+						{ value: 5, label: m.may() },
+						{ value: 6, label: m.june() },
+						{ value: 7, label: m.july() },
+						{ value: 8, label: m.august() },
+						{ value: 9, label: m.september() },
+						{ value: 10, label: m.october() },
+						{ value: 11, label: m.november() },
+						{ value: 12, label: m.december() }
+					]}
+					cacheLock={cacheLocks['months_of_year']}
+					bind:cachedValue={formDataCache['months_of_year']}
+					label={m.month()}
+				/>
+			</div>
+		{/if}
+		<TextField
+			type="date"
+			{form}
+			field="end_date"
+			valuePath="schedule.end_date"
+			label={m.endDate()}
+			cacheLock={cacheLocks['end_date']}
+			bind:cachedValue={formDataCache['end_date']}
+		/>
+		{#if context == 'edit' && isScheduleTainted}<span class="text-secondary-500 italic text-sm"
+				><i class="fa-solid fa-circle-info mr-1"></i>{m.taskScheduleInfo()}</span
+			>{/if}
+	</Dropdown>
+{:else}
+	<Select
+		{form}
+		field="status"
+		label={m.status()}
+		options={model.selectOptions['status']}
+		cacheLock={cacheLocks['status']}
+		bind:cachedValue={formDataCache['status']}
+		disableDoubleDash={true}
+	/>
+{/if}
+<AutocompleteSelect
+	multiple
+	{form}
+	optionsEndpoint="evidences"
+	optionsExtraFields={[['folder', 'str']]}
+	optionsLabelField="auto"
+	helpText={m.taskTemplateEvidenceHelpText()}
+	helpTextClass="mt-1 border-l-2 border-primary-500 bg-primary-500/5 rounded-r py-1 pl-2"
+	field="evidences"
+	label={m.evidences()}
+	translateOptions={false}
+	allowUserOptions="append"
+	additionalMultiselectOptions={{
+		createOptionMsg: ({ searchText }: { searchText: string }) =>
+			m.createExpectedEvidence({ name: searchText }),
+		liUserMsgClass: '!text-primary-700 font-semibold',
+		liActiveUserMsgClass: '!bg-primary-500/10'
+	}}
+/>
+<Dropdown open={false} style="hover:text-primary-700" icon="fa-solid fa-list" header={m.more()}>
+	<AutocompleteSelect
+		multiple
+		lazy
+		{form}
+		optionsEndpoint="assets"
+		optionsExtraFields={[['folder', 'str']]}
+		optionsInfoFields={{
+			fields: [
+				{
+					field: 'type'
+				}
+			],
+			classes: 'text-blue-500'
+		}}
+		optionsLabelField="auto"
+		field="assets"
+		label={m.assets()}
+	/>
+	<AutocompleteSelect
+		multiple
+		{form}
+		optionsEndpoint="applied-controls"
+		optionsExtraFields={[['folder', 'str']]}
+		optionsInfoFields={{
+			fields: [{ field: 'category', translate: true }],
+			position: 'prefix'
+		}}
+		field="applied_controls"
+		label={m.appliedControls()}
+	/>
+	<AutocompleteSelect
+		multiple
+		{form}
+		optionsEndpoint="compliance-assessments"
+		field="compliance_assessments"
+		cacheLock={cacheLocks['compliance_assessments']}
+		bind:cachedValue={formDataCache['compliance_assessments']}
+		label={m.complianceAssessments()}
+	/>
+	<AutocompleteSelect
+		{form}
+		multiple
+		optionsEndpoint="risk-assessments"
+		optionsExtraFields={[['folder', 'str']]}
+		optionsLabelField="str"
+		field="risk_assessments"
+		cacheLock={cacheLocks['risk_assessments']}
+		bind:cachedValue={formDataCache['risk_assessments']}
+		label={m.riskAssessments()}
+	/>
+
+	<AutocompleteSelect
+		multiple
+		{form}
+		optionsEndpoint="findings-assessments"
+		field="findings_assessment"
+		cacheLock={cacheLocks['findings_assessment']}
+		bind:cachedValue={formDataCache['findings_assessment']}
+		label={m.findingsAssessment()}
+	/>
+	<AutocompleteSelect
+		multiple
+		{form}
+		optionsEndpoint="findings"
+		optionsExtraFields={[['folder', 'str']]}
+		field="findings"
+		cacheLock={cacheLocks['findings']}
+		bind:cachedValue={formDataCache['findings']}
+		label={m.findings()}
+	/>
+	<MarkdownField
+		{form}
+		field="observation"
+		label={m.observation()}
+		cacheLock={cacheLocks['observation']}
+		bind:cachedValue={formDataCache['observation']}
+	/>
+	<TextField
+		{form}
+		field="link"
+		label={m.link()}
+		helpText={m.linkHelpText()}
+		cacheLock={cacheLocks['link']}
+		bind:cachedValue={formDataCache['link']}
+	/>
+	<AutocompleteSelect
+		multiple
+		{form}
+		createFromSelection={true}
+		optionsEndpoint="filtering-labels"
+		optionsLabelField="label"
+		field="filtering_labels"
+		helpText={m.labelsHelpText()}
+		label={m.labels()}
+		translateOptions={false}
+		allowUserOptions="append"
+	/>
+</Dropdown>
+<Checkbox {form} field="enabled" label={m.enabled()} />

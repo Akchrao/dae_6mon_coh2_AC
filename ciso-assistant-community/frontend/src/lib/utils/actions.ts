@@ -1,0 +1,306 @@
+import { BASE_API_URL } from '#lib/utils/constants.js';
+import { contentDispositionHeader } from '#lib/utils/contentDisposition.js';
+import { getModelInfo, urlParamModelVerboseName } from '#lib/utils/crud.js';
+
+import { m } from '#paraglide/messages.js';
+
+import { safeTranslate } from '#lib/utils/i18n.js';
+import { modelSchema } from '#lib/utils/schemas.js';
+import { fail, redirect, type RequestEvent } from '@sveltejs/kit';
+import { setFlash } from 'sveltekit-flash-message/server';
+import { message, setError, superValidate, type SuperValidated } from 'sveltekit-superforms';
+import { zod4 as zod } from 'sveltekit-superforms/adapters';
+import { z } from 'zod';
+import { getSecureRedirect } from './helpers';
+
+type FormAction = 'create' | 'edit';
+
+function getHTTPMethod({
+	action,
+	fileFields
+}: {
+	action: FormAction;
+	fileFields: Record<string, File>;
+}) {
+	if (action === 'create') return 'POST';
+	return Object.keys(fileFields).length > 0 ? 'PATCH' : 'PUT';
+}
+
+function getSuccessMessage({ action, urlModel }: { action: FormAction; urlModel: string }) {
+	const modelVerboseName: string = urlModel ? urlParamModelVerboseName(urlModel) : '';
+	if (action === 'create') {
+		return m.successfullyCreatedObject({
+			object: safeTranslate(modelVerboseName).toLowerCase()
+		});
+	}
+	if (action === 'edit') {
+		return m.successfullyUpdatedObject({
+			object: safeTranslate(modelVerboseName).toLowerCase()
+		});
+	}
+}
+
+function getEndpoint({
+	action,
+	urlModel,
+	event
+}: {
+	action: FormAction;
+	urlModel: string;
+	event: RequestEvent;
+}) {
+	const model = getModelInfo(urlModel);
+	if (action === 'create') {
+		return model.endpointUrl
+			? `${BASE_API_URL}/${model.endpointUrl}/`
+			: `${BASE_API_URL}/${urlModel}/`;
+	}
+	const id = event.url.searchParams.get('id') || event.params.id;
+	return model.endpointUrl
+		? `${BASE_API_URL}/${model.endpointUrl}/${id}/`
+		: `${BASE_API_URL}/${urlModel}/${id}/`;
+}
+
+export async function handleErrorResponse({
+	event,
+	response,
+	form
+}: {
+	event: RequestEvent;
+	response: Response;
+	form: SuperValidated;
+}) {
+	const res: Record<string, string> = await response.json();
+	console.error(res);
+	if (res.label) {
+		res['filtering_labels'] = res.label;
+	}
+	if (res.warning) {
+		setFlash({ type: 'warning', message: safeTranslate(res.warning) }, event);
+		return message(form, { warning: res.warning });
+	}
+	if (res.error || res.detail) {
+		const rawError = res.error || res.detail;
+		const errorKey = Array.isArray(rawError) ? rawError[0] : rawError;
+		setFlash({ type: 'error', message: safeTranslate(errorKey), timeout: 10000 }, event);
+		return message(form, { error: rawError });
+	}
+	Object.entries(res).forEach(([key, value]) => {
+		if (Array.isArray(value)) {
+			value.forEach((item: string) => setError(form, key, safeTranslate(item)));
+		} else if (typeof value === 'string') {
+			setError(form, key, safeTranslate(value));
+		}
+	});
+	// setError only runs for string values; nested errors must still refuse the save.
+	form.valid = false;
+	// Structured values (e.g. a 409's impact summary) reach the form through the message.
+	return message(form, { status: response.status, data: res });
+}
+
+export async function defaultWriteFormAction({
+	event,
+	urlModel,
+	action,
+	doRedirect = true,
+	redirectToWrittenObject = false
+}: {
+	event: RequestEvent;
+	urlModel: string;
+	action: FormAction;
+	doRedirect?: boolean;
+	redirectToWrittenObject?: boolean;
+}) {
+	const formData = await event.request.formData();
+	if (!formData) {
+		return fail(400, { form: null });
+	}
+
+	const schema = modelSchema(urlModel!);
+	const form = await superValidate(formData, zod(schema));
+
+	if (!form.valid) {
+		console.error(form.errors);
+		return message(form, { status: 400 });
+	}
+
+	// `dataType: 'form'` submissions (models with a file field, e.g. Evidence) can't
+	// encode an empty array: a cleared multiselect renders no inputs, so superValidate
+	// drops the field and the relation would never be cleared. AutocompleteSelect emits
+	// `__empty_arrays` markers for such fields — restore them as explicit empty arrays.
+	const schemaShape = (schema as any).shape ?? {};
+	for (const emptyField of formData.getAll('__empty_arrays')) {
+		if (
+			typeof emptyField === 'string' &&
+			emptyField in schemaShape &&
+			form.data[emptyField] === undefined
+		) {
+			form.data[emptyField] = [];
+		}
+	}
+
+	if (urlModel === 'service-accounts') {
+		normalizeServiceAccountAuthorization(form.data);
+	}
+
+	const endpoint = getEndpoint({ action, urlModel, event });
+	const model = getModelInfo(urlModel!);
+
+	const fileFields = Object.fromEntries(
+		Object.entries(form.data).filter(([key]) => model.fileFields?.includes(key) ?? false)
+	) as Record<string, File>;
+
+	Object.keys(fileFields).forEach((key) => {
+		form.data[key] = undefined;
+	});
+
+	const requestInitOptions: RequestInit = {
+		method: getHTTPMethod({ action, fileFields }),
+		body: JSON.stringify(form.data)
+	};
+
+	const res = await event.fetch(endpoint, requestInitOptions);
+
+	if (!res.ok) return await handleErrorResponse({ event, response: res, form });
+
+	const writtenObject = await res.json();
+
+	if (fileFields) {
+		for (const [, file] of Object.entries(fileFields)) {
+			if (!file) continue;
+			if (file.size <= 0) continue;
+			const fileUploadEndpoint = `${BASE_API_URL}/${urlModel}/${writtenObject.id}/upload/`;
+			const fileUploadRequestInitOptions: RequestInit = {
+				headers: {
+					'Content-Disposition': contentDispositionHeader(file.name)
+				},
+				method: 'POST',
+				body: file
+			};
+			const fileUploadRes = await event.fetch(fileUploadEndpoint, fileUploadRequestInitOptions);
+			if (!fileUploadRes.ok) {
+				// Clean up the created object if file upload fails during creation
+				if (action === 'create') {
+					const deleteEndpoint = `${BASE_API_URL}/${urlModel}/${writtenObject.id}/`;
+					await event.fetch(deleteEndpoint, { method: 'DELETE' });
+				}
+				return await handleErrorResponse({ event, response: fileUploadRes, form });
+			}
+		}
+	}
+
+	const flashParams = {
+		type: 'success',
+		message: getSuccessMessage({ urlModel, action }) as string
+	};
+
+	if (urlModel == 'users') {
+		((flashParams.type = 'warning'), (flashParams.message += safeTranslate('userHasNoRights')));
+	}
+	setFlash(flashParams, event);
+
+	const next = getSecureRedirect(event.url.searchParams.get('next'));
+	if (next && doRedirect) redirect(302, next);
+
+	if (redirectToWrittenObject) {
+		return message(form, { redirect: `/${urlModel}/${writtenObject.id}` });
+	}
+	return message(form, { object: writtenObject });
+}
+
+export function normalizeServiceAccountAuthorization(data: Record<string, any>): void {
+	const mode = data.authorization_mode;
+	delete data.authorization_mode;
+	// 'role' and 'global_admin' both link a builtin role; global_admin is the
+	// explicit BI-RL-ADM case (form forces role + Global perimeter, recursive).
+	if (mode === 'custom') delete data.role;
+	else delete data.permissions;
+}
+
+export async function nestedWriteFormAction({
+	event,
+	action,
+	redirectToWrittenObject = false
+}: {
+	event: RequestEvent;
+	action: FormAction;
+	redirectToWrittenObject: boolean;
+}) {
+	const request = event.request.clone();
+	const formData = await request.formData();
+	const urlModel = formData.get('urlmodel') as string;
+	return defaultWriteFormAction({
+		event,
+		urlModel,
+		action,
+		doRedirect: false,
+		redirectToWrittenObject
+	});
+}
+
+export async function defaultDeleteFormAction({
+	event,
+	urlModel
+}: {
+	event: RequestEvent;
+	urlModel: string;
+}) {
+	const formData = await event.request.formData();
+	const schema = z.object({ id: z.string().uuid() });
+	const deleteForm = await superValidate(formData, zod(schema));
+	const model = getModelInfo(urlModel);
+
+	const id = deleteForm.data.id;
+	const endpoint = model.endpointUrl
+		? `${BASE_API_URL}/${model.endpointUrl}/${id}/`
+		: `${BASE_API_URL}/${model.urlModel}/${id}/`;
+
+	if (!deleteForm.valid) {
+		console.error(deleteForm.errors);
+		return message(deleteForm, { status: 400 });
+	}
+
+	const requestInitOptions: RequestInit = {
+		method: 'DELETE'
+	};
+	const res = await event.fetch(endpoint, requestInitOptions);
+	if (!res.ok) {
+		const response = await res.json();
+		// 409 Conflict: backend blocks deletion (e.g. Entity referenced as
+		// subcontractor). Body shape: { detail: "...", blocking_subcontracts: [...] }.
+		// Surface the detail message so the user sees why deletion was refused.
+		if (res.status === 409 && response.detail) {
+			setFlash({ type: 'error', message: response.detail }, event);
+			return message(deleteForm, { status: res.status });
+		}
+		if (response.error) {
+			const errorMessages = Array.isArray(response.error) ? response.error : [response.error];
+			errorMessages.forEach((error) => {
+				setFlash({ type: 'error', message: safeTranslate(error) }, event);
+			});
+			return message(deleteForm, { status: res.status });
+		}
+		if (response.non_field_errors) {
+			setError(deleteForm, 'non_field_errors', response.non_field_errors);
+		}
+		return message(deleteForm, { status: res.status });
+	}
+	setFlash(
+		{
+			type: 'success',
+			message: m.successfullyDeletedObject({
+				object: safeTranslate(model.localName).toLowerCase()
+			})
+		},
+		event
+	);
+
+	return message(deleteForm, { status: res.status });
+}
+
+export async function nestedDeleteFormAction({ event }: { event: RequestEvent }) {
+	const request = event.request.clone();
+	const formData = await request.formData();
+	const urlModel = formData.get('urlmodel') as string;
+	return defaultDeleteFormAction({ event, urlModel });
+}
