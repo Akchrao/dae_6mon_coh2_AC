@@ -1,0 +1,14 @@
+[2026-11-03T19:41:00Z] >>> r1_record
+# record the contained state before it is overwritten   [VBoxManage snapshot parrot-vm take pre-recovery --live]
+(ok)
+List of snapshots present on all disks:
+ID        TAG               VM SIZE                DATE     VM CLOCK     ICOUNT
+--        baseline-clean    501 MiB 2026-11-03 19:22:59 00:06:18.221           
+--        ir-pre-containment  556 MiB 2026-11-03 19:31:26 00:14:44.476           
+--        ir-contained      596 MiB 2026-11-03 19:35:46 00:18:57.579           
+--        pre-recovery      598 MiB 2026-11-03 19:41:00 00:24:11.025
+
+# verify the recovery source of last resort: the golden image (rebuild path)
+recorded: 767741ed83492b708f1ab0dd5a56ef1f2c2eb36663dd05164f096e4e7fb2a593
+now:      767741ed83492b708f1ab0dd5a56ef1f2c2eb36663dd05164f096e4e7fb2a593
+golden image: MATCH

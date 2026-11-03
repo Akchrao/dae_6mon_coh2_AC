@@ -1,0 +1,24 @@
+# Care Access Navigator - parrot-vm host firewall baseline (post-incident IR1-2026-002)
+*filter
+:INPUT DROP [0:0]
+:FORWARD DROP [0:0]
+:OUTPUT DROP [0:0]
+:IOC-BLOCK - [0:0]
+-A IOC-BLOCK -m limit --limit 20/min -j LOG --log-prefix "IOC-BLOCK " --log-uid
+-A IOC-BLOCK -j DROP
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+-A INPUT -p tcp --dport 22 -s 10.78.50.0/24 -j ACCEPT
+-A INPUT -p tcp --dport 8080 -s 10.78.10.0/24 -j ACCEPT
+-A INPUT -m limit --limit 20/min -j LOG --log-prefix "FW-DENY-IN "
+-A OUTPUT -d 10.78.99.66/32 -j IOC-BLOCK
+-A OUTPUT -o lo -j ACCEPT
+-A OUTPUT -m conntrack --ctstate ESTABLISHED,RELATED -j ACCEPT
+-A OUTPUT -p udp --dport 53 -j ACCEPT
+-A OUTPUT -p tcp --dport 53 -j ACCEPT
+-A OUTPUT -p udp --dport 123 -j ACCEPT
+-A OUTPUT -p udp --dport 67:68 -j ACCEPT
+-A OUTPUT -p tcp -m multiport --dports 80,443 -j ACCEPT
+-A OUTPUT -d 10.78.50.20/32 -p tcp -m multiport --dports 1514,1515 -j ACCEPT
+-A OUTPUT -m limit --limit 20/min -j LOG --log-prefix "FW-DENY-OUT " --log-uid
+COMMIT

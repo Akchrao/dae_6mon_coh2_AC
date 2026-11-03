@@ -1,0 +1,58 @@
+[2026-11-03T19:41:11Z] >>> r3_system
+# R4 network first (the host needs NTP and package mirrors reachable for validation)
+Cannot call openvswitch: ovsdb-server.service is not running.
+clinical=enp0s1 quarantine=enp0s2
+lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP> 
+enp0s1           UP             52:54:00:0a:00:10 <BROADCAST,MULTICAST,UP,LOWER_UP> 
+enp0s2           DOWN           52:54:00:0a:00:50 <BROADCAST,MULTICAST> 
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+enp0s1           UP             10.0.2.15/24 metric 100 fec0::5054:ff:fe0a:10/64 fe80::5054:ff:fe0a:10/64 
+enp0s2           DOWN           
+default via 10.0.2.2 dev enp0s1 proto dhcp src 10.0.2.15 metric 100 
+10.0.2.0/24 dev enp0s1 proto kernel scope link src 10.0.2.15 metric 100 
+10.0.2.2 dev enp0s1 proto dhcp scope link src 10.0.2.15 metric 100 
+10.0.2.3 dev enp0s1 proto dhcp scope link src 10.0.2.15 metric 100 
+
+nameserver 10.0.2.3
+search .
+
+# clock after restore (guest resumes at snapshot time):
+guest 19:23:04 UTC  host 19:41:20 UTC  skew -1096.0 s
+               Local time: Tue 2026-11-03 19:41:22 UTC
+           Universal time: Tue 2026-11-03 19:41:22 UTC
+                 RTC time: Tue 2026-11-03 19:41:22
+                Time zone: UTC (UTC, +0000)
+System clock synchronized: yes
+              NTP service: active
+# clock after NTP resync:
+guest 19:41:22 UTC  host 19:41:22 UTC  skew +0.0 s
+
+# R3 recover_harden.sh
+Created symlink /etc/systemd/system/multi-user.target.wants/ir-firewall.service → /etc/systemd/system/ir-firewall.service.
+== R2.1 identity: apply the JML register correctly (CHG-2026-0201 mover, TERM-2026-0301 leaver)
+Removing user test.nurse from group clinical
+Removing user test.clinician from group sudo
+uid=1003(test.nurse) gid=1006(test.nurse) groups=1006(test.nurse),1002(billing)
+uid=1004(test.billing) gid=1007(test.billing) groups=1007(test.billing),1002(billing),1003(disabled-users)
+test.nurse L 2026-11-03 0 99999 7 -1
+test.billing L 2026-11-03 0 99999 7 -1
+== R2.2 persistence vector: only root may use cron (users cannot create crontabs)
+total 8
+drwx-wx--T 2 root crontab 4096 Mar  2  2023 .
+drwxr-xr-x 3 root root    4096 Nov  3 00:10 ..
+== R2.3 host firewall baseline (persistent): least-privilege inbound, egress allow-list
+active
+== R2.4 services back to normal
+active active active active active
+== R2.5 audit: keep the incident watches, add one for privilege grants (sudoers)
+-w /srv/ehr/clinical -p r -k ehr-read
+-w /etc/group -p wa -k identity
+-w /etc/passwd -p wa -k identity
+-w /var/spool/cron/crontabs -p wa -k cron-persist
+-a always,exit -F arch=b64 -S execve -F auid>=1000 -F auid!=-1 -F key=user-exec
+-w /etc/sudoers.d -p wa -k sudoers
+recovered 2026-11-03T19:41:42Z
+
+# wait for monitoring to come back before validating (the restored agent must reconnect to the manager)
+status='connected'
+[2026-11-03T19:43:47Z] >>> r4_network

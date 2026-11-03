@@ -1,0 +1,118 @@
+[2026-11-03T19:38:42Z] >>> disk_seize
+# 4a seize: export the virtual disk as it was at snapshot ir-contained   [VBoxManage clonemedium disk ... --format RAW]
+image: /vm/parrot-vm.qcow2
+file format: qcow2
+virtual size: 8 GiB (8589934592 bytes)
+disk size: 1.72 GiB
+Snapshot list:
+ID        TAG               VM SIZE                DATE     VM CLOCK     ICOUNT
+1         baseline-clean    501 MiB 2026-11-03 19:22:59 00:06:18.221           
+2         ir-pre-containment  556 MiB 2026-11-03 19:31:26 00:14:44.476           
+3         ir-contained      596 MiB 2026-11-03 19:35:46 00:18:57.579           
+Format specific information:
+    compat: 1.1
+    compression type: zlib
+    lazy refcounts: false
+    refcount bits: 16
+    corrupt: false
+    extended l2: false
+export start 2026-11-03T19:38:42Z
+export end   2026-11-03T19:38:46Z
+-rw-r--r--  1 Adult  staff  8589934592 Nov  3 14:38 /Users/Adult/ir1-vm-lab/evidence/IR1-2026-002/IR1-2026-002_parrot-vm_seized.raw
+seized sha256 fa80be62ad1c05688c43f665c72e49be438ab46bb7232bb19a5ba7a01e0b7cbb  IR1-2026-002_parrot-vm_seized.raw
+[2026-11-03T19:39:04Z] >>> disk_image
+
+# 4b image with dc3dd on the Parrot workstation; source attached READ-ONLY (/seized is a :ro mount = write blocker)
+touch: cannot touch '/seized/x': Read-only file system
+
+dc3dd 7.2.646 started at 2026-11-03 19:39:04 +0000
+compiled options:
+command line: dc3dd if=/seized/IR1-2026-002_parrot-vm_seized.raw of=/evid/IR1-2026-002/IR1-2026-002_vda.dd hash=sha256 log=/ir/task4_evidence_management/evidence/disk/dc3dd_acquisition.log
+sector size: 512 bytes (assumed)
+  8589934592 bytes ( 8 G ) copied ( 100% ), 18.1087 s, 452 M/s
+
+input results for file `/seized/IR1-2026-002_parrot-vm_seized.raw':
+   16777216 sectors in
+   fa80be62ad1c05688c43f665c72e49be438ab46bb7232bb19a5ba7a01e0b7cbb (sha256)
+
+output results for file `/evid/IR1-2026-002/IR1-2026-002_vda.dd':
+   16777216 sectors out
+
+dc3dd completed at 2026-11-03 19:39:22 +0000
+
+$ sha256sum IR1-2026-002_vda.dd   (verify the image against dc3dd's input hash)
+fa80be62ad1c05688c43f665c72e49be438ab46bb7232bb19a5ba7a01e0b7cbb  /evid/IR1-2026-002/IR1-2026-002_vda.dd
+[2026-11-03T19:39:39Z] >>> disk_examine
+
+# 4c examine the image with The Sleuth Kit
+$ mmls /evid/IR1-2026-002/IR1-2026-002_vda.dd
+GUID Partition Table (EFI)
+Offset Sector: 0
+Units are in 512-byte sectors
+
+      Slot      Start        End          Length       Description
+000:  Meta      0000000000   0000000000   0000000001   Safety Table
+001:  -------   0000000000   0000002047   0000002048   Unallocated
+002:  Meta      0000000001   0000000001   0000000001   GPT Header
+003:  Meta      0000000002   0000000033   0000000032   Partition Table
+004:  013       0000002048   0000008191   0000006144   
+005:  014       0000008192   0000262143   0000253952   
+006:  000       0000262144   0016777182   0016515039   
+007:  -------   0016777183   0016777215   0000000033   Unallocated
+# root file system starts at sector 262144
+$ fsstat -o 262144 /evid/IR1-2026-002/IR1-2026-002_vda.dd | head
+File System Type: Ext4
+Volume Name: 
+Volume ID: 6110e0769bc0698a5746e914550aab0e
+Last Written at: 2026-10-26 04:46:07 (UTC)
+Last Checked at: 2026-10-26 04:42:26 (UTC)
+Last Mounted at: 2026-11-03 19:16:45 (UTC)
+Compat Features: Journal, Ext Attributes, Resize Inode, Dir Index
+Journal ID: 00
+Journal Inode: 8
+$ fls -r -p -o 262144 /evid/IR1-2026-002/IR1-2026-002_vda.dd | grep incident paths
+d/d 29039:	home/test.nurse
+r/r 31393:	home/test.nurse/.bashrc
+r/r 31397:	home/test.nurse/.profile
+r/r 31403:	home/test.nurse/.bash_logout
+d/d 31426:	home/test.nurse/.ssh
+d/d 32023:	home/test.nurse/.cache
+d/d 32024:	home/test.nurse/.cache/.sync
+r/r 32025:	home/test.nurse/.cache/.sync/pt1003.txt
+r/r 32027:	home/test.nurse/.cache/.sync/syncd.py
+r/r 18574:	var/lib/dpkg/info/iptables.prerm
+r/r 18572:	var/lib/dpkg/info/iptables.md5sums
+r/r 18573:	var/lib/dpkg/info/iptables.postinst
+r/r 18776:	var/lib/dpkg/info/iptables.list
+r/r 31406:	var/spool/cron/crontabs/test.nurse
+r/r 32013:	etc/ssh/sshd_config.d/00-ir-containment.conf
+r/r 18713:	usr/share/man/man8/iptables.8.gz
+r/r 18703:	usr/share/iptables/iptables.xslt
+r/r 32028:	root/iptables.pre-containment
+r/r 32030:	root/iptables.containment
+d/d 31437:	root/ir-quarantine
+r/r 31441:	root/ir-quarantine/test.nurse.authorized_keys
+r/r 31464:	root/ir-quarantine/test.billing.authorized_keys
+
+# recover the planted files from the image and compare with the Task 3 live copies
+/home/test.nurse/.cache/.sync/syncd.py inode=32027 image=9f3dbfe2b4d8cf2200bd95b6d08a2cab4336d74b2bb15d3adc02369b5cfe3477 task3=9f3dbfe2b4d8cf2200bd95b6d08a2cab4336d74b2bb15d3adc02369b5cfe3477 MATCH
+/home/test.nurse/.cache/.sync/pt1003.txt inode=32025 image=2dfb56c223ff1e45805fa5f6e4b4b81035eb2e974b93fa623cac6ae4a51b023a task3=2dfb56c223ff1e45805fa5f6e4b4b81035eb2e974b93fa623cac6ae4a51b023a MATCH
+/var/spool/cron/crontabs/test.nurse inode=31406 image=0d03cd1634170a3e0411b964f84f6ae37895290cf7def0aa1601b54ba52f4d4b task3=0d03cd1634170a3e0411b964f84f6ae37895290cf7def0aa1601b54ba52f4d4b MATCH
+$ istat -o 262144 /evid/IR1-2026-002/IR1-2026-002_vda.dd 32027   (syncd.py)
+inode: 32027
+Allocated
+uid / gid: 1003 / 1006
+mode: rrwx------
+size: 827
+Accessed:	2026-11-03 19:31:09.413688225 (UTC)
+File Modified:	2026-11-03 19:31:09.381687249 (UTC)
+Inode Modified:	2026-11-03 19:31:09.409688103 (UTC)
+File Created:	2026-11-03 19:31:09.357686517 (UTC)
+
+# logs as they were at snapshot ir-contained (after C7), recovered from the image for the timeline
+/var/log/auth.log inode=31833 -> disk/image_auth.log (     531 lines)
+/var/log/ehr-audit.log inode=32019 -> disk/image_ehr-audit.log (       2 lines)
+
+# body file of the incident-relevant directories for the timeline (mactime, UTC)
+33
+66

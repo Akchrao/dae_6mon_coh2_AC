@@ -1,0 +1,18 @@
+inode: 32027
+Allocated
+Group: 3
+Generation Id: 3498220599
+uid / gid: 1003 / 1006
+mode: rrwx------
+Flags: Extents, 
+size: 827
+num of links: 1
+
+Inode Times:
+Accessed:	2026-11-03 19:31:09.413688225 (UTC)
+File Modified:	2026-11-03 19:31:09.381687249 (UTC)
+Inode Modified:	2026-11-03 19:31:09.409688103 (UTC)
+File Created:	2026-11-03 19:31:09.357686517 (UTC)
+
+Direct Blocks:
+869632 

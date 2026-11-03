@@ -1,0 +1,7 @@
+id	path	expected	actual	result
+V-P1	macOS host -> parrot-vm SSH (user network)	BLOCKED	BLOCKED	PASS
+V-P2	clinical LAN -> parrot-vm SSH	BLOCKED	BLOCKED	PASS
+V-P3	clinical LAN -> EHR portal :8080 (service restored)	REACHABLE	REACHABLE	PASS
+V-P4	admin network 10.78.50.0/24 -> parrot-vm SSH	REACHABLE	REACHABLE	PASS
+V-P5	quarantine path :2222 closed	BLOCKED	BLOCKED	PASS
+V-P6	parrot-vm -> IOC drop site	BLOCKED	BLOCKED	PASS

@@ -1,0 +1,50 @@
+[2026-11-03T19:20:38Z] >>> wazuh_config
+# decoders, CDB lists (JML register), the 3 custom alert rules, macOS inputs
+can_ir1_core_rules.xml
+local_rules.xml
+4
+wazuh-logcollector is running...
+wazuh-remoted is running...
+wazuh-analysisd is running...
+wazuh-authd is running...
+
+$ cat etc/lists/jml-leavers etc/lists/jml-movers etc/lists/rbac-no-root
+== jml-leavers
+test.billing:TERM-2026-0301
+== jml-movers
+test.nurse:billing
+== rbac-no-root
+test.clinician:clinician
+test.nurse:billing
+test.billing:billing
+
+# each custom rule tested with wazuh-logtest: a line that must fire it, and a near-miss that must NOT (expected '!id')
+100210	leaver test.billing denied by sshd	100210	100210	10	PASS	2026-11-03T05:00:00.000000+00:00 parrot-vm sshd[1200]: User test.billing from 10.78.10.1 not allowed because a group is listed in DenyGroups
+100210	near-miss: non-leaver denied	!100210	5718	5	PASS	2026-11-03T05:00:00.000000+00:00 parrot-vm sshd[1201]: User guest from 10.78.10.1 not allowed because a group is listed in DenyGroups
+100221	mover test.nurse views PT-1003	100221	100221	12	PASS	2026-11-03T05:00:00.000000+00:00 parrot-vm ehr-audit: user=test.nurse action=VIEW patient=PT-1003 decision=ALLOW basis=group:clinical
+100221	near-miss: clinician views PT-1001	!100221	100220	3	PASS	2026-11-03T05:00:00.000000+00:00 parrot-vm ehr-audit: user=test.clinician action=VIEW patient=PT-1001 decision=ALLOW basis=group:clinical
+100231	test.clinician runs a command as root	100231	100231	12	PASS	2026-11-03T05:00:00.000000+00:00 parrot-vm sudo: test.clinician : TTY=pts/0 ; PWD=/home/test.clinician ; USER=root ; COMMAND=/usr/bin/id
+100231	near-miss: it_admin (entitled) uses sudo	!100231	5403	4	PASS	2026-11-03T05:00:00.000000+00:00 parrot-vm sudo:  it_admin : TTY=pts/0 ; PWD=/home/it_admin ; USER=root ; COMMAND=/usr/bin/id
+rule tests: 6 PASS, 0 FAIL
+
+$ wazuh-logtest -v (full trace for rule 100221)
+**Phase 1: Completed pre-decoding.
+**Phase 2: Completed decoding.
+	dstuser: 'test.nurse'
+	ehr_basis: 'group:clinical'
+	ehr_decision: 'ALLOW'
+	ehr_patient: 'PT-1003'
+		*Rule 1 matched
+	Trying rule: 89606 - Attempt to connect to screen sharing with username $(dstuser) from $(ip_address) failed.
+	Trying rule: 89607 - Attempt to connect to screen sharing with username $(dstuser) from $(ip_address) succeeded.
+	Trying rule: 100220 - EHR audit: $(dstuser) $(action) $(ehr_patient) - $(ehr_decision) via $(ehr_basis)
+		*Rule 100220 matched
+	Trying rule: 100221 - ePHI viewed by mover $(dstuser) (now Billing) through stale clinical group - record $(ehr_patient)
+		*Rule 100221 matched
+**Phase 3: Completed filtering (rules).
+	id: '100221'
+	level: '12'
+	description: 'ePHI viewed by mover test.nurse (now Billing) through stale clinical group - record PT-1003'
+	groups: '['care_access_navigator', 'ir1', 'core', 'ehr_access', 'privilege_creep']'
+	mitre.id: '['T1078']'
+**Alert to be generated.

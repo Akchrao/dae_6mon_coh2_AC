@@ -1,0 +1,9 @@
+# "ir-hypervisor": stand-in for the VirtualBox host. Runs the parrot-vm guest under QEMU
+# (x86_64, TCG emulation - no admin rights or kernel extensions needed on the Mac).
+FROM debian:12-slim
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
+      qemu-system-x86 qemu-utils cloud-image-utils socat python3 openssh-client \
+      netcat-openbsd iproute2 iputils-ping curl ca-certificates >/dev/null && \
+    rm -rf /var/lib/apt/lists/*
+CMD ["sleep", "infinity"]

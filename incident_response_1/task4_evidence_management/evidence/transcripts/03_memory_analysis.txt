@@ -1,0 +1,39 @@
+[2026-11-03T19:37:38Z] >>> memory_analysis
+# E01 RAM image from Task 3 (QMP dump-guest-memory). Hash before analysis:
+7010d346a57e2818d14b61d8ba9dd780258f73cf3c3f7bc77a4c5789d4fe9a0c  /evid/IR1-2026-002/IR1-2026-002_parrot-vm.mem.elf
+$ vol banners.Banners
+  -> memory/vol_banners.txt (6 lines)
+$ vol linux.pslist.PsList
+  -> memory/vol_pslist.txt (92 lines)
+$ vol linux.pstree.PsTree
+  -> memory/vol_pstree.txt (92 lines)
+$ vol linux.psaux.PsAux
+  -> memory/vol_psaux.txt (92 lines)
+# uploader PID in memory: 1534
+$ vol linux.envars.Envars --pid 1534
+  -> memory/vol_envars_uploader.txt (18 lines)
+$ vol linux.lsof.Lsof --pid 1534
+  -> memory/vol_lsof_uploader.txt (6 lines)
+$ vol linux.sockstat.Sockstat
+  -> memory/vol_sockstat.txt (200 lines)
+$ vol linux.proc.Maps --pid 1534
+  -> memory/vol_maps_uploader.txt (87 lines)
+$ vol linux.bash.Bash
+  -> memory/vol_bash.txt (2 lines)
+$ vol linux.lsmod.Lsmod
+  -> memory/vol_lsmod.txt (54 lines)
+$ vol linux.check_modules.Check_modules
+  -> memory/vol_check_modules.txt (2 lines)
+$ vol linux.check_syscall.Check_syscall
+  -> memory/vol_check_syscall.txt (432 lines)
+$ vol linux.malfind.Malfind
+  -> memory/vol_malfind.txt (11 lines)
+$ vol linux.kmsg.Kmsg
+  -> memory/vol_kmsg.txt (603 lines)
+
+# dump the uploader's memory regions and search them for the patient record
+regions dumped: 85
+region holding MRN SYN-0003: pid.1534.vma.0x7f0123f2c000-0x7f012418e000.dmp
+SYNTHETIC RECORD PT-1003 
+# E01 hash after analysis (analysis must not change the image):
+7010d346a57e2818d14b61d8ba9dd780258f73cf3c3f7bc77a4c5789d4fe9a0c  /evid/IR1-2026-002/IR1-2026-002_parrot-vm.mem.elf

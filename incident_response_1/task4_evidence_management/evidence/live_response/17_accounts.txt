@@ -1,0 +1,20 @@
+root:x:0:0:root:/root:/bin/bash
+nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin
+ir-analyst:x:1000:1000:Incident Response analyst (forensic access):/home/ir-analyst:/bin/bash
+it_admin:x:1001:1004:IT Administrator (lab):/home/it_admin:/bin/bash
+test.clinician:x:1002:1005:Sathya Hasi (Physician):/home/test.clinician:/bin/bash
+test.nurse:x:1003:1006:Tara Jones (Billing Specialist):/home/test.nurse:/bin/bash
+test.billing:x:1004:1007:Jeevan Smith (Billing Specialist):/home/test.billing:/bin/bash
+
+sudo:x:27:it_admin
+clinical:x:1001:test.clinician
+billing:x:1002:test.nurse,test.billing
+disabled-users:x:1003:test.billing,test.nurse
+test.billing:x:1007:
+
+nobody L 2026-10-26 0 99999 7 -1
+ir-analyst L 2026-11-02 0 99999 7 -1
+it_admin L 2026-11-03 0 99999 7 -1
+test.clinician P 2026-11-03 0 99999 7 -1
+test.nurse L 2026-11-03 0 99999 7 -1
+test.billing L 2026-11-03 0 99999 7 -1

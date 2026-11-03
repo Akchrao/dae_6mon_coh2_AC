@@ -1,0 +1,32 @@
+[2026-11-03T19:21:51Z] >>> log_collection
+# Parrot OS: a tagged test line written on parrot-vm must arrive at the manager through the agent
+2026-11-03T19:21:51.596419+00:00 parrot-vm ir1-test: ir1-collection-test-1793733711
+$ grep ir1-collection-test-1793733711 archives.json
+received: 2026-11-03T19:21:52.838+0000 agent=parrot-vm(001) location=/var/log/ir1-test.log
+
+$ agent log inputs (agent side)
+Analyzing file: '/var/log/audit/audit.log'.
+Analyzing file: '/var/log/auth.log'.
+Analyzing file: '/var/log/ehr-audit.log'.
+Analyzing file: '/var/log/ir1-test.log'.
+Analyzing file: '/var/log/kern.log'.
+
+# macOS host DAEDMAC1009: /var/log/install.log (world-readable) normalised to ISO 8601. Collection is proven here
+# with the newest 500 lines; Task 2 ships the full file once its macOS rules are loaded.
+$ sw_vers; hostname -s; date +%z
+ProductName:		macOS
+ProductVersion:		26.3.1
+BuildVersion:		25D2128
+DAEDMAC1009
+-0500
+$ log show --last 5m --predicate 'process == "sshd"'   (unified log needs admin on this managed Mac)
+log: Could not open local log store: Operation not permitted
+install_sample500.log -> /var/ossec/logs/macos/install.log  sent=500  received=500  logcollector restarts=0  COMPLETE
+
+$ events received per source (archives.json)
+    500 "location":"/var/ossec/logs/macos/install.log"
+      6 "location":"df -P"
+      2 "location":"wazuh-agent"
+      1 "location":"wazuh-remoted"
+      1 "location":"wazuh-monitord"
+      1 "location":"/var/log/ir1-test.log"

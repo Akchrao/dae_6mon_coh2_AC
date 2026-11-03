@@ -1,0 +1,13 @@
+1a95a304b651f085c5b6ad3528ad632c07b0bb62f4b9fa26d79d469d8615ea10  /etc/group
+04e2ec6f000140c35d6a208e0fdfa70997e672bb0169c7844a53bcc43227fcae  /etc/passwd
+dae6b206db1ff51b1d99fba0e68e991631b9a53333fc5bcacf2d015aac08a78b  /etc/sudoers.d/it_admin
+d6a6f3674eaa958e3decd730d978fec20467d06851255fe9b203f9c2667290d9  /home/test.billing/.ssh/authorized_keys
+2dfb56c223ff1e45805fa5f6e4b4b81035eb2e974b93fa623cac6ae4a51b023a  /home/test.nurse/.cache/.sync/pt1003.txt
+9f3dbfe2b4d8cf2200bd95b6d08a2cab4336d74b2bb15d3adc02369b5cfe3477  /home/test.nurse/.cache/.sync/syncd.py
+d6a6f3674eaa958e3decd730d978fec20467d06851255fe9b203f9c2667290d9  /home/test.nurse/.ssh/authorized_keys
+99bcfc3d7ee9b259b0b219c443c4cb5f3ab1c9ec8edd78785fefb674c6dd8308  /var/log/audit/audit.log
+a7e0ce6bbeefa13768c832914de19c89c9d2e75c902b97e3d7850379e85d5a94  /var/log/auth.log
+21f89e60217f451af9a8cb6449ce477043ddb27367dd2de1a1b290c511199e09  /var/log/ehr-audit.log
+4d4950a380b23a299da1ca785e5743385ecfe1ae323d059f8204ebcf5c0b4a28  /var/log/kern.log
+3967373a2c126cf38c28c6642e4663902dfd722371dc752c2e23a36b00a5cc43  /var/ossec/logs/ossec.log
+0d03cd1634170a3e0411b964f84f6ae37895290cf7def0aa1601b54ba52f4d4b  /var/spool/cron/crontabs/test.nurse

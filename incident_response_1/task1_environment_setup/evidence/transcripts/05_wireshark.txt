@@ -1,0 +1,43 @@
+[2026-11-03T19:21:59Z] >>> wireshark
+# saved capture filters for the analyst (Wireshark GUI and tshark read ~/.config/wireshark/cfilters)
+"IR1 SSH sessions" tcp port 22
+"IR1 EHR portal" tcp port 8080 and host 10.0.2.15
+"IR1 Wazuh agent traffic" tcp port 1514 or tcp port 1515
+"IR1 traffic to a suspect host" host 10.78.99.66
+"IR1 outbound, excluding SSH and Wazuh" src host 10.0.2.15 and not port 22 and not port 1514 and not port 1515
+"IR1 DNS" udp port 53
+"IR1 TCP SYN only (new connections)" tcp[tcpflags] & (tcp-syn|tcp-ack) == tcp-syn
+
+$ tshark -v | head -1; dumpcap -D
+TShark (Wireshark) 4.0.17 (Git v4.0.17 packaged as 4.0.17-0+deb12u3).
+1. enp0s1
+2. any
+3. lo (Loopback)
+4. bluetooth-monitor
+5. nflog
+6. nfqueue
+7. dbus-system
+8. dbus-session
+9. enp0s2
+
+# every saved filter compiled to BPF on the clinical interface (dumpcap -d); a syntax error would fail here
+OK  20 BPF instructions  : tcp port 22
+OK  18 BPF instructions  : tcp port 8080 and host 10.0.2.15
+OK  23 BPF instructions  : tcp port 1514 or tcp port 1515
+OK  14 BPF instructions  : host 10.78.99.66
+OK  25 BPF instructions  : src host 10.0.2.15 and not port 22 and not port 1514 and not port 1515
+OK  20 BPF instructions  : udp port 53
+OK  12 BPF instructions  : tcp[tcpflags] & (tcp-syn|tcp-ack) == tcp-syn
+
+# live capture with a saved filter: 20 s of Wazuh agent traffic
+================================================================================
+TCP Conversations
+Filter:<No Filter>
+                                                           |       <-      | |       ->      | |     Total     |    Relative    |   Duration   |
+                                                           | Frames  Bytes | | Frames  Bytes | | Frames  Bytes |      Start     |              |
+10.0.2.15:50688            <-> 10.78.50.20:1514                 4 305 bytes       4 1202 bytes       8 1507 bytes     0.000000000         8.0737
+================================================================================
+Number of packets:   8
+acquired /dev/shm/t1_agent.pcapng -> /ir/task1_environment_setup/evidence/wireshark/t1_agent_traffic.pcapng  bytes=2176
+  sha256 source(parrot-vm)=8187ac9205885bb6957e8d9d67b39d0217bc6c4b0762c7f9a2650991ed1df34a
+  sha256 copy(ir-forensics)=8187ac9205885bb6957e8d9d67b39d0217bc6c4b0762c7f9a2650991ed1df34a  MATCH

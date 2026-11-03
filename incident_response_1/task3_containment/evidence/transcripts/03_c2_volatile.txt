@@ -1,0 +1,20 @@
+[2026-11-03T19:31:28Z] >>> c2_volatile
+# C2a packet capture on the host itself (tcpdump, saved filter 'IR1 traffic to a suspect host'), 25 s
+60 packets received by filter
+0 packets dropped by kernel
+acquired /dev/shm/IR1-2026-002_live.pcap -> /ir/task3_containment/evidence/network/IR1-2026-002_live_tcpdump.pcap  bytes=6379
+  sha256 source(parrot-vm)=ef0c2bf5c2d31d9384491f33804f9c04730e8fb4c73966b32cabce62e673666f
+  sha256 copy(ir-forensics)=ef0c2bf5c2d31d9384491f33804f9c04730e8fb4c73966b32cabce62e673666f  MATCH
+
+# C2b system state, processes, connections, persistence - over the guest agent, straight to the case folder
+wrote volatile/system_state.txt (      15 lines)
+wrote volatile/processes.txt (      93 lines)
+wrote volatile/network_connections.txt (      46 lines)
+wrote volatile/suspect_process.txt (      24 lines)
+wrote volatile/persistence_services.txt (      39 lines)
+
+    PID    PPID USER                      STARTED     ELAPSED STAT CMD
+    318       1 systemd+ Tue Nov  3 19:16:55 2026       15:00 Ssl  /lib/systemd/systemd-timesyncd
+   1534       1 test.nu+ Tue Nov  3 19:31:09 2026       00:45 Ss   python3 /home/test.nurse/.cache/.sync/syncd.py
+PID=1534
+SSH_CONNECTION=10.78.10.1 62768 10.0.2.15 22

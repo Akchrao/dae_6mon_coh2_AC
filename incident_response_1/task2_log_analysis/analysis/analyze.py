@@ -2,19 +2,20 @@
 """
 analyze.py - Care Access Navigator IR 1, Task 2 (log analysis over real Wazuh output)
 ====================================================================================
-Reads the evidence exported by lab/run_lab.sh and writes the analysis tables used in
+Reads the evidence exported by run_task2.sh (analysis phase) and writes the analysis tables used in
 the report (evidence/analysis/*.csv, *.json):
 
   alerts_by_rule.csv      every Wazuh alert grouped by source host, rule and level
   macos_findings.json     install.log findings (patch status, power cycles, installs)
-  correlation_inc_a.csv   per login attempt: macOS client <-> pcap <-> sshd <-> Wazuh
-  timeline_inc_a.csv      INC-A event timeline (JML record + both hosts + Wazuh), UTC
+  correlation_ir1_2026_001.csv   per login attempt: macOS client <-> pcap <-> sshd <-> Wazuh
+  timeline_ir1_2026_001.csv      IR1-2026-001 event timeline (JML record + both hosts + Wazuh), UTC
   timeline_all.csv        all security-relevant events from both hosts, UTC
   detection_latency.csv   log time -> Wazuh alert time for the Parrot alerts
   incidents.csv           the three incidents with their severity-matrix scoring
 
 Standard library only:
   python3 analyze.py --evidence ../evidence --jml ../../../capstone_next_steps/jml-evidence/JML-LOG.csv
+(Parrot alerts come from the Wazuh agent "parrot-vm"; macOS alerts from the shipped files.)
 """
 import argparse, collections, csv, datetime as dt, json, os, re, statistics
 
@@ -44,8 +45,8 @@ def source(alert):
     loc = alert.get("location", "")
     if "macos" in loc:
         return "macOS DAEDMAC1009"
-    if loc.startswith("10.77.0.10"):
-        return "Parrot parrot-sim"
+    if alert.get("agent", {}).get("name") == "parrot-vm":
+        return "Parrot parrot-vm"
     return "Wazuh manager"
 
 
@@ -57,7 +58,17 @@ def main():
     EV = a.evidence
     out = os.path.join(EV, "analysis"); os.makedirs(out, exist_ok=True)
 
-    alerts = [json.loads(l) for l in open(os.path.join(EV, "wazuh", "alerts.json")) if l.strip()]
+    alerts, seen = [], set()
+    for l in open(os.path.join(EV, "wazuh", "alerts.json")):
+        if not l.strip():
+            continue
+        al = json.loads(l)
+        if "macos" in al.get("location", ""):                     # a logcollector resend can duplicate shipped lines
+            k = (al["rule"]["id"], al.get("full_log"))
+            if k in seen:
+                continue
+            seen.add(k)
+        alerts.append(al)
     for al in alerts:
         al["_src"] = source(al); al["_t"] = log_time(al); al["_at"] = ts(al["timestamp"])
     alerts.sort(key=lambda x: x["_t"])
@@ -103,7 +114,7 @@ def main():
         "alerts_from_install_log": len(mac),
     }
 
-    # ---- 3. INC-A correlation (leaver login attempts) -----------------------------------
+    # ---- 3. IR1-2026-001 correlation (leaver login attempts) -----------------------------------
     # macOS client sessions from ssh_client.log
     sessions = collections.OrderedDict()
     for line in open(os.path.join(EV, "macos", "ssh_client.log")):
@@ -128,7 +139,7 @@ def main():
     # sshd connections
     sshd = {}
     for line in open(os.path.join(EV, "parrot", "auth.log")):
-        m = re.match(r"(\S+) parrot-sim sshd\[(\d+)\]: (.*)", line.rstrip())
+        m = re.match(r"(\S+) parrot-vm sshd\[(\d+)\]: (.*)", line.rstrip())
         if not m:
             continue
         t, pid, msg = ts(m[1]), m[2], m[3]
@@ -148,6 +159,8 @@ def main():
         deny = next(m for (t, m) in c["events"] if "not allowed" in m)
         deny_t = next(t for (t, m) in c["events"] if "not allowed" in m)
         w = min(wz, key=lambda x: abs((x["_t"] - deny_t).total_seconds()))
+        if not wz_mac:
+            raise SystemExit("no macOS SSH-client alerts (rule 100251) - was ssh_client.log ingested? check the ship_file line in transcripts/04")
         wm = min(wz_mac, key=lambda x: abs((x["_t"] - s["start"]).total_seconds()))
         corr.append({
             "attempt": len(corr) + 1,
@@ -164,10 +177,10 @@ def main():
             "delta_pcap_to_sshd_s": round((c["t"] - b["t"]).total_seconds(), 3),
             "detect_latency_s": round((w["_at"] - deny_t).total_seconds(), 3),
         })
-    with open(os.path.join(out, "correlation_inc_a.csv"), "w", newline="") as fh:
+    with open(os.path.join(out, "correlation_ir1_2026_001.csv"), "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=list(corr[0].keys())); w.writeheader(); w.writerows(corr)
 
-    # ---- 4. INC-A timeline ---------------------------------------------------------------
+    # ---- 4. IR1-2026-001 timeline ---------------------------------------------------------------
     jml = {r["ticket"]: r for r in csv.DictReader(open(a.jml))}
     term = jml["TERM-2026-0301"]
     # (datetime, display time, host, source, event); macOS ssh lines have 1-second resolution
@@ -186,17 +199,17 @@ def main():
         sec = lambda x: ts(x)
         tl += [
             (sec(c["mac_time_utc"]), c["mac_time_utc"], "macOS", f"ssh_client.log ssh[{c['mac_ssh_pid']}]",
-             f"Attempt {n}: Mac user '{c['mac_user_from_key_path']}' starts ssh as test.billing to 127.0.0.1:2222 ({c['client_version']})"),
+             f"Attempt {n}: Mac user '{c['mac_user_from_key_path']}' starts ssh as test.billing to 127.0.0.1:2223 ({c['client_version']})"),
             (sec(c["pcap_time_utc"]), c["pcap_time_utc"], "Network", "ssh_sessions.pcapng", f"Attempt {n}: client banner {c['pcap_client_banner']} from {c['pcap_src']}"),
-            (sec(c["sshd_time_utc"]), c["sshd_time_utc"], "Parrot", f"auth.log sshd[{c['sshd_pid']}]", f"Attempt {n}: Connection from {c['sshd_src']} (Docker gateway for 127.0.0.1:2222)"),
+            (sec(c["sshd_time_utc"]), c["sshd_time_utc"], "Parrot", f"auth.log sshd[{c['sshd_pid']}]", f"Attempt {n}: Connection from {c['sshd_src']} (Docker gateway for 127.0.0.1:2223)"),
             (sec(c["sshd_deny_utc"]), c["sshd_deny_utc"], "Parrot", f"auth.log sshd[{c['sshd_pid']}]", f"Attempt {n}: {c['sshd_decision']}"),
-            (sec(c["wazuh_parrot_alert_utc"]) + dt.timedelta(microseconds=1), c["wazuh_parrot_alert_utc"], "Wazuh", f"rule {c['wazuh_parrot_rule']}", "Alert raised from the live Parrot syslog stream"),
+            (sec(c["wazuh_parrot_alert_utc"]) + dt.timedelta(microseconds=1), c["wazuh_parrot_alert_utc"], "Wazuh", f"rule {c['wazuh_parrot_rule']}", "Alert raised from the Wazuh agent on parrot-vm"),
             (sec(c["mac_outcome_utc"]) + dt.timedelta(milliseconds=999), c["mac_outcome_utc"], "macOS", f"ssh_client.log ssh[{c['mac_ssh_pid']}]", f"Attempt {n}: client receives {c['mac_outcome']}"),
             (sec(c["wazuh_mac_alert_utc"]), c["wazuh_mac_alert_utc"], "Wazuh", f"rule {c['wazuh_mac_rule']}", f"Attempt {n}: macOS-side alert when the host log was shipped"),
         ]
     tl.sort(key=lambda r: r[0])
     tl = [r[1:] for r in tl]
-    with open(os.path.join(out, "timeline_inc_a.csv"), "w", newline="") as fh:
+    with open(os.path.join(out, "timeline_ir1_2026_001.csv"), "w", newline="") as fh:
         w = csv.writer(fh); w.writerow(["time_utc", "host", "source", "event"]); w.writerows(tl)
 
     # ---- 5. combined timeline (alerts >= L5 from both hosts during the scenario) ------------
@@ -224,7 +237,7 @@ def main():
     with open(os.path.join(out, "macos_findings.json"), "w") as fh:
         json.dump(mf, fh, indent=2)
 
-    keyevents = {r: first(r) for r in ("100220", "100230", "100231", "100221", "100222", "100210", "100211", "100244")}
+    keyevents = {r: first(r) for r in ("100220", "100230", "100231", "100210", "100211", "100221", "100244")}
     with open(os.path.join(out, "key_events.json"), "w") as fh:
         json.dump({"first_alert_log_time": keyevents,
                    "latency_s": {"min": min(lat), "median": statistics.median(lat), "max": max(lat)},
@@ -236,7 +249,7 @@ def main():
     print(f"alerts loaded        : {len(alerts)}  " + ", ".join(f"{k}={v}" for k, v in collections.Counter(al['_src'] for al in alerts).items()))
     print(f"alerts level >= 10   : {sum(1 for al in alerts if al['rule']['level'] >= 10)}")
     print(f"macOS install.log    : {raw_lines} lines, {len(mac)} alerts, updates offered {dict(offers)}")
-    print(f"INC-A correlated     : {len(corr)} attempts")
+    print(f"IR1-2026-001 correlated     : {len(corr)} attempts")
     for c in corr:
         print(f"  attempt {c['attempt']}: mac {c['mac_time_utc']} pid {c['mac_ssh_pid']} -> pcap {c['pcap_src']} "
               f"-> sshd[{c['sshd_pid']}] (+{c['delta_mac_to_sshd_s']}s) -> Wazuh {c['wazuh_parrot_rule']} in {c['detect_latency_s']}s")

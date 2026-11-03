@@ -1,0 +1,69 @@
+[2026-11-03T19:20:56Z] >>> provision
+$ guest-exec provision_vm.sh  (JML people from JML-LOG.csv, synthetic EHR, EHR portal, auditd rules)
+Cannot call openvswitch: ovsdb-server.service is not running.
+provisioned 2026-11-03T19:21:07Z
+
+$ hostname; head -1 /etc/os-release; uname -r; cat /etc/ir-golden-release
+parrot-vm
+PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"
+6.1.0-54-cloud-amd64
+golden built 2026-11-02T22:03:16Z
+
+$ cat /etc/ir-golden-packages   (Parrot OS IR toolset + Wazuh agent baked into the golden image)
+auditd 1:3.0.9-1
+dc3dd 7.2.646-6
+gdb 13.1-3
+lsof 4.95.0-1
+qemu-guest-agent 1:7.2+dfsg-7+deb12u18+b3
+rsyslog 8.2302.0-1+deb12u1
+sleuthkit 4.11.1+dfsg-1+b1
+tcpdump 4.99.3-1
+tshark 4.0.17-0+deb12u3
+wazuh-agent 4.9.2-1
+
+$ id test.clinician
+uid=1002(test.clinician) gid=1005(test.clinician) groups=1005(test.clinician),1001(clinical)
+$ id test.nurse
+uid=1003(test.nurse) gid=1006(test.nurse) groups=1006(test.nurse),1001(clinical),1002(billing)
+$ id test.billing
+uid=1004(test.billing) gid=1007(test.billing) groups=1007(test.billing),1002(billing),1003(disabled-users)
+$ id it_admin
+uid=1001(it_admin) gid=1004(it_admin) groups=1004(it_admin),27(sudo)
+$ id ir-analyst
+uid=1000(ir-analyst) gid=1000(ir-analyst) groups=1000(ir-analyst)
+
+$ ip -br addr; ip route
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+enp0s1           UP             10.0.2.15/24 metric 100 fec0::5054:ff:fe0a:10/64 fe80::5054:ff:fe0a:10/64 
+enp0s2           DOWN           
+default via 10.0.2.2 dev enp0s1 proto dhcp src 10.0.2.15 metric 100 
+10.0.2.0/24 dev enp0s1 proto kernel scope link src 10.0.2.15 metric 100 
+10.0.2.2 dev enp0s1 proto dhcp scope link src 10.0.2.15 metric 100 
+10.0.2.3 dev enp0s1 proto dhcp scope link src 10.0.2.15 metric 100 
+
+# Wazuh agent deployment: agent config -> /var/ossec/etc/ossec.conf, enable, start (auto-enrollment on 1515/tcp)
+active
+WAZUH_VERSION="v4.9.2"
+WAZUH_REVISION="40921"
+WAZUH_TYPE="agent"
+
+$ agent_control -l   (manager side)
+
+Wazuh agent_control. List of available agents:
+   ID: 000, Name: wazuh-manager (server), IP: 127.0.0.1, Active/Local
+   ID: 001, Name: parrot-vm, IP: any, Active
+
+List of agentless devices:
+
+$ agent_control -i 001
+   Agent ID:   001
+   IP address: any
+   Status:     Active
+   Client version:      Wazuh v4.9.2
+   Last keep alive:     1793733704
+
+$ grep -E 'Connected to|enrollment' /var/ossec/logs/ossec.log   (agent side)
+2026/11/03 19:21:17 wazuh-agentd: INFO: Requesting a key from server: 10.78.50.20
+2026/11/03 19:21:17 wazuh-agentd: INFO: Valid key received
+2026/11/03 19:21:38 wazuh-agentd: INFO: (4102): Connected to the server ([10.78.50.20]:1514/tcp).
+2026/11/03 19:21:44 wazuh-agentd: INFO: (4102): Connected to the server ([10.78.50.20]:1514/tcp).

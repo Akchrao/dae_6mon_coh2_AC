@@ -1,0 +1,51 @@
+[2026-11-03T19:16:35Z] >>> lab_build
+# IR1 shared lab build - 2026-11-03T19:16:35Z - host DAEDMAC1009 (macOS 26.3.1, arm64), Docker 29.7.2
+$ docker network create ... (3 segments)
+85f698d2d79493e9c268554d268c7406482e074f8d35d02ba58e04a019453923
+90e5da02ab902ad744fa8c66b92d2c819a41c6211ea297a0647da90c05d6d707
+873393060baa2bf579611b1dc9958fee2e896dac11ea07634d906b292192495b
+
+# Wazuh manager wazuh/wazuh-manager:4.9.2 on the management segment (amd64 image, emulated on Apple silicon)
+875639cd1e836044213af67470cb480abbf60b546d74237b2592da24039551d1
+
+# hypervisor host (VirtualBox host stand-in); the Mac reaches the VM through 127.0.0.1:2223
+1f8281e656feafb2e9f8db40557657046c83ff65b44188969f8640d9599be210
+3656e2e1b0c9fd40f94aab9a3f540f99dcb843b87ee3bf72bbf1f32f20dd4c1a
+402fa029f465b20b97ad0fe41d1ceb242962410e7ea98064dc08152080795a6c
+a2d7606ee85e2ac392757165e493e588b638221a29317571c4cd3e760a06f7a2
+
+$ docker network inspect (segments and members)
+ir-clinical subnet=10.78.10.0/24 internal=false
+    ir-hv 10.78.10.5/24
+    nurse-ws 10.78.10.20/24
+ir-internet subnet=10.78.99.0/24 internal=false
+    ir-hv 10.78.99.5/24
+    exfil-sink 10.78.99.66/24
+ir-mgmt subnet=10.78.50.0/24 internal=true
+    ir-hv 10.78.50.2/24
+    wazuh-manager 10.78.50.20/24
+    ir-forensics 10.78.50.5/24
+
+# golden image (lab/build_golden.sh) and a throw-away overlay for this run
+$ cat parrot-vm-golden.sha256
+767741ed83492b708f1ab0dd5a56ef1f2c2eb36663dd05164f096e4e7fb2a593  /Users/Adult/ir1-vm-lab/golden/parrot-vm-golden.qcow2
+
+$ qemu-system-x86_64 -name parrot-vm -machine q35 -accel tcg,thread=multi -cpu max,la57=off -smp 2 -m 1024 -display none -vga none -monitor none -serial file:/vm/console.log -drive file=/vm/parrot-vm.qcow2,if=virtio,id=disk0 -netdev user,id=n0,net=10.0.2.0/24,hostfwd=tcp::22-:22,hostfwd=tcp::8080-:8080 -device virtio-net-pci,netdev=n0,id=nic0,mac=52:54:00:0a:00:10 -object filter-dump,id=cap0,netdev=n0,file=/vm/nic0-clinical.pcap -netdev 'user,id=q0,net=10.0.3.0/24,restrict=on,hostfwd=tcp:10.78.50.2:2222-:22,guestfwd=tcp:10.0.3.20:1514-cmd:nc 10.78.50.20 1514' -device virtio-net-pci,netdev=q0,id=nic1,mac=52:54:00:0a:00:50 -object filter-dump,id=cap1,netdev=q0,file=/vm/nic1-quarantine.pcap -device virtio-serial -chardev socket,path=/vm/qga.sock,server=on,wait=off,id=qga0 -device virtserialport,chardev=qga0,name=org.qemu.guest_agent.0 -qmp unix:/vm/qmp.sock,server=on,wait=off
+
+# adapter 2 (quarantine) starts with the cable disconnected   [VBoxManage ... setlinkstate2 off]
+{"return": {}}
+guest agent: up
+nic0: index=0,type=nic,model=virtio-net-pci,macaddr=52:54:00:0a:00:10
+ \ n0: index=0,type=user,net=10.0.2.0,restrict=off
+filters:
+  - cap0: type=filter-dump,file=/vm/nic0-clinical.pcap,maxlen=65536,position=tail,status=on,insert=behind,netdev=n0,queue=all
+nic1: index=0,type=nic,model=virtio-net-pci,macaddr=52:54:00:0a:00:50
+ \ q0: index=0,type=user,net=10.0.3.0,restrict=on
+filters:
+  - cap1: type=filter-dump,file=/vm/nic1-quarantine.pcap,maxlen=65536,position=tail,status=on,insert=behind,netdev=q0,queue=all
+{"return": {"status": "running", "singlestep": false, "running": true}}
+
+# waiting for the Wazuh manager
+WAZUH_VERSION="v4.9.2"
+WAZUH_REVISION="40921"
+WAZUH_TYPE="server"

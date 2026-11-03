@@ -1,0 +1,7 @@
+[2026-11-03T19:31:26Z] >>> c1_snapshot
+# C1 live snapshot of the compromised state (RAM + disk)   [VBoxManage snapshot parrot-vm take ir-pre-containment --live]
+(ok)
+List of snapshots present on all disks:
+ID        TAG               VM SIZE                DATE     VM CLOCK     ICOUNT
+--        baseline-clean    501 MiB 2026-11-03 19:22:59 00:06:18.221           
+--        ir-pre-containment  556 MiB 2026-11-03 19:31:26 00:14:44.476

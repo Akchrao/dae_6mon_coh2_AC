@@ -1,0 +1,15 @@
+== collected 2026-11-03T19:31:55Z by guest-agent
+Tue Nov  3 19:31:55 UTC 2026
+ 19:31:55 up 15 min,  0 user,  load average: 0.18, 0.19, 0.12
+parrot-vm
+Linux parrot-vm 6.1.0-54-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.190-1 (2026-10-16) x86_64 GNU/Linux
+
+== who / w
+ 19:31:55 up 15 min,  0 user,  load average: 0.18, 0.19, 0.12
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+
+== last -n 15
+reboot   system boot  6.1.0-54-cloud-a Tue Nov  3 19:16:42 2026   still running
+reboot   system boot  6.1.0-54-cloud-a Mon Nov  2 22:03:27 2026 - Tue Nov  3 04:19:44 2026  (06:16)
+
+wtmp begins Mon Nov  2 22:03:27 2026

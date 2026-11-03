@@ -1,49 +1,57 @@
 {
-  "install_log_lines": 18914,
+  "install_log_lines": 51823,
   "window_start": "2026-10-13 23:38:35-04",
   "top_processes": [
     [
       "softwareupdated",
-      4642
+      13429
     ],
     [
       "installd",
-      2289
+      2561
     ],
     [
       "Safari",
-      832
-    ],
-    [
-      "package_script_service",
-      105
+      2090
     ],
     [
       "loginwindow",
-      62
+      210
     ],
     [
       "system_installd",
-      40
+      201
+    ],
+    [
+      "package_script_service",
+      201
     ]
   ],
   "updates_offered": [
     {
-      "update": "macOS 27.0.1 26A434 (Customer)(SU)",
-      "times_offered": 184
+      "update": "macOS Tahoe 26.7.1 25G241",
+      "times_offered": 342
     },
     {
-      "update": "macOS Tahoe 26.7.1 25G241",
-      "times_offered": 184
+      "update": "macOS 27.0.1 26A434 (Customer)(SU)",
+      "times_offered": 342
+    },
+    {
+      "update": "macOS Tahoe 26.7.2 25G332",
+      "times_offered": 153
+    },
+    {
+      "update": "macOS 27.2 26B123 (Customer)(SU)",
+      "times_offered": 153
     }
   ],
   "update_offer_first": "2026-10-14T03:38:37Z",
-  "update_offer_last": "2026-10-20T10:08:12Z",
-  "power_events": 41,
-  "sleeps": 20,
-  "wakes": 21,
-  "last_wake_before_scenario": "2026-10-20T15:57:40Z",
-  "entitlement_violations": 31,
+  "update_offer_last": "2026-11-03T18:42:03Z",
+  "power_events": 139,
+  "sleeps": 69,
+  "wakes": 70,
+  "last_wake_before_scenario": "2026-11-03T16:44:39Z",
+  "entitlement_violations": 77,
   "entitlement_pids": [
     "75876"
   ],
@@ -54,5 +62,5 @@
       "rule": "100244"
     }
   ],
-  "alerts_from_install_log": 441
+  "alerts_from_install_log": 1207
 }

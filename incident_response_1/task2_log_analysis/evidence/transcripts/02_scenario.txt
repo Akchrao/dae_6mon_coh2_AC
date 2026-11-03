@@ -1,0 +1,36 @@
+# Scenario run from macOS host DAEDMAC1009; UTC; ssh = OpenSSH_10.2p1, LibreSSL 3.3.6
+[2026-11-03T19:29:50Z] >>> scenario_start
+
+[2026-11-03T19:29:50Z] S1 Sathya Hasi (test.clinician, joiner) views her patient PT-1001
+SYNTHETIC RECORD PT-1001
+
+[2026-11-03T19:30:01Z] S2 it_admin adds test.clinician to the sudo group (no change ticket)
+uid=1002(test.clinician) gid=1005(test.clinician) groups=1005(test.clinician),27(sudo),1001(clinical)
+
+[2026-11-03T19:30:13Z] S3 Sathya Hasi runs a command as root
+uid=0(root) gid=0(root) groups=0(root)
+
+[2026-11-03T19:30:30Z] S4a login attempt as Jeevan Smith (test.billing, leaver)
+
+[2026-11-03T19:30:51Z] S4b second login attempt as test.billing
+[2026-11-03T19:31:06Z] >>> s5_start
+
+[2026-11-03T19:31:06Z] S5a Tara Jones (test.nurse, now Billing) logs in and checks her groups
+uid=1003(test.nurse) gid=1006(test.nurse) groups=1006(test.nurse),1001(clinical),1002(billing)
+parrot-vm
+
+[2026-11-03T19:31:07Z] S5b opens clinical record PT-1003 and stages a copy in a hidden folder
+total 12
+drwxr-xr-x 2 test.nurse test.nurse 4096 Nov  3 19:31 .
+drwxr-xr-x 3 test.nurse test.nurse 4096 Nov  3 19:31 ..
+-rw-r--r-- 1 test.nurse test.nurse  127 Nov  3 19:31 pt1003.txt
+
+[2026-11-03T19:31:08Z] S5c drops syncd.py (uploader) next to it
+9f3dbfe2b4d8cf2200bd95b6d08a2cab4336d74b2bb15d3adc02369b5cfe3477  /home/test.nurse/.cache/.sync/syncd.py
+
+[2026-11-03T19:31:09Z] S5d starts it detached from the session
+1534 python3 /home/test.nurse/.cache/.sync/syncd.py
+
+[2026-11-03T19:31:11Z] S5e adds a cron job that restarts it (persistence)
+*/5 * * * * pgrep -f syncd.py >/dev/null || setsid python3 $HOME/.cache/.sync/syncd.py >/dev/null 2>&1 &
+[2026-11-03T19:31:11Z] >>> s5_done

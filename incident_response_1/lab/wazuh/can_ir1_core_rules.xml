@@ -1,0 +1,54 @@
+<!--
+  Care Access Navigator - Incident Response 1 (shared lab, Tasks 1-6)
+  Task 1 - the three custom alert rules (one per JML risk). Rule 100220 is their EHR-audit base rule.
+  Loaded by a real wazuh-manager 4.9.2. Built on the bundled sshd (57xx) and sudo (54xx) rules and on three CDB lists kept
+  in step with the JML register (capstone_next_steps/jml-evidence/JML-LOG.csv):
+    etc/lists/jml-leavers   login -> termination ticket   (accounts that must never log in)
+    etc/lists/jml-movers    login -> current role          (role changed; old access must be gone)
+    etc/lists/rbac-no-root  login -> role                  (workforce roles with no root entitlement)
+-->
+<group name="care_access_navigator,ir1,core,">
+
+  <!-- R1 leaver: a deprovisioned account tried to log in (-> IR1-2026-001). 5718 = sshd denied user. -->
+  <rule id="100210" level="10">
+    <if_sid>5718, 5710, 5716, 5760</if_sid>
+    <list field="user" lookup="match_key">etc/lists/jml-leavers</list>
+    <description>JML leaver account $(dstuser) attempted SSH login from $(srcip) - account was deprovisioned</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>authentication_failed,jml_leaver,hipaa_164.308.a.3.ii.c,</group>
+  </rule>
+
+  <!-- R2 mover: a mover opened a clinical record through access their new role does not grant (-> IR1-2026-002). -->
+  <rule id="100220" level="3">
+    <decoded_as>ehr-audit</decoded_as>
+    <description>EHR audit: $(dstuser) $(action) $(ehr_patient) - $(ehr_decision) via $(ehr_basis)</description>
+    <group>ehr_access,</group>
+  </rule>
+
+  <rule id="100221" level="12">
+    <if_sid>100220</if_sid>
+    <field name="ehr_decision">^ALLOW$</field>
+    <field name="ehr_basis">^group:clinical$</field>
+    <list field="user" lookup="match_key_value" check_value="^billing$">etc/lists/jml-movers</list>
+    <description>ePHI viewed by mover $(dstuser) (now Billing) through stale clinical group - record $(ehr_patient)</description>
+    <mitre>
+      <id>T1078</id>
+    </mitre>
+    <group>ehr_access,privilege_creep,hipaa_164.308.a.4,hipaa_164.312.a.1,</group>
+  </rule>
+
+  <!-- R3 joiner/RBAC: root obtained by a role with no root entitlement (-> IR1-2026-003). -->
+  <rule id="100231" level="12">
+    <if_sid>5402, 5403</if_sid>
+    <!-- mirrors etc/lists/rbac-no-root (see note on rule 100222) -->
+    <regex type="pcre2">^\s*(test\.clinician|test\.nurse|test\.billing)\s:</regex>
+    <description>Root obtained via sudo by $(srcuser), whose role has no root entitlement (RBAC/SoD violation)</description>
+    <mitre>
+      <id>T1548.003</id>
+    </mitre>
+    <group>privilege_escalation,rbac_violation,hipaa_164.312.a.1,</group>
+  </rule>
+
+</group>

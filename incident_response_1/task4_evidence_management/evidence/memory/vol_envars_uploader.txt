@@ -1,0 +1,20 @@
+Volatility 3 Framework 2.7.0
+
+PID	PPID	COMM	KEY	VALUE
+
+1534	1	python3	SHELL	/bin/bash
+1534	1	python3	PWD	/home/test.nurse
+1534	1	python3	LOGNAME	test.nurse
+1534	1	python3	XDG_SESSION_TYPE	tty
+1534	1	python3	MOTD_SHOWN	pam
+1534	1	python3	HOME	/home/test.nurse
+1534	1	python3	LANG	C.UTF-8
+1534	1	python3	SSH_CONNECTION	10.78.10.1 62768 10.0.2.15 22
+1534	1	python3	XDG_SESSION_CLASS	user
+1534	1	python3	USER	test.nurse
+1534	1	python3	SHLVL	0
+1534	1	python3	XDG_SESSION_ID	14
+1534	1	python3	XDG_RUNTIME_DIR	/run/user/1003
+1534	1	python3	SSH_CLIENT	10.78.10.1 62768 22
+1534	1	python3	PATH	/usr/local/bin:/usr/bin:/bin:/usr/games
+1534	1	python3	_	/usr/bin/setsid

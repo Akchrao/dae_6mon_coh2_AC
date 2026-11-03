@@ -1,0 +1,35 @@
+id	area	check	expected	actual	result
+INT-01	Integrity	OS package files unmodified (dpkg -V, non-config; Wazuh agent state excluded)	0	0	PASS
+INT-01b	Integrity	Wazuh agent binaries unmodified (dpkg -V, /var/ossec/bin)	0	0	PASS
+INT-02	Integrity	staged record / uploader folder absent	no	no	PASS
+INT-03	Integrity	no user crontabs in /var/spool/cron/crontabs	0	0	PASS
+INT-04	Integrity	no syncd.py process	0	0	PASS
+INT-05	Integrity	no SUID/SGID files in user-writable paths	0	0	PASS
+IAM-01	Identity	test.nurse NOT in clinical (mover rule)	no	no	PASS
+IAM-02	Identity	test.nurse locked + expired (pending HR)	L 1970-01-02	L 1970-01-02	PASS
+IAM-03	Identity	test.billing (leaver) locked + expired	L 1970-01-02	L 1970-01-02	PASS
+IAM-04	Identity	no SSH keys on disabled accounts	0	0	PASS
+IAM-05	Identity	sudo group = it_admin only	it_admin	it_admin	PASS
+IAM-06	Identity	clinician can still view a record (no over-correction)	0	0	PASS
+IAM-07	Identity	billing role is denied clinical record PT-1003	1	1	PASS
+IAM-08	Identity	users other than root cannot use cron	root	root	PASS
+SVC-ssh	Services	ssh active + enabled at boot	active enabled	active enabled	PASS
+SVC-cron	Services	cron active + enabled at boot	active enabled	active enabled	PASS
+SVC-ehr-portal	Services	ehr-portal active + enabled at boot	active enabled	active enabled	PASS
+SVC-auditd	Services	auditd active + enabled at boot	active enabled	active enabled	PASS
+SVC-rsyslog	Services	rsyslog active + enabled at boot	active enabled	active enabled	PASS
+SVC-ir-firewall	Services	ir-firewall active + enabled at boot	active enabled	active enabled	PASS
+SVC-wazuh-agent	Services	wazuh-agent active + enabled at boot	active enabled	active enabled	PASS
+NET-01	Network	clinical NIC enp0s1 up with 10.0.2.15/24	UP 10.0.2.15/24	UP 10.0.2.15/24	PASS
+NET-02	Network	default route via clinical NAT gateway	10.0.2.2 enp0s1	10.0.2.2 enp0s1	PASS
+NET-03	Network	quarantine NIC enp0s2 has no address			PASS
+NET-04	Network	firewall policies INPUT/FORWARD/OUTPUT = DROP	3	3	PASS
+NET-05	Network	egress to IOC 10.78.99.66:8080 blocked	000	000	PASS
+NET-06	Network	egress HTTP for updates allowed	200	200	PASS
+NET-07	Network	DNS resolution works	yes	yes	PASS
+NET-08	Network	clock synchronised by NTP	yes	yes	PASS
+MON-01	Monitoring	auditd incident watches loaded (5 keys)	5	5	PASS
+MON-02	Monitoring	EHR audit logged the clinician view (IAM-06)	yes	yes	PASS
+MON-03	Monitoring	EHR audit logged the billing denial (IAM-07)	yes	yes	PASS
+MON-04	Monitoring	firewall logged the IOC block (NET-05)	yes	yes	PASS
+MON-05	Monitoring	Wazuh agent connected to the manager	connected	connected	PASS

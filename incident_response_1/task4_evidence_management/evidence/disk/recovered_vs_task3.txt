@@ -1,0 +1,3 @@
+/home/test.nurse/.cache/.sync/syncd.py inode=32027 image=9f3dbfe2b4d8cf2200bd95b6d08a2cab4336d74b2bb15d3adc02369b5cfe3477 task3=9f3dbfe2b4d8cf2200bd95b6d08a2cab4336d74b2bb15d3adc02369b5cfe3477 MATCH
+/home/test.nurse/.cache/.sync/pt1003.txt inode=32025 image=2dfb56c223ff1e45805fa5f6e4b4b81035eb2e974b93fa623cac6ae4a51b023a task3=2dfb56c223ff1e45805fa5f6e4b4b81035eb2e974b93fa623cac6ae4a51b023a MATCH
+/var/spool/cron/crontabs/test.nurse inode=31406 image=0d03cd1634170a3e0411b964f84f6ae37895290cf7def0aa1601b54ba52f4d4b task3=0d03cd1634170a3e0411b964f84f6ae37895290cf7def0aa1601b54ba52f4d4b MATCH

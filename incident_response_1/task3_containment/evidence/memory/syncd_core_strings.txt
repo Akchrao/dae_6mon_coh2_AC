@@ -1,0 +1,12 @@
+      7 /home/test.nurse/.cache/.sync/syncd.py
+      3 10.78.99.66
+      2 MRN: SYN-0003
+      2 10.78.99.66:8080
+      1 ~/.cache/.sync/pt1003.txt
+      1 unclosed file <_io.BufferedReader name='/home/test.nurse/.cache/.sync/pt1003.txt'>
+      1 syncd/0.3
+      1 syncd.py
+      1 pt1003.txt
+      1 http://10.78.99.66:8080/sync
+      1 er-Agent: syncd/0.3
+      1 User-Agent: syncd/0.3

@@ -1,0 +1,12 @@
+[2026-11-03T19:48:48Z] >>> r7_snapshot
+# new known-good baseline   [VBoxManage snapshot parrot-vm take recovered-validated --live]
+(ok)
+List of snapshots present on all disks:
+ID        TAG               VM SIZE                DATE     VM CLOCK     ICOUNT
+--        baseline-clean    501 MiB 2026-11-03 19:22:59 00:06:18.221           
+--        ir-pre-containment  556 MiB 2026-11-03 19:31:26 00:14:44.476           
+--        ir-contained      596 MiB 2026-11-03 19:35:46 00:18:57.579           
+--        pre-recovery      598 MiB 2026-11-03 19:41:00 00:24:11.025           
+--        recovered-validated  952 MiB 2026-11-03 19:48:48 00:13:55.851
+[2026-11-03T19:48:53Z] >>> done
+evidence index: 19 files

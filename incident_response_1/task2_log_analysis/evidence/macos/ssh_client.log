@@ -1,378 +1,578 @@
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Reading configuration data /Users/Adult/.ssh/config
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Reading configuration data /etc/ssh/ssh_config
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Reading configuration data /etc/ssh/crypto.conf
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2222.
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: fd 3 clearing O_NONBLOCK
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Connection established.
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519: ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 type 2
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Local version string SSH-2.0-OpenSSH_10.2
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Authenticating to 127.0.0.1:2222 as 'test.clinician'
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: load_hostkeys: fopen /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/known_hosts: No such file or directory
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: SSH2_MSG_KEXINIT sent
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: SSH2_MSG_KEXINIT received
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: kex: algorithm: ecdh-sha2-nistp256
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: kex: host key algorithm: ssh-ed25519
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Server host key: ssh-ed25519 SHA256:p65+KYxiMh0uXSawsGYlGJSfGcbnBJynFD1+bro8ULA
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: load_hostkeys: fopen /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/known_hosts: No such file or directory
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: checking without port identifier
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: load_hostkeys: fopen /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/known_hosts: No such file or directory
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: Warning: Permanently added '[127.0.0.1]:2222' (ED25519) to the list of known hosts.
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: rekey out after 4294967296 blocks
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: SSH2_MSG_NEWKEYS sent
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: expecting SSH2_MSG_NEWKEYS
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: SSH2_MSG_NEWKEYS received
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: rekey in after 4294967296 blocks
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: SSH2_MSG_EXT_INFO received
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: SSH2_MSG_SERVICE_ACCEPT received
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Authentications that can continue: publickey
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Next authentication method: publickey
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: get_agent_identities: bound agent to hostkey
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Server accepts key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: Authenticated to 127.0.0.1 ([127.0.0.1]:2222) using "publickey".
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: channel 0: new session [client-session] (inactive timeout: 0)
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Requesting no-more-sessions@openssh.com
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Entering interactive session.
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: pledge: network
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: client_input_global_request: rtype hostkeys-00@openssh.com want_reply 0
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Remote: /home/test.clinician/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Remote: /home/test.clinician/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Sending environment.
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: channel 0: setting env LANG = "en_US.UTF-8"
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Sending command: ehr-view PT-1001 | head -1
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: pledge: fork
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: channel 0: free: client-session, nchannels 1
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: Transferred: sent 2508, received 2972 bytes, in 0.1 seconds
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: Bytes per second: sent 44854.6, received 53153.1
-2026-10-20T12:27:46-04:00 DAEDMAC1009 ssh[18301]: debug1: Exit status 0
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Reading configuration data /Users/Adult/.ssh/config
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Reading configuration data /etc/ssh/ssh_config
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Reading configuration data /etc/ssh/crypto.conf
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2222.
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: fd 3 clearing O_NONBLOCK
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Connection established.
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519: ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 type 2
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Local version string SSH-2.0-OpenSSH_10.2
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Authenticating to 127.0.0.1:2222 as 'test.clinician'
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: SSH2_MSG_KEXINIT sent
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: SSH2_MSG_KEXINIT received
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: kex: algorithm: ecdh-sha2-nistp256
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: kex: host key algorithm: ssh-ed25519
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Server host key: ssh-ed25519 SHA256:p65+KYxiMh0uXSawsGYlGJSfGcbnBJynFD1+bro8ULA
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Host '[127.0.0.1]:2222' is known and matches the ED25519 host key.
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Found key in /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/known_hosts:1
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: rekey out after 4294967296 blocks
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: SSH2_MSG_NEWKEYS sent
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: expecting SSH2_MSG_NEWKEYS
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: SSH2_MSG_NEWKEYS received
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: rekey in after 4294967296 blocks
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: SSH2_MSG_EXT_INFO received
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: SSH2_MSG_SERVICE_ACCEPT received
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Authentications that can continue: publickey
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Next authentication method: publickey
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: get_agent_identities: bound agent to hostkey
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Server accepts key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: Authenticated to 127.0.0.1 ([127.0.0.1]:2222) using "publickey".
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: channel 0: new session [client-session] (inactive timeout: 0)
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Requesting no-more-sessions@openssh.com
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Entering interactive session.
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: pledge: network
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: client_input_global_request: rtype hostkeys-00@openssh.com want_reply 0
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Remote: /home/test.clinician/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Remote: /home/test.clinician/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Sending environment.
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: channel 0: setting env LANG = "en_US.UTF-8"
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Sending command: sudo -S -p "" id
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: pledge: fork
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: channel 0: free: client-session, nchannels 1
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: Transferred: sent 2544, received 2988 bytes, in 0.1 seconds
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: Bytes per second: sent 30295.1, received 35582.4
-2026-10-20T12:28:16-04:00 DAEDMAC1009 ssh[18391]: debug1: Exit status 0
-2026-10-20T12:28:36-04:00 DAEDMAC1009 ssh[18396]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
-2026-10-20T12:28:36-04:00 DAEDMAC1009 ssh[18396]: debug1: Reading configuration data /Users/Adult/.ssh/config
-2026-10-20T12:28:36-04:00 DAEDMAC1009 ssh[18396]: debug1: Reading configuration data /etc/ssh/ssh_config
-2026-10-20T12:28:36-04:00 DAEDMAC1009 ssh[18396]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
-2026-10-20T12:28:36-04:00 DAEDMAC1009 ssh[18396]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
-2026-10-20T12:28:36-04:00 DAEDMAC1009 ssh[18396]: debug1: Reading configuration data /etc/ssh/crypto.conf
-2026-10-20T12:28:36-04:00 DAEDMAC1009 ssh[18396]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
-2026-10-20T12:28:36-04:00 DAEDMAC1009 ssh[18396]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2222.
-2026-10-20T12:28:36-04:00 DAEDMAC1009 ssh[18396]: debug1: fd 3 clearing O_NONBLOCK
-2026-10-20T12:28:36-04:00 DAEDMAC1009 ssh[18396]: debug1: Connection established.
-2026-10-20T12:28:36-04:00 DAEDMAC1009 ssh[18396]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519: ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
-2026-10-20T12:28:36-04:00 DAEDMAC1009 ssh[18396]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 type 2
-2026-10-20T12:28:36-04:00 DAEDMAC1009 ssh[18396]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519
-2026-10-20T12:28:36-04:00 DAEDMAC1009 ssh[18396]: debug1: Local version string SSH-2.0-OpenSSH_10.2
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Authenticating to 127.0.0.1:2222 as 'test.nurse'
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: SSH2_MSG_KEXINIT sent
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: SSH2_MSG_KEXINIT received
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: kex: algorithm: ecdh-sha2-nistp256
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: kex: host key algorithm: ssh-ed25519
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Server host key: ssh-ed25519 SHA256:p65+KYxiMh0uXSawsGYlGJSfGcbnBJynFD1+bro8ULA
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Host '[127.0.0.1]:2222' is known and matches the ED25519 host key.
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Found key in /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/known_hosts:1
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: rekey out after 4294967296 blocks
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: SSH2_MSG_NEWKEYS sent
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: expecting SSH2_MSG_NEWKEYS
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: SSH2_MSG_NEWKEYS received
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: rekey in after 4294967296 blocks
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: SSH2_MSG_EXT_INFO received
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: SSH2_MSG_SERVICE_ACCEPT received
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Authentications that can continue: publickey
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Next authentication method: publickey
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: get_agent_identities: bound agent to hostkey
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Server accepts key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: Authenticated to 127.0.0.1 ([127.0.0.1]:2222) using "publickey".
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: channel 0: new session [client-session] (inactive timeout: 0)
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Requesting no-more-sessions@openssh.com
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Entering interactive session.
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: pledge: network
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: client_input_global_request: rtype hostkeys-00@openssh.com want_reply 0
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Remote: /home/test.nurse/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Remote: /home/test.nurse/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Sending environment.
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: channel 0: setting env LANG = "en_US.UTF-8"
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Sending command: ehr-view PT-1003 | head -1
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: pledge: fork
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: channel 0: free: client-session, nchannels 1
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: Transferred: sent 2492, received 2940 bytes, in 0.1 seconds
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: Bytes per second: sent 44799.2, received 52853.0
-2026-10-20T12:28:37-04:00 DAEDMAC1009 ssh[18396]: debug1: Exit status 0
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Reading configuration data /Users/Adult/.ssh/config
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Reading configuration data /etc/ssh/ssh_config
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Reading configuration data /etc/ssh/crypto.conf
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2222.
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: fd 3 clearing O_NONBLOCK
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Connection established.
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519: ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 type 2
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Local version string SSH-2.0-OpenSSH_10.2
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Authenticating to 127.0.0.1:2222 as 'test.nurse'
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: SSH2_MSG_KEXINIT sent
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: SSH2_MSG_KEXINIT received
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: kex: algorithm: ecdh-sha2-nistp256
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: kex: host key algorithm: ssh-ed25519
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Server host key: ssh-ed25519 SHA256:p65+KYxiMh0uXSawsGYlGJSfGcbnBJynFD1+bro8ULA
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Host '[127.0.0.1]:2222' is known and matches the ED25519 host key.
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Found key in /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/known_hosts:1
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: rekey out after 4294967296 blocks
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: SSH2_MSG_NEWKEYS sent
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: expecting SSH2_MSG_NEWKEYS
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: SSH2_MSG_NEWKEYS received
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: rekey in after 4294967296 blocks
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: SSH2_MSG_EXT_INFO received
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: SSH2_MSG_SERVICE_ACCEPT received
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Authentications that can continue: publickey
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Next authentication method: publickey
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: get_agent_identities: bound agent to hostkey
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Server accepts key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: Authenticated to 127.0.0.1 ([127.0.0.1]:2222) using "publickey".
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: channel 0: new session [client-session] (inactive timeout: 0)
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Requesting no-more-sessions@openssh.com
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Entering interactive session.
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: pledge: network
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: client_input_global_request: rtype hostkeys-00@openssh.com want_reply 0
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Remote: /home/test.nurse/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Remote: /home/test.nurse/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Sending environment.
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: channel 0: setting env LANG = "en_US.UTF-8"
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Sending command: sudo -S -p "" cat /srv/ehr/clinical/PT-1003.txt
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: pledge: fork
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: test.nurse is not in the sudoers file.
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: channel 0: free: client-session, nchannels 1
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: Transferred: sent 2560, received 2956 bytes, in 0.1 seconds
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: Bytes per second: sent 32588.2, received 37629.2
-2026-10-20T12:28:47-04:00 DAEDMAC1009 ssh[18410]: debug1: Exit status 1
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Reading configuration data /Users/Adult/.ssh/config
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Reading configuration data /etc/ssh/ssh_config
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Reading configuration data /etc/ssh/crypto.conf
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2222.
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: fd 3 clearing O_NONBLOCK
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Connection established.
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519: ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 type 2
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Local version string SSH-2.0-OpenSSH_10.2
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Authenticating to 127.0.0.1:2222 as 'test.billing'
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: SSH2_MSG_KEXINIT sent
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: SSH2_MSG_KEXINIT received
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: kex: algorithm: ecdh-sha2-nistp256
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: kex: host key algorithm: ssh-ed25519
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Server host key: ssh-ed25519 SHA256:p65+KYxiMh0uXSawsGYlGJSfGcbnBJynFD1+bro8ULA
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Host '[127.0.0.1]:2222' is known and matches the ED25519 host key.
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Found key in /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/known_hosts:1
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: rekey out after 4294967296 blocks
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: SSH2_MSG_NEWKEYS sent
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: expecting SSH2_MSG_NEWKEYS
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: SSH2_MSG_NEWKEYS received
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: rekey in after 4294967296 blocks
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: SSH2_MSG_EXT_INFO received
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: SSH2_MSG_SERVICE_ACCEPT received
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Authentications that can continue: publickey
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Next authentication method: publickey
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: get_agent_identities: bound agent to hostkey
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: Authentications that can continue: publickey
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: debug1: No more authentication methods to try.
-2026-10-20T12:29:07-04:00 DAEDMAC1009 ssh[18458]: test.billing@127.0.0.1: Permission denied (publickey).
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Reading configuration data /Users/Adult/.ssh/config
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Reading configuration data /etc/ssh/ssh_config
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Reading configuration data /etc/ssh/crypto.conf
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2222.
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: fd 3 clearing O_NONBLOCK
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Connection established.
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519: ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 type 2
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Local version string SSH-2.0-OpenSSH_10.2
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Authenticating to 127.0.0.1:2222 as 'test.billing'
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: SSH2_MSG_KEXINIT sent
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: SSH2_MSG_KEXINIT received
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: kex: algorithm: ecdh-sha2-nistp256
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: kex: host key algorithm: ssh-ed25519
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Server host key: ssh-ed25519 SHA256:p65+KYxiMh0uXSawsGYlGJSfGcbnBJynFD1+bro8ULA
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Host '[127.0.0.1]:2222' is known and matches the ED25519 host key.
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Found key in /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/known_hosts:1
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: rekey out after 4294967296 blocks
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: SSH2_MSG_NEWKEYS sent
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: expecting SSH2_MSG_NEWKEYS
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: SSH2_MSG_NEWKEYS received
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: rekey in after 4294967296 blocks
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: SSH2_MSG_EXT_INFO received
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: SSH2_MSG_SERVICE_ACCEPT received
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Authentications that can continue: publickey
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Next authentication method: publickey
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: get_agent_identities: bound agent to hostkey
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/task2_log_analysis/lab/.keys/ir2_lab_ed25519 ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ explicit
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: Authentications that can continue: publickey
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: debug1: No more authentication methods to try.
-2026-10-20T12:29:32-04:00 DAEDMAC1009 ssh[18466]: test.billing@127.0.0.1: Permission denied (publickey).
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Reading configuration data /Users/Adult/.ssh/config
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Reading configuration data /etc/ssh/ssh_config
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Reading configuration data /etc/ssh/crypto.conf
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: fd 3 clearing O_NONBLOCK
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Connection established.
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 type 2
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Local version string SSH-2.0-OpenSSH_10.2
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Authenticating to 127.0.0.1:2223 as 'test.clinician'
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: load_hostkeys: fopen /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/known_hosts: No such file or directory
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: SSH2_MSG_KEXINIT sent
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: SSH2_MSG_KEXINIT received
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: kex: algorithm: ecdh-sha2-nistp256
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: kex: host key algorithm: ssh-ed25519
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Server host key: ssh-ed25519 SHA256:VxlVqpxoCgH+P1rcs0iAS5HxjJ8QAyLMo34NsWxSMMk
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: load_hostkeys: fopen /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/known_hosts: No such file or directory
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: checking without port identifier
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: load_hostkeys: fopen /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/known_hosts: No such file or directory
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: Warning: Permanently added '[127.0.0.1]:2223' (ED25519) to the list of known hosts.
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: rekey out after 4294967296 blocks
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: SSH2_MSG_NEWKEYS sent
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: expecting SSH2_MSG_NEWKEYS
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: SSH2_MSG_NEWKEYS received
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: rekey in after 4294967296 blocks
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: SSH2_MSG_EXT_INFO received
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: SSH2_MSG_SERVICE_ACCEPT received
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Authentications that can continue: publickey
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Next authentication method: publickey
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: get_agent_identities: bound agent to hostkey
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Server accepts key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using "publickey".
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: channel 0: new session [client-session] (inactive timeout: 0)
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Requesting no-more-sessions@openssh.com
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Entering interactive session.
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: pledge: network
+2026-11-03T14:29:51-05:00 DAEDMAC1009 ssh[48924]: debug1: client_input_global_request: rtype hostkeys-00@openssh.com want_reply 0
+2026-11-03T14:29:51-05:00 DAEDMAC1009 ssh[48924]: debug1: Remote: /home/test.clinician/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+2026-11-03T14:29:51-05:00 DAEDMAC1009 ssh[48924]: debug1: Remote: /home/test.clinician/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+2026-11-03T14:29:51-05:00 DAEDMAC1009 ssh[48924]: debug1: Sending environment.
+2026-11-03T14:29:51-05:00 DAEDMAC1009 ssh[48924]: debug1: channel 0: setting env LANG = "en_US.UTF-8"
+2026-11-03T14:29:51-05:00 DAEDMAC1009 ssh[48924]: debug1: Sending command: ehr-view PT-1001 | head -1
+2026-11-03T14:29:51-05:00 DAEDMAC1009 ssh[48924]: debug1: pledge: fork
+2026-11-03T14:29:51-05:00 DAEDMAC1009 ssh[48924]: debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
+2026-11-03T14:29:51-05:00 DAEDMAC1009 ssh[48924]: debug1: channel 0: free: client-session, nchannels 1
+2026-11-03T14:29:51-05:00 DAEDMAC1009 ssh[48924]: Transferred: sent 2508, received 2972 bytes, in 1.4 seconds
+2026-11-03T14:29:51-05:00 DAEDMAC1009 ssh[48924]: Bytes per second: sent 1759.2, received 2084.7
+2026-11-03T14:29:51-05:00 DAEDMAC1009 ssh[48924]: debug1: Exit status 0
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Reading configuration data /Users/Adult/.ssh/config
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Reading configuration data /etc/ssh/ssh_config
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Reading configuration data /etc/ssh/crypto.conf
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: fd 3 clearing O_NONBLOCK
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Connection established.
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 type 2
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Local version string SSH-2.0-OpenSSH_10.2
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Authenticating to 127.0.0.1:2223 as 'test.clinician'
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: SSH2_MSG_KEXINIT sent
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: SSH2_MSG_KEXINIT received
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: kex: algorithm: ecdh-sha2-nistp256
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: kex: host key algorithm: ssh-ed25519
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Server host key: ssh-ed25519 SHA256:VxlVqpxoCgH+P1rcs0iAS5HxjJ8QAyLMo34NsWxSMMk
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Host '[127.0.0.1]:2223' is known and matches the ED25519 host key.
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Found key in /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/known_hosts:1
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: rekey out after 4294967296 blocks
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: SSH2_MSG_NEWKEYS sent
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: expecting SSH2_MSG_NEWKEYS
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: SSH2_MSG_NEWKEYS received
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: rekey in after 4294967296 blocks
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: SSH2_MSG_EXT_INFO received
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: SSH2_MSG_SERVICE_ACCEPT received
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Authentications that can continue: publickey
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Next authentication method: publickey
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: get_agent_identities: bound agent to hostkey
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Server accepts key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:30:14-05:00 DAEDMAC1009 ssh[48981]: Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using "publickey".
+2026-11-03T14:30:14-05:00 DAEDMAC1009 ssh[48981]: debug1: channel 0: new session [client-session] (inactive timeout: 0)
+2026-11-03T14:30:14-05:00 DAEDMAC1009 ssh[48981]: debug1: Requesting no-more-sessions@openssh.com
+2026-11-03T14:30:14-05:00 DAEDMAC1009 ssh[48981]: debug1: Entering interactive session.
+2026-11-03T14:30:14-05:00 DAEDMAC1009 ssh[48981]: debug1: pledge: network
+2026-11-03T14:30:15-05:00 DAEDMAC1009 ssh[48981]: debug1: client_input_global_request: rtype hostkeys-00@openssh.com want_reply 0
+2026-11-03T14:30:15-05:00 DAEDMAC1009 ssh[48981]: debug1: Remote: /home/test.clinician/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+2026-11-03T14:30:15-05:00 DAEDMAC1009 ssh[48981]: debug1: Remote: /home/test.clinician/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+2026-11-03T14:30:15-05:00 DAEDMAC1009 ssh[48981]: debug1: Sending environment.
+2026-11-03T14:30:15-05:00 DAEDMAC1009 ssh[48981]: debug1: channel 0: setting env LANG = "en_US.UTF-8"
+2026-11-03T14:30:15-05:00 DAEDMAC1009 ssh[48981]: debug1: Sending command: sudo -S -p "" id
+2026-11-03T14:30:15-05:00 DAEDMAC1009 ssh[48981]: debug1: pledge: fork
+2026-11-03T14:30:15-05:00 DAEDMAC1009 ssh[48981]: debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
+2026-11-03T14:30:15-05:00 DAEDMAC1009 ssh[48981]: debug1: channel 0: free: client-session, nchannels 1
+2026-11-03T14:30:15-05:00 DAEDMAC1009 ssh[48981]: Transferred: sent 2544, received 2988 bytes, in 1.9 seconds
+2026-11-03T14:30:15-05:00 DAEDMAC1009 ssh[48981]: Bytes per second: sent 1374.7, received 1614.6
+2026-11-03T14:30:15-05:00 DAEDMAC1009 ssh[48981]: debug1: Exit status 0
+2026-11-03T14:30:30-05:00 DAEDMAC1009 ssh[48999]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
+2026-11-03T14:30:30-05:00 DAEDMAC1009 ssh[48999]: debug1: Reading configuration data /Users/Adult/.ssh/config
+2026-11-03T14:30:30-05:00 DAEDMAC1009 ssh[48999]: debug1: Reading configuration data /etc/ssh/ssh_config
+2026-11-03T14:30:30-05:00 DAEDMAC1009 ssh[48999]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
+2026-11-03T14:30:30-05:00 DAEDMAC1009 ssh[48999]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
+2026-11-03T14:30:30-05:00 DAEDMAC1009 ssh[48999]: debug1: Reading configuration data /etc/ssh/crypto.conf
+2026-11-03T14:30:30-05:00 DAEDMAC1009 ssh[48999]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
+2026-11-03T14:30:30-05:00 DAEDMAC1009 ssh[48999]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T14:30:30-05:00 DAEDMAC1009 ssh[48999]: debug1: fd 3 clearing O_NONBLOCK
+2026-11-03T14:30:30-05:00 DAEDMAC1009 ssh[48999]: debug1: Connection established.
+2026-11-03T14:30:30-05:00 DAEDMAC1009 ssh[48999]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T14:30:30-05:00 DAEDMAC1009 ssh[48999]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 type 2
+2026-11-03T14:30:30-05:00 DAEDMAC1009 ssh[48999]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519
+2026-11-03T14:30:30-05:00 DAEDMAC1009 ssh[48999]: debug1: Local version string SSH-2.0-OpenSSH_10.2
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: Authenticating to 127.0.0.1:2223 as 'test.billing'
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: SSH2_MSG_KEXINIT sent
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: SSH2_MSG_KEXINIT received
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: kex: algorithm: ecdh-sha2-nistp256
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: kex: host key algorithm: ssh-ed25519
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: Server host key: ssh-ed25519 SHA256:VxlVqpxoCgH+P1rcs0iAS5HxjJ8QAyLMo34NsWxSMMk
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: Host '[127.0.0.1]:2223' is known and matches the ED25519 host key.
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: Found key in /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/known_hosts:1
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: rekey out after 4294967296 blocks
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: SSH2_MSG_NEWKEYS sent
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: expecting SSH2_MSG_NEWKEYS
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: SSH2_MSG_NEWKEYS received
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: rekey in after 4294967296 blocks
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: SSH2_MSG_EXT_INFO received
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: SSH2_MSG_SERVICE_ACCEPT received
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: Authentications that can continue: publickey
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: Next authentication method: publickey
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: get_agent_identities: bound agent to hostkey
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: Authentications that can continue: publickey
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: No more authentication methods to try.
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: test.billing@127.0.0.1: Permission denied (publickey).
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Reading configuration data /Users/Adult/.ssh/config
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Reading configuration data /etc/ssh/ssh_config
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Reading configuration data /etc/ssh/crypto.conf
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: fd 3 clearing O_NONBLOCK
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Connection established.
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 type 2
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Local version string SSH-2.0-OpenSSH_10.2
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Authenticating to 127.0.0.1:2223 as 'test.billing'
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: SSH2_MSG_KEXINIT sent
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: SSH2_MSG_KEXINIT received
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: kex: algorithm: ecdh-sha2-nistp256
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: kex: host key algorithm: ssh-ed25519
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Server host key: ssh-ed25519 SHA256:VxlVqpxoCgH+P1rcs0iAS5HxjJ8QAyLMo34NsWxSMMk
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Host '[127.0.0.1]:2223' is known and matches the ED25519 host key.
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Found key in /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/known_hosts:1
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: rekey out after 4294967296 blocks
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: SSH2_MSG_NEWKEYS sent
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: expecting SSH2_MSG_NEWKEYS
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: SSH2_MSG_NEWKEYS received
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: rekey in after 4294967296 blocks
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: SSH2_MSG_EXT_INFO received
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: SSH2_MSG_SERVICE_ACCEPT received
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Authentications that can continue: publickey
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Next authentication method: publickey
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: get_agent_identities: bound agent to hostkey
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Authentications that can continue: publickey
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: No more authentication methods to try.
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: test.billing@127.0.0.1: Permission denied (publickey).
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Reading configuration data /Users/Adult/.ssh/config
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Reading configuration data /etc/ssh/ssh_config
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Reading configuration data /etc/ssh/crypto.conf
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: fd 3 clearing O_NONBLOCK
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Connection established.
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 type 2
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Local version string SSH-2.0-OpenSSH_10.2
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Authenticating to 127.0.0.1:2223 as 'test.nurse'
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: SSH2_MSG_KEXINIT sent
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: SSH2_MSG_KEXINIT received
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: kex: algorithm: ecdh-sha2-nistp256
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: kex: host key algorithm: ssh-ed25519
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Server host key: ssh-ed25519 SHA256:VxlVqpxoCgH+P1rcs0iAS5HxjJ8QAyLMo34NsWxSMMk
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Host '[127.0.0.1]:2223' is known and matches the ED25519 host key.
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Found key in /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/known_hosts:1
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: rekey out after 4294967296 blocks
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: SSH2_MSG_NEWKEYS sent
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: expecting SSH2_MSG_NEWKEYS
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: SSH2_MSG_NEWKEYS received
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: rekey in after 4294967296 blocks
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: SSH2_MSG_EXT_INFO received
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: SSH2_MSG_SERVICE_ACCEPT received
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Authentications that can continue: publickey
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Next authentication method: publickey
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: get_agent_identities: bound agent to hostkey
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Server accepts key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using "publickey".
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: channel 0: new session [client-session] (inactive timeout: 0)
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Requesting no-more-sessions@openssh.com
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Entering interactive session.
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: pledge: network
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49100]: debug1: client_input_global_request: rtype hostkeys-00@openssh.com want_reply 0
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49100]: debug1: Remote: /home/test.nurse/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49100]: debug1: Remote: /home/test.nurse/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49100]: debug1: Sending environment.
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49100]: debug1: channel 0: setting env LANG = "en_US.UTF-8"
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49100]: debug1: Sending command: id; hostname
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49100]: debug1: pledge: fork
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49100]: debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49100]: debug1: channel 0: free: client-session, nchannels 1
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49100]: Transferred: sent 2476, received 3040 bytes, in 1.2 seconds
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49100]: Bytes per second: sent 2096.9, received 2574.6
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49100]: debug1: Exit status 0
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49105]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49105]: debug1: Reading configuration data /Users/Adult/.ssh/config
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49105]: debug1: Reading configuration data /etc/ssh/ssh_config
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49105]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49105]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49105]: debug1: Reading configuration data /etc/ssh/crypto.conf
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49105]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49105]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49105]: debug1: fd 3 clearing O_NONBLOCK
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49105]: debug1: Connection established.
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49105]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49105]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 type 2
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49105]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519
+2026-11-03T14:31:07-05:00 DAEDMAC1009 ssh[49105]: debug1: Local version string SSH-2.0-OpenSSH_10.2
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Authenticating to 127.0.0.1:2223 as 'test.nurse'
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: SSH2_MSG_KEXINIT sent
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: SSH2_MSG_KEXINIT received
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: kex: algorithm: ecdh-sha2-nistp256
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: kex: host key algorithm: ssh-ed25519
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Server host key: ssh-ed25519 SHA256:VxlVqpxoCgH+P1rcs0iAS5HxjJ8QAyLMo34NsWxSMMk
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Host '[127.0.0.1]:2223' is known and matches the ED25519 host key.
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Found key in /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/known_hosts:1
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: rekey out after 4294967296 blocks
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: SSH2_MSG_NEWKEYS sent
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: expecting SSH2_MSG_NEWKEYS
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: SSH2_MSG_NEWKEYS received
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: rekey in after 4294967296 blocks
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: SSH2_MSG_EXT_INFO received
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: SSH2_MSG_SERVICE_ACCEPT received
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Authentications that can continue: publickey
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Next authentication method: publickey
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: get_agent_identities: bound agent to hostkey
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Server accepts key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using "publickey".
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: channel 0: new session [client-session] (inactive timeout: 0)
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Requesting no-more-sessions@openssh.com
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Entering interactive session.
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: pledge: network
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: client_input_global_request: rtype hostkeys-00@openssh.com want_reply 0
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Remote: /home/test.nurse/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Remote: /home/test.nurse/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Sending environment.
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: channel 0: setting env LANG = "en_US.UTF-8"
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Sending command: mkdir -p ~/.cache/.sync && ehr-view PT-1003 > ~/.cache/.sync/pt1003.txt && ls -la ~/.cache/.sync
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: pledge: fork
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: channel 0: free: client-session, nchannels 1
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: Transferred: sent 2556, received 3100 bytes, in 0.5 seconds
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: Bytes per second: sent 5042.3, received 6115.4
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Exit status 0
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Reading configuration data /Users/Adult/.ssh/config
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Reading configuration data /etc/ssh/ssh_config
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Reading configuration data /etc/ssh/crypto.conf
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: fd 3 clearing O_NONBLOCK
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Connection established.
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 type 2
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Local version string SSH-2.0-OpenSSH_10.2
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Authenticating to 127.0.0.1:2223 as 'test.nurse'
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: SSH2_MSG_KEXINIT sent
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: SSH2_MSG_KEXINIT received
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: kex: algorithm: ecdh-sha2-nistp256
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: kex: host key algorithm: ssh-ed25519
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Server host key: ssh-ed25519 SHA256:VxlVqpxoCgH+P1rcs0iAS5HxjJ8QAyLMo34NsWxSMMk
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Host '[127.0.0.1]:2223' is known and matches the ED25519 host key.
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Found key in /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/known_hosts:1
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: rekey out after 4294967296 blocks
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: SSH2_MSG_NEWKEYS sent
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: expecting SSH2_MSG_NEWKEYS
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: SSH2_MSG_NEWKEYS received
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: rekey in after 4294967296 blocks
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: SSH2_MSG_EXT_INFO received
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: SSH2_MSG_SERVICE_ACCEPT received
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Authentications that can continue: publickey
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Next authentication method: publickey
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: get_agent_identities: bound agent to hostkey
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Server accepts key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using "publickey".
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: debug1: channel 0: new session [client-session] (inactive timeout: 0)
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: debug1: Requesting no-more-sessions@openssh.com
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: debug1: Entering interactive session.
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: debug1: pledge: network
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: debug1: client_input_global_request: rtype hostkeys-00@openssh.com want_reply 0
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: debug1: Remote: /home/test.nurse/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: debug1: Remote: /home/test.nurse/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: debug1: Sending environment.
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: debug1: channel 0: setting env LANG = "en_US.UTF-8"
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: debug1: Sending command: cat > ~/.cache/.sync/syncd.py && chmod 700 ~/.cache/.sync/syncd.py && sha256sum ~/.cache/.sync/syncd.py
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: debug1: pledge: fork
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: debug1: channel 0: free: client-session, nchannels 1
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: Transferred: sent 3408, received 3020 bytes, in 0.4 seconds
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: Bytes per second: sent 9203.6, received 8155.8
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49109]: debug1: Exit status 0
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Reading configuration data /Users/Adult/.ssh/config
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Reading configuration data /etc/ssh/ssh_config
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Reading configuration data /etc/ssh/crypto.conf
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: fd 3 clearing O_NONBLOCK
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Connection established.
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 type 2
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Local version string SSH-2.0-OpenSSH_10.2
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Authenticating to 127.0.0.1:2223 as 'test.nurse'
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: SSH2_MSG_KEXINIT sent
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: SSH2_MSG_KEXINIT received
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: kex: algorithm: ecdh-sha2-nistp256
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: kex: host key algorithm: ssh-ed25519
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Server host key: ssh-ed25519 SHA256:VxlVqpxoCgH+P1rcs0iAS5HxjJ8QAyLMo34NsWxSMMk
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Host '[127.0.0.1]:2223' is known and matches the ED25519 host key.
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Found key in /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/known_hosts:1
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: rekey out after 4294967296 blocks
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: SSH2_MSG_NEWKEYS sent
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: expecting SSH2_MSG_NEWKEYS
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: SSH2_MSG_NEWKEYS received
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: rekey in after 4294967296 blocks
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: SSH2_MSG_EXT_INFO received
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: SSH2_MSG_SERVICE_ACCEPT received
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Authentications that can continue: publickey
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Next authentication method: publickey
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: get_agent_identities: bound agent to hostkey
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Server accepts key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using "publickey".
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: channel 0: new session [client-session] (inactive timeout: 0)
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Requesting no-more-sessions@openssh.com
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Entering interactive session.
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: pledge: network
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: client_input_global_request: rtype hostkeys-00@openssh.com want_reply 0
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Remote: /home/test.nurse/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Remote: /home/test.nurse/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Sending environment.
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: channel 0: setting env LANG = "en_US.UTF-8"
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Sending command: setsid nohup python3 ~/.cache/.sync/syncd.py >/dev/null 2>&1 < /dev/null & sleep 1; pgrep -af syncd.py
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: pledge: fork
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49113]: debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49113]: debug1: channel 0: free: client-session, nchannels 1
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49113]: Transferred: sent 2556, received 2972 bytes, in 1.5 seconds
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49113]: Bytes per second: sent 1755.1, received 2040.7
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49113]: debug1: Exit status 0
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: OpenSSH_10.2p1, LibreSSL 3.3.6
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Reading configuration data /Users/Adult/.ssh/config
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Reading configuration data /etc/ssh/ssh_config
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Reading configuration data /etc/ssh/ssh_config.d/100-macos.conf
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: /etc/ssh/ssh_config.d/100-macos.conf line 1: Applying options for *
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Reading configuration data /etc/ssh/crypto.conf
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Authenticator provider $SSH_SK_PROVIDER did not resolve; disabling
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: fd 3 clearing O_NONBLOCK
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Connection established.
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: loaded pubkey from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: identity file /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 type 2
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: no identity pubkey loaded from /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Local version string SSH-2.0-OpenSSH_10.2
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Remote protocol version 2.0, remote software version OpenSSH_9.2p1 Debian-2+deb12u10
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: compat_banner: match: OpenSSH_9.2p1 Debian-2+deb12u10 pat OpenSSH* compat 0x04000000
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Authenticating to 127.0.0.1:2223 as 'test.nurse'
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: SSH2_MSG_KEXINIT sent
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: SSH2_MSG_KEXINIT received
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: kex: algorithm: ecdh-sha2-nistp256
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: kex: host key algorithm: ssh-ed25519
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: kex: server->client cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: kex: client->server cipher: aes128-gcm@openssh.com MAC: <implicit> compression: none
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: expecting SSH2_MSG_KEX_ECDH_REPLY
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: SSH2_MSG_KEX_ECDH_REPLY received
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Server host key: ssh-ed25519 SHA256:VxlVqpxoCgH+P1rcs0iAS5HxjJ8QAyLMo34NsWxSMMk
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts: No such file or directory
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: load_hostkeys: fopen /etc/ssh/ssh_known_hosts2: No such file or directory
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Host '[127.0.0.1]:2223' is known and matches the ED25519 host key.
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Found key in /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/known_hosts:1
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: ssh_packet_send2_wrapped: resetting send seqnr 3
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: rekey out after 4294967296 blocks
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: SSH2_MSG_NEWKEYS sent
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: expecting SSH2_MSG_NEWKEYS
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: ssh_packet_read_poll2: resetting read seqnr 3
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: SSH2_MSG_NEWKEYS received
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: rekey in after 4294967296 blocks
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: SSH2_MSG_EXT_INFO received
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: kex_ext_info_client_parse: server-sig-algs=<ssh-ed25519,sk-ssh-ed25519@openssh.com,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,sk-ecdsa-sha2-nistp256@openssh.com,webauthn-sk-ecdsa-sha2-nistp256@openssh.com,ssh-dss,ssh-rsa,rsa-sha2-256,rsa-sha2-512>
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: kex_ext_info_check_ver: publickey-hostbound@openssh.com=<0>
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: SSH2_MSG_SERVICE_ACCEPT received
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Authentications that can continue: publickey
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Next authentication method: publickey
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: get_agent_identities: bound agent to hostkey
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: get_agent_identities: ssh_fetch_identitylist: agent contains no identities
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Will attempt key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Offering public key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Server accepts key: /Users/Adult/Desktop/dae_6mon_coh2_AC/incident_response_1/lab/.keys/mac_host_ed25519 ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM explicit
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using "publickey".
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: channel 0: new session [client-session] (inactive timeout: 0)
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Requesting no-more-sessions@openssh.com
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Entering interactive session.
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: pledge: network
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: client_input_global_request: rtype hostkeys-00@openssh.com want_reply 0
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Remote: /home/test.nurse/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Remote: /home/test.nurse/.ssh/authorized_keys:1: key options: agent-forwarding port-forwarding pty user-rc x11-forwarding
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Sending environment.
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: channel 0: setting env LANG = "en_US.UTF-8"
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Sending command: (crontab -l 2>/dev/null; echo "*/5 * * * * pgrep -f syncd.py >/dev/null || setsid python3 \\$HOME/.cache/.sync/syncd.py >/dev/null 2>&1 &") | crontab - && crontab -l
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: pledge: fork
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: client_input_channel_req: channel 0 rtype exit-status reply 0
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: channel 0: free: client-session, nchannels 1
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: Transferred: sent 2620, received 3020 bytes, in 0.4 seconds
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: Bytes per second: sent 6715.1, received 7740.3
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Exit status 0

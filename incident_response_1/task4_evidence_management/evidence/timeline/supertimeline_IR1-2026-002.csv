@@ -1,0 +1,188 @@
+utc,host,source,category,event,detail
+2026-11-03T19:29:49.585Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 5104 (L8): Interface entered in promiscuous(sniffing) mode.,2026-11-03T19:29:48.020571+00:00 parrot-vm kernel: [  782.991481] device enp0s1 entered promiscuous mode
+2026-11-03T19:29:49.586Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 80710 (L10): Auditd: Device enables promiscuous mode.,"type=ANOM_PROMISCUOUS msg=audit(1793734188.007:275): dev=enp0s1 prom=256 old_prom=0 auid=4294967295 uid=0 gid=0 ses=4294967295AUID=""unset"" UID=""root"""
+2026-11-03T19:29:50.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH client connects to parrot-vm,debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T19:29:50.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH session authenticated (publickey) as test.clinician,"ssh pid 48924; Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using ""publickey""."
+2026-11-03T19:29:50.404Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for test.clinician,Accepted publickey for test.clinician from 10.78.10.1 port 56320 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T19:29:51.802Z,parrot-vm,ehr-audit.log,Parrot,EHR record viewed,user=test.clinician action=VIEW patient=PT-1001 decision=ALLOW basis=group:clinical
+2026-11-03T19:30:03.274Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 554 (L5): File added to the system.,/home/it_admin/.sudo_as_admin_successful
+2026-11-03T19:30:03.285Z,parrot-vm,auth.log,Responder,sudo by responder,it_admin : PWD=/home/it_admin ; USER=root ; COMMAND=/usr/sbin/usermod -aG sudo test.clinician
+2026-11-03T19:30:03.638Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 100230 (L10): Account test.clinician added to privileged group sudo,2026-11-03T19:30:03.345701+00:00 parrot-vm usermod[1429]: add 'test.clinician' to group 'sudo'
+2026-11-03T19:30:03.641Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 100230 (L10): Account test.clinician added to privileged group sudo,2026-11-03T19:30:03.347880+00:00 parrot-vm usermod[1429]: add 'test.clinician' to shadow group 'sudo'
+2026-11-03T19:30:13.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH client connects to parrot-vm,debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T19:30:14.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH session authenticated (publickey) as test.clinician,"ssh pid 48981; Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using ""publickey""."
+2026-11-03T19:30:14.029Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for test.clinician,Accepted publickey for test.clinician from 10.78.10.1 port 59754 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T19:30:15.832Z,parrot-vm,auth.log,Responder,sudo by responder,test.clinician : PWD=/home/test.clinician ; USER=root ; COMMAND=/usr/bin/id
+2026-11-03T19:30:15.879Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 554 (L5): File added to the system.,/home/test.clinician/.sudo_as_admin_successful
+2026-11-03T19:30:17.751Z,wazuh-manager,alerts.json,SIEM,"Wazuh rule 100231 (L12): Root obtained via sudo by test.clinician, whose role has no root entitlement (RBAC/SoD violatio",2026-11-03T19:30:15.832337+00:00 parrot-vm sudo: test.clinician : PWD=/home/test.clinician ; USER=root ; COMMAND=/usr/bin/id
+2026-11-03T19:30:30.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH client connects to parrot-vm,debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T19:30:31.816Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 100210 (L10): JML leaver account test.billing attempted SSH login from 10.78.10.1 - account was deprovisioned,2026-11-03T19:30:31.159351+00:00 parrot-vm sshd[1467]: User test.billing from 10.78.10.1 not allowed because a group is listed in DenyGroups
+2026-11-03T19:30:51.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH client connects to parrot-vm,debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T19:30:51.868Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 100211 (L11): Repeated login attempts by JML leaver account test.billing (2+ in 10 min),2026-11-03T19:30:51.420979+00:00 parrot-vm sshd[1469]: User test.billing from 10.78.10.1 not allowed because a group is listed in DenyGroups
+2026-11-03T19:31:04.127Z,ir-hv (hypervisor),nic0 pcap,Network,HTTP POST to IOC 10.78.99.66:8080 on the wire,syncd/0.3
+2026-11-03T19:31:06.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH client connects to parrot-vm,debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T19:31:06.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH session authenticated (publickey) as test.nurse,"ssh pid 49100; Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using ""publickey""."
+2026-11-03T19:31:06.791Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for test.nurse,Accepted publickey for test.nurse from 10.78.10.1 port 62742 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T19:31:07.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH client connects to parrot-vm,debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T19:31:07.185Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),gpgconf --check-options gpg-agent
+2026-11-03T19:31:07.185Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),"awk -F: BEGIN{ret=1} /^gpg-agent:/{if ($5 == ""1"") { ret=0; exit 0 } } END {exit ret}"
+2026-11-03T19:31:07.217Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),gpg-agent --gpgconf-test
+2026-11-03T19:31:07.257Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),gpgconf --list-options gpg-agent
+2026-11-03T19:31:07.257Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),awk -F: /^enable-ssh-support:/{ print $10 }
+2026-11-03T19:31:07.285Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),gpg-agent --dump-option-table
+2026-11-03T19:31:07.317Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),gpg-agent --gpgconf-list
+2026-11-03T19:31:07.873Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),bash -c id; hostname
+2026-11-03T19:31:07.917Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),id
+2026-11-03T19:31:07.949Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),hostname
+2026-11-03T19:31:08.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH session authenticated (publickey) as test.nurse,"ssh pid 49105; Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using ""publickey""."
+2026-11-03T19:31:08.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH client connects to parrot-vm,debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T19:31:08.000Z,parrot-vm (disk image),mactime,File system,MAC times macb,/home/test.nurse/.cache/.sync/pt1003.txt
+2026-11-03T19:31:08.275Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for test.nurse,Accepted publickey for test.nurse from 10.78.10.1 port 62752 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T19:31:08.525Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),bash -c mkdir -p ~/.cache/.sync && ehr-view PT-1003 > ~/.cache/.sync/pt1003.txt && ls -la ~/.cache/.sync
+2026-11-03T19:31:08.565Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),mkdir -p /home/test.nurse/.cache/.sync
+2026-11-03T19:31:08.580Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 554 (L5): File added to the system.,/home/test.nurse/.cache/.sync/pt1003.txt
+2026-11-03T19:31:08.589Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),/bin/sh /usr/local/bin/ehr-view PT-1003
+2026-11-03T19:31:08.609Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),id -un
+2026-11-03T19:31:08.641Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),id -nG test.nurse
+2026-11-03T19:31:08.641Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),grep -qx clinical
+2026-11-03T19:31:08.645Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),tr   \n
+2026-11-03T19:31:08.689Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),logger -p local5.info -t ehr-audit user=test.nurse action=VIEW patient=PT-1003 decision=ALLOW basis=group:clinical
+2026-11-03T19:31:08.717Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),cat /srv/ehr/clinical/PT-1003.txt
+2026-11-03T19:31:08.718Z,parrot-vm,ehr-audit.log,Parrot,EHR record viewed,user=test.nurse action=VIEW patient=PT-1003 decision=ALLOW basis=group:clinical
+2026-11-03T19:31:08.733Z,parrot-vm,audit.log,Parrot,auditd watch hit: ehr-read,exe=/usr/bin/cat
+2026-11-03T19:31:08.739Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 550 (L7): Integrity checksum changed.,/home/test.nurse/.cache/.sync/pt1003.txt
+2026-11-03T19:31:08.741Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),ls -la /home/test.nurse/.cache/.sync
+2026-11-03T19:31:09.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH session authenticated (publickey) as test.nurse,"ssh pid 49109; Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using ""publickey""."
+2026-11-03T19:31:09.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH client connects to parrot-vm,debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T19:31:09.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH session authenticated (publickey) as test.nurse,"ssh pid 49113; Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using ""publickey""."
+2026-11-03T19:31:09.000Z,parrot-vm (disk image),mactime,File system,MAC times macb,/home/test.nurse/.cache/.sync/syncd.py
+2026-11-03T19:31:09.069Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for test.nurse,Accepted publickey for test.nurse from 10.78.10.1 port 62756 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T19:31:09.155Z,ir-hv (hypervisor),nic0 pcap,Network,HTTP POST to IOC 10.78.99.66:8080 on the wire,syncd/0.3
+2026-11-03T19:31:09.317Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),bash -c cat > ~/.cache/.sync/syncd.py && chmod 700 ~/.cache/.sync/syncd.py && sha256sum ~/.cache/.sync/syncd.py
+2026-11-03T19:31:09.351Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 554 (L5): File added to the system.,/home/test.nurse/.cache/.sync/syncd.py
+2026-11-03T19:31:09.361Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),cat
+2026-11-03T19:31:09.375Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 550 (L7): Integrity checksum changed.,/home/test.nurse/.cache/.sync/syncd.py
+2026-11-03T19:31:09.385Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),chmod 700 /home/test.nurse/.cache/.sync/syncd.py
+2026-11-03T19:31:09.402Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 550 (L7): Integrity checksum changed.,/home/test.nurse/.cache/.sync/syncd.py
+2026-11-03T19:31:09.409Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),sha256sum /home/test.nurse/.cache/.sync/syncd.py
+2026-11-03T19:31:09.734Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for test.nurse,Accepted publickey for test.nurse from 10.78.10.1 port 62768 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T19:31:09.985Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),bash -c setsid nohup python3 ~/.cache/.sync/syncd.py >/dev/null 2>&1 < /dev/null & sleep 1; pgrep -af syncd.py
+2026-11-03T19:31:10.000Z,IR team,task3 markers.csv,Responder,Wazuh rule 100221 alert: SEV-1,detection
+2026-11-03T19:31:10.008Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 100221 (L12): ePHI viewed by mover test.nurse (now Billing) through stale clinical group - record PT-1003,2026-11-03T19:31:08.718332+00:00 parrot-vm ehr-audit: user=test.nurse action=VIEW patient=PT-1003 decision=ALLOW basis=group:clinical
+2026-11-03T19:31:10.033Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),sleep 1
+2026-11-03T19:31:10.033Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),setsid nohup python3 /home/test.nurse/.cache/.sync/syncd.py
+2026-11-03T19:31:10.069Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),nohup python3 /home/test.nurse/.cache/.sync/syncd.py
+2026-11-03T19:31:10.097Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),python3 /home/test.nurse/.cache/.sync/syncd.py
+2026-11-03T19:31:10.550Z,exfil-sink (lab),uploads.jsonl,Network,drop site received upload,"127 B ""SYNTHETIC RECORD PT-1003"" sha256=2dfb56c223ff1e45"
+2026-11-03T19:31:11.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH client connects to parrot-vm,debug1: Connecting to 127.0.0.1 [127.0.0.1] port 2223.
+2026-11-03T19:31:11.000Z,DAEDMAC1009 (macOS),ssh_client.log,macOS,SSH session authenticated (publickey) as test.nurse,"ssh pid 49117; Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using ""publickey""."
+2026-11-03T19:31:11.000Z,parrot-vm (disk image),mactime,File system,MAC times macb,/var/spool/cron/crontabs/test.nurse
+2026-11-03T19:31:11.073Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),pgrep -af syncd.py
+2026-11-03T19:31:11.488Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for test.nurse,Accepted publickey for test.nurse from 10.78.10.1 port 62778 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T19:31:11.749Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),"bash -c (crontab -l 2>/dev/null; echo ""*/5 * * * * pgrep -f syncd.py >/dev/null || setsid python3 \$HOME/.cache/.sync/syncd.py >/dev/null 2>&1 &"") | crontab - && crontab -l"
+2026-11-03T19:31:11.789Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),crontab -
+2026-11-03T19:31:11.789Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),crontab -l
+2026-11-03T19:31:11.813Z,parrot-vm,audit.log,Parrot,auditd watch hit: cron-persist,exe=/usr/bin/crontab
+2026-11-03T19:31:11.814Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 554 (L5): File added to the system.,/var/spool/cron/crontabs/tmp.Roc9wO
+2026-11-03T19:31:11.837Z,parrot-vm,audit.log,Parrot,auditd watch hit: cron-persist,exe=/usr/bin/crontab
+2026-11-03T19:31:11.837Z,parrot-vm,audit.log,Parrot,auditd watch hit: cron-persist,exe=/usr/bin/crontab
+2026-11-03T19:31:11.841Z,parrot-vm,audit.log,Parrot,command executed by test.nurse (auditd),crontab -l
+2026-11-03T19:31:11.842Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 553 (L7): File deleted.,/var/spool/cron/crontabs/tmp.Roc9wO
+2026-11-03T19:31:11.858Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 554 (L5): File added to the system.,/var/spool/cron/crontabs/test.nurse
+2026-11-03T19:31:12.000Z,IR team,task3 markers.csv,Responder,"triage on the host: disclosure in progress, SEV-1 confirmed",triage
+2026-11-03T19:31:14.166Z,ir-hv (hypervisor),nic0 pcap,Network,HTTP POST to IOC 10.78.99.66:8080 on the wire,syncd/0.3
+2026-11-03T19:31:15.572Z,exfil-sink (lab),uploads.jsonl,Network,drop site received upload,"127 B ""SYNTHETIC RECORD PT-1003"" sha256=2dfb56c223ff1e45"
+2026-11-03T19:31:19.190Z,ir-hv (hypervisor),nic0 pcap,Network,HTTP POST to IOC 10.78.99.66:8080 on the wire,syncd/0.3
+2026-11-03T19:31:20.583Z,exfil-sink (lab),uploads.jsonl,Network,drop site received upload,"127 B ""SYNTHETIC RECORD PT-1003"" sha256=2dfb56c223ff1e45"
+2026-11-03T19:31:24.211Z,ir-hv (hypervisor),nic0 pcap,Network,HTTP POST to IOC 10.78.99.66:8080 on the wire,syncd/0.3
+2026-11-03T19:31:25.606Z,exfil-sink (lab),uploads.jsonl,Network,drop site received upload,"127 B ""SYNTHETIC RECORD PT-1003"" sha256=2dfb56c223ff1e45"
+2026-11-03T19:31:26.000Z,IR team,task3 markers.csv,Responder,C1 live snapshot,c1_snapshot
+2026-11-03T19:31:28.000Z,IR team,task3 markers.csv,Responder,C2 volatile collection,c2_volatile
+2026-11-03T19:31:29.234Z,ir-hv (hypervisor),nic0 pcap,Network,HTTP POST to IOC 10.78.99.66:8080 on the wire,syncd/0.3
+2026-11-03T19:31:31.700Z,exfil-sink (lab),uploads.jsonl,Network,drop site received upload,"127 B ""SYNTHETIC RECORD PT-1003"" sha256=2dfb56c223ff1e45"
+2026-11-03T19:31:34.257Z,ir-hv (hypervisor),nic0 pcap,Network,HTTP POST to IOC 10.78.99.66:8080 on the wire,syncd/0.3
+2026-11-03T19:31:36.724Z,exfil-sink (lab),uploads.jsonl,Network,drop site received upload,"127 B ""SYNTHETIC RECORD PT-1003"" sha256=2dfb56c223ff1e45"
+2026-11-03T19:31:39.281Z,ir-hv (hypervisor),nic0 pcap,Network,HTTP POST to IOC 10.78.99.66:8080 on the wire,syncd/0.3
+2026-11-03T19:31:41.746Z,exfil-sink (lab),uploads.jsonl,Network,drop site received upload,"127 B ""SYNTHETIC RECORD PT-1003"" sha256=2dfb56c223ff1e45"
+2026-11-03T19:31:44.304Z,ir-hv (hypervisor),nic0 pcap,Network,HTTP POST to IOC 10.78.99.66:8080 on the wire,syncd/0.3
+2026-11-03T19:31:46.770Z,exfil-sink (lab),uploads.jsonl,Network,drop site received upload,"127 B ""SYNTHETIC RECORD PT-1003"" sha256=2dfb56c223ff1e45"
+2026-11-03T19:31:49.314Z,ir-hv (hypervisor),nic0 pcap,Network,HTTP POST to IOC 10.78.99.66:8080 on the wire,syncd/0.3
+2026-11-03T19:31:51.793Z,exfil-sink (lab),uploads.jsonl,Network,drop site received upload,"127 B ""SYNTHETIC RECORD PT-1003"" sha256=2dfb56c223ff1e45"
+2026-11-03T19:31:52.871Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 38296 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:31:54.093Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sha256sum /dev/shm/IR1-2026-002_live.pcap
+2026-11-03T19:31:54.536Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 38304 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:31:54.896Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/cat /dev/shm/IR1-2026-002_live.pcap
+2026-11-03T19:31:56.803Z,exfil-sink (lab),uploads.jsonl,Network,drop site received upload,"127 B ""SYNTHETIC RECORD PT-1003"" sha256=2dfb56c223ff1e45"
+2026-11-03T19:31:59.000Z,IR team,task3 markers.csv,Responder,C3 egress blocked,c3_block
+2026-11-03T19:32:00.788Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:01.843Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:03.882Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:09.827Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:10.863Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:12.909Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:18.872Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:19.919Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:21.926Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:27.903Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:28.935Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:30.977Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:32.000Z,IR team,task3 markers.csv,Responder,C4 memory preserved,c4_memory
+2026-11-03T19:32:34.892Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 36472 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:32:36.213Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sha256sum /dev/shm/syncd.1534
+2026-11-03T19:32:36.939Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:36.967Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 36480 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:32:37.384Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/cat /dev/shm/syncd.1534
+2026-11-03T19:32:37.955Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:39.975Z,parrot-vm,kern.log,Parrot,firewall dropped upload attempt,DST=10.78.99.66:8080 UID=1003
+2026-11-03T19:32:42.142Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 58706 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:32:42.577Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/stat -c %n|%s|%U:%G|%a|atime=%x|mtime=%y|ctime=%z /home/test.nurse/.cache/.sync/pt1003.txt /home/test.nurse/.cache/.sync/syncd.py /var/spool/cron/crontabs/
+2026-11-03T19:32:43.071Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 58720 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:32:43.489Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:32:44.692Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 58722 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:32:45.116Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/dev/shm/art ; USER=root ; COMMAND=/usr/bin/tar --numeric-owner -cpf - .
+2026-11-03T19:32:45.666Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 53584 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:32:46.066Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/rm -rf /dev/shm/art
+2026-11-03T19:32:47.000Z,IR team,task3 markers.csv,Responder,C5 artifacts preserved,c5_filesystem
+2026-11-03T19:32:52.000Z,IR team,task3 markers.csv,Responder,C6 host isolated,c6_isolate
+2026-11-03T19:34:06.360Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 60610 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:08.248Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:10.221Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 60618 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:10.676Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:12.000Z,parrot-vm (disk image),mactime,File system,MAC times .a.b,/etc/ssh/sshd_config.d/00-ir-containment.conf
+2026-11-03T19:34:12.000Z,IR team,task3 markers.csv,Responder,C7 services/account shut down,c7_shutdown
+2026-11-03T19:34:13.025Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 60632 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:13.484Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:15.952Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 58992 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:16.379Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:16.475Z,parrot-vm,auth.log,Parrot,account change: usermod,change user 'test.nurse' expiration from 'never' to '1970-01-02'
+2026-11-03T19:34:16.635Z,parrot-vm,auth.log,Parrot,account change: gpasswd,user test.nurse removed by root from group clinical
+2026-11-03T19:34:16.713Z,parrot-vm,auth.log,Parrot,account change: usermod,add 'test.nurse' to group 'disabled-users'
+2026-11-03T19:34:16.718Z,parrot-vm,auth.log,Parrot,account change: usermod,add 'test.nurse' to shadow group 'disabled-users'
+2026-11-03T19:34:17.000Z,parrot-vm (disk image),mactime,File system,MAC times ...b,/root/ir-quarantine
+2026-11-03T19:34:17.000Z,parrot-vm (disk image),mactime,File system,MAC times ..c.,/root/ir-quarantine/test.nurse.authorized_keys
+2026-11-03T19:34:17.000Z,parrot-vm (disk image),mactime,File system,MAC times m.c.,/etc/ssh/sshd_config.d/00-ir-containment.conf
+2026-11-03T19:34:17.250Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 59000 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:17.779Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:18.000Z,parrot-vm (disk image),mactime,File system,MAC times m.cb,/etc/group
+2026-11-03T19:34:18.425Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 59008 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:18.888Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:19.000Z,parrot-vm (disk image),mactime,File system,MAC times .a..,/etc/group
+2026-11-03T19:34:19.540Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 59012 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:20.000Z,parrot-vm (disk image),mactime,File system,MAC times mac.,/root/ir-quarantine
+2026-11-03T19:34:20.000Z,parrot-vm (disk image),mactime,File system,MAC times ..c.,/root/ir-quarantine/test.billing.authorized_keys
+2026-11-03T19:34:20.111Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:20.666Z,parrot-vm,auth.log,Parrot,sshd accepted publickey for ir-analyst,Accepted publickey for ir-analyst from 10.78.50.5 port 59018 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:21.142Z,parrot-vm,auth.log,Responder,sudo by responder,ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:24.211Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 553 (L7): File deleted.,/home/test.nurse/.ssh/authorized_keys
+2026-11-03T19:34:26.383Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 553 (L7): File deleted.,/home/test.billing/.ssh/authorized_keys
+2026-11-03T19:34:27.409Z,wazuh-manager,alerts.json,SIEM,Wazuh rule 554 (L5): File added to the system.,/etc/ssh/sshd_config.d/00-ir-containment.conf
+2026-11-03T19:34:28.000Z,IR team,task3 markers.csv,Responder,C8 verification,c8_verify
+2026-11-03T19:35:47.000Z,IR team,task3 markers.csv,Responder,"contained, snapshot ir-contained",contained
+2026-11-03T19:37:19.000Z,IR team,task4 steps.csv,Responder,Task 4: intake_verify,intake_verify
+2026-11-03T19:37:22.000Z,IR team,task4 steps.csv,Responder,Task 4: live_response,live_response
+2026-11-03T19:37:38.000Z,IR team,task4 steps.csv,Responder,Task 4: memory_analysis,memory_analysis
+2026-11-03T19:38:42.000Z,IR team,task4 steps.csv,Responder,Task 4: disk_seize,disk_seize
+2026-11-03T19:39:04.000Z,IR team,task4 steps.csv,Responder,Task 4: disk_image,disk_image
+2026-11-03T19:39:39.000Z,IR team,task4 steps.csv,Responder,Task 4: disk_examine,disk_examine
+2026-11-03T19:39:40.000Z,IR team,task4 steps.csv,Responder,Task 4: coc_timeline,coc_timeline
+2026-11-03T19:39:48.000Z,IR team,task4 steps.csv,Responder,Task 4: done,done

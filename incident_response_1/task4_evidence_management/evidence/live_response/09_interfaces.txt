@@ -1,0 +1,14 @@
+lo               UNKNOWN        00:00:00:00:00:00 <LOOPBACK,UP,LOWER_UP> 
+enp0s1           DOWN           52:54:00:0a:00:10 <BROADCAST,MULTICAST> 
+enp0s2           UP             52:54:00:0a:00:50 <BROADCAST,MULTICAST,UP,LOWER_UP> 
+
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+enp0s1           DOWN           
+enp0s2           UP             10.0.3.15/24 fec0::5054:ff:fe0a:50/64 fe80::5054:ff:fe0a:50/64 
+
+default via 10.0.3.2 dev enp0s2 
+10.0.3.0/24 dev enp0s2 proto kernel scope link src 10.0.3.15 
+
+10.0.3.2 dev enp0s2 lladdr 52:55:0a:00:03:02 REACHABLE 
+10.0.3.20 dev enp0s2 lladdr 52:55:0a:00:03:14 REACHABLE 
+fe80::2 dev enp0s2 lladdr 52:56:00:00:00:02 router STALE 

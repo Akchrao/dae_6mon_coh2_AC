@@ -1,0 +1,2 @@
+IR1-2026-002_parrot-vm.mem.elf: OK
+IR1-2026-002_syncd.core: OK

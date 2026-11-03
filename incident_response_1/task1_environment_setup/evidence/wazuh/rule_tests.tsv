@@ -1,0 +1,7 @@
+rule	case	expected	fired	level	result	input
+100210	leaver test.billing denied by sshd	100210	100210	10	PASS	2026-11-03T05:00:00.000000+00:00 parrot-vm sshd[1200]: User test.billing from 10.78.10.1 not allowed because a group is listed in DenyGroups
+100210	near-miss: non-leaver denied	!100210	5718	5	PASS	2026-11-03T05:00:00.000000+00:00 parrot-vm sshd[1201]: User guest from 10.78.10.1 not allowed because a group is listed in DenyGroups
+100221	mover test.nurse views PT-1003	100221	100221	12	PASS	2026-11-03T05:00:00.000000+00:00 parrot-vm ehr-audit: user=test.nurse action=VIEW patient=PT-1003 decision=ALLOW basis=group:clinical
+100221	near-miss: clinician views PT-1001	!100221	100220	3	PASS	2026-11-03T05:00:00.000000+00:00 parrot-vm ehr-audit: user=test.clinician action=VIEW patient=PT-1001 decision=ALLOW basis=group:clinical
+100231	test.clinician runs a command as root	100231	100231	12	PASS	2026-11-03T05:00:00.000000+00:00 parrot-vm sudo: test.clinician : TTY=pts/0 ; PWD=/home/test.clinician ; USER=root ; COMMAND=/usr/bin/id
+100231	near-miss: it_admin (entitled) uses sudo	!100231	5403	4	PASS	2026-11-03T05:00:00.000000+00:00 parrot-vm sudo:  it_admin : TTY=pts/0 ; PWD=/home/it_admin ; USER=root ; COMMAND=/usr/bin/id

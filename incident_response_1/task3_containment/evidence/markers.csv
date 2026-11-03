@@ -1,0 +1,12 @@
+phase,utc
+detection,2026-11-03T19:31:10Z
+triage,2026-11-03T19:31:12Z
+c1_snapshot,2026-11-03T19:31:26Z
+c2_volatile,2026-11-03T19:31:28Z
+c3_block,2026-11-03T19:31:59Z
+c4_memory,2026-11-03T19:32:32Z
+c5_filesystem,2026-11-03T19:32:47Z
+c6_isolate,2026-11-03T19:32:52Z
+c7_shutdown,2026-11-03T19:34:12Z
+c8_verify,2026-11-03T19:34:28Z
+contained,2026-11-03T19:35:47Z

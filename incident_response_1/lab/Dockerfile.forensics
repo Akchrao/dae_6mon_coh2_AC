@@ -1,0 +1,8 @@
+# "ir-forensics": the Parrot OS forensic workstation (Debian 12 stand-in) for IR1 Tasks 4-6.
+# Extends the Task 1/2 image (tshark, Volatility 3 2.7.0) with the Parrot disk-forensics toolset.
+FROM ir1-parrot-sim:1.0
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update -qq && apt-get install -y -qq --no-install-recommends \
+      dc3dd sleuthkit ewf-tools binutils xz-utils file openssh-client >/dev/null && \
+    rm -rf /var/lib/apt/lists/*
+COPY symbols/debian-6.1.0-54-cloud-amd64.json.xz /opt/symbols/linux/

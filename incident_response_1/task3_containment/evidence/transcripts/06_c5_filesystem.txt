@@ -1,0 +1,17 @@
+[2026-11-03T19:32:47Z] >>> c5_filesystem
+# C5 stat first (reading changes atime), freeze a copy in RAM, hash, tar to ir-forensics, re-hash the copy
+/home/test.nurse/.cache/.sync/pt1003.txt|127|test.nurse:test.nurse|644|atime=2026-11-03 19:31:08.745667853 +0000|mtime=2026-11-03 19:31:08.733667487 +
+/home/test.nurse/.cache/.sync/syncd.py|827|test.nurse:test.nurse|700|atime=2026-11-03 19:31:09.413688225 +0000|mtime=2026-11-03 19:31:09.381687249 +00
+/var/spool/cron/crontabs/test.nurse|280|test.nurse:crontab|600|atime=2026-11-03 19:31:11.869763062 +0000|mtime=2026-11-03 19:31:11.829761844 +0000|cti
+/home/test.nurse/.ssh/authorized_keys|100|test.nurse:test.nurse|600|atime=2026-11-03 19:21:39.618990227 +0000|mtime=2026-11-03 19:21:04.160000000 +000
+/home/test.billing/.ssh/authorized_keys|100|test.billing:test.billing|600|atime=2026-11-03 19:21:39.634990227 +0000|mtime=2026-11-03 19:21:04.24400000
+/var/log/auth.log|40121|root:adm|640|atime=2026-11-03 19:32:42.139542104 +0000|mtime=2026-11-03 19:32:42.575457290 +0000|ctime=2026-11-03 19:32:42.575
+/var/log/ehr-audit.log|272|root:adm|640|atime=2026-11-03 19:31:09.905703226 +0000|mtime=2026-11-03 19:31:08.713666876 +0000|ctime=2026-11-03 19:31:08.
+/var/log/kern.log|102597|root:adm|640|atime=2026-11-03 19:32:40.111940585 +0000|mtime=2026-11-03 19:32:39.971968314 +0000|ctime=2026-11-03 19:32:39.97
+/var/log/audit/audit.log|578074|root:adm|640|atime=2026-11-03 19:32:42.139542104 +0000|mtime=2026-11-03 19:32:42.587454956 +0000|ctime=2026-11-03 19:3
+/etc/group|934|root:root|644|atime=2026-11-03 19:30:03.415619851 +0000|mtime=2026-11-03 19:30:03.343617509 +0000|ctime=2026-11-03 19:30:03.347617639 +
+/etc/passwd|1817|root:root|644|atime=2026-11-03 19:21:04.076000000 +0000|mtime=2026-11-03 19:21:04.020000000 +0000|ctime=2026-11-03 19:21:04.024000000
+/etc/sudoers.d/it_admin|33|root:root|440|atime=2026-11-03 19:21:39.610990227 +0000|mtime=2026-11-03 19:21:03.488000000 +0000|ctime=2026-11-03 19:21:03
+/var/ossec/logs/ossec.log|9723|root:wazuh|660|atime=2026-11-03 19:21:54.426990227 +0000|mtime=2026-11-03 19:23:10.130095569 +0000|ctime=2026-11-03 19:
+all       13 artifacts: source hash == copy hash (MATCH)
+871eb2e5c6b26ecc72919a5fde243717785e80f8905d1d1134b6a189fa2f5140  /ir/task3_containment/evidence/filesystem/IR1-2026-002_artifacts.tar

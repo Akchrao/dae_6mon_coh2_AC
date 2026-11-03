@@ -1,0 +1,21 @@
+[2026-11-03T19:34:28Z] >>> c8_verify
+# reachability AFTER containment (before = Task 1 transcripts/07)
+P1 macOS host -> parrot-vm SSH (127.0.0.1:2223)           : BLOCKED
+P2 clinical LAN nurse-ws -> parrot-vm SSH (10.78.10.5:22)  : BLOCKED
+P3 clinical LAN nurse-ws -> EHR portal (10.78.10.5:8080)   : BLOCKED
+P4 parrot-vm -> exfil-sink (10.78.99.66:8080)              : BLOCKED
+P5 parrot-vm -> internet (deb.debian.org:80)               : BLOCKED
+P6 ir-forensics -> parrot-vm quarantine SSH (10.78.50.2:2222): REACHABLE
+
+$ systemctl is-active ssh cron ehr-portal wazuh-agent
+active inactive inactive active
+uploads received by the drop site: 10 ; last: {"ts": "2026-11-03T19:31:56.803+00:00", "src": "10.78.99.5",
+
+# post-containment snapshot   [VBoxManage snapshot parrot-vm take ir-contained --live]
+(ok)
+List of snapshots present on all disks:
+ID        TAG               VM SIZE                DATE     VM CLOCK     ICOUNT
+--        baseline-clean    501 MiB 2026-11-03 19:22:59 00:06:18.221           
+--        ir-pre-containment  556 MiB 2026-11-03 19:31:26 00:14:44.476           
+--        ir-contained      596 MiB 2026-11-03 19:35:46 00:18:57.579
+[2026-11-03T19:35:47Z] >>> contained

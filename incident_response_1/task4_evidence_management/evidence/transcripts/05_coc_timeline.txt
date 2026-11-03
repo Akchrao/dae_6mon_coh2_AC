@@ -1,0 +1,15 @@
+[2026-11-03T19:39:40Z] >>> coc_timeline
+chain of custody: 13 items, 13 verified unchanged; 54 custody events
+  -> evidence/coc/evidence_register.csv, evidence/coc/custody_log.csv
+super-timeline: 186 events from 11 host/source pairs; 2026-11-03T19:29:49.585Z -> 2026-11-03T19:39:40.000Z
+session correlation: 7/7 macOS sessions matched to Parrot sshd by key fingerprint
+key events found: 18/18
+[2026-11-03T19:39:48Z] >>> done
+evidence index: 66 files
+
+# CORRECTION 2026-11-03T19:52:32Z: analysis/build_timeline.py picked the first EHR-audit event and the first Mac SSH session
+# for two milestones regardless of person (it matched Sathya's normal PT-1001 view). Selectors now require test.nurse / PT-1003;
+# timeline/*.csv regenerated from the same raw evidence (raw evidence unchanged; index re-written).
+super-timeline: 187 events from 11 host/source pairs; 2026-11-03T19:29:49.585Z -> 2026-11-03T19:39:48.000Z
+session correlation: 7/7 macOS sessions matched to Parrot sshd by key fingerprint
+key events found: 18/18

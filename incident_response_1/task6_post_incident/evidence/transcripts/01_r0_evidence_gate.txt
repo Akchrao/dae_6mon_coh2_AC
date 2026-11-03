@@ -1,0 +1,13 @@
+[2026-11-03T19:40:22Z] >>> r0_gate
+# Recovery destroys the compromised state. Gate: every evidence item must re-verify first.
+task1_check: 15 OK, 0 not OK
+task2_check: 24 OK, 0 not OK
+task3_check: 27 OK, 0 not OK
+task4_check: 64 OK, 0 not OK
+large_items_check: 5 OK, 0 not OK
+IR1-2026-002_parrot-vm.mem.elf: OK
+IR1-2026-002_syncd.core: OK
+IR1-2026-002_parrot-vm_seized.raw: OK
+IR1-2026-002_vda.dd: OK
+parrot-vm_baseline.mem.elf: OK
+GATE PASSED: evidence preserved - recovery may proceed

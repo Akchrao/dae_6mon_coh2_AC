@@ -1,0 +1,39 @@
+== crontab -l -u test.nurse
+*/5 * * * * pgrep -f syncd.py >/dev/null || setsid python3 $HOME/.cache/.sync/syncd.py >/dev/null 2>&1 &
+
+== sudo group
+sudo:x:27:it_admin,test.clinician
+
+== running services
+  auditd.service              loaded active running Security Auditing Service
+  cron.service                loaded active running Regular background program processing daemon
+  dbus.service                loaded active running D-Bus System Message Bus
+  ehr-portal.service          loaded active running Care Access Navigator EHR portal (lab)
+  exim4.service               loaded active running LSB: exim Mail Transport Agent
+  getty@tty1.service          loaded active running Getty on tty1
+  qemu-guest-agent.service    loaded active running QEMU Guest Agent
+  rsyslog.service             loaded active running System Logging Service
+  serial-getty@ttyS0.service  loaded active running Serial Getty on ttyS0
+  ssh.service                 loaded active running OpenBSD Secure Shell server
+  systemd-journald.service    loaded active running Journal Service
+  systemd-logind.service      loaded active running User Login Management
+  systemd-networkd.service    loaded active running Network Configuration
+  systemd-resolved.service    loaded active running Network Name Resolution
+  systemd-timesyncd.service   loaded active running Network Time Synchronization
+  systemd-udevd.service       loaded active running Rule-based Manager for Device Events and Files
+  unattended-upgrades.service loaded active running Unattended Upgrades Shutdown
+  user@1000.service           loaded active running User Manager for UID 1000
+  user@1003.service           loaded active running User Manager for UID 1003
+  wazuh-agent.service         loaded active running Wazuh agent
+
+== listening
+State  Recv-Q Send-Q Local Address:Port Peer Address:PortProcess                                   
+LISTEN 0      5            0.0.0.0:8080      0.0.0.0:*    users:(("python3",pid=852,fd=3))         
+LISTEN 0      20         127.0.0.1:25        0.0.0.0:*    users:(("exim4",pid=647,fd=4))           
+LISTEN 0      4096      127.0.0.54:53        0.0.0.0:*    users:(("systemd-resolve",pid=313,fd=20))
+LISTEN 0      4096         0.0.0.0:5355      0.0.0.0:*    users:(("systemd-resolve",pid=313,fd=12))
+LISTEN 0      128          0.0.0.0:22        0.0.0.0:*    users:(("sshd",pid=811,fd=3))            
+LISTEN 0      4096   127.0.0.53%lo:53        0.0.0.0:*    users:(("systemd-resolve",pid=313,fd=18))
+LISTEN 0      4096            [::]:5355         [::]:*    users:(("systemd-resolve",pid=313,fd=14))
+LISTEN 0      128             [::]:22           [::]:*    users:(("sshd",pid=811,fd=4))            
+LISTEN 0      20             [::1]:25           [::]:*    users:(("exim4",pid=647,fd=5))           

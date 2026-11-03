@@ -3,3 +3,5 @@ Care_Access_Navigator/keycloak-26.7.1.tar
 .DS_Store
 
 *.zip
+__pycache__/
+*.pyc

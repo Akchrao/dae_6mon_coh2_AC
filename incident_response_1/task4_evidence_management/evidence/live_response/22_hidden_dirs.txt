@@ -1,0 +1,13 @@
+test.clinician	/home/test.clinician/.ssh
+test.nurse	/home/test.nurse/.ssh
+test.nurse	/home/test.nurse/.cache
+test.nurse	/home/test.nurse/.cache/.sync
+ir-analyst	/home/ir-analyst/.ssh
+ir-analyst	/home/ir-analyst/.config
+test.billing	/home/test.billing/.ssh
+root	/tmp/.font-unix
+root	/tmp/.ICE-unix
+root	/tmp/.X11-unix
+root	/tmp/.XIM-unix
+root	/root/.ssh
+root	/root/.config

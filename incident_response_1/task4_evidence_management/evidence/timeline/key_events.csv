@@ -1,0 +1,19 @@
+milestone,utc,host,source,detail
+Tara's first SSH session from the Mac authenticated,2026-11-03T19:31:06.000Z,DAEDMAC1009 (macOS),ssh_client.log,"ssh pid 49100; Authenticated to 127.0.0.1 ([127.0.0.1]:2223) using ""publickey""."
+Parrot sshd accepts test.nurse (same key fingerprint),2026-11-03T19:31:06.791Z,parrot-vm,auth.log,Accepted publickey for test.nurse from 10.78.10.1 port 62742 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+PT-1003 viewed through stale clinical group,2026-11-03T19:31:08.718Z,parrot-vm,ehr-audit.log,user=test.nurse action=VIEW patient=PT-1003 decision=ALLOW basis=group:clinical
+auditd: patient file read,2026-11-03T19:31:08.733Z,parrot-vm,audit.log,exe=/usr/bin/cat
+Staged copy written (file system),2026-11-03T19:31:08.000Z,parrot-vm (disk image),mactime,/home/test.nurse/.cache/.sync/pt1003.txt
+Uploader script written (file system),2026-11-03T19:31:09.000Z,parrot-vm (disk image),mactime,/home/test.nurse/.cache/.sync/syncd.py
+Uploader started (auditd),2026-11-03T19:31:09.985Z,parrot-vm,audit.log,bash -c setsid nohup python3 ~/.cache/.sync/syncd.py >/dev/null 2>&1 < /dev/null & sleep 1; pgrep -af syncd.py
+Persistence: crontab written (auditd),2026-11-03T19:31:11.813Z,parrot-vm,audit.log,exe=/usr/bin/crontab
+First upload received by drop site,2026-11-03T19:31:10.550Z,exfil-sink (lab),uploads.jsonl,"127 B ""SYNTHETIC RECORD PT-1003"" sha256=2dfb56c223ff1e45"
+"Wazuh alert 100221 (detection, SEV-1)",2026-11-03T19:31:10.008Z,wazuh-manager,alerts.json,2026-11-03T19:31:08.718332+00:00 parrot-vm ehr-audit: user=test.nurse action=VIEW patient=PT-1003 decision=ALLOW basis=group:clinical
+Triage confirms disclosure in progress,2026-11-03T19:31:12.000Z,IR team,task3 markers.csv,triage
+Egress blocked (C3),2026-11-03T19:31:59.000Z,IR team,task3 markers.csv,c3_block
+Last upload received by drop site,2026-11-03T19:31:56.803Z,exfil-sink (lab),uploads.jsonl,"127 B ""SYNTHETIC RECORD PT-1003"" sha256=2dfb56c223ff1e45"
+First firewall drop logged,2026-11-03T19:32:00.788Z,parrot-vm,kern.log,DST=10.78.99.66:8080 UID=1003
+Memory preserved (C4),2026-11-03T19:32:32.000Z,IR team,task3 markers.csv,c4_memory
+Host isolated (C6),2026-11-03T19:32:52.000Z,IR team,task3 markers.csv,c6_isolate
+Account locked + clinical group removed,2026-11-03T19:34:16.475Z,parrot-vm,auth.log,change user 'test.nurse' expiration from 'never' to '1970-01-02'
+Contained,2026-11-03T19:35:47.000Z,IR team,task3 markers.csv,contained

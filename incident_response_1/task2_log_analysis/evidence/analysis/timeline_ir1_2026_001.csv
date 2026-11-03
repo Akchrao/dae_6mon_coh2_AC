@@ -1,0 +1,20 @@
+time_utc,host,source,event
+2026-10-19 18:13,Entra ID,JML-LOG TERM-2026-0301,Jeevan Smith (test.billing) disabled in Entra ID (leaver)
+2026-10-19 18:15,Entra ID,JML-LOG TERM-2026-0301,Sessions revoked; app role removed 18:17
+2026-10-19 ~18:28,Keycloak,JML-LOG TERM-2026-0301,Keycloak copy disabled
+2026-11-03T19:21:04.020Z,Parrot,auth.log usermod,Lab replay of leaver: change user 'test.billing' expiration from 'never' to '1970-01-02'
+2026-11-03T19:21:04.021Z,Parrot,auth.log usermod,Lab replay of leaver: add 'test.billing' to group 'disabled-users'
+2026-11-03T19:30:30Z,macOS,ssh_client.log ssh[48999],Attempt 1: Mac user 'Adult' starts ssh as test.billing to 127.0.0.1:2223 (SSH-2.0-OpenSSH_10.2)
+2026-11-03T19:30:30.964Z,Network,ssh_sessions.pcapng,Attempt 1: client banner SSH-2.0-OpenSSH_10.2 from 10.78.10.1:55708
+2026-11-03T19:30:31.109Z,Parrot,auth.log sshd[1467],Attempt 1: Connection from 10.78.10.1:55708 (Docker gateway for 127.0.0.1:2223)
+2026-11-03T19:30:31.159Z,Parrot,auth.log sshd[1467],Attempt 1: User test.billing from 10.78.10.1 not allowed because a group is listed in DenyGroups
+2026-11-03T19:30:31.816Z,Wazuh,rule 100210 (L10),Alert raised from the Wazuh agent on parrot-vm
+2026-11-03T19:30:31Z,macOS,ssh_client.log ssh[48999],Attempt 1: client receives Permission denied (publickey)
+2026-11-03T19:30:51Z,macOS,ssh_client.log ssh[49063],Attempt 2: Mac user 'Adult' starts ssh as test.billing to 127.0.0.1:2223 (SSH-2.0-OpenSSH_10.2)
+2026-11-03T19:30:51.244Z,Network,ssh_sessions.pcapng,Attempt 2: client banner SSH-2.0-OpenSSH_10.2 from 10.78.10.1:61926
+2026-11-03T19:30:51.374Z,Parrot,auth.log sshd[1469],Attempt 2: Connection from 10.78.10.1:61926 (Docker gateway for 127.0.0.1:2223)
+2026-11-03T19:30:51.420Z,Parrot,auth.log sshd[1469],Attempt 2: User test.billing from 10.78.10.1 not allowed because a group is listed in DenyGroups
+2026-11-03T19:30:51.868Z,Wazuh,rule 100211 (L11),Alert raised from the Wazuh agent on parrot-vm
+2026-11-03T19:30:51Z,macOS,ssh_client.log ssh[49063],Attempt 2: client receives Permission denied (publickey)
+2026-11-03T19:36:44.335Z,Wazuh,rule 100251 (L7),Attempt 1: macOS-side alert when the host log was shipped
+2026-11-03T19:36:44.336Z,Wazuh,rule 100251 (L7),Attempt 2: macOS-side alert when the host log was shipped

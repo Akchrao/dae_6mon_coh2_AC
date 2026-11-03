@@ -1,0 +1,5 @@
+"IR - SSH only" tcp port 22
+"IR - attacker host" host 10.66.0.66
+"IR - TCP SYN (scan / new sessions)" tcp[tcpflags] & tcp-syn != 0
+"IR - exclude lab mgmt" not port 2375 and not port 2376
+"IR - DNS" udp port 53

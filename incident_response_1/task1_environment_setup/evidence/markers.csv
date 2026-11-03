@@ -1,0 +1,9 @@
+phase,utc
+lab_build,2026-11-03T19:16:35Z
+wazuh_config,2026-11-03T19:20:38Z
+provision,2026-11-03T19:20:56Z
+log_collection,2026-11-03T19:21:51Z
+wireshark,2026-11-03T19:21:59Z
+volatility,2026-11-03T19:22:29Z
+baseline,2026-11-03T19:22:45Z
+done,2026-11-03T19:23:00Z

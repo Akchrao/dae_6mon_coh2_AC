@@ -1,0 +1,42 @@
+TARGET                                              SOURCE      FSTYPE      OPTIONS
+/sys                                                sysfs       sysfs       rw,nosuid,nodev,noexec,relatime
+/proc                                               proc        proc        rw,nosuid,nodev,noexec,relatime
+/dev                                                udev        devtmpfs    rw,nosuid,relatime,size=486772k,nr_inodes=121693,mode=755,inode64
+/dev/pts                                            devpts      devpts      rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000
+/run                                                tmpfs       tmpfs       rw,nosuid,nodev,noexec,relatime,size=99640k,mode=755,inode64
+/                                                   /dev/vda1   ext4        rw,relatime,discard,errors=remount-ro
+/sys/kernel/security                                securityfs  securityfs  rw,nosuid,nodev,noexec,relatime
+/dev/shm                                            tmpfs       tmpfs       rw,nosuid,nodev,inode64
+/run/lock                                           tmpfs       tmpfs       rw,nosuid,nodev,noexec,relatime,size=5120k,inode64
+/sys/fs/cgroup                                      cgroup2     cgroup2     rw,nosuid,nodev,noexec,relatime,nsdelegate,memory_recursiveprot
+/sys/fs/pstore                                      pstore      pstore      rw,nosuid,nodev,noexec,relatime
+/sys/fs/bpf                                         bpf         bpf         rw,nosuid,nodev,noexec,relatime,mode=700
+/proc/sys/fs/binfmt_misc                            systemd-1   autofs      rw,relatime,fd=30,pgrp=1,timeout=0,minproto=5,maxproto=5,direct,pipe_ino=1398
+/dev/hugepages                                      hugetlbfs   hugetlbfs   rw,relatime,pagesize=2M
+/dev/mqueue                                         mqueue      mqueue      rw,nosuid,nodev,noexec,relatime
+/sys/kernel/debug                                   debugfs     debugfs     rw,nosuid,nodev,noexec,relatime
+/sys/kernel/tracing                                 tracefs     tracefs     rw,nosuid,nodev,noexec,relatime
+/sys/fs/fuse/connections                            fusectl     fusectl     rw,nosuid,nodev,noexec,relatime
+/sys/kernel/config                                  configfs    configfs    rw,nosuid,nodev,noexec,relatime
+/run/credentials/systemd-sysctl.service             ramfs       ramfs       ro,nosuid,nodev,noexec,relatime,mode=700
+/run/credentials/systemd-sysusers.service           ramfs       ramfs       ro,nosuid,nodev,noexec,relatime,mode=700
+/run/credentials/systemd-tmpfiles-setup-dev.service ramfs       ramfs       ro,nosuid,nodev,noexec,relatime,mode=700
+/boot/efi                                           /dev/vda15  vfat        rw,relatime,fmask=0022,dmask=0022,codepage=437,iocharset=ascii,shortname=mixed,utf8,errors=remount-ro
+/run/credentials/systemd-tmpfiles-setup.service     ramfs       ramfs       ro,nosuid,nodev,noexec,relatime,mode=700
+/proc/sys/fs/binfmt_misc                            binfmt_misc binfmt_misc rw,nosuid,nodev,noexec,relatime
+/run/user/1000                                      tmpfs       tmpfs       rw,nosuid,nodev,relatime,size=99636k,nr_inodes=24909,mode=700,uid=1000,gid=1000,inode64
+
+Filesystem      Size  Used Avail Use% Mounted on
+udev            476M     0  476M   0% /dev
+tmpfs            98M  508K   97M   1% /run
+/dev/vda1       7.7G  1.3G  6.1G  18% /
+tmpfs           487M   15M  473M   3% /dev/shm
+tmpfs           5.0M     0  5.0M   0% /run/lock
+/dev/vda15      124M   12M  112M  10% /boot/efi
+tmpfs            98M     0   98M   0% /run/user/1000
+
+NAME     SIZE TYPE FSTYPE MOUNTPOINT UUID
+vda        8G disk                   
+├─vda1   7.9G part ext4   /          0eab0a55-14e9-4657-8a69-c09b76e01061
+├─vda14    3M part                   
+└─vda15  124M part vfat   /boot/efi  A326-5718

@@ -1,0 +1,21 @@
+[2026-11-03T19:23:02Z] >>> task2_rules
+# Task 2 adds analysis rules on top of the Task 1 core rules
+can_ir1_core_rules.xml
+can_ir1_task2_rules.xml
+local_rules.xml
+/var/ossec/etc/rules/can_ir1_core_rules.xml:4
+/var/ossec/etc/rules/can_ir1_task2_rules.xml:11
+wazuh-logcollector is running...
+wazuh-remoted is running...
+wazuh-analysisd is running...
+wazuh-authd is running...
+   ID: 001, Name: parrot-vm, IP: any, Active
+
+# macOS host: the full install.log (Task 1 proved the path with a sample), now analysed by the Task 2 macOS rules
+install_iso.log -> /var/ossec/logs/macos/install.log  sent=51823  received=51823  logcollector restarts=0  COMPLETE
+
+# packet capture on parrot-vm, SSH only (saved filter 'IR1 SSH sessions'), for the whole scenario
+1336 tshark -i enp0s1 -f tcp port 22 -a duration:1800 -w /dev/shm/t2_ssh.pcapng
+
+# lab-only sudo passwords for the people who use sudo in the scenario (values never recorded)
+password set for test.clinician

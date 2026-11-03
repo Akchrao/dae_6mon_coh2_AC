@@ -1,0 +1,16 @@
+
+dc3dd 7.2.646 started at 2026-11-03 19:39:04 +0000
+compiled options:
+command line: dc3dd if=/seized/IR1-2026-002_parrot-vm_seized.raw of=/evid/IR1-2026-002/IR1-2026-002_vda.dd hash=sha256 log=/ir/task4_evidence_management/evidence/disk/dc3dd_acquisition.log
+sector size: 512 bytes (assumed)
+  8589934592 bytes ( 8 G ) copied ( 100% ), 18.1087 s, 452 M/s
+
+input results for file `/seized/IR1-2026-002_parrot-vm_seized.raw':
+   16777216 sectors in
+   fa80be62ad1c05688c43f665c72e49be438ab46bb7232bb19a5ba7a01e0b7cbb (sha256)
+
+output results for file `/evid/IR1-2026-002/IR1-2026-002_vda.dd':
+   16777216 sectors out
+
+dc3dd completed at 2026-11-03 19:39:22 +0000
+

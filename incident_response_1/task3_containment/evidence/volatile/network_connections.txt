@@ -1,0 +1,46 @@
+== ss -tunap
+Netid State  Recv-Q Send-Q    Local Address:Port  Peer Address:PortProcess                                   
+udp   UNCONN 0      0               0.0.0.0:5355       0.0.0.0:*    users:(("systemd-resolve",pid=313,fd=11))
+udp   UNCONN 0      0            127.0.0.54:53         0.0.0.0:*    users:(("systemd-resolve",pid=313,fd=19))
+udp   UNCONN 0      0         127.0.0.53%lo:53         0.0.0.0:*    users:(("systemd-resolve",pid=313,fd=17))
+udp   UNCONN 0      0      10.0.2.15%enp0s1:68         0.0.0.0:*    users:(("systemd-network",pid=237,fd=18))
+udp   UNCONN 0      0                  [::]:5355          [::]:*    users:(("systemd-resolve",pid=313,fd=13))
+tcp   LISTEN 0      5               0.0.0.0:8080       0.0.0.0:*    users:(("python3",pid=852,fd=3))         
+tcp   LISTEN 0      20            127.0.0.1:25         0.0.0.0:*    users:(("exim4",pid=647,fd=4))           
+tcp   LISTEN 0      4096         127.0.0.54:53         0.0.0.0:*    users:(("systemd-resolve",pid=313,fd=20))
+tcp   LISTEN 0      4096            0.0.0.0:5355       0.0.0.0:*    users:(("systemd-resolve",pid=313,fd=12))
+tcp   LISTEN 0      128             0.0.0.0:22         0.0.0.0:*    users:(("sshd",pid=811,fd=3))            
+tcp   LISTEN 0      4096      127.0.0.53%lo:53         0.0.0.0:*    users:(("systemd-resolve",pid=313,fd=18))
+tcp   ESTAB  0      0             10.0.2.15:40456  10.78.50.20:1514 users:(("wazuh-agentd",pid=1089,fd=7))   
+tcp   LISTEN 0      4096               [::]:5355          [::]:*    users:(("systemd-resolve",pid=313,fd=14))
+tcp   LISTEN 0      128                [::]:22            [::]:*    users:(("sshd",pid=811,fd=4))            
+tcp   LISTEN 0      20                [::1]:25            [::]:*    users:(("exim4",pid=647,fd=5))           
+
+== ip -br addr
+lo               UNKNOWN        127.0.0.1/8 ::1/128 
+enp0s1           UP             10.0.2.15/24 metric 100 fec0::5054:ff:fe0a:10/64 fe80::5054:ff:fe0a:10/64 
+enp0s2           DOWN           
+
+== ip route
+default via 10.0.2.2 dev enp0s1 proto dhcp src 10.0.2.15 metric 100 
+10.0.2.0/24 dev enp0s1 proto kernel scope link src 10.0.2.15 metric 100 
+10.0.2.2 dev enp0s1 proto dhcp scope link src 10.0.2.15 metric 100 
+10.0.2.3 dev enp0s1 proto dhcp scope link src 10.0.2.15 metric 100 
+
+== lsof -nP -i
+COMMAND    PID            USER   FD   TYPE DEVICE SIZE/OFF NODE NAME
+systemd-n  237 systemd-network   18u  IPv4  12914      0t0  UDP 10.0.2.15:68 
+systemd-r  313 systemd-resolve   11u  IPv4  14114      0t0  UDP *:5355 
+systemd-r  313 systemd-resolve   12u  IPv4  14115      0t0  TCP *:5355 (LISTEN)
+systemd-r  313 systemd-resolve   13u  IPv6  14122      0t0  UDP *:5355 
+systemd-r  313 systemd-resolve   14u  IPv6  14123      0t0  TCP *:5355 (LISTEN)
+systemd-r  313 systemd-resolve   17u  IPv4  14126      0t0  UDP 127.0.0.53:53 
+systemd-r  313 systemd-resolve   18u  IPv4  14127      0t0  TCP 127.0.0.53:53 (LISTEN)
+systemd-r  313 systemd-resolve   19u  IPv4  14128      0t0  UDP 127.0.0.54:53 
+systemd-r  313 systemd-resolve   20u  IPv4  14129      0t0  TCP 127.0.0.54:53 (LISTEN)
+exim4      647     Debian-exim    4u  IPv4  14374      0t0  TCP 127.0.0.1:25 (LISTEN)
+exim4      647     Debian-exim    5u  IPv6  14375      0t0  TCP [::1]:25 (LISTEN)
+sshd       811            root    3u  IPv4  14636      0t0  TCP *:22 (LISTEN)
+sshd       811            root    4u  IPv6  14638      0t0  TCP *:22 (LISTEN)
+python3    852          nobody    3u  IPv4  13153      0t0  TCP *:8080 (LISTEN)
+wazuh-age 1089           wazuh    7u  IPv4  16864      0t0  TCP 10.0.2.15:40456->10.78.50.20:1514 (ESTABLISHED)

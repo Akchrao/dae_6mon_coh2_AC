@@ -1,0 +1,9 @@
+[2026-11-03T19:37:19Z] >>> intake_verify
+# re-hash every Task 3 evidence item against its acquisition hash (task3 EVIDENCE-INDEX-SHA256.txt)
+total 2123208
+-r--------  1 Adult  staff  1074005971 Nov  3 14:32 IR1-2026-002_parrot-vm.mem.elf
+-r--r--r--  1 Adult  staff    11973688 Nov  3 14:32 IR1-2026-002_syncd.core
+repo items:  27 OK, 0 not OK
+large items: 2 OK, 0 not OK
+IR1-2026-002_parrot-vm.mem.elf: OK
+IR1-2026-002_syncd.core: OK

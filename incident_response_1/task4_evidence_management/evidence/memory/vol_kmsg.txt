@@ -1,0 +1,605 @@
+Volatility 3 Framework 2.7.0
+
+facility	level	timestamp	caller	line
+
+kern	notice	0.000000	Task(0)	Linux version 6.1.0-54-cloud-amd64 (debian-kernel@lists.debian.org) (gcc-12 (Debian 12.2.0-14+deb12u1) 12.2.0, GNU ld (GNU Binutils for Debian) 2.40) #1 SMP PREEMPT_DYNAMIC Debian 6.1.190-1 (2026-10-16)
+kern	info	0.000000	Task(0)	Command line: BOOT_IMAGE=/boot/vmlinuz-6.1.0-54-cloud-amd64 root=PARTUUID=180a0c80-c107-41f6-80a6-405b40df1b72 ro console=tty0 console=ttyS0,115200 earlyprintk=ttyS0,115200 consoleblank=0
+kern	info	0.000000	Task(0)	BIOS-provided physical RAM map:
+kern	info	0.000000	Task(0)	BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
+kern	info	0.000000	Task(0)	BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff] reserved
+kern	info	0.000000	Task(0)	BIOS-e820: [mem 0x00000000000f0000-0x00000000000fffff] reserved
+kern	info	0.000000	Task(0)	BIOS-e820: [mem 0x0000000000100000-0x000000003ffdbfff] usable
+kern	info	0.000000	Task(0)	BIOS-e820: [mem 0x000000003ffdc000-0x000000003fffffff] reserved
+kern	info	0.000000	Task(0)	BIOS-e820: [mem 0x00000000b0000000-0x00000000bfffffff] reserved
+kern	info	0.000000	Task(0)	BIOS-e820: [mem 0x00000000fed1c000-0x00000000fed1ffff] reserved
+kern	info	0.000000	Task(0)	BIOS-e820: [mem 0x00000000fffc0000-0x00000000ffffffff] reserved
+kern	info	0.000000	Task(0)	BIOS-e820: [mem 0x000000fd00000000-0x000000ffffffffff] reserved
+kern	info	0.000000	Task(0)	printk: bootconsole [earlyser0] enabled
+kern	info	0.000000	Task(0)	NX (Execute Disable) protection: active
+kern	info	0.000000	Task(0)	SMBIOS 2.8 present.
+kern	info	0.000000	Task(0)	DMI: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.2-debian-1.16.2-1 04/01/2014
+kern	info	0.000000	Task(0)	tsc: Fast TSC calibration using PIT
+kern	info	0.000000	Task(0)	tsc: Detected 1000.001 MHz processor
+kern	debug	0.003210	Task(0)	e820: update [mem 0x00000000-0x00000fff] usable ==> reserved
+kern	debug	0.003330	Task(0)	e820: remove [mem 0x000a0000-0x000fffff] usable
+kern	info	0.003446	Task(0)	last_pfn = 0x3ffdc max_arch_pfn = 0x400000000
+kern	info	0.005055	Task(0)	x86/PAT: Configuration [0-7]: WB  WC  UC- UC  WB  WP  UC- WT  
+kern	info	0.008539	Task(0)	Using GB pages for direct mapping
+kern	info	0.011681	Task(0)	RAMDISK: [mem 0x3641f000-0x37206fff]
+kern	info	0.012871	Task(0)	ACPI: Early table checksum verification disabled
+kern	info	0.014244	Task(0)	ACPI: RSDP 0x00000000000F59C0 000014 (v00 BOCHS )
+kern	info	0.015605	Task(0)	ACPI: RSDT 0x000000003FFE2343 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+kern	info	0.017674	Task(0)	ACPI: FACP 0x000000003FFE2133 0000F4 (v03 BOCHS  BXPC     00000001 BXPC 00000001)
+kern	info	0.019747	Task(0)	ACPI: DSDT 0x000000003FFE0040 0020F3 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+kern	info	0.021592	Task(0)	ACPI: FACS 0x000000003FFE0000 000040
+kern	info	0.022601	Task(0)	ACPI: APIC 0x000000003FFE2227 000080 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+kern	info	0.024345	Task(0)	ACPI: HPET 0x000000003FFE22A7 000038 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+kern	info	0.026114	Task(0)	ACPI: MCFG 0x000000003FFE22DF 00003C (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+kern	info	0.027866	Task(0)	ACPI: WAET 0x000000003FFE231B 000028 (v01 BOCHS  BXPC     00000001 BXPC 00000001)
+kern	info	0.029666	Task(0)	ACPI: Reserving FACP table memory at [mem 0x3ffe2133-0x3ffe2226]
+kern	info	0.031151	Task(0)	ACPI: Reserving DSDT table memory at [mem 0x3ffe0040-0x3ffe2132]
+kern	info	0.032586	Task(0)	ACPI: Reserving FACS table memory at [mem 0x3ffe0000-0x3ffe003f]
+kern	info	0.034039	Task(0)	ACPI: Reserving APIC table memory at [mem 0x3ffe2227-0x3ffe22a6]
+kern	info	0.035484	Task(0)	ACPI: Reserving HPET table memory at [mem 0x3ffe22a7-0x3ffe22de]
+kern	info	0.037004	Task(0)	ACPI: Reserving MCFG table memory at [mem 0x3ffe22df-0x3ffe231a]
+kern	info	0.038456	Task(0)	ACPI: Reserving WAET table memory at [mem 0x3ffe231b-0x3ffe2342]
+kern	info	0.041346	Task(0)	No NUMA configuration found
+kern	info	0.042162	Task(0)	Faking a node at [mem 0x0000000000000000-0x000000003ffdbfff]
+kern	info	0.043872	Task(0)	NODE_DATA(0) allocated [mem 0x3ffb1000-0x3ffdbfff]
+kern	info	0.051960	Task(0)	Zone ranges:
+kern	info	0.052549	Task(0)	  DMA      [mem 0x0000000000001000-0x0000000000ffffff]
+kern	info	0.053938	Task(0)	  DMA32    [mem 0x0000000001000000-0x000000003ffdbfff]
+kern	info	0.055231	Task(0)	  Normal   empty
+kern	info	0.055875	Task(0)	  Device   empty
+kern	info	0.056521	Task(0)	Movable zone start for each node
+kern	info	0.057437	Task(0)	Early memory node ranges
+kern	info	0.058222	Task(0)	  node   0: [mem 0x0000000000001000-0x000000000009efff]
+kern	info	0.059628	Task(0)	  node   0: [mem 0x0000000000100000-0x000000003ffdbfff]
+kern	info	0.061363	Task(0)	Initmem setup node 0 [mem 0x0000000000001000-0x000000003ffdbfff]
+kern	info	0.063491	Task(0)	On node 0, zone DMA: 1 pages in unavailable ranges
+kern	info	0.063706	Task(0)	On node 0, zone DMA: 97 pages in unavailable ranges
+kern	info	0.067193	Task(0)	On node 0, zone DMA32: 36 pages in unavailable ranges
+kern	info	0.068667	Task(0)	ACPI: PM-Timer IO Port: 0x608
+kern	info	0.071042	Task(0)	ACPI: LAPIC_NMI (acpi_id[0xff] dfl dfl lint[0x1])
+kern	info	0.072453	Task(0)	IOAPIC[0]: apic_id 0, version 32, address 0xfec00000, GSI 0-23
+kern	info	0.073953	Task(0)	ACPI: INT_SRC_OVR (bus 0 bus_irq 0 global_irq 2 dfl dfl)
+kern	info	0.075377	Task(0)	ACPI: INT_SRC_OVR (bus 0 bus_irq 5 global_irq 5 high level)
+kern	info	0.076757	Task(0)	ACPI: INT_SRC_OVR (bus 0 bus_irq 9 global_irq 9 high level)
+kern	info	0.078137	Task(0)	ACPI: INT_SRC_OVR (bus 0 bus_irq 10 global_irq 10 high level)
+kern	info	0.079475	Task(0)	ACPI: INT_SRC_OVR (bus 0 bus_irq 11 global_irq 11 high level)
+kern	info	0.080936	Task(0)	ACPI: Using ACPI (MADT) for SMP configuration information
+kern	info	0.082375	Task(0)	ACPI: HPET id: 0x8086a201 base: 0xfed00000
+kern	info	0.083603	Task(0)	smpboot: Allowing 2 CPUs, 0 hotplug CPUs
+kern	info	0.085161	Task(0)	PM: hibernation: Registered nosave memory: [mem 0x00000000-0x00000fff]
+kern	info	0.086735	Task(0)	PM: hibernation: Registered nosave memory: [mem 0x0009f000-0x000fffff]
+kern	info	0.088333	Task(0)	[mem 0x40000000-0xafffffff] available for PCI devices
+kern	info	0.089570	Task(0)	Booting paravirtualized kernel on bare hardware
+kern	info	0.090850	Task(0)	clocksource: refined-jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645519600211568 ns
+kern	info	0.099391	Task(0)	setup_percpu: NR_CPUS:8192 nr_cpumask_bits:2 nr_cpu_ids:2 nr_node_ids:1
+kern	info	0.108024	Task(0)	percpu: Embedded 61 pages/cpu s212992 r8192 d28672 u1048576
+kern	debug	0.109676	Task(0)	pcpu-alloc: s212992 r8192 d28672 u1048576 alloc=1*2097152
+kern	debug	0.109724	Task(0)	pcpu-alloc: [0] 0 1 
+kern	info	0.110476	Task(0)	Fallback order for Node 0: 0 
+kern	info	0.110616	Task(0)	Built 1 zonelists, mobility grouping on.  Total pages: 257756
+kern	info	0.112773	Task(0)	Policy zone: DMA32
+kern	notice	0.113469	Task(0)	Kernel command line: BOOT_IMAGE=/boot/vmlinuz-6.1.0-54-cloud-amd64 root=PARTUUID=180a0c80-c107-41f6-80a6-405b40df1b72 ro console=tty0 console=ttyS0,115200 earlyprintk=ttyS0,115200 consoleblank=0
+kern	notice	0.118240	Task(0)	random: crng init done
+kern	info	0.132882	Task(0)	Dentry cache hash table entries: 131072 (order: 8, 1048576 bytes, linear)
+kern	info	0.160183	Task(0)	Inode-cache hash table entries: 65536 (order: 7, 524288 bytes, linear)
+kern	info	0.162825	Task(0)	mem auto-init: stack:all(zero), heap alloc:on, heap free:off
+kern	info	0.174953	Task(0)	Memory: 238332K/1048040K available (14343K kernel code, 2327K rwdata, 8340K rodata, 2608K init, 5440K bss, 74532K reserved, 0K cma-reserved)
+kern	info	0.180959	Task(0)	SLUB: HWalign=64, Order=0-3, MinObjects=0, CPUs=2, Nodes=1
+kern	info	0.184127	Task(0)	ftrace: allocating 37658 entries in 148 pages
+kern	info	0.209744	Task(0)	ftrace: allocated 148 pages with 3 groups
+kern	info	0.216479	Task(0)	Dynamic Preempt: voluntary
+kern	info	0.218776	Task(0)	rcu: Preemptible hierarchical RCU implementation.
+kern	info	0.220040	Task(0)	rcu: 	RCU restricting CPUs from NR_CPUS=8192 to nr_cpu_ids=2.
+kern	info	0.221524	Task(0)		Trampoline variant of Tasks RCU enabled.
+kern	info	0.222657	Task(0)		Rude variant of Tasks RCU enabled.
+kern	info	0.223647	Task(0)		Tracing variant of Tasks RCU enabled.
+kern	info	0.224943	Task(0)	rcu: RCU calculated value of scheduler-enlistment delay is 25 jiffies.
+kern	info	0.226726	Task(0)	rcu: Adjusting geometry for rcu_fanout_leaf=16, nr_cpu_ids=2
+kern	info	0.249903	Task(0)	NR_IRQS: 524544, nr_irqs: 440, preallocated irqs: 16
+kern	info	0.254792	Task(0)	rcu: srcu_init: Setting srcu_struct sizes based on contention.
+kern	info	0.259119	Task(0)	Console: colour VGA+ 80x25
+kern	info	0.261248	Task(0)	printk: console [tty0] enabled
+kern	info	0.262853	Task(0)	printk: console [ttyS0] enabled
+kern	info	0.264814	Task(0)	printk: bootconsole [earlyser0] disabled
+kern	info	0.267386	Task(0)	ACPI: Core revision 20220331
+kern	info	0.270855	Task(0)	clocksource: hpet: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 19112604467 ns
+kern	info	0.273806	Task(0)	APIC: Switch to symmetric I/O mode setup
+kern	info	0.276755	Task(0)	..TIMER: vector=0x30 apic1=0 pin1=2 apic2=-1 pin2=-1
+kern	info	0.298093	Task(0)	tsc: Marking TSC unstable due to TSCs unsynchronized
+kern	info	0.299786	Task(0)	Calibrating delay loop (skipped), value calculated using timer frequency.. 2000.00 BogoMIPS (lpj=4000004)
+kern	info	0.304534	Task(0)	x86/cpu: User Mode Instruction Prevention (UMIP) activated
+kern	info	0.309046	Task(0)	process: using AMD E400 aware idle routine
+kern	info	0.311810	Task(0)	Last level iTLB entries: 4KB 512, 2MB 255, 4MB 127
+kern	info	0.313321	Task(0)	Last level dTLB entries: 4KB 512, 2MB 255, 4MB 127, 1GB 0
+kern	info	0.316459	Task(0)	Spectre V1 : Mitigation: usercopy/swapgs barriers and __user pointer sanitization
+kern	info	0.318827	Task(0)	Spectre V2 : Mitigation: Retpolines
+kern	info	0.319667	Task(0)	Spectre V2 : Spectre v2 / SpectreRSB: Filling RSB on context switch and VMEXIT
+kern	info	0.322431	Task(0)	x86/fpu: Supporting XSAVE feature 0x001: 'x87 floating point registers'
+kern	info	0.328379	Task(0)	x86/fpu: Supporting XSAVE feature 0x002: 'SSE registers'
+kern	info	0.329828	Task(0)	x86/fpu: Supporting XSAVE feature 0x004: 'AVX registers'
+kern	info	0.331675	Task(0)	x86/fpu: Supporting XSAVE feature 0x008: 'MPX bounds registers'
+kern	info	0.333180	Task(0)	x86/fpu: Supporting XSAVE feature 0x010: 'MPX CSR'
+kern	info	0.334442	Task(0)	x86/fpu: Supporting XSAVE feature 0x200: 'Protection Keys User registers'
+kern	info	0.335700	Task(0)	x86/fpu: xstate_offset[2]:  576, xstate_sizes[2]:  256
+kern	info	0.337108	Task(0)	x86/fpu: xstate_offset[3]:  960, xstate_sizes[3]:   64
+kern	info	0.338400	Task(0)	x86/fpu: xstate_offset[4]: 1024, xstate_sizes[4]:   64
+kern	info	0.339648	Task(0)	x86/fpu: xstate_offset[9]: 2688, xstate_sizes[9]:    8
+kern	info	0.340950	Task(0)	x86/fpu: Enabled xstate features 0x21f, context size is 2696 bytes, using 'standard' format.
+kern	info	0.429527	Task(0)	Freeing SMP alternatives memory: 36K
+kern	info	0.431026	Task(0)	pid_max: default: 32768 minimum: 301
+kern	info	0.434909	Task(0)	LSM: Security Framework initializing
+kern	info	0.437634	Task(0)	landlock: Up and running.
+kern	info	0.438467	Task(0)	Yama: disabled by default; enable with sysctl kernel.yama.*
+kern	info	0.441838	Task(0)	AppArmor: AppArmor initialized
+kern	info	0.443664	Task(0)	TOMOYO Linux initialized
+kern	info	0.444644	Task(0)	LSM support for eBPF active
+kern	info	0.446836	Task(0)	Mount-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)
+kern	info	0.447715	Task(0)	Mountpoint-cache hash table entries: 2048 (order: 2, 16384 bytes, linear)
+kern	info	0.574967	Task(1)	smpboot: CPU0: AMD QEMU TCG CPU version 2.5+ (family: 0xf, model: 0x6b, stepping: 0x1)
+kern	info	0.578851	Task(1)	cblist_init_generic: Setting adjustable number of callback queues.
+kern	info	0.579669	Task(1)	cblist_init_generic: Setting shift to 1 and lim to 1.
+kern	info	0.581164	Task(1)	cblist_init_generic: Setting adjustable number of callback queues.
+kern	info	0.583649	Task(1)	cblist_init_generic: Setting shift to 1 and lim to 1.
+kern	info	0.585219	Task(1)	cblist_init_generic: Setting adjustable number of callback queues.
+kern	info	0.586750	Task(1)	cblist_init_generic: Setting shift to 1 and lim to 1.
+kern	info	0.587963	Task(1)	Performance Events: PMU not available due to virtualization, using software events only.
+kern	info	0.590401	Task(1)	signal: max sigframe size: 3632
+kern	info	0.592192	Task(1)	rcu: Hierarchical SRCU implementation.
+kern	info	0.593190	Task(1)	rcu: 	Max phase no-delay instances is 1000.
+kern	info	0.598257	Task(1)	NMI watchdog: Perf NMI watchdog permanently disabled
+kern	info	0.601962	Task(1)	smp: Bringing up secondary CPUs ...
+kern	info	0.606425	Task(1)	x86: Booting SMP configuration:
+kern	info	0.607339	Task(1)	.... node  #0, CPUs:      #1
+kern	info	0.692523	Task(1)	smp: Brought up 1 node, 2 CPUs
+kern	info	0.694555	Task(1)	smpboot: Max logical packages: 1
+kern	info	0.695688	Task(1)	smpboot: Total of 2 processors activated (4010.09 BogoMIPS)
+kern	info	0.709842	Task(24)	node 0 deferred pages initialised in 8ms
+kern	info	0.721705	Task(1)	devtmpfs: initialized
+kern	info	0.725514	Task(1)	x86/mm: Memory block size: 128MB
+kern	info	0.729988	Task(1)	clocksource: jiffies: mask: 0xffffffff max_cycles: 0xffffffff, max_idle_ns: 7645041785100000 ns
+kern	info	0.731926	Task(1)	futex hash table entries: 512 (order: 3, 32768 bytes, linear)
+kern	info	0.753272	Task(1)	NET: Registered PF_NETLINK/PF_ROUTE protocol family
+kern	info	0.757363	Task(1)	DMA: preallocated 128 KiB GFP_KERNEL pool for atomic allocations
+kern	info	0.759728	Task(1)	DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA pool for atomic allocations
+kern	info	0.761762	Task(1)	DMA: preallocated 128 KiB GFP_KERNEL|GFP_DMA32 pool for atomic allocations
+kern	info	0.763613	Task(1)	audit: initializing netlink subsys (disabled)
+kern	notice	0.764287	Task(28)	audit: type=2000 audit(1793733398.484:1): state=initialized audit_enabled=0 res=1
+kern	info	0.766640	Task(1)	thermal_sys: Registered thermal governor 'fair_share'
+kern	info	0.767688	Task(1)	thermal_sys: Registered thermal governor 'bang_bang'
+kern	info	0.769360	Task(1)	thermal_sys: Registered thermal governor 'step_wise'
+kern	info	0.770623	Task(1)	thermal_sys: Registered thermal governor 'user_space'
+kern	info	0.771646	Task(1)	thermal_sys: Registered thermal governor 'power_allocator'
+kern	info	0.773204	Task(1)	cpuidle: using governor ladder
+kern	info	0.775716	Task(1)	cpuidle: using governor menu
+kern	info	0.777313	Task(1)	acpiphp: ACPI Hot Plug PCI Controller Driver version: 0.5
+kern	info	0.779623	Task(1)	PCI: MMCONFIG for domain 0000 [bus 00-ff] at [mem 0xb0000000-0xbfffffff] (base 0xb0000000)
+kern	info	0.779856	Task(1)	PCI: MMCONFIG at [mem 0xb0000000-0xbfffffff] reserved in E820
+kern	info	0.784773	Task(1)	PCI: Using configuration type 1 for base access
+kern	warn	0.786954	Task(1)	mtrr: your CPUs had inconsistent fixed MTRR settings
+kern	warn	0.787653	Task(1)	mtrr: your CPUs had inconsistent variable MTRR settings
+kern	warn	0.789190	Task(1)	mtrr: your CPUs had inconsistent MTRRdefType settings
+kern	info	0.790452	Task(1)	mtrr: probably your BIOS does not setup all CPUs.
+kern	info	0.791648	Task(1)	mtrr: corrected configuration.
+kern	info	0.801310	Task(1)	kprobes: kprobe jump-optimization is enabled. All kprobes are optimized if possible.
+kern	info	0.836047	Task(1)	HugeTLB: registered 1.00 GiB page size, pre-allocated 0 pages
+kern	info	0.839162	Task(1)	HugeTLB: 16380 KiB vmemmap can be freed for a 1.00 GiB page
+kern	info	0.839674	Task(1)	HugeTLB: registered 2.00 MiB page size, pre-allocated 0 pages
+kern	info	0.839674	Task(1)	HugeTLB: 28 KiB vmemmap can be freed for a 2.00 MiB page
+kern	info	0.853158	Task(1)	ACPI: Added _OSI(Module Device)
+kern	info	0.854825	Task(1)	ACPI: Added _OSI(Processor Device)
+kern	info	0.855655	Task(1)	ACPI: Added _OSI(Processor Aggregator Device)
+kern	info	0.869212	Task(1)	ACPI: 1 ACPI AML tables successfully acquired and loaded
+kern	info	0.881810	Task(1)	ACPI: Interpreter enabled
+kern	info	0.884164	Task(1)	ACPI: PM: (supports S0 S3 S4 S5)
+kern	info	0.885138	Task(1)	ACPI: Using IOAPIC for interrupt routing
+kern	info	0.887808	Task(1)	PCI: Using host bridge windows from ACPI; if necessary, use "pci=nocrs" and report a bug
+kern	info	0.890033	Task(1)	PCI: Using E820 reservations for host bridge windows
+kern	info	0.892333	Task(1)	ACPI: Enabled 2 GPEs in block 00 to 3F
+kern	info	0.907464	Task(1)	ACPI: PCI Root Bridge [PCI0] (domain 0000 [bus 00-ff])
+kern	info	0.907944	Task(1)	acpi PNP0A08:00: _OSC: OS supports [ExtendedConfig ASPM ClockPM Segments MSI HPX-Type3]
+kern	info	0.907944	Task(1)	 SUBSYSTEM=acpi
+kern	info	0.907944	Task(1)	 DEVICE=+acpi:PNP0A08:00
+kern	info	0.912258	Task(1)	acpi PNP0A08:00: _OSC: platform does not support [PCIeHotplug LTR]
+kern	info	0.912258	Task(1)	 SUBSYSTEM=acpi
+kern	info	0.912258	Task(1)	 DEVICE=+acpi:PNP0A08:00
+kern	info	0.914301	Task(1)	acpi PNP0A08:00: _OSC: OS now controls [PME AER PCIeCapability]
+kern	info	0.914301	Task(1)	 SUBSYSTEM=acpi
+kern	info	0.914301	Task(1)	 DEVICE=+acpi:PNP0A08:00
+kern	info	0.917916	Task(1)	PCI host bridge to bus 0000:00
+kern	info	0.918933	Task(1)	pci_bus 0000:00: root bus resource [io  0x0000-0x0cf7 window]
+kern	info	0.918933	Task(1)	 SUBSYSTEM=pci_bus
+kern	info	0.918933	Task(1)	 DEVICE=+pci_bus:0000:00
+kern	info	0.919657	Task(1)	pci_bus 0000:00: root bus resource [io  0x0d00-0xffff window]
+kern	info	0.919657	Task(1)	 SUBSYSTEM=pci_bus
+kern	info	0.919657	Task(1)	 DEVICE=+pci_bus:0000:00
+kern	info	0.921071	Task(1)	pci_bus 0000:00: root bus resource [mem 0x000a0000-0x000bffff window]
+kern	info	0.921071	Task(1)	 SUBSYSTEM=pci_bus
+kern	info	0.921071	Task(1)	 DEVICE=+pci_bus:0000:00
+kern	info	0.923662	Task(1)	pci_bus 0000:00: root bus resource [mem 0x40000000-0xafffffff window]
+kern	info	0.923662	Task(1)	 SUBSYSTEM=pci_bus
+kern	info	0.923662	Task(1)	 DEVICE=+pci_bus:0000:00
+kern	info	0.925316	Task(1)	pci_bus 0000:00: root bus resource [mem 0xc0000000-0xfebfffff window]
+kern	info	0.925316	Task(1)	 SUBSYSTEM=pci_bus
+kern	info	0.925316	Task(1)	 DEVICE=+pci_bus:0000:00
+kern	info	0.926873	Task(1)	pci_bus 0000:00: root bus resource [mem 0x100000000-0x8ffffffff window]
+kern	info	0.926873	Task(1)	 SUBSYSTEM=pci_bus
+kern	info	0.926873	Task(1)	 DEVICE=+pci_bus:0000:00
+kern	info	0.927721	Task(1)	pci_bus 0000:00: root bus resource [bus 00-ff]
+kern	info	0.927721	Task(1)	 SUBSYSTEM=pci_bus
+kern	info	0.927721	Task(1)	 DEVICE=+pci_bus:0000:00
+kern	info	0.929556	Task(1)	pci 0000:00:00.0: [8086:29c0] type 00 class 0x060000
+kern	info	0.929556	Task(1)	 SUBSYSTEM=pci
+kern	info	0.929556	Task(1)	 DEVICE=+pci:0000:00:00.0
+kern	info	0.933863	Task(1)	pci 0000:00:01.0: [1af4:1000] type 00 class 0x020000
+kern	info	0.933863	Task(1)	 SUBSYSTEM=pci
+kern	info	0.933863	Task(1)	 DEVICE=+pci:0000:00:01.0
+kern	info	0.936763	Task(1)	pci 0000:00:01.0: BAR 0 [io  0xc100-0xc11f]
+kern	info	0.936763	Task(1)	 SUBSYSTEM=pci
+kern	info	0.936763	Task(1)	 DEVICE=+pci:0000:00:01.0
+kern	info	0.938735	Task(1)	pci 0000:00:01.0: BAR 1 [mem 0xfebc0000-0xfebc0fff]
+kern	info	0.938735	Task(1)	 SUBSYSTEM=pci
+kern	info	0.938735	Task(1)	 DEVICE=+pci:0000:00:01.0
+kern	info	0.944110	Task(1)	pci 0000:00:01.0: BAR 4 [mem 0xfebf0000-0xfebf3fff 64bit pref]
+kern	info	0.944110	Task(1)	 SUBSYSTEM=pci
+kern	info	0.944110	Task(1)	 DEVICE=+pci:0000:00:01.0
+kern	info	0.948238	Task(1)	pci 0000:00:01.0: ROM [mem 0xfeb40000-0xfeb7ffff pref]
+kern	info	0.948238	Task(1)	 SUBSYSTEM=pci
+kern	info	0.948238	Task(1)	 DEVICE=+pci:0000:00:01.0
+kern	info	0.950190	Task(1)	pci 0000:00:02.0: [1af4:1000] type 00 class 0x020000
+kern	info	0.950190	Task(1)	 SUBSYSTEM=pci
+kern	info	0.950190	Task(1)	 DEVICE=+pci:0000:00:02.0
+kern	info	0.952398	Task(1)	pci 0000:00:02.0: BAR 0 [io  0xc120-0xc13f]
+kern	info	0.952398	Task(1)	 SUBSYSTEM=pci
+kern	info	0.952398	Task(1)	 DEVICE=+pci:0000:00:02.0
+kern	info	0.954334	Task(1)	pci 0000:00:02.0: BAR 1 [mem 0xfebc1000-0xfebc1fff]
+kern	info	0.954334	Task(1)	 SUBSYSTEM=pci
+kern	info	0.954334	Task(1)	 DEVICE=+pci:0000:00:02.0
+kern	info	0.959640	Task(1)	pci 0000:00:02.0: BAR 4 [mem 0xfebf4000-0xfebf7fff 64bit pref]
+kern	info	0.959640	Task(1)	 SUBSYSTEM=pci
+kern	info	0.959640	Task(1)	 DEVICE=+pci:0000:00:02.0
+kern	info	0.964645	Task(1)	pci 0000:00:02.0: ROM [mem 0xfeb80000-0xfebbffff pref]
+kern	info	0.964645	Task(1)	 SUBSYSTEM=pci
+kern	info	0.964645	Task(1)	 DEVICE=+pci:0000:00:02.0
+kern	info	0.967990	Task(1)	pci 0000:00:03.0: [1af4:1003] type 00 class 0x078000
+kern	info	0.967990	Task(1)	 SUBSYSTEM=pci
+kern	info	0.967990	Task(1)	 DEVICE=+pci:0000:00:03.0
+kern	info	0.970065	Task(1)	pci 0000:00:03.0: BAR 0 [io  0xc080-0xc0bf]
+kern	info	0.970065	Task(1)	 SUBSYSTEM=pci
+kern	info	0.970065	Task(1)	 DEVICE=+pci:0000:00:03.0
+kern	info	0.971640	Task(1)	pci 0000:00:03.0: BAR 1 [mem 0xfebc2000-0xfebc2fff]
+kern	info	0.971640	Task(1)	 SUBSYSTEM=pci
+kern	info	0.971640	Task(1)	 DEVICE=+pci:0000:00:03.0
+kern	info	0.974875	Task(1)	pci 0000:00:03.0: BAR 4 [mem 0xfebf8000-0xfebfbfff 64bit pref]
+kern	info	0.974875	Task(1)	 SUBSYSTEM=pci
+kern	info	0.974875	Task(1)	 DEVICE=+pci:0000:00:03.0
+kern	info	0.976912	Task(1)	pci 0000:00:04.0: [1af4:1001] type 00 class 0x010000
+kern	info	0.976912	Task(1)	 SUBSYSTEM=pci
+kern	info	0.976912	Task(1)	 DEVICE=+pci:0000:00:04.0
+kern	info	0.978547	Task(1)	pci 0000:00:04.0: BAR 0 [io  0xc000-0xc07f]
+kern	info	0.978547	Task(1)	 SUBSYSTEM=pci
+kern	info	0.978547	Task(1)	 DEVICE=+pci:0000:00:04.0
+kern	info	0.980191	Task(1)	pci 0000:00:04.0: BAR 1 [mem 0xfebc3000-0xfebc3fff]
+kern	info	0.980191	Task(1)	 SUBSYSTEM=pci
+kern	info	0.980191	Task(1)	 DEVICE=+pci:0000:00:04.0
+kern	info	0.982751	Task(1)	pci 0000:00:04.0: BAR 4 [mem 0xfebfc000-0xfebfffff 64bit pref]
+kern	info	0.982751	Task(1)	 SUBSYSTEM=pci
+kern	info	0.982751	Task(1)	 DEVICE=+pci:0000:00:04.0
+kern	info	0.986250	Task(1)	pci 0000:00:1f.0: [8086:2918] type 00 class 0x060100
+kern	info	0.986250	Task(1)	 SUBSYSTEM=pci
+kern	info	0.986250	Task(1)	 DEVICE=+pci:0000:00:1f.0
+kern	info	0.987881	Task(1)	pci 0000:00:1f.0: quirk: [io  0x0600-0x067f] claimed by ICH6 ACPI/GPIO/TCO
+kern	info	0.987881	Task(1)	 SUBSYSTEM=pci
+kern	info	0.987881	Task(1)	 DEVICE=+pci:0000:00:1f.0
+kern	info	0.989921	Task(1)	pci 0000:00:1f.2: [8086:2922] type 00 class 0x010601
+kern	info	0.989921	Task(1)	 SUBSYSTEM=pci
+kern	info	0.989921	Task(1)	 DEVICE=+pci:0000:00:1f.2
+kern	info	0.993107	Task(1)	pci 0000:00:1f.2: BAR 4 [io  0xc140-0xc15f]
+kern	info	0.993107	Task(1)	 SUBSYSTEM=pci
+kern	info	0.993107	Task(1)	 DEVICE=+pci:0000:00:1f.2
+kern	info	0.994767	Task(1)	pci 0000:00:1f.2: BAR 5 [mem 0xfebc4000-0xfebc4fff]
+kern	info	0.994767	Task(1)	 SUBSYSTEM=pci
+kern	info	0.994767	Task(1)	 DEVICE=+pci:0000:00:1f.2
+kern	info	0.997523	Task(1)	pci 0000:00:1f.3: [8086:2930] type 00 class 0x0c0500
+kern	info	0.997523	Task(1)	 SUBSYSTEM=pci
+kern	info	0.997523	Task(1)	 DEVICE=+pci:0000:00:1f.3
+kern	info	0.999467	Task(1)	pci 0000:00:1f.3: BAR 4 [io  0x0700-0x073f]
+kern	info	0.999467	Task(1)	 SUBSYSTEM=pci
+kern	info	0.999467	Task(1)	 DEVICE=+pci:0000:00:1f.3
+kern	info	1.004283	Task(1)	ACPI: PCI: Interrupt link LNKA configured for IRQ 10
+kern	info	1.005994	Task(1)	ACPI: PCI: Interrupt link LNKB configured for IRQ 10
+kern	info	1.007474	Task(1)	ACPI: PCI: Interrupt link LNKC configured for IRQ 11
+kern	info	1.008025	Task(1)	ACPI: PCI: Interrupt link LNKD configured for IRQ 11
+kern	info	1.009399	Task(1)	ACPI: PCI: Interrupt link LNKE configured for IRQ 10
+kern	info	1.011734	Task(1)	ACPI: PCI: Interrupt link LNKF configured for IRQ 10
+kern	info	1.013157	Task(1)	ACPI: PCI: Interrupt link LNKG configured for IRQ 11
+kern	info	1.014596	Task(1)	ACPI: PCI: Interrupt link LNKH configured for IRQ 11
+kern	info	1.015723	Task(1)	ACPI: PCI: Interrupt link GSIA configured for IRQ 16
+kern	info	1.016874	Task(1)	ACPI: PCI: Interrupt link GSIB configured for IRQ 17
+kern	info	1.017964	Task(1)	ACPI: PCI: Interrupt link GSIC configured for IRQ 18
+kern	info	1.019647	Task(1)	ACPI: PCI: Interrupt link GSID configured for IRQ 19
+kern	info	1.020701	Task(1)	ACPI: PCI: Interrupt link GSIE configured for IRQ 20
+kern	info	1.022170	Task(1)	ACPI: PCI: Interrupt link GSIF configured for IRQ 21
+kern	info	1.023381	Task(1)	ACPI: PCI: Interrupt link GSIG configured for IRQ 22
+kern	info	1.023685	Task(1)	ACPI: PCI: Interrupt link GSIH configured for IRQ 23
+kern	info	1.028847	Task(1)	iommu: Default domain type: Translated 
+kern	info	1.029550	Task(1)	iommu: DMA domain TLB invalidation policy: lazy mode 
+kern	info	1.032445	Task(1)	pps_core: LinuxPPS API ver. 1 registered
+kern	info	1.034191	Task(1)	pps_core: Software ver. 5.3.6 - Copyright 2005-2007 Rodolfo Giometti <giometti@linux.it>
+kern	info	1.035693	Task(1)	PTP clock support registered
+kern	info	1.043894	Task(1)	NetLabel: Initializing
+kern	info	1.045182	Task(1)	NetLabel:  domain hash size = 128
+kern	info	1.046768	Task(1)	NetLabel:  protocols = UNLABELED CIPSOv4 CALIPSO
+kern	info	1.048152	Task(1)	NetLabel:  unlabeled traffic allowed by default
+kern	info	1.051668	Task(1)	PCI: Using ACPI for IRQ routing
+kern	debug	1.054534	Task(1)	PCI: pci_cache_line_size set to 64 bytes
+kern	debug	1.054808	Task(1)	e820: reserve RAM buffer [mem 0x0009fc00-0x0009ffff]
+kern	debug	1.054889	Task(1)	e820: reserve RAM buffer [mem 0x3ffdc000-0x3fffffff]
+kern	info	1.057156	Task(1)	vgaarb: loaded
+kern	info	1.057189	Task(1)	hpet0: at MMIO 0xfed00000, IRQs 2, 8, 0
+kern	info	1.059661	Task(1)	hpet0: 3 comparators, 64-bit 100.000000 MHz counter
+kern	info	1.065384	Task(1)	clocksource: Switched to clocksource hpet
+kern	notice	1.068430	Task(1)	VFS: Disk quotas dquot_6.6.0
+kern	info	1.070190	Task(1)	VFS: Dquot-cache hash table entries: 512 (order 0, 4096 bytes)
+kern	info	1.077925	Task(1)	AppArmor: AppArmor Filesystem Enabled
+kern	info	1.079961	Task(1)	pnp: PnP ACPI init
+kern	info	1.083302	Task(1)	system 00:05: [mem 0xb0000000-0xbfffffff window] has been reserved
+kern	info	1.083302	Task(1)	 SUBSYSTEM=pnp
+kern	info	1.083302	Task(1)	 DEVICE=+pnp:00:05
+kern	info	1.087749	Task(1)	pnp: PnP ACPI: found 6 devices
+kern	info	1.105527	Task(1)	clocksource: acpi_pm: mask: 0xffffff max_cycles: 0xffffff, max_idle_ns: 2085701024 ns
+kern	info	1.109595	Task(1)	NET: Registered PF_INET protocol family
+kern	info	1.112670	Task(1)	IP idents hash table entries: 16384 (order: 5, 131072 bytes, linear)
+kern	info	1.125832	Task(1)	tcp_listen_portaddr_hash hash table entries: 512 (order: 1, 8192 bytes, linear)
+kern	info	1.129894	Task(1)	Table-perturb hash table entries: 65536 (order: 6, 262144 bytes, linear)
+kern	info	1.133339	Task(1)	TCP established hash table entries: 8192 (order: 4, 65536 bytes, linear)
+kern	info	1.136967	Task(1)	TCP bind hash table entries: 8192 (order: 6, 262144 bytes, linear)
+kern	info	1.139865	Task(1)	TCP: Hash tables configured (established 8192 bind 8192)
+kern	info	1.143432	Task(1)	MPTCP token hash table entries: 1024 (order: 3, 24576 bytes, linear)
+kern	info	1.146453	Task(1)	UDP hash table entries: 512 (order: 2, 16384 bytes, linear)
+kern	info	1.149099	Task(1)	UDP-Lite hash table entries: 512 (order: 2, 16384 bytes, linear)
+kern	info	1.152255	Task(1)	NET: Registered PF_UNIX/PF_LOCAL protocol family
+kern	info	1.154575	Task(1)	NET: Registered PF_XDP protocol family
+kern	info	1.157086	Task(1)	pci_bus 0000:00: resource 4 [io  0x0000-0x0cf7 window]
+kern	info	1.157086	Task(1)	 SUBSYSTEM=pci_bus
+kern	info	1.157086	Task(1)	 DEVICE=+pci_bus:0000:00
+kern	info	1.159797	Task(1)	pci_bus 0000:00: resource 5 [io  0x0d00-0xffff window]
+kern	info	1.159797	Task(1)	 SUBSYSTEM=pci_bus
+kern	info	1.159797	Task(1)	 DEVICE=+pci_bus:0000:00
+kern	info	1.162167	Task(1)	pci_bus 0000:00: resource 6 [mem 0x000a0000-0x000bffff window]
+kern	info	1.162167	Task(1)	 SUBSYSTEM=pci_bus
+kern	info	1.162167	Task(1)	 DEVICE=+pci_bus:0000:00
+kern	info	1.164885	Task(1)	pci_bus 0000:00: resource 7 [mem 0x40000000-0xafffffff window]
+kern	info	1.164885	Task(1)	 SUBSYSTEM=pci_bus
+kern	info	1.164885	Task(1)	 DEVICE=+pci_bus:0000:00
+kern	info	1.167564	Task(1)	pci_bus 0000:00: resource 8 [mem 0xc0000000-0xfebfffff window]
+kern	info	1.167564	Task(1)	 SUBSYSTEM=pci_bus
+kern	info	1.167564	Task(1)	 DEVICE=+pci_bus:0000:00
+kern	info	1.170460	Task(1)	pci_bus 0000:00: resource 9 [mem 0x100000000-0x8ffffffff window]
+kern	info	1.170460	Task(1)	 SUBSYSTEM=pci_bus
+kern	info	1.170460	Task(1)	 DEVICE=+pci_bus:0000:00
+kern	info	1.173626	Task(1)	PCI: CLS 0 bytes, default 64
+kern	info	1.177974	Task(25)	Trying to unpack rootfs image as initramfs...
+kern	notice	1.178651	Task(1)	Initialise system trusted keyrings
+kern	notice	1.181925	Task(1)	Key type blacklist registered
+kern	info	1.187494	Task(1)	workingset: timestamp_bits=36 max_order=18 bucket_order=0
+kern	notice	1.202793	Task(1)	integrity: Platform Keyring initialized
+kern	notice	1.205023	Task(1)	integrity: Machine keyring initialized
+kern	notice	1.206849	Task(1)	Key type asymmetric registered
+kern	notice	1.208594	Task(1)	Asymmetric key parser 'x509' registered
+kern	info	2.109371	Task(25)	Freeing initrd memory: 14240K
+kern	info	2.205055	Task(1)	alg: self-tests for CTR-KDF (hmac(sha256)) passed
+kern	info	2.207058	Task(1)	Block layer SCSI generic (bsg) driver version 0.4 loaded (major 249)
+kern	info	2.209400	Task(1)	io scheduler mq-deadline registered
+kern	info	2.224078	Task(1)	Serial: 8250/16550 driver, 4 ports, IRQ sharing enabled
+kern	info	2.227597	Task(1)	00:03: ttyS0 at I/O 0x3f8 (irq = 4, base_baud = 115200) is a 16550A
+kern	info	2.237847	Task(1)	i8042: PNP: PS/2 Controller [PNP0303:KBD,PNP0f13:MOU] at 0x60,0x64 irq 1,12
+kern	info	2.241490	Task(1)	serio: i8042 KBD port at 0x60,0x64 irq 1
+kern	info	2.242715	Task(1)	serio: i8042 AUX port at 0x60,0x64 irq 12
+kern	info	2.245262	Task(1)	rtc_cmos 00:04: RTC can wake from S4
+kern	info	2.245262	Task(1)	 SUBSYSTEM=pnp
+kern	info	2.245262	Task(1)	 DEVICE=+pnp:00:04
+kern	info	2.247687	Task(53)	input: AT Translated Set 2 keyboard as /devices/platform/i8042/serio0/input/input0
+kern	info	2.251836	Task(1)	rtc_cmos 00:04: registered as rtc0
+kern	info	2.251836	Task(1)	 SUBSYSTEM=pnp
+kern	info	2.251836	Task(1)	 DEVICE=+pnp:00:04
+kern	info	2.254089	Task(1)	rtc_cmos 00:04: setting system clock to 2026-11-03T19:16:40 UTC (1793733400)
+kern	info	2.254089	Task(1)	 SUBSYSTEM=pnp
+kern	info	2.254089	Task(1)	 DEVICE=+pnp:00:04
+kern	info	2.257592	Task(1)	rtc_cmos 00:04: alarms up to one day, y3k, 242 bytes nvram, hpet irqs
+kern	info	2.257592	Task(1)	 SUBSYSTEM=pnp
+kern	info	2.257592	Task(1)	 DEVICE=+pnp:00:04
+kern	info	2.261010	Task(1)	ledtrig-cpu: registered to indicate activity on CPUs
+kern	info	2.313240	Task(1)	NET: Registered PF_INET6 protocol family
+kern	info	2.380426	Task(1)	Segment Routing with IPv6
+kern	info	2.381549	Task(1)	In-situ OAM (IOAM) with IPv6
+kern	info	2.382720	Task(1)	mip6: Mobile IPv6
+kern	info	2.383665	Task(1)	NET: Registered PF_PACKET protocol family
+kern	info	2.385448	Task(1)	IPI shorthand broadcast: enabled
+kern	info	2.388585	Task(1)	registered taskstats version 1
+kern	notice	2.390322	Task(1)	Loading compiled-in X.509 certificates
+kern	notice	2.432304	Task(1)	Loaded X.509 cert 'Build time autogenerated kernel key: b919b97b34a823ecfe45c899dee6bcc30dbe4f6b'
+kern	notice	2.435599	Task(1)	Key type .fscrypt registered
+kern	notice	2.437079	Task(1)	Key type fscrypt-provisioning registered
+kern	notice	2.497403	Task(1)	Key type encrypted registered
+kern	info	2.499099	Task(1)	AppArmor: AppArmor sha1 policy hashing enabled
+kern	info	2.501632	Task(1)	ima: No TPM chip found, activating TPM-bypass!
+kern	info	2.503807	Task(1)	ima: Allocated hash algorithm: sha256
+kern	info	2.506383	Task(1)	ima: No architecture policies found
+kern	info	2.508356	Task(1)	evm: Initialising EVM extended attributes:
+kern	info	2.510196	Task(1)	evm: security.selinux
+kern	info	2.511366	Task(1)	evm: security.SMACK64 (disabled)
+kern	info	2.513113	Task(1)	evm: security.SMACK64EXEC (disabled)
+kern	info	2.514750	Task(1)	evm: security.SMACK64TRANSMUTE (disabled)
+kern	info	2.516634	Task(1)	evm: security.SMACK64MMAP (disabled)
+kern	info	2.518384	Task(1)	evm: security.apparmor
+kern	info	2.519633	Task(1)	evm: security.ima
+kern	info	2.520860	Task(1)	evm: security.capability
+kern	info	2.522285	Task(1)	evm: HMAC attrs: 0x1
+kern	warn	2.718389	Task(1)	Unstable clock detected, switching default tracing clock to "global"
+kern	warn	2.718389	Task(1)	If you want to keep using the local clock, then add:
+kern	warn	2.718389	Task(1)	  "trace_clock=local"
+kern	warn	2.718389	Task(1)	on the kernel command line
+kern	info	2.770626	Task(1)	Freeing unused decrypted memory: 2036K
+kern	info	2.820343	Task(1)	Freeing unused kernel image (initmem) memory: 2608K
+kern	info	2.821796	Task(1)	Write protecting the kernel read-only data: 26624k
+kern	info	2.825462	Task(1)	Freeing unused kernel image (text/rodata gap) memory: 2040K
+kern	info	2.828360	Task(1)	Freeing unused kernel image (rodata/data gap) memory: 1900K
+kern	info	2.834072	Task(1)	x86/mm: Checked W+X mappings: passed, no W+X pages found.
+kern	info	2.835560	Task(1)	Run /init as init process
+kern	debug	2.836549	Task(1)	  with arguments:
+kern	debug	2.836570	Task(1)	    /init
+kern	debug	2.836581	Task(1)	  with environment:
+kern	debug	2.836590	Task(1)	    HOME=/
+kern	debug	2.836598	Task(1)	    TERM=linux
+kern	info	3.373943	Task(119)	ACPI: \_SB_.GSIF: Enabled at IRQ 21
+kern	info	3.379933	Task(119)	ACPI: \_SB_.GSIG: Enabled at IRQ 22
+kern	info	3.383788	Task(119)	ACPI: \_SB_.GSIH: Enabled at IRQ 23
+kern	info	3.389353	Task(119)	ACPI: \_SB_.GSIE: Enabled at IRQ 20
+kern	info	3.495775	Task(113)	virtio_blk virtio3: 2/0/0 default/read/poll queues
+kern	info	3.495775	Task(113)	 SUBSYSTEM=virtio
+kern	info	3.495775	Task(113)	 DEVICE=+virtio:virtio3
+kern	notice	3.504844	Task(113)	virtio_blk virtio3: [vda] 16777216 512-byte logical blocks (8.59 GB/8.00 GiB)
+kern	notice	3.504844	Task(113)	 SUBSYSTEM=virtio
+kern	notice	3.504844	Task(113)	 DEVICE=+virtio:virtio3
+kern	info	3.543488	Task(113)	 vda: vda1 vda14 vda15
+kern	info	3.583764	Task(118)	virtio_net virtio1 enp0s2: renamed from eth1
+kern	info	3.583764	Task(118)	 SUBSYSTEM=virtio
+kern	info	3.583764	Task(118)	 DEVICE=+virtio:virtio1
+kern	info	3.608285	Task(116)	virtio_net virtio0 enp0s1: renamed from eth0
+kern	info	3.608285	Task(116)	 SUBSYSTEM=virtio
+kern	info	3.608285	Task(116)	 DEVICE=+virtio:virtio0
+kern	info	3.862793	Task(136)	EXT4-fs (vda1): mounted filesystem with ordered data mode. Quota mode: none.
+kern	info	4.337744	Task(1)	Not activating Mandatory Access Control as /sbin/tomoyo-init does not exist.
+daemon	info	4.742671	Task(1)	systemd[1]: Inserted module 'autofs4'
+daemon	info	4.828720	Task(1)	systemd[1]: systemd 252.39-1~deb12u2 running in system mode (+PAM +AUDIT +SELINUX +APPARMOR +IMA +SMACK +SECCOMP +GCRYPT -GNUTLS +OPENSSL +ACL +BLKID +CURL +ELFUTILS +FIDO2 +IDN2 -IDN +IPTC +KMOD +LIBCRYPTSETUP +LIBFDISK +PCRE2 -PWQUALITY +P11KIT +QRENCODE +TPM2 +BZIP2 +LZ4 +XZ +ZLIB +ZSTD -BPF_FRAMEWORK -XKBCOMMON +UTMP +SYSVINIT default-hierarchy=unified)
+daemon	info	4.834434	Task(1)	systemd[1]: Detected virtualization qemu.
+daemon	info	4.835319	Task(1)	systemd[1]: Detected architecture x86-64.
+daemon	info	4.843857	Task(1)	systemd[1]: Hostname set to <parrot-vm>.
+daemon	info	6.232159	Task(1)	systemd[1]: Queued start job for default target graphical.target.
+daemon	info	6.280422	Task(1)	systemd[1]: Created slice system-getty.slice - Slice /system/getty.
+daemon	info	6.289476	Task(1)	systemd[1]: Created slice system-modprobe.slice - Slice /system/modprobe.
+daemon	info	6.299961	Task(1)	systemd[1]: Created slice system-serial\x2dgetty.slice - Slice /system/serial-getty.
+daemon	info	6.308492	Task(1)	systemd[1]: Created slice system-systemd\x2dgrowfs.slice - Slice /system/systemd-growfs.
+daemon	info	6.316466	Task(1)	systemd[1]: Created slice user.slice - User and Session Slice.
+daemon	info	6.324736	Task(1)	systemd[1]: Started systemd-ask-password-console.path - Dispatch Password Requests to Console Directory Watch.
+daemon	info	6.331787	Task(1)	systemd[1]: Started systemd-ask-password-wall.path - Forward Password Requests to Wall Directory Watch.
+daemon	info	6.341378	Task(1)	systemd[1]: Set up automount proc-sys-fs-binfmt_misc.automount - Arbitrary Executable File Formats File System Automount Point.
+daemon	info	6.349363	Task(1)	systemd[1]: Expecting device dev-disk-by\x2dpartuuid-9b85ae33\x2d20fa\x2d4a91\x2d8589\x2d60db3a7e9711.device - /dev/disk/by-partuuid/9b85ae33-20fa-4a91-8589-60db3a7e9711...
+daemon	info	6.357980	Task(1)	systemd[1]: Expecting device dev-ttyS0.device - /dev/ttyS0...
+daemon	info	6.362532	Task(1)	systemd[1]: Reached target cryptsetup.target - Local Encrypted Volumes.
+daemon	info	6.368754	Task(1)	systemd[1]: Reached target integritysetup.target - Local Integrity Protected Volumes.
+daemon	info	6.374742	Task(1)	systemd[1]: Reached target paths.target - Path Units.
+daemon	info	6.379249	Task(1)	systemd[1]: Reached target remote-fs.target - Remote File Systems.
+daemon	info	6.385224	Task(1)	systemd[1]: Reached target slices.target - Slice Units.
+daemon	info	6.389886	Task(1)	systemd[1]: Reached target swap.target - Swaps.
+daemon	info	6.394232	Task(1)	systemd[1]: Reached target veritysetup.target - Local Verity Protected Volumes.
+daemon	info	6.402947	Task(1)	systemd[1]: Listening on syslog.socket - Syslog Socket.
+daemon	info	6.408894	Task(1)	systemd[1]: Listening on systemd-fsckd.socket - fsck to fsckd communication Socket.
+daemon	info	6.417107	Task(1)	systemd[1]: Listening on systemd-initctl.socket - initctl Compatibility Named Pipe.
+daemon	info	6.427769	Task(1)	systemd[1]: Listening on systemd-journald-audit.socket - Journal Audit Socket.
+daemon	info	6.435953	Task(1)	systemd[1]: Listening on systemd-journald-dev-log.socket - Journal Socket (/dev/log).
+daemon	info	6.441907	Task(1)	systemd[1]: Listening on systemd-journald.socket - Journal Socket.
+daemon	info	6.447550	Task(1)	systemd[1]: Listening on systemd-networkd.socket - Network Service Netlink Socket.
+daemon	info	6.453544	Task(1)	systemd[1]: Listening on systemd-udevd-control.socket - udev Control Socket.
+daemon	info	6.459208	Task(1)	systemd[1]: Listening on systemd-udevd-kernel.socket - udev Kernel Socket.
+daemon	info	6.488822	Task(1)	systemd[1]: Mounting dev-hugepages.mount - Huge Pages File System...
+daemon	info	6.503527	Task(1)	systemd[1]: Mounting dev-mqueue.mount - POSIX Message Queue File System...
+daemon	info	6.536510	Task(1)	systemd[1]: Mounting sys-kernel-debug.mount - Kernel Debug File System...
+daemon	info	6.561212	Task(1)	systemd[1]: Mounting sys-kernel-tracing.mount - Kernel Trace File System...
+daemon	info	6.597767	Task(1)	systemd[1]: Starting kmod-static-nodes.service - Create List of Static Device Nodes...
+daemon	info	6.616027	Task(1)	systemd[1]: Starting modprobe@configfs.service - Load Kernel Module configfs...
+daemon	info	6.639483	Task(1)	systemd[1]: Starting modprobe@dm_mod.service - Load Kernel Module dm_mod...
+daemon	info	6.668478	Task(1)	systemd[1]: Starting modprobe@drm.service - Load Kernel Module drm...
+daemon	info	6.692979	Task(1)	systemd[1]: Starting modprobe@efi_pstore.service - Load Kernel Module efi_pstore...
+daemon	info	6.729029	Task(1)	systemd[1]: Starting modprobe@fuse.service - Load Kernel Module fuse...
+daemon	info	6.752800	Task(1)	systemd[1]: Starting modprobe@loop.service - Load Kernel Module loop...
+daemon	info	6.772459	Task(1)	systemd[1]: netplan-ovs-cleanup.service - OpenVSwitch configuration for cleanup was skipped because of an unmet condition check (ConditionFileIsExecutable=/usr/bin/ovs-vsctl).
+kern	warn	6.787467	Task(200)	device-mapper: core: CONFIG_IMA_DISABLE_HTABLE is disabled. Duplicate IMA measurements will not be recorded in the IMA log.
+kern	info	6.799760	Task(200)	device-mapper: uevent: version 1.0.3
+kern	info	6.810110	Task(200)	device-mapper: ioctl: 4.47.0-ioctl (2022-07-28) initialised: dm-devel@redhat.com
+daemon	info	6.815863	Task(1)	systemd[1]: Starting systemd-fsck-root.service - File System Check on Root Device...
+daemon	info	6.869294	Task(1)	systemd[1]: Starting systemd-journald.service - Journal Service...
+kern	info	6.891089	Task(203)	fuse: init (API version 7.38)
+kern	info	6.908791	Task(204)	loop: module loaded
+daemon	info	6.916874	Task(1)	systemd[1]: Starting systemd-modules-load.service - Load Kernel Modules...
+daemon	info	6.940270	Task(1)	systemd[1]: Starting systemd-network-generator.service - Generate network units from Kernel command line...
+daemon	info	7.005363	Task(1)	systemd[1]: Starting systemd-udev-trigger.service - Coldplug All udev Devices...
+daemon	info	7.053563	Task(1)	systemd[1]: Mounted dev-hugepages.mount - Huge Pages File System.
+daemon	info	7.081124	Task(1)	systemd[1]: Mounted dev-mqueue.mount - POSIX Message Queue File System.
+daemon	info	7.095244	Task(1)	systemd[1]: Mounted sys-kernel-debug.mount - Kernel Debug File System.
+daemon	info	7.120156	Task(1)	systemd[1]: Mounted sys-kernel-tracing.mount - Kernel Trace File System.
+daemon	info	7.131654	Task(1)	systemd[1]: Finished kmod-static-nodes.service - Create List of Static Device Nodes.
+daemon	info	7.146905	Task(1)	systemd[1]: modprobe@configfs.service: Deactivated successfully.
+daemon	info	7.155701	Task(1)	systemd[1]: Finished modprobe@configfs.service - Load Kernel Module configfs.
+daemon	info	7.167893	Task(1)	systemd[1]: modprobe@dm_mod.service: Deactivated successfully.
+daemon	info	7.176088	Task(1)	systemd[1]: Finished modprobe@dm_mod.service - Load Kernel Module dm_mod.
+daemon	info	7.196282	Task(1)	systemd[1]: modprobe@drm.service: Deactivated successfully.
+daemon	info	7.198818	Task(1)	systemd[1]: Finished modprobe@drm.service - Load Kernel Module drm.
+daemon	info	7.218191	Task(1)	systemd[1]: modprobe@efi_pstore.service: Deactivated successfully.
+daemon	info	7.222128	Task(1)	systemd[1]: Finished modprobe@efi_pstore.service - Load Kernel Module efi_pstore.
+daemon	info	7.238802	Task(1)	systemd[1]: modprobe@fuse.service: Deactivated successfully.
+daemon	info	7.243854	Task(1)	systemd[1]: Finished modprobe@fuse.service - Load Kernel Module fuse.
+daemon	info	7.262309	Task(1)	systemd[1]: modprobe@loop.service: Deactivated successfully.
+daemon	info	7.264842	Task(1)	systemd[1]: Finished modprobe@loop.service - Load Kernel Module loop.
+daemon	info	7.284358	Task(1)	systemd[1]: Finished systemd-fsck-root.service - File System Check on Root Device.
+daemon	info	7.299981	Task(1)	systemd[1]: Finished systemd-modules-load.service - Load Kernel Modules.
+daemon	info	7.316547	Task(1)	systemd[1]: Finished systemd-network-generator.service - Generate network units from Kernel command line.
+daemon	info	7.325835	Task(1)	systemd[1]: Reached target network-pre.target - Preparation for Network.
+daemon	info	7.364373	Task(1)	systemd[1]: Mounting sys-fs-fuse-connections.mount - FUSE Control File System...
+daemon	info	7.386251	Task(1)	systemd[1]: Mounting sys-kernel-config.mount - Kernel Configuration File System...
+daemon	info	7.433070	Task(1)	systemd[1]: Started systemd-fsckd.service - File System Check Daemon to report status.
+daemon	info	7.485156	Task(1)	systemd[1]: Starting systemd-remount-fs.service - Remount Root and Kernel File Systems...
+daemon	info	7.504502	Task(1)	systemd[1]: systemd-repart.service - Repartition Root Disk was skipped because no trigger condition checks were met.
+daemon	info	7.528986	Task(1)	systemd[1]: Starting systemd-sysctl.service - Apply Kernel Variables...
+daemon	info	7.554982	Task(1)	systemd[1]: Started systemd-journald.service - Journal Service.
+kern	info	7.666331	Task(218)	EXT4-fs (vda1): re-mounted. Quota mode: none.
+kern	info	7.891744	Task(220)	EXT4-fs (vda1): resizing filesystem from 2064379 to 2064379 blocks
+syslog	info	7.899782	Task(206)	systemd-journald[206]: Received client request to flush runtime journal.
+kern	info	8.871435	Task(235)	input: Power Button as /devices/LNXSYSTM:00/LNXPWRBN:00/input/input2
+kern	info	8.936143	Task(235)	ACPI: button: Power Button [PWRF]
+kern	info	9.131706	Task(239)	cryptd: max_cpu_qlen set to 1000
+kern	info	9.216745	Task(239)	AVX2 version of gcm_enc/dec engaged.
+kern	info	9.218690	Task(239)	AES CTR mode by8 optimization enabled
+kern	notice	10.332996	Task(28)	audit: type=1400 audit(1793733408.576:2): apparmor="STATUS" operation="profile_load" profile="unconfined" name="lsb_release" pid=319 comm="apparmor_parser"
+kern	notice	10.348527	Task(28)	audit: type=1400 audit(1793733408.592:3): apparmor="STATUS" operation="profile_load" profile="unconfined" name="nvidia_modprobe" pid=320 comm="apparmor_parser"
+kern	notice	10.363966	Task(28)	audit: type=1400 audit(1793733408.592:4): apparmor="STATUS" operation="profile_load" profile="unconfined" name="nvidia_modprobe//kmod" pid=320 comm="apparmor_parser"
+kern	info	11.485152	Task(239)	kvm: Nested Virtualization enabled
+kern	info	11.489465	Task(239)	SVM: kvm: Nested Paging enabled
+kern	info	11.496465	Task(239)	SVM: Virtual GIF supported
+kern	info	11.500792	Task(239)	SVM: PMU virtualization is disabled
+kern	info	11.629909	CPU(0)	powernow_k8: Power state transitions not supported
+kern	info	11.634297	Task(238)	powernow_k8: Power state transitions not supported
+kern	info	323.459625	Task(1200)	device enp0s1 entered promiscuous mode
+kern	info	323.526368	Task(1200)	device enp0s1 left promiscuous mode
+kern	info	323.648331	Task(1204)	device enp0s1 entered promiscuous mode
+kern	info	323.672712	Task(1204)	device enp0s1 left promiscuous mode
+kern	info	323.814474	Task(1208)	device enp0s1 entered promiscuous mode
+kern	info	323.851803	Task(1208)	device enp0s1 left promiscuous mode
+kern	info	323.988740	Task(1212)	device enp0s1 entered promiscuous mode
+kern	info	324.016520	Task(1212)	device enp0s1 left promiscuous mode
+kern	info	324.143096	Task(1216)	device enp0s1 entered promiscuous mode
+kern	info	324.173820	Task(1216)	device enp0s1 left promiscuous mode
+kern	info	324.312474	Task(1220)	device enp0s1 entered promiscuous mode
+kern	info	324.352633	Task(1220)	device enp0s1 left promiscuous mode
+kern	info	324.477629	Task(1224)	device enp0s1 entered promiscuous mode
+kern	info	324.504320	Task(1224)	device enp0s1 left promiscuous mode
+kern	info	327.007865	Task(1254)	device enp0s1 entered promiscuous mode
+kern	info	345.029557	Task(1254)	device enp0s1 left promiscuous mode
+kern	info	782.991481	Task(1361)	device enp0s1 entered promiscuous mode
+kern	warn	915.744987	Task(1534)	IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=23159 DF PROTO=TCP SPT=43312 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 UID=1003 GID=1006 
+kern	warn	916.802432	CPU(1)	IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=23160 DF PROTO=TCP SPT=43312 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 UID=1003 GID=1006 
+kern	warn	918.846273	CPU(1)	IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=23161 DF PROTO=TCP SPT=43312 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 UID=1003 GID=1006 
+kern	warn	924.789104	Task(1534)	IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=11645 DF PROTO=TCP SPT=33906 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 UID=1003 GID=1006 
+kern	warn	925.820109	CPU(1)	IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=11646 DF PROTO=TCP SPT=33906 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 UID=1003 GID=1006 
+kern	warn	927.871300	CPU(1)	IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=11647 DF PROTO=TCP SPT=33906 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 UID=1003 GID=1006 
+kern	warn	933.830389	Task(1534)	IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=34211 DF PROTO=TCP SPT=37332 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 UID=1003 GID=1006 
+kern	warn	934.879447	CPU(1)	IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=34212 DF PROTO=TCP SPT=37332 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 UID=1003 GID=1006 
+kern	warn	936.893459	CPU(1)	IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=34213 DF PROTO=TCP SPT=37332 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 UID=1003 GID=1006 
+kern	warn	942.866972	Task(1534)	IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=3470 DF PROTO=TCP SPT=58442 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 UID=1003 GID=1006 
+kern	warn	943.901966	CPU(1)	IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=3471 DF PROTO=TCP SPT=58442 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 UID=1003 GID=1006 
+kern	warn	945.948216	CPU(1)	IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=3472 DF PROTO=TCP SPT=58442 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 UID=1003 GID=1006 
+kern	warn	951.910399	Task(1534)	IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=15787 DF PROTO=TCP SPT=55446 DPT=8080 WINDOW=64240 RES=0x00 SYN URGP=0 UID=1003 GID=1006 

@@ -1,0 +1,8 @@
+Volatility 3 Framework 2.7.0
+
+PID	Process	FD	Path
+
+1534	python3	0	/dev/null
+1534	python3	1	/dev/null
+1534	python3	2	/dev/null
+1534	python3	3	socket:[20614]

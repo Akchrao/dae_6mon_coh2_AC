@@ -1,0 +1,17 @@
+[2026-11-03T19:41:09Z] >>> r2_restore
+# restore the clean snapshot taken before the incident   [VBoxManage snapshot parrot-vm restore baseline-clean]
+(ok)
+guest agent: up
+
+# adapters back to production wiring   [setlinkstate1 on ; setlinkstate2 off]
+{"return": {}}
+{"return": {}}
+
+# what the restored host looks like BEFORE fixes: clean of artifacts, but the root cause is back
+ls: cannot access '/home/test.nurse/.cache': No such file or directory
+no crontab for test.nurse
+uid=1003(test.nurse) gid=1006(test.nurse) groups=1006(test.nurse),1001(clinical),1002(billing)
+test.nurse L 2026-11-03 0 99999 7 -1
+-P INPUT ACCEPT
+-P FORWARD ACCEPT
+-P OUTPUT ACCEPT

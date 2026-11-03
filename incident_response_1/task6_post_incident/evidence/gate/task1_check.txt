@@ -1,0 +1,15 @@
+./macos/install_iso.log: OK
+./macos/install_sample500.log: OK
+./macos/install.log: OK
+./markers.csv: OK
+./transcripts/01_lab_build.txt: OK
+./transcripts/02_provision_agent.txt: OK
+./transcripts/03_wazuh_rules.txt: OK
+./transcripts/04_log_collection.txt: OK
+./transcripts/05_wireshark.txt: OK
+./transcripts/06_volatility.txt: OK
+./volatility/baseline_pslist.txt: OK
+./wazuh/can_ir1_core_rules.xml: OK
+./wazuh/rule_tests.tsv: OK
+./wireshark/cfilters: OK
+./wireshark/t1_agent_traffic.pcapng: OK

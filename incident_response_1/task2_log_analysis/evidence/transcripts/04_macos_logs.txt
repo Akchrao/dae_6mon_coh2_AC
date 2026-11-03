@@ -1,0 +1,15 @@
+[2026-11-03T19:35:52Z] >>> analysis_start
+# the Mac's SSH client trail (host_ssh_logged.py) shipped to the manager's macOS input
+$ wc -l ssh_client.log; grep 'Authenticating to' ssh_client.log
+     578
+2026-11-03T14:29:50-05:00 DAEDMAC1009 ssh[48924]: debug1: Authenticating to 127.0.0.1:2223 as 'test.clinician'
+2026-11-03T14:30:13-05:00 DAEDMAC1009 ssh[48981]: debug1: Authenticating to 127.0.0.1:2223 as 'test.clinician'
+2026-11-03T14:30:31-05:00 DAEDMAC1009 ssh[48999]: debug1: Authenticating to 127.0.0.1:2223 as 'test.billing'
+2026-11-03T14:30:51-05:00 DAEDMAC1009 ssh[49063]: debug1: Authenticating to 127.0.0.1:2223 as 'test.billing'
+2026-11-03T14:31:06-05:00 DAEDMAC1009 ssh[49100]: debug1: Authenticating to 127.0.0.1:2223 as 'test.nurse'
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49105]: debug1: Authenticating to 127.0.0.1:2223 as 'test.nurse'
+2026-11-03T14:31:08-05:00 DAEDMAC1009 ssh[49109]: debug1: Authenticating to 127.0.0.1:2223 as 'test.nurse'
+2026-11-03T14:31:09-05:00 DAEDMAC1009 ssh[49113]: debug1: Authenticating to 127.0.0.1:2223 as 'test.nurse'
+2026-11-03T14:31:11-05:00 DAEDMAC1009 ssh[49117]: debug1: Authenticating to 127.0.0.1:2223 as 'test.nurse'
+  logcollector stopped - restarting and resending part_aa
+ssh_client.log -> /var/ossec/logs/macos/ssh_client.log  sent=578  received=578  logcollector restarts=1  COMPLETE

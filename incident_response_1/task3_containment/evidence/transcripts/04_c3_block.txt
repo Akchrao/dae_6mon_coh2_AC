@@ -1,0 +1,20 @@
+[2026-11-03T19:31:59Z] >>> c3_block
+# C3 drop + log everything to the IOC 10.78.99.66 (applied over the guest agent: a mistake cannot lock responders out)
+-P INPUT ACCEPT
+-P FORWARD ACCEPT
+-P OUTPUT ACCEPT
+-N IR-EGRESS-BLOCK
+-A OUTPUT -d 10.78.99.66/32 -j IR-EGRESS-BLOCK
+-A IR-EGRESS-BLOCK -m limit --limit 20/min -j LOG --log-prefix "IR-BLOCK IR1-2026-002 " --log-uid
+-A IR-EGRESS-BLOCK -j DROP
+
+# 30 s later: the uploader still runs, every attempt is dropped
+Chain IR-EGRESS-BLOCK (1 references)
+ pkts bytes target     prot opt in     out     source               destination         
+   11   660 LOG        0    --  *      *       0.0.0.0/0            0.0.0.0/0            limit: avg 20/min burst 5 LOG flags 8 level 4 prefix "IR-BLOCK IR1-2026-002 "
+   11   660 DROP       0    --  *      *       0.0.0.0/0            0.0.0.0/0           
+
+2026-11-03T19:32:27.903904+00:00 parrot-vm kernel: [  942.866972] IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=3470 DF PROTO=TCP SPT=58442 DPT
+2026-11-03T19:32:28.935354+00:00 parrot-vm kernel: [  943.901966] IR-BLOCK IR1-2026-002 IN= OUT=enp0s1 SRC=10.0.2.15 DST=10.78.99.66 LEN=60 TOS=0x00 PREC=0x00 TTL=64 ID=3471 DF PROTO=TCP SPT=58442 DPT
+
+last upload received by the drop site: {"ts": "2026-11-03T19:31:56.803+00:00", "src": "10.78.99.5",

@@ -1,0 +1,37 @@
+[2026-11-03T19:37:22Z] >>> live_response
+# ir_live_response.sh streamed to the host over the forensic SSH channel; output kept in RAM (/dev/shm/lr)
+$ sha256sum ir_live_response.sh
+85b815ebc437c6cf82b8cb4939b188dc3064bc0996e77e6e065d8c5d0a9d6675
+# clock reference: forensic workstation (NTP-synced macOS host) vs the suspect host's own clock
+workstation UTC before collection: 2026-11-03T19:37:22Z
+collected 24 items into /dev/shm/lr at 2026-11-03T19:37:28Z
+workstation UTC after collection:  2026-11-03T19:37:36Z
+$ sha256sum IR1-2026-002_live_response.tar
+c285b468cfbb168342dc596099e2e4056a52ec5811ead0cc2a420ecef7922d68  /ir/task4_evidence_management/evidence/live_response/IR1-2026-002_live_response.tar
+
+# every output file re-hashed against the hash the collector logged at collection time
+ 1 2026-11-03T19:37:15.730Z  exit=0  MATCH  01_clock.txt
+ 2 2026-11-03T19:37:16.566Z  exit=0  MATCH  02_system.txt
+ 3 2026-11-03T19:37:16.772Z  exit=0  MATCH  03_processes.txt
+ 4 2026-11-03T19:37:16.990Z  exit=0  MATCH  04_process_exe_sha256.txt
+ 5 2026-11-03T19:37:21.244Z  exit=0  MATCH  05_open_files.txt
+ 6 2026-11-03T19:37:21.774Z  exit=0  MATCH  06_logged_in.txt
+ 7 2026-11-03T19:37:21.930Z  exit=0  MATCH  07_sockets.txt
+ 8 2026-11-03T19:37:22.196Z  exit=0  MATCH  08_listening.txt
+ 9 2026-11-03T19:37:22.366Z  exit=0  MATCH  09_interfaces.txt
+10 2026-11-03T19:37:22.575Z  exit=0  MATCH  10_firewall.txt
+11 2026-11-03T19:37:22.764Z  exit=0  MATCH  11_dns_hosts.txt
+12 2026-11-03T19:37:22.884Z  exit=0  MATCH  12_kernel_modules.txt
+13 2026-11-03T19:37:23.020Z  exit=0  MATCH  13_kernel_log.txt
+14 2026-11-03T19:37:23.183Z  exit=0  MATCH  14_services.txt
+15 2026-11-03T19:37:23.344Z  exit=0  MATCH  15_timers_cron.txt
+16 2026-11-03T19:37:23.699Z  exit=0  MATCH  16_mounts_disks.txt
+17 2026-11-03T19:37:23.973Z  exit=0  MATCH  17_accounts.txt
+18 2026-11-03T19:37:24.538Z  exit=0  MATCH  18_sudoers.txt
+19 2026-11-03T19:37:24.703Z  exit=0  MATCH  19_ssh_keys.txt
+20 2026-11-03T19:37:25.071Z  exit=0  MATCH  20_lastlog.txt
+21 2026-11-03T19:37:25.244Z  exit=0  MATCH  21_recent_files.txt
+22 2026-11-03T19:37:25.507Z  exit=0  MATCH  22_hidden_dirs.txt
+23 2026-11-03T19:37:25.647Z  exit=0  MATCH  23_suid_sgid.txt
+24 2026-11-03T19:37:28.406Z  exit=0  MATCH  24_shell_history.txt
+24 outputs match the collection log, 0 do not

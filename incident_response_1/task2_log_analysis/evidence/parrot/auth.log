@@ -1,104 +1,615 @@
-2026-10-20T16:27:36.438047+00:00 parrot-sim sshd[37]: Server listening on 0.0.0.0 port 22.
-2026-10-20T16:27:36.438073+00:00 parrot-sim sshd[37]: Server listening on :: port 22.
-2026-10-20T16:27:37.549255+00:00 parrot-sim root: ir2-collection-test 2026-10-20T16:27:37Z
-2026-10-20T16:27:42.788782+00:00 parrot-sim groupadd[54]: group added to /etc/group: name=clinical, GID=1000
-2026-10-20T16:27:42.789474+00:00 parrot-sim groupadd[54]: group added to /etc/gshadow: name=clinical
-2026-10-20T16:27:42.789972+00:00 parrot-sim groupadd[54]: new group: name=clinical, GID=1000
-2026-10-20T16:27:42.792729+00:00 parrot-sim groupadd[60]: group added to /etc/group: name=billing, GID=1001
-2026-10-20T16:27:42.793741+00:00 parrot-sim groupadd[60]: group added to /etc/gshadow: name=billing
-2026-10-20T16:27:42.794182+00:00 parrot-sim groupadd[60]: new group: name=billing, GID=1001
-2026-10-20T16:27:42.796557+00:00 parrot-sim groupadd[66]: group added to /etc/group: name=disabled-users, GID=1002
-2026-10-20T16:27:42.797351+00:00 parrot-sim groupadd[66]: group added to /etc/gshadow: name=disabled-users
-2026-10-20T16:27:42.797854+00:00 parrot-sim groupadd[66]: new group: name=disabled-users, GID=1002
-2026-10-20T16:27:42.805257+00:00 parrot-sim useradd[72]: new group: name=it_admin, GID=1003
-2026-10-20T16:27:42.805307+00:00 parrot-sim useradd[72]: new user: name=it_admin, UID=1000, GID=1003, home=/home/it_admin, shell=/bin/bash, from=none
-2026-10-20T16:27:42.805382+00:00 parrot-sim useradd[72]: add 'it_admin' to group 'sudo'
-2026-10-20T16:27:42.805396+00:00 parrot-sim useradd[72]: add 'it_admin' to shadow group 'sudo'
-2026-10-20T16:27:42.815560+00:00 parrot-sim useradd[80]: new group: name=test.clinician, GID=1004
-2026-10-20T16:27:42.815598+00:00 parrot-sim useradd[80]: new user: name=test.clinician, UID=1001, GID=1004, home=/home/test.clinician, shell=/bin/bash, from=none
-2026-10-20T16:27:42.815629+00:00 parrot-sim useradd[80]: add 'test.clinician' to group 'clinical'
-2026-10-20T16:27:42.815641+00:00 parrot-sim useradd[80]: add 'test.clinician' to shadow group 'clinical'
-2026-10-20T16:27:42.824678+00:00 parrot-sim useradd[87]: new group: name=test.nurse, GID=1005
-2026-10-20T16:27:42.824706+00:00 parrot-sim useradd[87]: new user: name=test.nurse, UID=1002, GID=1005, home=/home/test.nurse, shell=/bin/bash, from=none
-2026-10-20T16:27:42.824737+00:00 parrot-sim useradd[87]: add 'test.nurse' to group 'clinical'
-2026-10-20T16:27:42.824749+00:00 parrot-sim useradd[87]: add 'test.nurse' to shadow group 'clinical'
-2026-10-20T16:27:42.831301+00:00 parrot-sim usermod[94]: add 'test.nurse' to group 'billing'
-2026-10-20T16:27:42.831313+00:00 parrot-sim usermod[94]: add 'test.nurse' to shadow group 'billing'
-2026-10-20T16:27:42.837036+00:00 parrot-sim useradd[101]: new group: name=test.billing, GID=1006
-2026-10-20T16:27:42.837076+00:00 parrot-sim useradd[101]: new user: name=test.billing, UID=1003, GID=1006, home=/home/test.billing, shell=/bin/bash, from=none
-2026-10-20T16:27:42.837110+00:00 parrot-sim useradd[101]: add 'test.billing' to group 'billing'
-2026-10-20T16:27:42.837123+00:00 parrot-sim useradd[101]: add 'test.billing' to shadow group 'billing'
-2026-10-20T16:27:42.843034+00:00 parrot-sim usermod[108]: change user 'test.billing' expiration from 'never' to '1970-01-02'
-2026-10-20T16:27:42.843049+00:00 parrot-sim usermod[108]: add 'test.billing' to group 'disabled-users'
-2026-10-20T16:27:42.843055+00:00 parrot-sim usermod[108]: add 'test.billing' to shadow group 'disabled-users'
-2026-10-20T16:27:42.903099+00:00 parrot-sim chpasswd[132]: pam_unix(chpasswd:chauthtok): password changed for test.clinician
-2026-10-20T16:27:42.912150+00:00 parrot-sim chpasswd[136]: pam_unix(chpasswd:chauthtok): password changed for test.nurse
-2026-10-20T16:27:46.342771+00:00 parrot-sim sshd[231]: Connection from 10.77.0.1 port 64660 on 10.77.0.10 port 22 rdomain ""
-2026-10-20T16:27:46.363609+00:00 parrot-sim sshd[231]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.clinician/.ssh/authorized_keys:1
-2026-10-20T16:27:46.370253+00:00 parrot-sim sshd[231]: Postponed publickey for test.clinician from 10.77.0.1 port 64660 ssh2 [preauth]
-2026-10-20T16:27:46.370345+00:00 parrot-sim sshd[231]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.clinician/.ssh/authorized_keys:1
-2026-10-20T16:27:46.376221+00:00 parrot-sim sshd[231]: Accepted publickey for test.clinician from 10.77.0.1 port 64660 ssh2: ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
-2026-10-20T16:27:46.377054+00:00 parrot-sim sshd[231]: pam_unix(sshd:session): session opened for user test.clinician(uid=1001) by (uid=0)
-2026-10-20T16:27:46.381620+00:00 parrot-sim sshd[231]: pam_env(sshd:session): deprecated reading of user environment enabled
-2026-10-20T16:27:46.381639+00:00 parrot-sim sshd[231]: pam_env(sshd:session): Unable to open env file: /etc/default/locale: No such file or directory
-2026-10-20T16:27:46.381820+00:00 parrot-sim sshd[231]: User child is on pid 237
-2026-10-20T16:27:46.423848+00:00 parrot-sim sshd[237]: Starting session: command for test.clinician from 10.77.0.1 port 64660 id 0
-2026-10-20T16:27:46.432566+00:00 parrot-sim sshd[237]: Received disconnect from 10.77.0.1 port 64660:11: disconnected by user
-2026-10-20T16:27:46.432657+00:00 parrot-sim sshd[237]: Disconnected from user test.clinician 10.77.0.1 port 64660
-2026-10-20T16:27:46.432948+00:00 parrot-sim sshd[231]: pam_unix(sshd:session): session closed for user test.clinician
-2026-10-20T16:28:01.673486+00:00 parrot-sim sudo: it_admin : PWD=/ ; USER=root ; COMMAND=/usr/sbin/usermod -aG sudo test.clinician
-2026-10-20T16:28:01.673764+00:00 parrot-sim sudo: pam_limits(sudo:session): Could not set limit for 'core' to soft=0, hard=-1: Operation not permitted; uid=1000,euid=0
-2026-10-20T16:28:01.673800+00:00 parrot-sim sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
-2026-10-20T16:28:01.681666+00:00 parrot-sim usermod[253]: add 'test.clinician' to group 'sudo'
-2026-10-20T16:28:01.681687+00:00 parrot-sim usermod[253]: add 'test.clinician' to shadow group 'sudo'
-2026-10-20T16:28:01.686034+00:00 parrot-sim sudo: pam_unix(sudo:session): session closed for user root
-2026-10-20T16:28:16.808558+00:00 parrot-sim sshd[260]: Connection from 10.77.0.1 port 57946 on 10.77.0.10 port 22 rdomain ""
-2026-10-20T16:28:16.824852+00:00 parrot-sim sshd[260]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.clinician/.ssh/authorized_keys:1
-2026-10-20T16:28:16.830715+00:00 parrot-sim sshd[260]: Postponed publickey for test.clinician from 10.77.0.1 port 57946 ssh2 [preauth]
-2026-10-20T16:28:16.830797+00:00 parrot-sim sshd[260]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.clinician/.ssh/authorized_keys:1
-2026-10-20T16:28:16.836970+00:00 parrot-sim sshd[260]: Accepted publickey for test.clinician from 10.77.0.1 port 57946 ssh2: ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
-2026-10-20T16:28:16.838645+00:00 parrot-sim sshd[260]: pam_unix(sshd:session): session opened for user test.clinician(uid=1001) by (uid=0)
-2026-10-20T16:28:16.841969+00:00 parrot-sim sshd[260]: pam_env(sshd:session): deprecated reading of user environment enabled
-2026-10-20T16:28:16.841990+00:00 parrot-sim sshd[260]: pam_env(sshd:session): Unable to open env file: /etc/default/locale: No such file or directory
-2026-10-20T16:28:16.842247+00:00 parrot-sim sshd[260]: User child is on pid 266
-2026-10-20T16:28:16.883961+00:00 parrot-sim sshd[266]: Starting session: command for test.clinician from 10.77.0.1 port 57946 id 0
-2026-10-20T16:28:16.919679+00:00 parrot-sim sudo: test.clinician : PWD=/home/test.clinician ; USER=root ; COMMAND=/usr/bin/id
-2026-10-20T16:28:16.919783+00:00 parrot-sim sudo: pam_limits(sudo:session): Could not set limit for 'core' to soft=0, hard=-1: Operation not permitted; uid=1001,euid=0
-2026-10-20T16:28:16.919809+00:00 parrot-sim sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1001)
-2026-10-20T16:28:16.920759+00:00 parrot-sim sudo: pam_unix(sudo:session): session closed for user root
-2026-10-20T16:28:16.921423+00:00 parrot-sim sshd[266]: Received disconnect from 10.77.0.1 port 57946:11: disconnected by user
-2026-10-20T16:28:16.921488+00:00 parrot-sim sshd[266]: Disconnected from user test.clinician 10.77.0.1 port 57946
-2026-10-20T16:28:16.921763+00:00 parrot-sim sshd[260]: pam_unix(sshd:session): session closed for user test.clinician
-2026-10-20T16:28:37.013984+00:00 parrot-sim sshd[269]: Connection from 10.77.0.1 port 55994 on 10.77.0.10 port 22 rdomain ""
-2026-10-20T16:28:37.033099+00:00 parrot-sim sshd[269]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.nurse/.ssh/authorized_keys:1
-2026-10-20T16:28:37.040036+00:00 parrot-sim sshd[269]: Postponed publickey for test.nurse from 10.77.0.1 port 55994 ssh2 [preauth]
-2026-10-20T16:28:37.040141+00:00 parrot-sim sshd[269]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.nurse/.ssh/authorized_keys:1
-2026-10-20T16:28:37.046314+00:00 parrot-sim sshd[269]: Accepted publickey for test.nurse from 10.77.0.1 port 55994 ssh2: ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
-2026-10-20T16:28:37.048023+00:00 parrot-sim sshd[269]: pam_unix(sshd:session): session opened for user test.nurse(uid=1002) by (uid=0)
-2026-10-20T16:28:37.051406+00:00 parrot-sim sshd[269]: pam_env(sshd:session): deprecated reading of user environment enabled
-2026-10-20T16:28:37.051428+00:00 parrot-sim sshd[269]: pam_env(sshd:session): Unable to open env file: /etc/default/locale: No such file or directory
-2026-10-20T16:28:37.051759+00:00 parrot-sim sshd[269]: User child is on pid 275
-2026-10-20T16:28:37.094746+00:00 parrot-sim sshd[275]: Starting session: command for test.nurse from 10.77.0.1 port 55994 id 0
-2026-10-20T16:28:37.103064+00:00 parrot-sim sshd[275]: Received disconnect from 10.77.0.1 port 55994:11: disconnected by user
-2026-10-20T16:28:37.103175+00:00 parrot-sim sshd[275]: Disconnected from user test.nurse 10.77.0.1 port 55994
-2026-10-20T16:28:37.103747+00:00 parrot-sim sshd[269]: pam_unix(sshd:session): session closed for user test.nurse
-2026-10-20T16:28:47.184723+00:00 parrot-sim sshd[285]: Connection from 10.77.0.1 port 58784 on 10.77.0.10 port 22 rdomain ""
-2026-10-20T16:28:47.203931+00:00 parrot-sim sshd[285]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.nurse/.ssh/authorized_keys:1
-2026-10-20T16:28:47.210737+00:00 parrot-sim sshd[285]: Postponed publickey for test.nurse from 10.77.0.1 port 58784 ssh2 [preauth]
-2026-10-20T16:28:47.210807+00:00 parrot-sim sshd[285]: Accepted key ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ found at /home/test.nurse/.ssh/authorized_keys:1
-2026-10-20T16:28:47.217168+00:00 parrot-sim sshd[285]: Accepted publickey for test.nurse from 10.77.0.1 port 58784 ssh2: ED25519 SHA256:RzTBOFUkQVBLIVAOdw0lMBBlaccfSbD/zz0bBplKZxQ
-2026-10-20T16:28:47.218560+00:00 parrot-sim sshd[285]: pam_unix(sshd:session): session opened for user test.nurse(uid=1002) by (uid=0)
-2026-10-20T16:28:47.221645+00:00 parrot-sim sshd[285]: pam_env(sshd:session): deprecated reading of user environment enabled
-2026-10-20T16:28:47.221669+00:00 parrot-sim sshd[285]: pam_env(sshd:session): Unable to open env file: /etc/default/locale: No such file or directory
-2026-10-20T16:28:47.221957+00:00 parrot-sim sshd[285]: User child is on pid 291
-2026-10-20T16:28:47.264475+00:00 parrot-sim sshd[291]: Starting session: command for test.nurse from 10.77.0.1 port 58784 id 0
-2026-10-20T16:28:47.295550+00:00 parrot-sim sudo: test.nurse : user NOT in sudoers ; PWD=/home/test.nurse ; USER=root ; COMMAND=/usr/bin/cat /srv/ehr/clinical/PT-1003.txt
-2026-10-20T16:28:47.296362+00:00 parrot-sim sshd[291]: Received disconnect from 10.77.0.1 port 58784:11: disconnected by user
-2026-10-20T16:28:47.296445+00:00 parrot-sim sshd[291]: Disconnected from user test.nurse 10.77.0.1 port 58784
-2026-10-20T16:28:47.296874+00:00 parrot-sim sshd[285]: pam_unix(sshd:session): session closed for user test.nurse
-2026-10-20T16:29:07.392048+00:00 parrot-sim sshd[293]: Connection from 10.77.0.1 port 60292 on 10.77.0.10 port 22 rdomain ""
-2026-10-20T16:29:07.402186+00:00 parrot-sim sshd[293]: User test.billing from 10.77.0.1 not allowed because a group is listed in DenyGroups
-2026-10-20T16:29:07.423591+00:00 parrot-sim sshd[293]: Connection closed by invalid user test.billing 10.77.0.1 port 60292 [preauth]
-2026-10-20T16:29:32.516718+00:00 parrot-sim sshd[295]: Connection from 10.77.0.1 port 55326 on 10.77.0.10 port 22 rdomain ""
-2026-10-20T16:29:32.526586+00:00 parrot-sim sshd[295]: User test.billing from 10.77.0.1 not allowed because a group is listed in DenyGroups
-2026-10-20T16:29:32.553105+00:00 parrot-sim sshd[295]: Connection closed by invalid user test.billing 10.77.0.1 port 55326 [preauth]
+2026-11-03T03:34:14.665850+00:00 parrot-vm CRON[2936]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+2026-11-03T03:34:14.841319+00:00 parrot-vm CRON[2936]: pam_unix(cron:session): session closed for user root
+2026-11-03T04:19:06.916313+00:00 parrot-vm groupadd[3211]: group added to /etc/group: name=wazuh, GID=111
+2026-11-03T04:19:06.929914+00:00 parrot-vm groupadd[3211]: group added to /etc/gshadow: name=wazuh
+2026-11-03T04:19:06.937196+00:00 parrot-vm groupadd[3211]: new group: name=wazuh, GID=111
+2026-11-03T04:19:07.589327+00:00 parrot-vm useradd[3219]: new user: name=wazuh, UID=105, GID=111, home=/var/ossec, shell=/sbin/nologin, from=none
+2026-11-03T04:19:39.787927+00:00 parrot-vm systemd-logind[471]: The system will power off now!
+2026-11-03T04:19:41.730499+00:00 parrot-vm systemd-logind[471]: System is powering down.
+2026-11-03T19:16:50.990908+00:00 parrot-vm systemd-logind[382]: Watching system buttons on /dev/input/event1 (Power Button)
+2026-11-03T19:16:50.991662+00:00 parrot-vm systemd-logind[382]: Watching system buttons on /dev/input/event0 (AT Translated Set 2 keyboard)
+2026-11-03T19:16:51.006454+00:00 parrot-vm systemd-logind[382]: New seat seat0.
+2026-11-03T19:16:51.106041+00:00 parrot-vm sshd[389]: Server listening on 0.0.0.0 port 22.
+2026-11-03T19:16:51.106626+00:00 parrot-vm sshd[389]: Server listening on :: port 22.
+2026-11-03T19:17:01.304157+00:00 parrot-vm CRON[394]: pam_unix(cron:session): session opened for user root(uid=0) by (uid=0)
+2026-11-03T19:17:01.375151+00:00 parrot-vm CRON[394]: pam_unix(cron:session): session closed for user root
+2026-11-03T19:21:03.200891+00:00 parrot-vm groupadd[701]: group added to /etc/group: name=clinical, GID=1001
+2026-11-03T19:21:03.207087+00:00 parrot-vm groupadd[701]: group added to /etc/gshadow: name=clinical
+2026-11-03T19:21:03.217745+00:00 parrot-vm groupadd[701]: new group: name=clinical, GID=1001
+2026-11-03T19:21:03.268454+00:00 parrot-vm groupadd[707]: group added to /etc/group: name=billing, GID=1002
+2026-11-03T19:21:03.274074+00:00 parrot-vm groupadd[707]: group added to /etc/gshadow: name=billing
+2026-11-03T19:21:03.282072+00:00 parrot-vm groupadd[707]: new group: name=billing, GID=1002
+2026-11-03T19:21:03.330845+00:00 parrot-vm groupadd[713]: group added to /etc/group: name=disabled-users, GID=1003
+2026-11-03T19:21:03.336520+00:00 parrot-vm groupadd[713]: group added to /etc/gshadow: name=disabled-users
+2026-11-03T19:21:03.345062+00:00 parrot-vm groupadd[713]: new group: name=disabled-users, GID=1003
+2026-11-03T19:21:03.435642+00:00 parrot-vm useradd[720]: new group: name=it_admin, GID=1004
+2026-11-03T19:21:03.439391+00:00 parrot-vm useradd[720]: new user: name=it_admin, UID=1001, GID=1004, home=/home/it_admin, shell=/bin/bash, from=none
+2026-11-03T19:21:03.439906+00:00 parrot-vm useradd[720]: add 'it_admin' to group 'sudo'
+2026-11-03T19:21:03.440386+00:00 parrot-vm useradd[720]: add 'it_admin' to shadow group 'sudo'
+2026-11-03T19:21:03.586230+00:00 parrot-vm useradd[729]: new group: name=test.clinician, GID=1005
+2026-11-03T19:21:03.586745+00:00 parrot-vm useradd[729]: new user: name=test.clinician, UID=1002, GID=1005, home=/home/test.clinician, shell=/bin/bash, from=none
+2026-11-03T19:21:03.588539+00:00 parrot-vm useradd[729]: add 'test.clinician' to group 'clinical'
+2026-11-03T19:21:03.589324+00:00 parrot-vm useradd[729]: add 'test.clinician' to shadow group 'clinical'
+2026-11-03T19:21:03.717154+00:00 parrot-vm useradd[737]: new group: name=test.nurse, GID=1006
+2026-11-03T19:21:03.717808+00:00 parrot-vm useradd[737]: new user: name=test.nurse, UID=1003, GID=1006, home=/home/test.nurse, shell=/bin/bash, from=none
+2026-11-03T19:21:03.719968+00:00 parrot-vm useradd[737]: add 'test.nurse' to group 'clinical'
+2026-11-03T19:21:03.721960+00:00 parrot-vm useradd[737]: add 'test.nurse' to shadow group 'clinical'
+2026-11-03T19:21:03.815951+00:00 parrot-vm usermod[744]: add 'test.nurse' to group 'billing'
+2026-11-03T19:21:03.817062+00:00 parrot-vm usermod[744]: add 'test.nurse' to shadow group 'billing'
+2026-11-03T19:21:03.926663+00:00 parrot-vm useradd[752]: new group: name=test.billing, GID=1007
+2026-11-03T19:21:03.927201+00:00 parrot-vm useradd[752]: new user: name=test.billing, UID=1004, GID=1007, home=/home/test.billing, shell=/bin/bash, from=none
+2026-11-03T19:21:03.929479+00:00 parrot-vm useradd[752]: add 'test.billing' to group 'billing'
+2026-11-03T19:21:03.930360+00:00 parrot-vm useradd[752]: add 'test.billing' to shadow group 'billing'
+2026-11-03T19:21:04.020101+00:00 parrot-vm usermod[759]: change user 'test.billing' expiration from 'never' to '1970-01-02'
+2026-11-03T19:21:04.021329+00:00 parrot-vm usermod[759]: add 'test.billing' to group 'disabled-users'
+2026-11-03T19:21:04.021824+00:00 parrot-vm usermod[759]: add 'test.billing' to shadow group 'disabled-users'
+2026-11-03T19:21:04.920467+00:00 parrot-vm sshd[389]: Received signal 15; terminating.
+2026-11-03T19:21:05.230755+00:00 parrot-vm sshd[811]: Server listening on 0.0.0.0 port 22.
+2026-11-03T19:21:05.231280+00:00 parrot-vm sshd[811]: Server listening on :: port 22.
+2026-11-03T19:22:26.738218+00:00 parrot-vm sshd[1261]: Connection from 10.78.50.5 port 59844 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:22:26.917581+00:00 parrot-vm sshd[1261]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:22:26.926995+00:00 parrot-vm sshd[1261]: Postponed publickey for ir-analyst from 10.78.50.5 port 59844 ssh2 [preauth]
+2026-11-03T19:22:26.928382+00:00 parrot-vm sshd[1261]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:22:26.969899+00:00 parrot-vm sshd[1261]: Accepted publickey for ir-analyst from 10.78.50.5 port 59844 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:22:26.989238+00:00 parrot-vm sshd[1261]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:22:27.104079+00:00 parrot-vm systemd-logind[382]: New session 2 of user ir-analyst.
+2026-11-03T19:22:27.329465+00:00 parrot-vm (systemd): pam_unix(systemd-user:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:22:28.234093+00:00 parrot-vm sshd[1261]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:22:28.236385+00:00 parrot-vm sshd[1261]: User child is on pid 1285
+2026-11-03T19:22:28.251540+00:00 parrot-vm sshd[1285]: Starting session: command for ir-analyst from 10.78.50.5 port 59844 id 0
+2026-11-03T19:22:28.372378+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sha256sum /dev/shm/t1_agent.pcapng
+2026-11-03T19:22:28.378473+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:22:28.409808+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:22:28.421117+00:00 parrot-vm sshd[1285]: Received disconnect from 10.78.50.5 port 59844:11: disconnected by user
+2026-11-03T19:22:28.422635+00:00 parrot-vm sshd[1285]: Disconnected from user ir-analyst 10.78.50.5 port 59844
+2026-11-03T19:22:28.426179+00:00 parrot-vm sshd[1261]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:22:28.451533+00:00 parrot-vm systemd-logind[382]: Session 2 logged out. Waiting for processes to exit.
+2026-11-03T19:22:28.456224+00:00 parrot-vm systemd-logind[382]: Removed session 2.
+2026-11-03T19:22:28.578362+00:00 parrot-vm sshd[1288]: Connection from 10.78.50.5 port 59846 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:22:28.752218+00:00 parrot-vm sshd[1288]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:22:28.761439+00:00 parrot-vm sshd[1288]: Postponed publickey for ir-analyst from 10.78.50.5 port 59846 ssh2 [preauth]
+2026-11-03T19:22:28.763591+00:00 parrot-vm sshd[1288]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:22:28.803787+00:00 parrot-vm sshd[1288]: Accepted publickey for ir-analyst from 10.78.50.5 port 59846 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:22:28.817980+00:00 parrot-vm sshd[1288]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:22:28.854469+00:00 parrot-vm systemd-logind[382]: New session 4 of user ir-analyst.
+2026-11-03T19:22:29.066847+00:00 parrot-vm sshd[1288]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:22:29.070523+00:00 parrot-vm sshd[1288]: User child is on pid 1295
+2026-11-03T19:22:29.086115+00:00 parrot-vm sshd[1295]: Starting session: command for ir-analyst from 10.78.50.5 port 59846 id 0
+2026-11-03T19:22:29.203517+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/cat /dev/shm/t1_agent.pcapng
+2026-11-03T19:22:29.208218+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:22:29.233812+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:22:29.243235+00:00 parrot-vm sshd[1295]: Received disconnect from 10.78.50.5 port 59846:11: disconnected by user
+2026-11-03T19:22:29.244334+00:00 parrot-vm sshd[1295]: Disconnected from user ir-analyst 10.78.50.5 port 59846
+2026-11-03T19:22:29.246665+00:00 parrot-vm sshd[1288]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:22:29.265928+00:00 parrot-vm systemd-logind[382]: Session 4 logged out. Waiting for processes to exit.
+2026-11-03T19:22:29.271703+00:00 parrot-vm systemd-logind[382]: Removed session 4.
+2026-11-03T19:22:41.092676+00:00 parrot-vm sshd[1302]: Connection from 10.78.10.1 port 62208 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:22:41.177210+00:00 parrot-vm sshd[1304]: Connection from 10.78.10.1 port 62242 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:22:41.193118+00:00 parrot-vm sshd[1303]: Connection from 10.78.10.1 port 62210 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:22:41.248012+00:00 parrot-vm sshd[1302]: Connection closed by 10.78.10.1 port 62208 [preauth]
+2026-11-03T19:22:41.383154+00:00 parrot-vm sshd[1304]: Connection closed by 10.78.10.1 port 62242 [preauth]
+2026-11-03T19:22:41.497616+00:00 parrot-vm sshd[1303]: Connection closed by 10.78.10.1 port 62210 [preauth]
+2026-11-03T19:22:42.125330+00:00 parrot-vm sshd[1308]: Connection from 10.78.10.1 port 62232 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:22:42.127519+00:00 parrot-vm sshd[1309]: Connection from 10.78.10.1 port 62224 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:22:42.141630+00:00 parrot-vm sshd[1308]: Unable to negotiate with 10.78.10.1 port 62232: no matching host key type found. Their offer: sk-ssh-ed25519@openssh.com [preauth]
+2026-11-03T19:22:42.158003+00:00 parrot-vm sshd[1309]: Unable to negotiate with 10.78.10.1 port 62224: no matching host key type found. Their offer: sk-ecdsa-sha2-nistp256@openssh.com [preauth]
+2026-11-03T19:22:42.424726+00:00 parrot-vm sshd[1312]: Connection from 10.78.10.20 port 53018 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:22:42.461127+00:00 parrot-vm sshd[1314]: Connection from 10.78.10.20 port 53038 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:22:42.467266+00:00 parrot-vm sshd[1313]: Connection from 10.78.10.20 port 53034 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:22:42.469233+00:00 parrot-vm sshd[1315]: Connection from 10.78.10.20 port 53060 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:22:42.577677+00:00 parrot-vm sshd[1312]: Connection closed by 10.78.10.20 port 53018 [preauth]
+2026-11-03T19:22:42.691143+00:00 parrot-vm sshd[1313]: Connection closed by 10.78.10.20 port 53034 [preauth]
+2026-11-03T19:22:42.806708+00:00 parrot-vm sshd[1314]: Connection closed by 10.78.10.20 port 53038 [preauth]
+2026-11-03T19:22:42.820376+00:00 parrot-vm sshd[1315]: Unable to negotiate with 10.78.10.20 port 53060: no matching host key type found. Their offer: sk-ssh-ed25519@openssh.com [preauth]
+2026-11-03T19:22:43.383005+00:00 parrot-vm sshd[1320]: Connection from 10.78.10.20 port 53048 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:22:43.400720+00:00 parrot-vm sshd[1320]: Unable to negotiate with 10.78.10.20 port 53048: no matching host key type found. Their offer: sk-ecdsa-sha2-nistp256@openssh.com [preauth]
+2026-11-03T19:29:49.853405+00:00 parrot-vm chpasswd[1366]: pam_unix(chpasswd:chauthtok): password changed for test.clinician
+2026-11-03T19:29:50.246616+00:00 parrot-vm sshd[1369]: Connection from 10.78.10.1 port 56320 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:29:50.349655+00:00 parrot-vm sshd[1369]: Accepted key ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM found at /home/test.clinician/.ssh/authorized_keys:1
+2026-11-03T19:29:50.357095+00:00 parrot-vm sshd[1369]: Postponed publickey for test.clinician from 10.78.10.1 port 56320 ssh2 [preauth]
+2026-11-03T19:29:50.359030+00:00 parrot-vm sshd[1369]: Accepted key ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM found at /home/test.clinician/.ssh/authorized_keys:1
+2026-11-03T19:29:50.404796+00:00 parrot-vm sshd[1369]: Accepted publickey for test.clinician from 10.78.10.1 port 56320 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T19:29:50.419566+00:00 parrot-vm sshd[1369]: pam_unix(sshd:session): session opened for user test.clinician(uid=1002) by (uid=0)
+2026-11-03T19:29:50.544931+00:00 parrot-vm systemd-logind[382]: New session 5 of user test.clinician.
+2026-11-03T19:29:50.638470+00:00 parrot-vm (systemd): pam_unix(systemd-user:session): session opened for user test.clinician(uid=1002) by (uid=0)
+2026-11-03T19:29:51.567304+00:00 parrot-vm sshd[1369]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:29:51.569899+00:00 parrot-vm sshd[1369]: User child is on pid 1393
+2026-11-03T19:29:51.587515+00:00 parrot-vm sshd[1393]: Starting session: command for test.clinician from 10.78.10.1 port 56320 id 0
+2026-11-03T19:29:51.832572+00:00 parrot-vm sshd[1393]: Received disconnect from 10.78.10.1 port 56320:11: disconnected by user
+2026-11-03T19:29:51.833841+00:00 parrot-vm sshd[1393]: Disconnected from user test.clinician 10.78.10.1 port 56320
+2026-11-03T19:29:51.836939+00:00 parrot-vm sshd[1369]: pam_unix(sshd:session): session closed for user test.clinician
+2026-11-03T19:29:51.857820+00:00 parrot-vm systemd-logind[382]: Session 5 logged out. Waiting for processes to exit.
+2026-11-03T19:29:51.860992+00:00 parrot-vm systemd-logind[382]: Removed session 5.
+2026-11-03T19:30:01.986892+00:00 parrot-vm (sd-pam): pam_unix(systemd-user:session): session closed for user test.clinician
+2026-11-03T19:30:02.094409+00:00 parrot-vm su[1406]: (to it_admin) root on none
+2026-11-03T19:30:02.103758+00:00 parrot-vm su[1406]: pam_unix(su-l:session): session opened for user it_admin(uid=1001) by (uid=0)
+2026-11-03T19:30:02.362236+00:00 parrot-vm (systemd): pam_unix(systemd-user:session): session opened for user it_admin(uid=1001) by (uid=0)
+2026-11-03T19:30:03.285425+00:00 parrot-vm sudo: it_admin : PWD=/home/it_admin ; USER=root ; COMMAND=/usr/sbin/usermod -aG sudo test.clinician
+2026-11-03T19:30:03.290011+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1001)
+2026-11-03T19:30:03.345701+00:00 parrot-vm usermod[1429]: add 'test.clinician' to group 'sudo'
+2026-11-03T19:30:03.347880+00:00 parrot-vm usermod[1429]: add 'test.clinician' to shadow group 'sudo'
+2026-11-03T19:30:03.378408+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:30:03.391556+00:00 parrot-vm su[1406]: pam_unix(su-l:session): session closed for user it_admin
+2026-11-03T19:30:13.898748+00:00 parrot-vm sshd[1438]: Connection from 10.78.10.1 port 59754 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:30:13.976138+00:00 parrot-vm sshd[1438]: Accepted key ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM found at /home/test.clinician/.ssh/authorized_keys:1
+2026-11-03T19:30:13.982476+00:00 parrot-vm sshd[1438]: Postponed publickey for test.clinician from 10.78.10.1 port 59754 ssh2 [preauth]
+2026-11-03T19:30:13.984018+00:00 parrot-vm sshd[1438]: Accepted key ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM found at /home/test.clinician/.ssh/authorized_keys:1
+2026-11-03T19:30:14.029477+00:00 parrot-vm sshd[1438]: Accepted publickey for test.clinician from 10.78.10.1 port 59754 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T19:30:14.050963+00:00 parrot-vm sshd[1438]: pam_unix(sshd:session): session opened for user test.clinician(uid=1002) by (uid=0)
+2026-11-03T19:30:14.150988+00:00 parrot-vm systemd-logind[382]: New session 8 of user test.clinician.
+2026-11-03T19:30:14.356498+00:00 parrot-vm (systemd): pam_unix(systemd-user:session): session opened for user test.clinician(uid=1002) by (uid=0)
+2026-11-03T19:30:15.205144+00:00 parrot-vm sshd[1438]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:30:15.206644+00:00 parrot-vm sshd[1438]: User child is on pid 1462
+2026-11-03T19:30:15.219008+00:00 parrot-vm sshd[1462]: Starting session: command for test.clinician from 10.78.10.1 port 59754 id 0
+2026-11-03T19:30:15.832337+00:00 parrot-vm sudo: test.clinician : PWD=/home/test.clinician ; USER=root ; COMMAND=/usr/bin/id
+2026-11-03T19:30:15.837105+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1002)
+2026-11-03T19:30:15.872460+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:30:15.883454+00:00 parrot-vm sshd[1462]: Received disconnect from 10.78.10.1 port 59754:11: disconnected by user
+2026-11-03T19:30:15.883848+00:00 parrot-vm sshd[1462]: Disconnected from user test.clinician 10.78.10.1 port 59754
+2026-11-03T19:30:15.886773+00:00 parrot-vm sshd[1438]: pam_unix(sshd:session): session closed for user test.clinician
+2026-11-03T19:30:15.909621+00:00 parrot-vm systemd-logind[382]: Session 8 logged out. Waiting for processes to exit.
+2026-11-03T19:30:15.911229+00:00 parrot-vm systemd-logind[382]: Removed session 8.
+2026-11-03T19:30:31.109721+00:00 parrot-vm sshd[1467]: Connection from 10.78.10.1 port 55708 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:30:31.159351+00:00 parrot-vm sshd[1467]: User test.billing from 10.78.10.1 not allowed because a group is listed in DenyGroups
+2026-11-03T19:30:31.189810+00:00 parrot-vm sshd[1467]: Connection closed by invalid user test.billing 10.78.10.1 port 55708 [preauth]
+2026-11-03T19:30:51.374163+00:00 parrot-vm sshd[1469]: Connection from 10.78.10.1 port 61926 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:30:51.420979+00:00 parrot-vm sshd[1469]: User test.billing from 10.78.10.1 not allowed because a group is listed in DenyGroups
+2026-11-03T19:30:51.448452+00:00 parrot-vm sshd[1469]: Connection closed by invalid user test.billing 10.78.10.1 port 61926 [preauth]
+2026-11-03T19:31:06.683216+00:00 parrot-vm sshd[1471]: Connection from 10.78.10.1 port 62742 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:31:06.746051+00:00 parrot-vm sshd[1471]: Accepted key ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM found at /home/test.nurse/.ssh/authorized_keys:1
+2026-11-03T19:31:06.751734+00:00 parrot-vm sshd[1471]: Postponed publickey for test.nurse from 10.78.10.1 port 62742 ssh2 [preauth]
+2026-11-03T19:31:06.753102+00:00 parrot-vm sshd[1471]: Accepted key ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM found at /home/test.nurse/.ssh/authorized_keys:1
+2026-11-03T19:31:06.791192+00:00 parrot-vm sshd[1471]: Accepted publickey for test.nurse from 10.78.10.1 port 62742 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T19:31:06.805656+00:00 parrot-vm sshd[1471]: pam_unix(sshd:session): session opened for user test.nurse(uid=1003) by (uid=0)
+2026-11-03T19:31:06.912126+00:00 parrot-vm systemd-logind[382]: New session 10 of user test.nurse.
+2026-11-03T19:31:06.989559+00:00 parrot-vm (systemd): pam_unix(systemd-user:session): session opened for user test.nurse(uid=1003) by (uid=0)
+2026-11-03T19:31:07.851181+00:00 parrot-vm sshd[1471]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:31:07.855656+00:00 parrot-vm sshd[1471]: User child is on pid 1494
+2026-11-03T19:31:07.871336+00:00 parrot-vm sshd[1494]: Starting session: command for test.nurse from 10.78.10.1 port 62742 id 0
+2026-11-03T19:31:07.974384+00:00 parrot-vm sshd[1494]: Received disconnect from 10.78.10.1 port 62742:11: disconnected by user
+2026-11-03T19:31:07.975256+00:00 parrot-vm sshd[1494]: Disconnected from user test.nurse 10.78.10.1 port 62742
+2026-11-03T19:31:07.978092+00:00 parrot-vm sshd[1471]: pam_unix(sshd:session): session closed for user test.nurse
+2026-11-03T19:31:08.004386+00:00 parrot-vm systemd-logind[382]: Session 10 logged out. Waiting for processes to exit.
+2026-11-03T19:31:08.011836+00:00 parrot-vm systemd-logind[382]: Removed session 10.
+2026-11-03T19:31:08.124722+00:00 parrot-vm sshd[1497]: Connection from 10.78.10.1 port 62752 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:31:08.190954+00:00 parrot-vm sshd[1497]: Accepted key ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM found at /home/test.nurse/.ssh/authorized_keys:1
+2026-11-03T19:31:08.196996+00:00 parrot-vm sshd[1497]: Postponed publickey for test.nurse from 10.78.10.1 port 62752 ssh2 [preauth]
+2026-11-03T19:31:08.198352+00:00 parrot-vm sshd[1497]: Accepted key ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM found at /home/test.nurse/.ssh/authorized_keys:1
+2026-11-03T19:31:08.275441+00:00 parrot-vm sshd[1497]: Accepted publickey for test.nurse from 10.78.10.1 port 62752 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T19:31:08.287220+00:00 parrot-vm sshd[1497]: pam_unix(sshd:session): session opened for user test.nurse(uid=1003) by (uid=0)
+2026-11-03T19:31:08.320475+00:00 parrot-vm systemd-logind[382]: New session 12 of user test.nurse.
+2026-11-03T19:31:08.505120+00:00 parrot-vm sshd[1497]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:31:08.508630+00:00 parrot-vm sshd[1497]: User child is on pid 1504
+2026-11-03T19:31:08.524937+00:00 parrot-vm sshd[1504]: Starting session: command for test.nurse from 10.78.10.1 port 62752 id 0
+2026-11-03T19:31:08.781246+00:00 parrot-vm sshd[1504]: Received disconnect from 10.78.10.1 port 62752:11: disconnected by user
+2026-11-03T19:31:08.781907+00:00 parrot-vm sshd[1504]: Disconnected from user test.nurse 10.78.10.1 port 62752
+2026-11-03T19:31:08.785259+00:00 parrot-vm sshd[1497]: pam_unix(sshd:session): session closed for user test.nurse
+2026-11-03T19:31:08.804443+00:00 parrot-vm systemd-logind[382]: Session 12 logged out. Waiting for processes to exit.
+2026-11-03T19:31:08.808756+00:00 parrot-vm systemd-logind[382]: Removed session 12.
+2026-11-03T19:31:08.926921+00:00 parrot-vm sshd[1514]: Connection from 10.78.10.1 port 62756 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:31:08.989874+00:00 parrot-vm sshd[1514]: Accepted key ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM found at /home/test.nurse/.ssh/authorized_keys:1
+2026-11-03T19:31:08.995129+00:00 parrot-vm sshd[1514]: Postponed publickey for test.nurse from 10.78.10.1 port 62756 ssh2 [preauth]
+2026-11-03T19:31:08.996713+00:00 parrot-vm sshd[1514]: Accepted key ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM found at /home/test.nurse/.ssh/authorized_keys:1
+2026-11-03T19:31:09.069051+00:00 parrot-vm sshd[1514]: Accepted publickey for test.nurse from 10.78.10.1 port 62756 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T19:31:09.083549+00:00 parrot-vm sshd[1514]: pam_unix(sshd:session): session opened for user test.nurse(uid=1003) by (uid=0)
+2026-11-03T19:31:09.116702+00:00 parrot-vm systemd-logind[382]: New session 13 of user test.nurse.
+2026-11-03T19:31:09.298615+00:00 parrot-vm sshd[1514]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:31:09.302255+00:00 parrot-vm sshd[1514]: User child is on pid 1521
+2026-11-03T19:31:09.315867+00:00 parrot-vm sshd[1521]: Starting session: command for test.nurse from 10.78.10.1 port 62756 id 0
+2026-11-03T19:31:09.441665+00:00 parrot-vm sshd[1521]: Received disconnect from 10.78.10.1 port 62756:11: disconnected by user
+2026-11-03T19:31:09.442571+00:00 parrot-vm sshd[1521]: Disconnected from user test.nurse 10.78.10.1 port 62756
+2026-11-03T19:31:09.444952+00:00 parrot-vm sshd[1514]: pam_unix(sshd:session): session closed for user test.nurse
+2026-11-03T19:31:09.463308+00:00 parrot-vm systemd-logind[382]: Session 13 logged out. Waiting for processes to exit.
+2026-11-03T19:31:09.468628+00:00 parrot-vm systemd-logind[382]: Removed session 13.
+2026-11-03T19:31:09.591520+00:00 parrot-vm sshd[1525]: Connection from 10.78.10.1 port 62768 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:31:09.653600+00:00 parrot-vm sshd[1525]: Accepted key ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM found at /home/test.nurse/.ssh/authorized_keys:1
+2026-11-03T19:31:09.659654+00:00 parrot-vm sshd[1525]: Postponed publickey for test.nurse from 10.78.10.1 port 62768 ssh2 [preauth]
+2026-11-03T19:31:09.660913+00:00 parrot-vm sshd[1525]: Accepted key ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM found at /home/test.nurse/.ssh/authorized_keys:1
+2026-11-03T19:31:09.734275+00:00 parrot-vm sshd[1525]: Accepted publickey for test.nurse from 10.78.10.1 port 62768 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T19:31:09.750632+00:00 parrot-vm sshd[1525]: pam_unix(sshd:session): session opened for user test.nurse(uid=1003) by (uid=0)
+2026-11-03T19:31:09.785457+00:00 parrot-vm systemd-logind[382]: New session 14 of user test.nurse.
+2026-11-03T19:31:09.958983+00:00 parrot-vm sshd[1525]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:31:09.963166+00:00 parrot-vm sshd[1525]: User child is on pid 1532
+2026-11-03T19:31:09.982537+00:00 parrot-vm sshd[1532]: Starting session: command for test.nurse from 10.78.10.1 port 62768 id 0
+2026-11-03T19:31:11.194187+00:00 parrot-vm sshd[1532]: Received disconnect from 10.78.10.1 port 62768:11: disconnected by user
+2026-11-03T19:31:11.195387+00:00 parrot-vm sshd[1532]: Disconnected from user test.nurse 10.78.10.1 port 62768
+2026-11-03T19:31:11.200459+00:00 parrot-vm sshd[1525]: pam_unix(sshd:session): session closed for user test.nurse
+2026-11-03T19:31:11.212392+00:00 parrot-vm systemd-logind[382]: Session 14 logged out. Waiting for processes to exit.
+2026-11-03T19:31:11.345594+00:00 parrot-vm sshd[1536]: Connection from 10.78.10.1 port 62778 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:31:11.408838+00:00 parrot-vm sshd[1536]: Accepted key ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM found at /home/test.nurse/.ssh/authorized_keys:1
+2026-11-03T19:31:11.414688+00:00 parrot-vm sshd[1536]: Postponed publickey for test.nurse from 10.78.10.1 port 62778 ssh2 [preauth]
+2026-11-03T19:31:11.415989+00:00 parrot-vm sshd[1536]: Accepted key ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM found at /home/test.nurse/.ssh/authorized_keys:1
+2026-11-03T19:31:11.488289+00:00 parrot-vm sshd[1536]: Accepted publickey for test.nurse from 10.78.10.1 port 62778 ssh2: ED25519 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM
+2026-11-03T19:31:11.501514+00:00 parrot-vm sshd[1536]: pam_unix(sshd:session): session opened for user test.nurse(uid=1003) by (uid=0)
+2026-11-03T19:31:11.547438+00:00 parrot-vm systemd-logind[382]: New session 15 of user test.nurse.
+2026-11-03T19:31:11.727793+00:00 parrot-vm sshd[1536]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:31:11.731596+00:00 parrot-vm sshd[1536]: User child is on pid 1543
+2026-11-03T19:31:11.748119+00:00 parrot-vm sshd[1543]: Starting session: command for test.nurse from 10.78.10.1 port 62778 id 0
+2026-11-03T19:31:11.880511+00:00 parrot-vm sshd[1543]: Received disconnect from 10.78.10.1 port 62778:11: disconnected by user
+2026-11-03T19:31:11.882685+00:00 parrot-vm sshd[1543]: Disconnected from user test.nurse 10.78.10.1 port 62778
+2026-11-03T19:31:11.886557+00:00 parrot-vm sshd[1536]: pam_unix(sshd:session): session closed for user test.nurse
+2026-11-03T19:31:11.906726+00:00 parrot-vm systemd-logind[382]: Session 15 logged out. Waiting for processes to exit.
+2026-11-03T19:31:11.928658+00:00 parrot-vm systemd-logind[382]: Removed session 15.
+2026-11-03T19:31:52.666300+00:00 parrot-vm sshd[1569]: Connection from 10.78.50.5 port 38296 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:31:52.822119+00:00 parrot-vm sshd[1569]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:31:52.827916+00:00 parrot-vm sshd[1569]: Postponed publickey for ir-analyst from 10.78.50.5 port 38296 ssh2 [preauth]
+2026-11-03T19:31:52.828641+00:00 parrot-vm sshd[1569]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:31:52.871953+00:00 parrot-vm sshd[1569]: Accepted publickey for ir-analyst from 10.78.50.5 port 38296 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:31:52.883219+00:00 parrot-vm sshd[1569]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:31:52.935335+00:00 parrot-vm systemd-logind[382]: New session 16 of user ir-analyst.
+2026-11-03T19:31:53.076903+00:00 parrot-vm (systemd): pam_unix(systemd-user:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:31:53.943983+00:00 parrot-vm sshd[1569]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:31:53.945692+00:00 parrot-vm sshd[1569]: User child is on pid 1592
+2026-11-03T19:31:53.960323+00:00 parrot-vm sshd[1592]: Starting session: command for ir-analyst from 10.78.50.5 port 38296 id 0
+2026-11-03T19:31:54.093919+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sha256sum /dev/shm/IR1-2026-002_live.pcap
+2026-11-03T19:31:54.099001+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:31:54.131556+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:31:54.139790+00:00 parrot-vm sshd[1592]: Received disconnect from 10.78.50.5 port 38296:11: disconnected by user
+2026-11-03T19:31:54.141243+00:00 parrot-vm sshd[1592]: Disconnected from user ir-analyst 10.78.50.5 port 38296
+2026-11-03T19:31:54.144525+00:00 parrot-vm sshd[1569]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:31:54.165235+00:00 parrot-vm systemd-logind[382]: Session 16 logged out. Waiting for processes to exit.
+2026-11-03T19:31:54.169596+00:00 parrot-vm systemd-logind[382]: Removed session 16.
+2026-11-03T19:31:54.294716+00:00 parrot-vm sshd[1595]: Connection from 10.78.50.5 port 38304 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:31:54.450687+00:00 parrot-vm sshd[1595]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:31:54.455682+00:00 parrot-vm sshd[1595]: Postponed publickey for ir-analyst from 10.78.50.5 port 38304 ssh2 [preauth]
+2026-11-03T19:31:54.456673+00:00 parrot-vm sshd[1595]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:31:54.536081+00:00 parrot-vm sshd[1595]: Accepted publickey for ir-analyst from 10.78.50.5 port 38304 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:31:54.552108+00:00 parrot-vm sshd[1595]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:31:54.585186+00:00 parrot-vm systemd-logind[382]: New session 18 of user ir-analyst.
+2026-11-03T19:31:54.766536+00:00 parrot-vm sshd[1595]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:31:54.769944+00:00 parrot-vm sshd[1595]: User child is on pid 1602
+2026-11-03T19:31:54.784279+00:00 parrot-vm sshd[1602]: Starting session: command for ir-analyst from 10.78.50.5 port 38304 id 0
+2026-11-03T19:31:54.896265+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/cat /dev/shm/IR1-2026-002_live.pcap
+2026-11-03T19:31:54.901015+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:31:54.926057+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:31:54.933711+00:00 parrot-vm sshd[1602]: Received disconnect from 10.78.50.5 port 38304:11: disconnected by user
+2026-11-03T19:31:54.934881+00:00 parrot-vm sshd[1602]: Disconnected from user ir-analyst 10.78.50.5 port 38304
+2026-11-03T19:31:54.938721+00:00 parrot-vm sshd[1595]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:31:54.960062+00:00 parrot-vm systemd-logind[382]: Session 18 logged out. Waiting for processes to exit.
+2026-11-03T19:31:54.965947+00:00 parrot-vm systemd-logind[382]: Removed session 18.
+2026-11-03T19:32:34.677555+00:00 parrot-vm sshd[1689]: Connection from 10.78.50.5 port 36472 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:32:34.837987+00:00 parrot-vm sshd[1689]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:32:34.848663+00:00 parrot-vm sshd[1689]: Postponed publickey for ir-analyst from 10.78.50.5 port 36472 ssh2 [preauth]
+2026-11-03T19:32:34.850399+00:00 parrot-vm sshd[1689]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:32:34.892588+00:00 parrot-vm sshd[1689]: Accepted publickey for ir-analyst from 10.78.50.5 port 36472 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:32:34.910012+00:00 parrot-vm sshd[1689]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:32:34.966338+00:00 parrot-vm systemd-logind[382]: New session 19 of user ir-analyst.
+2026-11-03T19:32:35.137662+00:00 parrot-vm (systemd): pam_unix(systemd-user:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:32:36.058793+00:00 parrot-vm sshd[1689]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:32:36.062342+00:00 parrot-vm sshd[1689]: User child is on pid 1712
+2026-11-03T19:32:36.078222+00:00 parrot-vm sshd[1712]: Starting session: command for ir-analyst from 10.78.50.5 port 36472 id 0
+2026-11-03T19:32:36.213628+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sha256sum /dev/shm/syncd.1534
+2026-11-03T19:32:36.218478+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:32:36.370727+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:32:36.379273+00:00 parrot-vm sshd[1712]: Received disconnect from 10.78.50.5 port 36472:11: disconnected by user
+2026-11-03T19:32:36.381633+00:00 parrot-vm sshd[1712]: Disconnected from user ir-analyst 10.78.50.5 port 36472
+2026-11-03T19:32:36.384622+00:00 parrot-vm sshd[1689]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:32:36.616477+00:00 parrot-vm systemd-logind[382]: Session 19 logged out. Waiting for processes to exit.
+2026-11-03T19:32:36.624682+00:00 parrot-vm systemd-logind[382]: Removed session 19.
+2026-11-03T19:32:36.712246+00:00 parrot-vm sshd[1715]: Connection from 10.78.50.5 port 36480 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:32:36.877633+00:00 parrot-vm sshd[1715]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:32:36.882734+00:00 parrot-vm sshd[1715]: Postponed publickey for ir-analyst from 10.78.50.5 port 36480 ssh2 [preauth]
+2026-11-03T19:32:36.884546+00:00 parrot-vm sshd[1715]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:32:36.967102+00:00 parrot-vm sshd[1715]: Accepted publickey for ir-analyst from 10.78.50.5 port 36480 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:32:36.985444+00:00 parrot-vm sshd[1715]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:32:37.043893+00:00 parrot-vm systemd-logind[382]: New session 21 of user ir-analyst.
+2026-11-03T19:32:37.244032+00:00 parrot-vm sshd[1715]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:32:37.247577+00:00 parrot-vm sshd[1715]: User child is on pid 1722
+2026-11-03T19:32:37.263857+00:00 parrot-vm sshd[1722]: Starting session: command for ir-analyst from 10.78.50.5 port 36480 id 0
+2026-11-03T19:32:37.384120+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/cat /dev/shm/syncd.1534
+2026-11-03T19:32:37.388854+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:32:38.507679+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:32:38.519544+00:00 parrot-vm sshd[1722]: Received disconnect from 10.78.50.5 port 36480:11: disconnected by user
+2026-11-03T19:32:38.521442+00:00 parrot-vm sshd[1722]: Disconnected from user ir-analyst 10.78.50.5 port 36480
+2026-11-03T19:32:38.525395+00:00 parrot-vm sshd[1715]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:32:38.547643+00:00 parrot-vm systemd-logind[382]: Session 21 logged out. Waiting for processes to exit.
+2026-11-03T19:32:38.552223+00:00 parrot-vm systemd-logind[382]: Removed session 21.
+2026-11-03T19:32:41.885897+00:00 parrot-vm sshd[1728]: Connection from 10.78.50.5 port 58706 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:32:42.051218+00:00 parrot-vm sshd[1728]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:32:42.061322+00:00 parrot-vm sshd[1728]: Postponed publickey for ir-analyst from 10.78.50.5 port 58706 ssh2 [preauth]
+2026-11-03T19:32:42.063036+00:00 parrot-vm sshd[1728]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:32:42.142214+00:00 parrot-vm sshd[1728]: Accepted publickey for ir-analyst from 10.78.50.5 port 58706 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:32:42.157822+00:00 parrot-vm sshd[1728]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:32:42.200839+00:00 parrot-vm systemd-logind[382]: New session 22 of user ir-analyst.
+2026-11-03T19:32:42.425913+00:00 parrot-vm sshd[1728]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:32:42.430006+00:00 parrot-vm sshd[1728]: User child is on pid 1735
+2026-11-03T19:32:42.445539+00:00 parrot-vm sshd[1735]: Starting session: command for ir-analyst from 10.78.50.5 port 58706 id 0
+2026-11-03T19:32:42.577534+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/stat -c %n|%s|%U:%G|%a|atime=%x|mtime=%y|ctime=%z /home/test.nurse/.cache/.sync/pt1003.txt /home/test.nurse/.cache/.sync/syncd.py /var/spool/cron/crontabs/test.nurse /home/test.nurse/.ssh/authorized_keys /home/test.billing/.ssh/authorized_keys /var/log/auth.log /var/log/ehr-audit.log /var/log/kern.log /var/log/audit/audit.log /etc/group /etc/passwd /etc/sudoers.d/it_admin /var/ossec/logs/ossec.log
+2026-11-03T19:32:42.582707+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:32:42.639905+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:32:42.651329+00:00 parrot-vm sshd[1735]: Received disconnect from 10.78.50.5 port 58706:11: disconnected by user
+2026-11-03T19:32:42.652532+00:00 parrot-vm sshd[1735]: Disconnected from user ir-analyst 10.78.50.5 port 58706
+2026-11-03T19:32:42.655974+00:00 parrot-vm sshd[1728]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:32:42.676179+00:00 parrot-vm systemd-logind[382]: Session 22 logged out. Waiting for processes to exit.
+2026-11-03T19:32:42.682062+00:00 parrot-vm systemd-logind[382]: Removed session 22.
+2026-11-03T19:32:42.822228+00:00 parrot-vm sshd[1738]: Connection from 10.78.50.5 port 58720 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:32:42.986176+00:00 parrot-vm sshd[1738]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:32:42.989444+00:00 parrot-vm sshd[1738]: Postponed publickey for ir-analyst from 10.78.50.5 port 58720 ssh2 [preauth]
+2026-11-03T19:32:42.990998+00:00 parrot-vm sshd[1738]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:32:43.071816+00:00 parrot-vm sshd[1738]: Accepted publickey for ir-analyst from 10.78.50.5 port 58720 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:32:43.088484+00:00 parrot-vm sshd[1738]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:32:43.127672+00:00 parrot-vm systemd-logind[382]: New session 23 of user ir-analyst.
+2026-11-03T19:32:43.339862+00:00 parrot-vm sshd[1738]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:32:43.343937+00:00 parrot-vm sshd[1738]: User child is on pid 1745
+2026-11-03T19:32:43.362307+00:00 parrot-vm sshd[1745]: Starting session: command for ir-analyst from 10.78.50.5 port 58720 id 0
+2026-11-03T19:32:43.489431+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:32:43.494540+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:32:44.219529+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:32:44.235762+00:00 parrot-vm sshd[1745]: Received disconnect from 10.78.50.5 port 58720:11: disconnected by user
+2026-11-03T19:32:44.244053+00:00 parrot-vm sshd[1745]: Disconnected from user ir-analyst 10.78.50.5 port 58720
+2026-11-03T19:32:44.246479+00:00 parrot-vm sshd[1738]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:32:44.281152+00:00 parrot-vm systemd-logind[382]: Session 23 logged out. Waiting for processes to exit.
+2026-11-03T19:32:44.282390+00:00 parrot-vm systemd-logind[382]: Removed session 23.
+2026-11-03T19:32:44.424045+00:00 parrot-vm sshd[1795]: Connection from 10.78.50.5 port 58722 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:32:44.600214+00:00 parrot-vm sshd[1795]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:32:44.612454+00:00 parrot-vm sshd[1795]: Postponed publickey for ir-analyst from 10.78.50.5 port 58722 ssh2 [preauth]
+2026-11-03T19:32:44.614160+00:00 parrot-vm sshd[1795]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:32:44.692644+00:00 parrot-vm sshd[1795]: Accepted publickey for ir-analyst from 10.78.50.5 port 58722 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:32:44.707399+00:00 parrot-vm sshd[1795]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:32:44.743138+00:00 parrot-vm systemd-logind[382]: New session 24 of user ir-analyst.
+2026-11-03T19:32:44.966880+00:00 parrot-vm sshd[1795]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:32:44.970281+00:00 parrot-vm sshd[1795]: User child is on pid 1802
+2026-11-03T19:32:44.986646+00:00 parrot-vm sshd[1802]: Starting session: command for ir-analyst from 10.78.50.5 port 58722 id 0
+2026-11-03T19:32:45.116121+00:00 parrot-vm sudo: ir-analyst : PWD=/dev/shm/art ; USER=root ; COMMAND=/usr/bin/tar --numeric-owner -cpf - .
+2026-11-03T19:32:45.121416+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:32:45.221904+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:32:45.236104+00:00 parrot-vm sshd[1802]: Received disconnect from 10.78.50.5 port 58722:11: disconnected by user
+2026-11-03T19:32:45.237328+00:00 parrot-vm sshd[1802]: Disconnected from user ir-analyst 10.78.50.5 port 58722
+2026-11-03T19:32:45.240513+00:00 parrot-vm sshd[1795]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:32:45.261985+00:00 parrot-vm systemd-logind[382]: Session 24 logged out. Waiting for processes to exit.
+2026-11-03T19:32:45.267462+00:00 parrot-vm systemd-logind[382]: Removed session 24.
+2026-11-03T19:32:45.418024+00:00 parrot-vm sshd[1805]: Connection from 10.78.50.5 port 53584 on 10.0.2.15 port 22 rdomain ""
+2026-11-03T19:32:45.582895+00:00 parrot-vm sshd[1805]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:32:45.585195+00:00 parrot-vm sshd[1805]: Postponed publickey for ir-analyst from 10.78.50.5 port 53584 ssh2 [preauth]
+2026-11-03T19:32:45.586640+00:00 parrot-vm sshd[1805]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:32:45.666857+00:00 parrot-vm sshd[1805]: Accepted publickey for ir-analyst from 10.78.50.5 port 53584 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:32:45.681004+00:00 parrot-vm sshd[1805]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:32:45.732267+00:00 parrot-vm systemd-logind[382]: New session 25 of user ir-analyst.
+2026-11-03T19:32:45.908638+00:00 parrot-vm sshd[1805]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:32:45.912748+00:00 parrot-vm sshd[1805]: User child is on pid 1812
+2026-11-03T19:32:45.930695+00:00 parrot-vm sshd[1812]: Starting session: command for ir-analyst from 10.78.50.5 port 53584 id 0
+2026-11-03T19:32:46.066640+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/rm -rf /dev/shm/art
+2026-11-03T19:32:46.071516+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:32:46.147089+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:32:46.163717+00:00 parrot-vm sshd[1812]: Received disconnect from 10.78.50.5 port 53584:11: disconnected by user
+2026-11-03T19:32:46.164101+00:00 parrot-vm sshd[1812]: Disconnected from user ir-analyst 10.78.50.5 port 53584
+2026-11-03T19:32:46.164376+00:00 parrot-vm sshd[1805]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:32:46.192025+00:00 parrot-vm systemd-logind[382]: Session 25 logged out. Waiting for processes to exit.
+2026-11-03T19:32:46.201928+00:00 parrot-vm systemd-logind[382]: Removed session 25.
+2026-11-03T19:34:06.085251+00:00 parrot-vm sshd[2046]: Connection from 10.78.50.5 port 60610 on 10.0.3.15 port 22 rdomain ""
+2026-11-03T19:34:06.266153+00:00 parrot-vm sshd[2046]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:06.277697+00:00 parrot-vm sshd[2046]: Postponed publickey for ir-analyst from 10.78.50.5 port 60610 ssh2 [preauth]
+2026-11-03T19:34:06.280190+00:00 parrot-vm sshd[2046]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:06.360460+00:00 parrot-vm sshd[2046]: Accepted publickey for ir-analyst from 10.78.50.5 port 60610 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:06.381171+00:00 parrot-vm sshd[2046]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:34:06.466531+00:00 parrot-vm systemd-logind[382]: New session 26 of user ir-analyst.
+2026-11-03T19:34:06.699449+00:00 parrot-vm (systemd): pam_unix(systemd-user:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:34:07.868693+00:00 parrot-vm sshd[2046]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:34:07.876756+00:00 parrot-vm sshd[2046]: User child is on pid 2069
+2026-11-03T19:34:07.897071+00:00 parrot-vm sshd[2069]: Starting session: command for ir-analyst from 10.78.50.5 port 60610 id 0
+2026-11-03T19:34:08.248131+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:08.266584+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:34:08.519937+00:00 parrot-vm systemd-logind[382]: Removed session 14.
+2026-11-03T19:34:09.737790+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:34:09.758012+00:00 parrot-vm sshd[2069]: Received disconnect from 10.78.50.5 port 60610:11: disconnected by user
+2026-11-03T19:34:09.761872+00:00 parrot-vm sshd[2069]: Disconnected from user ir-analyst 10.78.50.5 port 60610
+2026-11-03T19:34:09.771309+00:00 parrot-vm sshd[2046]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:34:09.834576+00:00 parrot-vm systemd-logind[382]: Session 26 logged out. Waiting for processes to exit.
+2026-11-03T19:34:09.839904+00:00 parrot-vm systemd-logind[382]: Removed session 26.
+2026-11-03T19:34:09.957854+00:00 parrot-vm sshd[2077]: Connection from 10.78.50.5 port 60618 on 10.0.3.15 port 22 rdomain ""
+2026-11-03T19:34:10.127213+00:00 parrot-vm sshd[2077]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:10.138162+00:00 parrot-vm sshd[2077]: Postponed publickey for ir-analyst from 10.78.50.5 port 60618 ssh2 [preauth]
+2026-11-03T19:34:10.138839+00:00 parrot-vm sshd[2077]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:10.221149+00:00 parrot-vm sshd[2077]: Accepted publickey for ir-analyst from 10.78.50.5 port 60618 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:10.236787+00:00 parrot-vm sshd[2077]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:34:10.300271+00:00 parrot-vm systemd-logind[382]: New session 28 of user ir-analyst.
+2026-11-03T19:34:10.518925+00:00 parrot-vm sshd[2077]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:34:10.524063+00:00 parrot-vm sshd[2077]: User child is on pid 2084
+2026-11-03T19:34:10.540788+00:00 parrot-vm sshd[2084]: Starting session: command for ir-analyst from 10.78.50.5 port 60618 id 0
+2026-11-03T19:34:10.676541+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:10.679711+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:34:12.546008+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:34:12.560640+00:00 parrot-vm sshd[2084]: Received disconnect from 10.78.50.5 port 60618:11: disconnected by user
+2026-11-03T19:34:12.561605+00:00 parrot-vm sshd[2084]: Disconnected from user ir-analyst 10.78.50.5 port 60618
+2026-11-03T19:34:12.570886+00:00 parrot-vm sshd[2077]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:34:12.603698+00:00 parrot-vm systemd-logind[382]: Session 28 logged out. Waiting for processes to exit.
+2026-11-03T19:34:12.611004+00:00 parrot-vm systemd-logind[382]: Removed session 28.
+2026-11-03T19:34:12.756582+00:00 parrot-vm sshd[2109]: Connection from 10.78.50.5 port 60632 on 10.0.3.15 port 22 rdomain ""
+2026-11-03T19:34:12.930900+00:00 parrot-vm sshd[2109]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:12.939902+00:00 parrot-vm sshd[2109]: Postponed publickey for ir-analyst from 10.78.50.5 port 60632 ssh2 [preauth]
+2026-11-03T19:34:12.941491+00:00 parrot-vm sshd[2109]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:13.025699+00:00 parrot-vm sshd[2109]: Accepted publickey for ir-analyst from 10.78.50.5 port 60632 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:13.038281+00:00 parrot-vm sshd[2109]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:34:13.075951+00:00 parrot-vm systemd-logind[382]: New session 29 of user ir-analyst.
+2026-11-03T19:34:13.325487+00:00 parrot-vm sshd[2109]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:34:13.331469+00:00 parrot-vm sshd[2109]: User child is on pid 2116
+2026-11-03T19:34:13.350728+00:00 parrot-vm sshd[2116]: Starting session: command for ir-analyst from 10.78.50.5 port 60632 id 0
+2026-11-03T19:34:13.484149+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:13.488853+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:34:15.444950+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:34:15.461531+00:00 parrot-vm sshd[2116]: Received disconnect from 10.78.50.5 port 60632:11: disconnected by user
+2026-11-03T19:34:15.465489+00:00 parrot-vm sshd[2116]: Disconnected from user ir-analyst 10.78.50.5 port 60632
+2026-11-03T19:34:15.470068+00:00 parrot-vm sshd[2109]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:34:15.500691+00:00 parrot-vm systemd-logind[382]: Session 29 logged out. Waiting for processes to exit.
+2026-11-03T19:34:15.509061+00:00 parrot-vm systemd-logind[382]: Removed session 29.
+2026-11-03T19:34:15.628443+00:00 parrot-vm sshd[2142]: Connection from 10.78.50.5 port 58992 on 10.0.3.15 port 22 rdomain ""
+2026-11-03T19:34:15.857603+00:00 parrot-vm sshd[2142]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:15.865558+00:00 parrot-vm sshd[2142]: Postponed publickey for ir-analyst from 10.78.50.5 port 58992 ssh2 [preauth]
+2026-11-03T19:34:15.868251+00:00 parrot-vm sshd[2142]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:15.952905+00:00 parrot-vm sshd[2142]: Accepted publickey for ir-analyst from 10.78.50.5 port 58992 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:15.972428+00:00 parrot-vm sshd[2142]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:34:16.021977+00:00 parrot-vm systemd-logind[382]: New session 30 of user ir-analyst.
+2026-11-03T19:34:16.231893+00:00 parrot-vm sshd[2142]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:34:16.237756+00:00 parrot-vm sshd[2142]: User child is on pid 2149
+2026-11-03T19:34:16.254196+00:00 parrot-vm sshd[2149]: Starting session: command for ir-analyst from 10.78.50.5 port 58992 id 0
+2026-11-03T19:34:16.379315+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:16.387461+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:34:16.475034+00:00 parrot-vm usermod[2152]: change user 'test.nurse' expiration from 'never' to '1970-01-02'
+2026-11-03T19:34:16.635947+00:00 parrot-vm gpasswd[2159]: user test.nurse removed by root from group clinical
+2026-11-03T19:34:16.713400+00:00 parrot-vm usermod[2165]: add 'test.nurse' to group 'disabled-users'
+2026-11-03T19:34:16.718899+00:00 parrot-vm usermod[2165]: add 'test.nurse' to shadow group 'disabled-users'
+2026-11-03T19:34:16.802042+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:34:16.813003+00:00 parrot-vm sshd[2149]: Received disconnect from 10.78.50.5 port 58992:11: disconnected by user
+2026-11-03T19:34:16.814225+00:00 parrot-vm sshd[2149]: Disconnected from user ir-analyst 10.78.50.5 port 58992
+2026-11-03T19:34:16.820607+00:00 parrot-vm sshd[2142]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:34:16.859930+00:00 parrot-vm systemd-logind[382]: Session 30 logged out. Waiting for processes to exit.
+2026-11-03T19:34:16.861800+00:00 parrot-vm systemd-logind[382]: Removed session 30.
+2026-11-03T19:34:16.986456+00:00 parrot-vm sshd[2173]: Connection from 10.78.50.5 port 59000 on 10.0.3.15 port 22 rdomain ""
+2026-11-03T19:34:17.158334+00:00 parrot-vm sshd[2173]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:17.170207+00:00 parrot-vm sshd[2173]: Postponed publickey for ir-analyst from 10.78.50.5 port 59000 ssh2 [preauth]
+2026-11-03T19:34:17.171373+00:00 parrot-vm sshd[2173]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:17.250358+00:00 parrot-vm sshd[2173]: Accepted publickey for ir-analyst from 10.78.50.5 port 59000 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:17.265665+00:00 parrot-vm sshd[2173]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:34:17.310215+00:00 parrot-vm systemd-logind[382]: New session 31 of user ir-analyst.
+2026-11-03T19:34:17.556119+00:00 parrot-vm sshd[2173]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:34:17.560946+00:00 parrot-vm sshd[2173]: User child is on pid 2180
+2026-11-03T19:34:17.587626+00:00 parrot-vm sshd[2180]: Starting session: command for ir-analyst from 10.78.50.5 port 59000 id 0
+2026-11-03T19:34:17.779094+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:17.787493+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:34:17.954094+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:34:17.971253+00:00 parrot-vm sshd[2180]: Received disconnect from 10.78.50.5 port 59000:11: disconnected by user
+2026-11-03T19:34:17.975585+00:00 parrot-vm sshd[2180]: Disconnected from user ir-analyst 10.78.50.5 port 59000
+2026-11-03T19:34:17.982152+00:00 parrot-vm sshd[2173]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:34:18.029528+00:00 parrot-vm systemd-logind[382]: Session 31 logged out. Waiting for processes to exit.
+2026-11-03T19:34:18.037378+00:00 parrot-vm systemd-logind[382]: Removed session 31.
+2026-11-03T19:34:18.150885+00:00 parrot-vm sshd[2186]: Connection from 10.78.50.5 port 59008 on 10.0.3.15 port 22 rdomain ""
+2026-11-03T19:34:18.330446+00:00 parrot-vm sshd[2186]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:18.340470+00:00 parrot-vm sshd[2186]: Postponed publickey for ir-analyst from 10.78.50.5 port 59008 ssh2 [preauth]
+2026-11-03T19:34:18.342201+00:00 parrot-vm sshd[2186]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:18.425392+00:00 parrot-vm sshd[2186]: Accepted publickey for ir-analyst from 10.78.50.5 port 59008 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:18.443145+00:00 parrot-vm sshd[2186]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:34:18.490045+00:00 parrot-vm systemd-logind[382]: New session 32 of user ir-analyst.
+2026-11-03T19:34:18.728963+00:00 parrot-vm sshd[2186]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:34:18.734049+00:00 parrot-vm sshd[2186]: User child is on pid 2193
+2026-11-03T19:34:18.764767+00:00 parrot-vm sshd[2193]: Starting session: command for ir-analyst from 10.78.50.5 port 59008 id 0
+2026-11-03T19:34:18.888180+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:18.892672+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:34:19.018053+00:00 parrot-vm gpasswd[2196]: user test.clinician removed by root from group sudo
+2026-11-03T19:34:19.065532+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:34:19.076965+00:00 parrot-vm sshd[2193]: Received disconnect from 10.78.50.5 port 59008:11: disconnected by user
+2026-11-03T19:34:19.079926+00:00 parrot-vm sshd[2193]: Disconnected from user ir-analyst 10.78.50.5 port 59008
+2026-11-03T19:34:19.082985+00:00 parrot-vm sshd[2186]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:34:19.120851+00:00 parrot-vm systemd-logind[382]: Session 32 logged out. Waiting for processes to exit.
+2026-11-03T19:34:19.132626+00:00 parrot-vm systemd-logind[382]: Removed session 32.
+2026-11-03T19:34:19.263702+00:00 parrot-vm sshd[2203]: Connection from 10.78.50.5 port 59012 on 10.0.3.15 port 22 rdomain ""
+2026-11-03T19:34:19.453490+00:00 parrot-vm sshd[2203]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:19.459055+00:00 parrot-vm sshd[2203]: Postponed publickey for ir-analyst from 10.78.50.5 port 59012 ssh2 [preauth]
+2026-11-03T19:34:19.459658+00:00 parrot-vm sshd[2203]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:19.540277+00:00 parrot-vm sshd[2203]: Accepted publickey for ir-analyst from 10.78.50.5 port 59012 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:19.559846+00:00 parrot-vm sshd[2203]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:34:19.606372+00:00 parrot-vm systemd-logind[382]: New session 33 of user ir-analyst.
+2026-11-03T19:34:19.928694+00:00 parrot-vm sshd[2203]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:34:19.936176+00:00 parrot-vm sshd[2203]: User child is on pid 2210
+2026-11-03T19:34:19.961487+00:00 parrot-vm sshd[2210]: Starting session: command for ir-analyst from 10.78.50.5 port 59012 id 0
+2026-11-03T19:34:20.111706+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:20.122019+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:34:20.217537+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:34:20.229138+00:00 parrot-vm sshd[2210]: Received disconnect from 10.78.50.5 port 59012:11: disconnected by user
+2026-11-03T19:34:20.232709+00:00 parrot-vm sshd[2210]: Disconnected from user ir-analyst 10.78.50.5 port 59012
+2026-11-03T19:34:20.237805+00:00 parrot-vm sshd[2203]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:34:20.265788+00:00 parrot-vm systemd-logind[382]: Session 33 logged out. Waiting for processes to exit.
+2026-11-03T19:34:20.277763+00:00 parrot-vm systemd-logind[382]: Removed session 33.
+2026-11-03T19:34:20.395355+00:00 parrot-vm sshd[2215]: Connection from 10.78.50.5 port 59018 on 10.0.3.15 port 22 rdomain ""
+2026-11-03T19:34:20.574332+00:00 parrot-vm sshd[2215]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:20.585673+00:00 parrot-vm sshd[2215]: Postponed publickey for ir-analyst from 10.78.50.5 port 59018 ssh2 [preauth]
+2026-11-03T19:34:20.586803+00:00 parrot-vm sshd[2215]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:34:20.666116+00:00 parrot-vm sshd[2215]: Accepted publickey for ir-analyst from 10.78.50.5 port 59018 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:34:20.690433+00:00 parrot-vm sshd[2215]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:34:20.749153+00:00 parrot-vm systemd-logind[382]: New session 34 of user ir-analyst.
+2026-11-03T19:34:20.982257+00:00 parrot-vm sshd[2215]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:34:20.987750+00:00 parrot-vm sshd[2215]: User child is on pid 2222
+2026-11-03T19:34:21.007345+00:00 parrot-vm sshd[2222]: Starting session: command for ir-analyst from 10.78.50.5 port 59018 id 0
+2026-11-03T19:34:21.142220+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sh -s
+2026-11-03T19:34:21.149790+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:34:21.576616+00:00 parrot-vm sshd[811]: Received SIGHUP; restarting.
+2026-11-03T19:34:21.754264+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:34:21.787944+00:00 parrot-vm sshd[2222]: Received disconnect from 10.78.50.5 port 59018:11: disconnected by user
+2026-11-03T19:34:21.788497+00:00 parrot-vm sshd[2222]: Disconnected from user ir-analyst 10.78.50.5 port 59018
+2026-11-03T19:34:21.789957+00:00 parrot-vm sshd[2215]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:34:21.828322+00:00 parrot-vm systemd-logind[382]: Session 34 logged out. Waiting for processes to exit.
+2026-11-03T19:34:21.843816+00:00 parrot-vm sshd[811]: Server listening on 10.0.3.15 port 22.
+2026-11-03T19:34:21.845235+00:00 parrot-vm systemd-logind[382]: Removed session 34.
+2026-11-03T19:35:37.489757+00:00 parrot-vm sshd[2245]: Connection from 10.78.50.5 port 49100 on 10.0.3.15 port 22 rdomain ""
+2026-11-03T19:35:37.669081+00:00 parrot-vm sshd[2245]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:35:37.691887+00:00 parrot-vm sshd[2245]: Postponed publickey for ir-analyst from 10.78.50.5 port 49100 ssh2 [preauth]
+2026-11-03T19:35:37.692325+00:00 parrot-vm sshd[2245]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:35:37.771651+00:00 parrot-vm sshd[2245]: Accepted publickey for ir-analyst from 10.78.50.5 port 49100 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:35:37.795534+00:00 parrot-vm sshd[2245]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:35:37.932393+00:00 parrot-vm systemd-logind[382]: New session 35 of user ir-analyst.
+2026-11-03T19:35:38.071756+00:00 parrot-vm (systemd): pam_unix(systemd-user:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:35:39.212335+00:00 parrot-vm sshd[2245]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:35:39.213881+00:00 parrot-vm sshd[2245]: User child is on pid 2269
+2026-11-03T19:35:39.232196+00:00 parrot-vm sshd[2269]: Starting session: command for ir-analyst from 10.78.50.5 port 49100 id 0
+2026-11-03T19:35:39.303215+00:00 parrot-vm sshd[2269]: Received disconnect from 10.78.50.5 port 49100:11: disconnected by user
+2026-11-03T19:35:39.304841+00:00 parrot-vm sshd[2269]: Disconnected from user ir-analyst 10.78.50.5 port 49100
+2026-11-03T19:35:39.309102+00:00 parrot-vm sshd[2245]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:35:39.342234+00:00 parrot-vm systemd-logind[382]: Session 35 logged out. Waiting for processes to exit.
+2026-11-03T19:35:39.349967+00:00 parrot-vm systemd-logind[382]: Removed session 35.
+2026-11-03T19:35:40.842186+00:00 parrot-vm sshd[2275]: Connection from 10.78.50.5 port 49104 on 10.0.3.15 port 22 rdomain ""
+2026-11-03T19:35:41.032877+00:00 parrot-vm sshd[2275]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:35:41.038663+00:00 parrot-vm sshd[2275]: Postponed publickey for ir-analyst from 10.78.50.5 port 49104 ssh2 [preauth]
+2026-11-03T19:35:41.040435+00:00 parrot-vm sshd[2275]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:35:41.123233+00:00 parrot-vm sshd[2275]: Accepted publickey for ir-analyst from 10.78.50.5 port 49104 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:35:41.141492+00:00 parrot-vm sshd[2275]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:35:41.198686+00:00 parrot-vm systemd-logind[382]: New session 37 of user ir-analyst.
+2026-11-03T19:35:41.436378+00:00 parrot-vm sshd[2275]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:35:41.442106+00:00 parrot-vm sshd[2275]: User child is on pid 2282
+2026-11-03T19:35:41.463718+00:00 parrot-vm sshd[2282]: Starting session: command for ir-analyst from 10.78.50.5 port 49104 id 0
+2026-11-03T19:35:41.605556+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/cat /root/iptables.containment
+2026-11-03T19:35:41.612985+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:35:41.649145+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:35:41.662443+00:00 parrot-vm sshd[2282]: Received disconnect from 10.78.50.5 port 49104:11: disconnected by user
+2026-11-03T19:35:41.665008+00:00 parrot-vm sshd[2282]: Disconnected from user ir-analyst 10.78.50.5 port 49104
+2026-11-03T19:35:41.672517+00:00 parrot-vm sshd[2275]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:35:41.705187+00:00 parrot-vm systemd-logind[382]: Session 37 logged out. Waiting for processes to exit.
+2026-11-03T19:35:41.721300+00:00 parrot-vm systemd-logind[382]: Removed session 37.
+2026-11-03T19:35:41.879276+00:00 parrot-vm sshd[2285]: Connection from 10.78.50.5 port 49116 on 10.0.3.15 port 22 rdomain ""
+2026-11-03T19:35:42.101217+00:00 parrot-vm sshd[2285]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:35:42.109151+00:00 parrot-vm sshd[2285]: Postponed publickey for ir-analyst from 10.78.50.5 port 49116 ssh2 [preauth]
+2026-11-03T19:35:42.110677+00:00 parrot-vm sshd[2285]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:35:42.194078+00:00 parrot-vm sshd[2285]: Accepted publickey for ir-analyst from 10.78.50.5 port 49116 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:35:42.213179+00:00 parrot-vm sshd[2285]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:35:42.269581+00:00 parrot-vm systemd-logind[382]: New session 38 of user ir-analyst.
+2026-11-03T19:35:42.564430+00:00 parrot-vm sshd[2285]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:35:42.570051+00:00 parrot-vm sshd[2285]: User child is on pid 2292
+2026-11-03T19:35:42.595966+00:00 parrot-vm sshd[2292]: Starting session: command for ir-analyst from 10.78.50.5 port 49116 id 0
+2026-11-03T19:35:42.751160+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/cat /root/iptables.pre-containment
+2026-11-03T19:35:42.756183+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:35:42.795313+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:35:42.816667+00:00 parrot-vm sshd[2292]: Received disconnect from 10.78.50.5 port 49116:11: disconnected by user
+2026-11-03T19:35:42.818805+00:00 parrot-vm sshd[2292]: Disconnected from user ir-analyst 10.78.50.5 port 49116
+2026-11-03T19:35:42.821930+00:00 parrot-vm sshd[2285]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:35:42.860412+00:00 parrot-vm systemd-logind[382]: Session 38 logged out. Waiting for processes to exit.
+2026-11-03T19:35:42.866548+00:00 parrot-vm systemd-logind[382]: Removed session 38.
+2026-11-03T19:35:53.009608+00:00 parrot-vm (sd-pam): pam_unix(systemd-user:session): session closed for user ir-analyst
+2026-11-03T19:36:57.576490+00:00 parrot-vm sshd[2297]: Connection from 10.78.50.5 port 32886 on 10.0.3.15 port 22 rdomain ""
+2026-11-03T19:36:57.771775+00:00 parrot-vm sshd[2297]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:36:57.776263+00:00 parrot-vm sshd[2297]: Postponed publickey for ir-analyst from 10.78.50.5 port 32886 ssh2 [preauth]
+2026-11-03T19:36:57.777894+00:00 parrot-vm sshd[2297]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:36:57.862539+00:00 parrot-vm sshd[2297]: Accepted publickey for ir-analyst from 10.78.50.5 port 32886 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:36:57.884664+00:00 parrot-vm sshd[2297]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:36:58.051106+00:00 parrot-vm systemd-logind[382]: New session 39 of user ir-analyst.
+2026-11-03T19:36:58.176743+00:00 parrot-vm (systemd): pam_unix(systemd-user:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:36:59.314607+00:00 parrot-vm sshd[2297]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:36:59.317622+00:00 parrot-vm sshd[2297]: User child is on pid 2321
+2026-11-03T19:36:59.340555+00:00 parrot-vm sshd[2321]: Starting session: command for ir-analyst from 10.78.50.5 port 32886 id 0
+2026-11-03T19:36:59.484081+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/sha256sum /var/log/auth.log
+2026-11-03T19:36:59.489188+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)
+2026-11-03T19:36:59.543497+00:00 parrot-vm sudo: pam_unix(sudo:session): session closed for user root
+2026-11-03T19:36:59.551701+00:00 parrot-vm sshd[2321]: Received disconnect from 10.78.50.5 port 32886:11: disconnected by user
+2026-11-03T19:36:59.554389+00:00 parrot-vm sshd[2321]: Disconnected from user ir-analyst 10.78.50.5 port 32886
+2026-11-03T19:36:59.559058+00:00 parrot-vm sshd[2297]: pam_unix(sshd:session): session closed for user ir-analyst
+2026-11-03T19:36:59.588380+00:00 parrot-vm systemd-logind[382]: Session 39 logged out. Waiting for processes to exit.
+2026-11-03T19:36:59.615196+00:00 parrot-vm systemd-logind[382]: Removed session 39.
+2026-11-03T19:36:59.788077+00:00 parrot-vm sshd[2324]: Connection from 10.78.50.5 port 32894 on 10.0.3.15 port 22 rdomain ""
+2026-11-03T19:37:00.021220+00:00 parrot-vm sshd[2324]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:37:00.027223+00:00 parrot-vm sshd[2324]: Postponed publickey for ir-analyst from 10.78.50.5 port 32894 ssh2 [preauth]
+2026-11-03T19:37:00.029525+00:00 parrot-vm sshd[2324]: Accepted key ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 found at /home/ir-analyst/.ssh/authorized_keys:1
+2026-11-03T19:37:00.120209+00:00 parrot-vm sshd[2324]: Accepted publickey for ir-analyst from 10.78.50.5 port 32894 ssh2: ED25519 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4
+2026-11-03T19:37:00.140780+00:00 parrot-vm sshd[2324]: pam_unix(sshd:session): session opened for user ir-analyst(uid=1000) by (uid=0)
+2026-11-03T19:37:00.195634+00:00 parrot-vm systemd-logind[382]: New session 41 of user ir-analyst.
+2026-11-03T19:37:00.443603+00:00 parrot-vm sshd[2324]: pam_env(sshd:session): deprecated reading of user environment enabled
+2026-11-03T19:37:00.453646+00:00 parrot-vm sshd[2324]: User child is on pid 2331
+2026-11-03T19:37:00.477838+00:00 parrot-vm sshd[2331]: Starting session: command for ir-analyst from 10.78.50.5 port 32894 id 0
+2026-11-03T19:37:00.638981+00:00 parrot-vm sudo: ir-analyst : PWD=/home/ir-analyst ; USER=root ; COMMAND=/usr/bin/cat /var/log/auth.log
+2026-11-03T19:37:00.655852+00:00 parrot-vm sudo: pam_unix(sudo:session): session opened for user root(uid=0) by (uid=1000)

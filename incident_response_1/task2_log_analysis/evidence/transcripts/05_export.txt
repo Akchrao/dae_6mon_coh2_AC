@@ -1,0 +1,50 @@
+# Parrot logs pulled over the forensic path (the host is contained by now)
+acquired /var/log/auth.log -> /ir/task2_log_analysis/evidence/parrot/auth.log  bytes=77371
+  sha256 source(parrot-vm)=a0fbbec164d368a68ab6f3b3dddd0696383879ddaee13985bf75e5cb10e3459d
+  sha256 copy(ir-forensics)=e7baec5bbcaf6e79d818cb9bf11ed93e4feb8dc5f6958d9e48fe95c2d0244a13  MISMATCH
+acquired /var/log/ehr-audit.log -> /ir/task2_log_analysis/evidence/parrot/ehr-audit.log  bytes=272
+  sha256 source(parrot-vm)=21f89e60217f451af9a8cb6449ce477043ddb27367dd2de1a1b290c511199e09
+  sha256 copy(ir-forensics)=21f89e60217f451af9a8cb6449ce477043ddb27367dd2de1a1b290c511199e09  MATCH
+
+$ events received by the manager, per source
+  52323 "location":"/var/ossec/logs/macos/install.log"
+   1204 "location":"/var/log/audit/audit.log"
+    618 "location":"/var/log/auth.log"
+    578 "location":"/var/ossec/logs/macos/ssh_client.log"
+     62 "location":"/var/log/kern.log"
+     30 "location":"df -P"
+     15 "location":"syscheck"
+      3 "location":"wazuh-monitord"
+      3 "location":"wazuh-agent"
+      1 "location":"wazuh-remoted"
+      1 "location":"/var/log/ir1-test.log"
+      1 "location":"/var/log/ehr-audit.log"
+
+# SSH client identification strings in the capture (client -> port 22)
+1793734190.117447291,10.78.10.1,56320,SSH-2.0-OpenSSH_10.2
+1793734213.612294223,10.78.10.1,59754,SSH-2.0-OpenSSH_10.2
+1793734230.964361612,10.78.10.1,55708,SSH-2.0-OpenSSH_10.2
+1793734251.244918567,10.78.10.1,61926,SSH-2.0-OpenSSH_10.2
+1793734266.524569438,10.78.10.1,62742,SSH-2.0-OpenSSH_10.2
+1793734268.014970061,10.78.10.1,62752,SSH-2.0-OpenSSH_10.2
+1793734268.819923958,10.78.10.1,62756,SSH-2.0-OpenSSH_10.2
+1793734269.481224874,10.78.10.1,62768,SSH-2.0-OpenSSH_10.2
+1793734271.238175377,10.78.10.1,62778,SSH-2.0-OpenSSH_10.2
+1793734312.546398645,10.78.50.5,38296,SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u10
+1793734314.182115622,10.78.50.5,38304,SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u10
+1793734354.550303573,10.78.50.5,36472,SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u10
+1793734356.510075200,10.78.50.5,36480,SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u10
+1793734361.736079119,10.78.50.5,58706,SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u10
+1793734362.698789254,10.78.50.5,58720,SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u10
+1793734364.280482111,10.78.50.5,58722,SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u10
+1793734365.283511291,10.78.50.5,53584,SSH-2.0-OpenSSH_9.2p1 Debian-2+deb12u10
+
+# alert validation: replay the raw leaver denial through wazuh-logtest -v (rule trace)
+		*Rule 1 matched
+		*Rule 5700 matched
+		*Rule 5718 matched
+		*Rule 100210 matched
+	id: '100210'
+	level: '10'
+	description: 'JML leaver account test.billing attempted SSH login from 10.78.10.1 - account was deprovisioned'
+**Alert to be generated.

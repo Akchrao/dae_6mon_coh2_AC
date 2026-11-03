@@ -1,0 +1,30 @@
+# irtrack CLI walk-through on a scratch database (IRTRACK_DB=demo.db) - the real register is incidents.db
+
+$ irtrack.py init
+initialised demo.db
+
+$ irtrack.py new IR1-2026-099 --title DEMO: unapproved sudo grant --type Unauthorized privilege escalation --severity SEV-2 --detected 2026-11-03T20:00:00Z --source Wazuh 100230 --handler A. Chennamaneni --summary walk-through only
+
+$ irtrack.py status IR1-2026-099 Triage --at 2026-11-03T20:05:00Z --note validated on host
+
+$ irtrack.py action IR1-2026-099 --at 2026-11-03T20:06:00Z --phase Containment --by A. Chennamaneni --what gpasswd -d test.clinician sudo --result removed
+
+$ irtrack.py status IR1-2026-099 Contained --at 2026-11-03T20:07:00Z
+
+$ irtrack.py status IR1-2026-099 New --at 2026-11-03T20:08:00Z
+IR1-2026-099: status can only move forward (Contained -> New refused)
+
+$ irtrack.py list
+ID               SEV    STATUS      DETECTED              RESPOND(min) SLA     CONTAIN(min)  TITLE
+IR1-2026-099     SEV-2  Contained   2026-11-03T20:00:00Z           6.0 MET              7.0  DEMO: unapproved sudo grant
+
+# the real register
+$ irtrack.py list
+ID               SEV    STATUS      DETECTED              RESPOND(min) SLA     CONTAIN(min)  TITLE
+INC-20261008-01  SEV-2  Closed      2026-10-08T20:22:00Z               n/a                   Rogue NSG backdoor rule + storage key listing + SSH brute fo
+IR1-2026-003     SEV-2  Closed      2026-11-03T19:30:03Z           4.2 MET              4.2  it_admin added joiner Sathya Hasi (test.clinician) to sudo w
+IR1-2026-001     SEV-3  Closed      2026-11-03T19:30:31Z           3.7 MET              3.7  Leaver Jeevan Smith (test.billing) attempted SSH twice; his 
+IR1-2026-002     SEV-1  Closed      2026-11-03T19:31:10Z           0.0 MET              4.6  Mover Tara Jones used stale clinical access to take patient 
+
+$ irtrack.py export incidents_register.csv
+exported incidents_register.csv

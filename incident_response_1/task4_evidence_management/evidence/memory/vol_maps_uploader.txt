@@ -1,0 +1,89 @@
+Volatility 3 Framework 2.7.0
+
+PID	Process	Start	End	Flags	PgOff	Major	Minor	Inode	File Path	File output
+
+1534	python3	0x400000	0x41f000	r--	0x0	254	1	9891	/usr/bin/python3.11	Disabled
+1534	python3	0x41f000	0x6cf000	r-x	0x1f000	254	1	9891	/usr/bin/python3.11	Disabled
+1534	python3	0x6cf000	0x940000	r--	0x2cf000	254	1	9891	/usr/bin/python3.11	Disabled
+1534	python3	0x940000	0x941000	r--	0x53f000	254	1	9891	/usr/bin/python3.11	Disabled
+1534	python3	0x941000	0xa7f000	rw-	0x540000	254	1	9891	/usr/bin/python3.11	Disabled
+1534	python3	0xa7f000	0xac4000	rw-	0x0	0	0	0	Anonymous Mapping	Disabled
+1534	python3	0x22343000	0x22559000	rw-	0x0	0	0	0	[heap]	Disabled
+1534	python3	0x7f012361c000	0x7f0123620000	r--	0x0	254	1	526	/usr/lib/x86_64-linux-gnu/liblzma.so.5.4.1	Disabled
+1534	python3	0x7f0123620000	0x7f012363d000	r-x	0x4000	254	1	526	/usr/lib/x86_64-linux-gnu/liblzma.so.5.4.1	Disabled
+1534	python3	0x7f012363d000	0x7f0123649000	r--	0x21000	254	1	526	/usr/lib/x86_64-linux-gnu/liblzma.so.5.4.1	Disabled
+1534	python3	0x7f0123649000	0x7f012364a000	r--	0x2d000	254	1	526	/usr/lib/x86_64-linux-gnu/liblzma.so.5.4.1	Disabled
+1534	python3	0x7f012364a000	0x7f012364b000	rw-	0x2e000	254	1	526	/usr/lib/x86_64-linux-gnu/liblzma.so.5.4.1	Disabled
+1534	python3	0x7f012364b000	0x7f012364e000	r--	0x0	254	1	10333	/usr/lib/python3.11/lib-dynload/_lzma.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f012364e000	0x7f0123652000	r-x	0x3000	254	1	10333	/usr/lib/python3.11/lib-dynload/_lzma.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123652000	0x7f0123655000	r--	0x7000	254	1	10333	/usr/lib/python3.11/lib-dynload/_lzma.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123655000	0x7f0123656000	r--	0x9000	254	1	10333	/usr/lib/python3.11/lib-dynload/_lzma.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123656000	0x7f0123657000	rw-	0xa000	254	1	10333	/usr/lib/python3.11/lib-dynload/_lzma.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123657000	0x7f0123757000	rw-	0x0	0	0	0	Anonymous Mapping	Disabled
+1534	python3	0x7f0123757000	0x7f0123776000	r--	0x0	254	1	2250	/usr/lib/x86_64-linux-gnu/libssl.so.3	Disabled
+1534	python3	0x7f0123776000	0x7f01237d3000	r-x	0x1f000	254	1	2250	/usr/lib/x86_64-linux-gnu/libssl.so.3	Disabled
+1534	python3	0x7f01237d3000	0x7f01237f2000	r--	0x7c000	254	1	2250	/usr/lib/x86_64-linux-gnu/libssl.so.3	Disabled
+1534	python3	0x7f01237f2000	0x7f01237fc000	r--	0x9a000	254	1	2250	/usr/lib/x86_64-linux-gnu/libssl.so.3	Disabled
+1534	python3	0x7f01237fc000	0x7f0123800000	rw-	0xa4000	254	1	2250	/usr/lib/x86_64-linux-gnu/libssl.so.3	Disabled
+1534	python3	0x7f0123800000	0x7f0123a00000	rw-	0x0	0	0	0	Anonymous Mapping	Disabled
+1534	python3	0x7f0123a00000	0x7f0123ac5000	r--	0x0	254	1	2249	/usr/lib/x86_64-linux-gnu/libcrypto.so.3	Disabled
+1534	python3	0x7f0123ac5000	0x7f0123d44000	r-x	0xc5000	254	1	2249	/usr/lib/x86_64-linux-gnu/libcrypto.so.3	Disabled
+1534	python3	0x7f0123d44000	0x7f0123e22000	r--	0x344000	254	1	2249	/usr/lib/x86_64-linux-gnu/libcrypto.so.3	Disabled
+1534	python3	0x7f0123e22000	0x7f0123e84000	r--	0x421000	254	1	2249	/usr/lib/x86_64-linux-gnu/libcrypto.so.3	Disabled
+1534	python3	0x7f0123e84000	0x7f0123e87000	rw-	0x483000	254	1	2249	/usr/lib/x86_64-linux-gnu/libcrypto.so.3	Disabled
+1534	python3	0x7f0123e87000	0x7f0123e8a000	rw-	0x0	0	0	0	Anonymous Mapping	Disabled
+1534	python3	0x7f0123e94000	0x7f0123e96000	r--	0x0	254	1	2032	/usr/lib/x86_64-linux-gnu/libbz2.so.1.0.4	Disabled
+1534	python3	0x7f0123e96000	0x7f0123ea3000	r-x	0x2000	254	1	2032	/usr/lib/x86_64-linux-gnu/libbz2.so.1.0.4	Disabled
+1534	python3	0x7f0123ea3000	0x7f0123ea5000	r--	0xf000	254	1	2032	/usr/lib/x86_64-linux-gnu/libbz2.so.1.0.4	Disabled
+1534	python3	0x7f0123ea5000	0x7f0123ea6000	r--	0x10000	254	1	2032	/usr/lib/x86_64-linux-gnu/libbz2.so.1.0.4	Disabled
+1534	python3	0x7f0123ea6000	0x7f0123ea7000	rw-	0x11000	254	1	2032	/usr/lib/x86_64-linux-gnu/libbz2.so.1.0.4	Disabled
+1534	python3	0x7f0123eab000	0x7f0123ead000	r--	0x0	254	1	10316	/usr/lib/python3.11/lib-dynload/_bz2.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123ead000	0x7f0123eaf000	r-x	0x2000	254	1	10316	/usr/lib/python3.11/lib-dynload/_bz2.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123eaf000	0x7f0123eb1000	r--	0x4000	254	1	10316	/usr/lib/python3.11/lib-dynload/_bz2.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123eb1000	0x7f0123eb2000	r--	0x5000	254	1	10316	/usr/lib/python3.11/lib-dynload/_bz2.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123eb2000	0x7f0123eb3000	rw-	0x6000	254	1	10316	/usr/lib/python3.11/lib-dynload/_bz2.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123eb3000	0x7f0123ec5000	r--	0x0	254	1	9812	/usr/lib/python3.11/lib-dynload/_ssl.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123ec5000	0x7f0123ed0000	r-x	0x12000	254	1	9812	/usr/lib/python3.11/lib-dynload/_ssl.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123ed0000	0x7f0123ede000	r--	0x1d000	254	1	9812	/usr/lib/python3.11/lib-dynload/_ssl.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123ede000	0x7f0123edf000	r--	0x2a000	254	1	9812	/usr/lib/python3.11/lib-dynload/_ssl.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123edf000	0x7f0123ee8000	rw-	0x2b000	254	1	9812	/usr/lib/python3.11/lib-dynload/_ssl.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123ee8000	0x7f0123f1b000	rw-	0x0	0	0	0	Anonymous Mapping	Disabled
+1534	python3	0x7f0123f1b000	0x7f0123f1f000	r--	0x0	254	1	9811	/usr/lib/python3.11/lib-dynload/_hashlib.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123f1f000	0x7f0123f25000	r-x	0x4000	254	1	9811	/usr/lib/python3.11/lib-dynload/_hashlib.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123f25000	0x7f0123f29000	r--	0xa000	254	1	9811	/usr/lib/python3.11/lib-dynload/_hashlib.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123f29000	0x7f0123f2a000	r--	0xd000	254	1	9811	/usr/lib/python3.11/lib-dynload/_hashlib.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123f2a000	0x7f0123f2c000	rw-	0xe000	254	1	9811	/usr/lib/python3.11/lib-dynload/_hashlib.cpython-311-x86_64-linux-gnu.so	Disabled
+1534	python3	0x7f0123f2c000	0x7f012418e000	rw-	0x0	0	0	0	Anonymous Mapping	Disabled
+1534	python3	0x7f012418e000	0x7f0124195000	r--	0x0	254	1	6388	/usr/lib/x86_64-linux-gnu/gconv/gconv-modules.cache	Disabled
+1534	python3	0x7f0124195000	0x7f01241ec000	r--	0x0	254	1	4289	/usr/lib/locale/C.utf8/LC_CTYPE	Disabled
+1534	python3	0x7f01241ec000	0x7f01241ee000	rw-	0x0	0	0	0	Anonymous Mapping	Disabled
+1534	python3	0x7f01241ee000	0x7f0124214000	r--	0x0	254	1	2077	/usr/lib/x86_64-linux-gnu/libc.so.6	Disabled
+1534	python3	0x7f0124214000	0x7f012436a000	r-x	0x26000	254	1	2077	/usr/lib/x86_64-linux-gnu/libc.so.6	Disabled
+1534	python3	0x7f012436a000	0x7f01243bd000	r--	0x17c000	254	1	2077	/usr/lib/x86_64-linux-gnu/libc.so.6	Disabled
+1534	python3	0x7f01243bd000	0x7f01243c1000	r--	0x1cf000	254	1	2077	/usr/lib/x86_64-linux-gnu/libc.so.6	Disabled
+1534	python3	0x7f01243c1000	0x7f01243c3000	rw-	0x1d3000	254	1	2077	/usr/lib/x86_64-linux-gnu/libc.so.6	Disabled
+1534	python3	0x7f01243c3000	0x7f01243d0000	rw-	0x0	0	0	0	Anonymous Mapping	Disabled
+1534	python3	0x7f01243d0000	0x7f01243d4000	r--	0x0	254	1	8361	/usr/lib/x86_64-linux-gnu/libexpat.so.1.8.10	Disabled
+1534	python3	0x7f01243d4000	0x7f01243f2000	r-x	0x4000	254	1	8361	/usr/lib/x86_64-linux-gnu/libexpat.so.1.8.10	Disabled
+1534	python3	0x7f01243f2000	0x7f01243fb000	r--	0x22000	254	1	8361	/usr/lib/x86_64-linux-gnu/libexpat.so.1.8.10	Disabled
+1534	python3	0x7f01243fb000	0x7f01243fd000	r--	0x2b000	254	1	8361	/usr/lib/x86_64-linux-gnu/libexpat.so.1.8.10	Disabled
+1534	python3	0x7f01243fd000	0x7f01243fe000	rw-	0x2d000	254	1	8361	/usr/lib/x86_64-linux-gnu/libexpat.so.1.8.10	Disabled
+1534	python3	0x7f01243fe000	0x7f0124401000	r--	0x0	254	1	4930	/usr/lib/x86_64-linux-gnu/libz.so.1.2.13	Disabled
+1534	python3	0x7f0124401000	0x7f0124414000	r-x	0x3000	254	1	4930	/usr/lib/x86_64-linux-gnu/libz.so.1.2.13	Disabled
+1534	python3	0x7f0124414000	0x7f012441b000	r--	0x16000	254	1	4930	/usr/lib/x86_64-linux-gnu/libz.so.1.2.13	Disabled
+1534	python3	0x7f012441b000	0x7f012441c000	r--	0x1c000	254	1	4930	/usr/lib/x86_64-linux-gnu/libz.so.1.2.13	Disabled
+1534	python3	0x7f012441c000	0x7f012441d000	rw-	0x1d000	254	1	4930	/usr/lib/x86_64-linux-gnu/libz.so.1.2.13	Disabled
+1534	python3	0x7f012441d000	0x7f012442d000	r--	0x0	254	1	2080	/usr/lib/x86_64-linux-gnu/libm.so.6	Disabled
+1534	python3	0x7f012442d000	0x7f01244a1000	r-x	0x10000	254	1	2080	/usr/lib/x86_64-linux-gnu/libm.so.6	Disabled
+1534	python3	0x7f01244a1000	0x7f01244fb000	r--	0x84000	254	1	2080	/usr/lib/x86_64-linux-gnu/libm.so.6	Disabled
+1534	python3	0x7f01244fb000	0x7f01244fc000	r--	0xdd000	254	1	2080	/usr/lib/x86_64-linux-gnu/libm.so.6	Disabled
+1534	python3	0x7f01244fc000	0x7f01244fd000	rw-	0xde000	254	1	2080	/usr/lib/x86_64-linux-gnu/libm.so.6	Disabled
+1534	python3	0x7f01244fd000	0x7f0124503000	rw-	0x0	0	0	0	Anonymous Mapping	Disabled
+1534	python3	0x7f0124503000	0x7f0124504000	r--	0x0	254	1	2074	/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2	Disabled
+1534	python3	0x7f0124504000	0x7f012452a000	r-x	0x1000	254	1	2074	/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2	Disabled
+1534	python3	0x7f012452a000	0x7f0124534000	r--	0x27000	254	1	2074	/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2	Disabled
+1534	python3	0x7f0124534000	0x7f0124536000	r--	0x31000	254	1	2074	/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2	Disabled
+1534	python3	0x7f0124536000	0x7f0124538000	rw-	0x33000	254	1	2074	/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2	Disabled
+1534	python3	0x7ffc50cf5000	0x7ffc50d16000	rw-	0x0	0	0	0	[stack]	Disabled
+1534	python3	0x7ffc50d62000	0x7ffc50d66000	r--	0x0	0	0	0	Anonymous Mapping	Disabled
+1534	python3	0x7ffc50d66000	0x7ffc50d68000	r-x	0x0	0	0	0	[vdso]	Disabled

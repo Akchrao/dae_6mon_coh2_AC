@@ -1,0 +1,25 @@
+seq	utc_start	exit	sha256	output	command
+1	2026-11-03T19:37:15.730Z	0	bf5d8f4fd74e6ec56eda6a9f4e65f34deddc967d8b641b38141a63bac4e8e031	01_clock.txt	date -u; date; cat /etc/timezone; timedatectl 2>/dev/null | head -6; cat /proc/uptime
+2	2026-11-03T19:37:16.566Z	0	ac477e92418469ecee36f37507515ec1c1f690e54d29601a0c83134eb5007ae4	02_system.txt	hostname; uname -a; head -2 /etc/os-release; cat /proc/cmdline; cat /etc/ir-golden-release
+3	2026-11-03T19:37:16.772Z	0	f27e842b39dc254d0b542424530e9db012743f13ccfabae13f7e40652b210b48	03_processes.txt	ps -eo pid,ppid,user,uid,lstart,etime,stat,args --forest
+4	2026-11-03T19:37:16.990Z	0	373b38e0bc885714fcf80aace4f3e8b8cd8bf900ad5d023b6e613f55e14d06cf	04_process_exe_sha256.txt	for p in /proc/[0-9]*; do e=$(readlink $p/exe 2>/dev/null) && printf "%s\t%s\t%s\n" "${p#/proc/}" "$e" "$(sha256sum $p/exe 2>/dev/null | cut -d" " -f1)"; done | sort -n
+5	2026-11-03T19:37:21.244Z	0	b7504b32ee4fe303fee5bfb879d80692f04e174fddb8847880a0c0a1383569df	05_open_files.txt	lsof -nP 2>/dev/null | grep -vE " (mem|DEL) " | head -400
+6	2026-11-03T19:37:21.774Z	0	0fe81e4e60dab3c8f9fee42fbf3e507dab6926f712c0c4efaaa7403d1f402e00	06_logged_in.txt	who -a; echo; w
+7	2026-11-03T19:37:21.930Z	0	2b33344eaa500370caf3b45a8919eda0846e766f7ecf4f48ac2ed8f7ac6ca715	07_sockets.txt	ss -tunap
+8	2026-11-03T19:37:22.196Z	0	a3e178e7b509d896b31b88698e7981a4f534ecf11c5af4ba29e9b91569004d7b	08_listening.txt	ss -ltunp
+9	2026-11-03T19:37:22.366Z	0	4faebcf351180d0ed2bdf4d52b044d9a19d6dee9d6fb59796236d6d01493a22a	09_interfaces.txt	ip -d -br link; echo; ip -br addr; echo; ip route; echo; ip neigh
+10	2026-11-03T19:37:22.575Z	0	a204d992a62c3743bd220250fab269f4c11d7e8450ac136480bcf947406548fe	10_firewall.txt	iptables-save; echo; iptables -vnL
+11	2026-11-03T19:37:22.764Z	0	f1d272f1b721bd55c644f7f0182a6cce0b76aba485c0b1148e948507f0e2571d	11_dns_hosts.txt	cat /etc/resolv.conf /etc/hosts
+12	2026-11-03T19:37:22.884Z	0	6c259643e1afd5fc577ffd99e0b5c6dd2565b5edaa2ef68657deda2810beb802	12_kernel_modules.txt	lsmod
+13	2026-11-03T19:37:23.020Z	0	9cdc73380dde6ffc18e5a2edd485921f03e438bddd1850b0a5013deb19a53fdb	13_kernel_log.txt	dmesg -T | tail -60
+14	2026-11-03T19:37:23.183Z	0	c60e63330200dc1ac9264695156fccd88b9397aca6a36af60668d554bbca5123	14_services.txt	systemctl list-units --type=service --all --no-pager --no-legend
+15	2026-11-03T19:37:23.344Z	0	15a14030a41165f5cab6943edec2b22e1cab6d40d0abdb459822f6b946f37098	15_timers_cron.txt	systemctl list-timers --all --no-pager; echo; ls -la /var/spool/cron/crontabs; for f in /var/spool/cron/crontabs/*; do echo "== $f"; cat "$f"; done; echo; cat /etc/crontab; ls -la /etc/cron.d
+16	2026-11-03T19:37:23.699Z	0	511113ca2f128b86386e2a24e288e6230278de530baad5f5b58b02f516855441	16_mounts_disks.txt	findmnt -l; echo; df -h; echo; lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINT,UUID
+17	2026-11-03T19:37:23.973Z	0	8d8e1cb55eca11dec3559d79ae39527e86bf0a4bee5066be2f95b82fd07c1792	17_accounts.txt	getent passwd | awk -F: "\$3>=1000 || \$3==0"; echo; getent group | grep -E "clinical|billing|sudo|disabled-users"; echo; for u in $(getent passwd | awk -F: "\$3>=1000{print \$1}"); do passwd -S $u; done
+18	2026-11-03T19:37:24.538Z	0	57e69d2aaf4a56133ba7ee10b32514af96820c91b523436490cda80b0a4ce13e	18_sudoers.txt	cat /etc/sudoers.d/* 2>/dev/null; grep -vE "^#|^$" /etc/sudoers
+19	2026-11-03T19:37:24.703Z	0	7234b6aae85ed0c9859c5afb0675e23f5e192d48779079d11691f51f61d9a732	19_ssh_keys.txt	for h in /root /home/*; do for k in $h/.ssh/authorized_keys; do [ -f $k ] && { echo "== $k"; ssh-keygen -lf $k; }; done; done; ls -la /root/ir-quarantine 2>/dev/null
+20	2026-11-03T19:37:25.071Z	0	d227418b4356b3c77b7343c78aef9af1c846c028193c6d441a2fc3a8f887f513	20_lastlog.txt	last -F -n 30; echo; lastb -F -n 20 2>/dev/null
+21	2026-11-03T19:37:25.244Z	0	dbc46ac7c74ee77c9ff2962393af0f527751d22f0b4f993f7d317dfd8ac5de34	21_recent_files.txt	find /home /tmp /var/tmp /dev/shm /etc /var/spool /usr/local -xdev -newermt "-3 hours" -type f ! -path "/dev/shm/lr/*" -printf "%TY-%Tm-%Td %TH:%TM:%TS\t%u\t%m\t%s\t%p\n" 2>/dev/null | sort
+22	2026-11-03T19:37:25.507Z	0	a87753adc849440f448e39f92e52ca6066c3d475c00f995f1f93ccdd9d5723e0	22_hidden_dirs.txt	find /home /tmp /var/tmp /root -xdev -name ".*" -type d -printf "%u\t%p\n" 2>/dev/null
+23	2026-11-03T19:37:25.647Z	0	15474608a0c119a8fa0eafdee41e49629745b1725d0a7ec924d918602edf13ea	23_suid_sgid.txt	find / -xdev \( -perm -4000 -o -perm -2000 \) -type f -printf "%m\t%u\t%p\n" 2>/dev/null | sort -k3
+24	2026-11-03T19:37:28.406Z	0	0adbcb6e9780d6f61e53d4919ac9f419e0c0ac9615d35a52ff5320ebd19833af	24_shell_history.txt	for h in /root /home/*; do for f in $h/.bash_history $h/.sh_history; do [ -f $f ] && { echo "== $f"; cat $f; }; done; done; echo "(end)"

@@ -1,0 +1,6 @@
+parrot-vm
+Linux parrot-vm 6.1.0-54-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.190-1 (2026-10-16) x86_64 GNU/Linux
+PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"
+NAME="Debian GNU/Linux"
+BOOT_IMAGE=/boot/vmlinuz-6.1.0-54-cloud-amd64 root=PARTUUID=180a0c80-c107-41f6-80a6-405b40df1b72 ro console=tty0 console=ttyS0,115200 earlyprintk=ttyS0,115200 consoleblank=0
+golden built 2026-11-02T22:03:16Z

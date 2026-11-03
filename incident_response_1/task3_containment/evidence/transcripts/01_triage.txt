@@ -1,0 +1,29 @@
+# Wazuh rule 100221 fired at 2026-11-03T19:31:10Z (Task 2, transcripts/03). Uploads received by the drop site so far: 1
+[2026-11-03T19:31:12Z] >>> triage
+$ tail -2 /var/log/ehr-audit.log
+2026-11-03T19:29:51.802321+00:00 parrot-vm ehr-audit: user=test.clinician action=VIEW patient=PT-1001 decision=ALLOW basis=group:clinical
+2026-11-03T19:31:08.718332+00:00 parrot-vm ehr-audit: user=test.nurse action=VIEW patient=PT-1003 decision=ALLOW basis=group:clinical
+
+$ ausearch -k ehr-read -i | grep -m2 PT-1003
+type=PROCTITLE msg=audit(11/03/26 19:31:08.733:470) : proctitle=cat /srv/ehr/clinical/PT-1003.txt 
+type=PATH msg=audit(11/03/26 19:31:08.733:470) : item=0 name=/srv/ehr/clinical/PT-1003.txt inode=31804 dev=fe:01 mode=file,640 ouid=root ogid=clinical rdev=00:00 nametype=NORMAL cap_fp=none cap_fi=non
+
+$ timeout 12 tcpdump -nn -i enp0s1 -c 3 'dst host 10.78.99.66 and tcp[tcpflags] & tcp-syn != 0'
+tcpdump: verbose output suppressed, use -v[v]... for full protocol decode
+listening on enp0s1, link-type EN10MB (Ethernet), snapshot length 262144 bytes
+19:31:15.587955 IP 10.0.2.15.55034 > 10.78.99.66.8080: Flags [S], seq 601044798, win 64240, options [mss 1460,sackOK,TS val 1477595325 ecr 0,nop,wscale 7], length 0
+19:31:20.602020 IP 10.0.2.15.51488 > 10.78.99.66.8080: Flags [S], seq 1960232890, win 64240, options [mss 1460,sackOK,TS val 1477600339 ecr 0,nop,wscale 7], length 0
+
+2 packets captured
+3 packets received by filter
+0 packets dropped by kernel
+
+$ ps -o pid,user,lstart,cmd -u test.nurse
+    PID USER                      STARTED CMD
+   1474 test.nu+ Tue Nov  3 19:31:06 2026 /lib/systemd/systemd --user
+   1475 test.nu+ Tue Nov  3 19:31:06 2026 (sd-pam)
+   1534 test.nu+ Tue Nov  3 19:31:09 2026 python3 /home/test.nurse/.cache/.sync/syncd.py
+
+# Finding: PT-1003 is being sent off-host to 10.78.99.66:8080 by a process owned by test.nurse.
+# IR1-2026-002 confirmed SEV-1 (Critical): ePHI disclosure in progress -> containment authorised.
+# Queue: IR1-2026-003 (SEV-2, unapproved sudo) and IR1-2026-001 (SEV-3, leaver attempts) are contained on the same host in C7.

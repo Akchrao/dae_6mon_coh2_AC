@@ -1,0 +1,31 @@
+# patch level: installed version vs the updates install.log says were offered
+$ sw_vers
+ProductName:		macOS
+ProductVersion:		26.3.1
+BuildVersion:		25D2128
+
+# remote-access software seen in install.log: is it present, who signed it, does Gatekeeper accept it?
+$ pkgutil --pkgs | grep -i splashtop
+com.splashtop.soundDriver
+com.splashtop.Splashtop-Streamer
+$ codesign -dv --verbose=2 "/Applications/Splashtop Streamer.app"
+Identifier=com.splashtop.Splashtop-Streamer
+Authority=Developer ID Application: Splashtop Inc. (CPQQ3AW49Y)
+Authority=Developer ID Certification Authority
+Authority=Apple Root CA
+Timestamp=Sep 24, 2026 at 1:44:37 AM
+TeamIdentifier=CPQQ3AW49Y
+$ spctl -a -vv "/Applications/Splashtop Streamer.app"
+/Applications/Splashtop Streamer.app: accepted
+source=Notarized Developer ID
+origin=Developer ID Application: Splashtop Inc. (CPQQ3AW49Y)
+
+# MDM enrolment (managed device => IT-deployed software is plausible)
+$ profiles status -type enrollment
+Enrolled via DEP: Yes
+MDM enrollment: Yes (User Approved)
+MDM server: https://biz-30445.business.mosyle.io/mdm/server/?op=commands&lang=en&c=234230350111783f7a11&lifetime=1773414327
+
+# processes behind the Software Update entitlement alerts (rule 100242), if still running
+PIDs: 75876
+75876 (not running now)

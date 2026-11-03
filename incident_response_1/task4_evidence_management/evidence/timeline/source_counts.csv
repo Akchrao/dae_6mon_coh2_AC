@@ -1,0 +1,12 @@
+host,source,events
+DAEDMAC1009,ssh_client.log,16
+IR,task3 markers.csv,11
+IR,task4 steps.csv,8
+exfil-sink,uploads.jsonl,10
+ir-hv,nic0 pcap,10
+parrot-vm,audit.log,38
+parrot-vm,auth.log,45
+parrot-vm,ehr-audit.log,2
+parrot-vm,kern.log,15
+parrot-vm,mactime,11
+wazuh-manager,alerts.json,21

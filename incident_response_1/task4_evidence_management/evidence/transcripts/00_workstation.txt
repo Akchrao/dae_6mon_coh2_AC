@@ -1,0 +1,15 @@
+# IR1 Task4 run - 2026-11-03T19:37:18Z - analyst host DAEDMAC1009; case IR1-2026-002
+# Parrot forensic workstation ir-forensics (built in Task 1): dc3dd, Sleuth Kit, ewf-tools, Volatility 3, tshark
+$ tool versions
+dc3dd (dc3dd) 7.2.646
+The Sleuth Kit ver 4.11.1
+ewfacquire 20140813
+Volatility 3 Framework 2.7.0
+Running as user "root" and group "root". This could be dangerous.
+TShark (Wireshark) 4.0.17 (Git v4.0.17 packaged as 4.0.17-0+deb12u3).
+total 1756
+-rw-r--r-- 1 root root 1797916 Nov  2 18:37 debian-6.1.0-54-cloud-amd64.json.xz
+$ sha256sum /opt/symbols/linux/*.json.xz   (ISF built with dwarf2json v0.9.0 from linux-image-6.1.0-54-cloud-amd64-dbg)
+c69b86fa8a29404ba410fa3fc3b3118b8e62ffb1b58b3fd161280cf4c3c0042f  /opt/symbols/linux/debian-6.1.0-54-cloud-amd64.json.xz
+$ ssh -i /root/.ssh/ir_analyst -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o ConnectTimeout=10 -o LogLevel=ERROR -p 2222 ir-analyst@10.78.50.2 hostname   (forensic path to the contained host)
+parrot-vm

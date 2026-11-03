@@ -1,40 +1,166 @@
 time_utc,host,rule_id,level,description
-2026-10-20T16:27:42.789Z,Parrot parrot-sim,5901,8,New group added to the system.
-2026-10-20T16:27:42.794Z,Parrot parrot-sim,5901,8,New group added to the system.
-2026-10-20T16:27:42.797Z,Parrot parrot-sim,5901,8,New group added to the system.
-2026-10-20T16:27:42.805Z,Parrot parrot-sim,5901,8,New group added to the system.
-2026-10-20T16:27:42.805Z,Parrot parrot-sim,5902,8,New user added to the system.
-2026-10-20T16:27:42.815Z,Parrot parrot-sim,5901,8,New group added to the system.
-2026-10-20T16:27:42.815Z,Parrot parrot-sim,5902,8,New user added to the system.
-2026-10-20T16:27:42.824Z,Parrot parrot-sim,5901,8,New group added to the system.
-2026-10-20T16:27:42.824Z,Parrot parrot-sim,5902,8,New user added to the system.
-2026-10-20T16:27:42.837Z,Parrot parrot-sim,5901,8,New group added to the system.
-2026-10-20T16:27:42.837Z,Parrot parrot-sim,5902,8,New user added to the system.
-2026-10-20T16:27:46.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2222 as test.clinician
-2026-10-20T16:27:46.363Z,Parrot parrot-sim,5715,3,sshd: authentication success.
-2026-10-20T16:27:46.370Z,Parrot parrot-sim,5715,3,sshd: authentication success.
-2026-10-20T16:27:46.376Z,Parrot parrot-sim,5715,3,sshd: authentication success.
-2026-10-20T16:27:46.431Z,Parrot parrot-sim,100220,3,EHR audit: test.clinician VIEW PT-1001 - ALLOW via group:clinical
-2026-10-20T16:28:01.673Z,Parrot parrot-sim,5403,4,First time user executed sudo.
-2026-10-20T16:28:01.673Z,Parrot parrot-sim,5403,4,First time user executed sudo.
-2026-10-20T16:28:01.681Z,Parrot parrot-sim,100230,10,Account test.clinician added to privileged group sudo
-2026-10-20T16:28:01.681Z,Parrot parrot-sim,100230,10,Account test.clinician added to privileged group sudo
-2026-10-20T16:28:16.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2222 as test.clinician
-2026-10-20T16:28:16.824Z,Parrot parrot-sim,5715,3,sshd: authentication success.
-2026-10-20T16:28:16.830Z,Parrot parrot-sim,5715,3,sshd: authentication success.
-2026-10-20T16:28:16.836Z,Parrot parrot-sim,5715,3,sshd: authentication success.
-2026-10-20T16:28:16.919Z,Parrot parrot-sim,100231,12,"Root obtained via sudo by test.clinician, whose role has no root entitlement (RBAC/SoD violation)"
-2026-10-20T16:28:37.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2222 as test.nurse
-2026-10-20T16:28:37.033Z,Parrot parrot-sim,5715,3,sshd: authentication success.
-2026-10-20T16:28:37.040Z,Parrot parrot-sim,5715,3,sshd: authentication success.
-2026-10-20T16:28:37.046Z,Parrot parrot-sim,5715,3,sshd: authentication success.
-2026-10-20T16:28:37.101Z,Parrot parrot-sim,100221,12,ePHI viewed by mover test.nurse (now Billing) through stale clinical group - record PT-1003
-2026-10-20T16:28:47.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2222 as test.nurse
-2026-10-20T16:28:47.203Z,Parrot parrot-sim,5715,3,sshd: authentication success.
-2026-10-20T16:28:47.210Z,Parrot parrot-sim,5715,3,sshd: authentication success.
-2026-10-20T16:28:47.217Z,Parrot parrot-sim,5715,3,sshd: authentication success.
-2026-10-20T16:28:47.295Z,Parrot parrot-sim,100222,10,JML mover test.nurse attempted root via sudo (not in sudoers)
-2026-10-20T16:29:07.000Z,macOS DAEDMAC1009,100251,7,macOS host: SSH client used leaver account test.billing against 127.0.0.1:2222
-2026-10-20T16:29:07.402Z,Parrot parrot-sim,100210,10,JML leaver account test.billing attempted SSH login from 10.77.0.1 - account was deprovisioned
-2026-10-20T16:29:32.000Z,macOS DAEDMAC1009,100251,7,macOS host: SSH client used leaver account test.billing against 127.0.0.1:2222
-2026-10-20T16:29:32.526Z,Parrot parrot-sim,100211,11,Repeated login attempts by JML leaver account test.billing (2+ in 10 min)
+2026-11-03T19:21:38.366Z,Parrot parrot-vm,501,3,New wazuh agent connected.
+2026-11-03T19:21:40.975Z,Parrot parrot-vm,506,3,Wazuh agent stopped.
+2026-11-03T19:21:44.097Z,Parrot parrot-vm,503,3,Wazuh agent started.
+2026-11-03T19:21:59.310Z,Parrot parrot-vm,554,5,File added to the system.
+2026-11-03T19:21:59.444Z,Parrot parrot-vm,550,7,Integrity checksum changed.
+2026-11-03T19:22:02.817Z,Parrot parrot-vm,5104,8,Interface entered in promiscuous(sniffing) mode.
+2026-11-03T19:22:02.831Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:03.002Z,Parrot parrot-vm,5104,8,Interface entered in promiscuous(sniffing) mode.
+2026-11-03T19:22:03.169Z,Parrot parrot-vm,5104,8,Interface entered in promiscuous(sniffing) mode.
+2026-11-03T19:22:03.341Z,Parrot parrot-vm,5104,8,Interface entered in promiscuous(sniffing) mode.
+2026-11-03T19:22:03.497Z,Parrot parrot-vm,5104,8,Interface entered in promiscuous(sniffing) mode.
+2026-11-03T19:22:03.665Z,Parrot parrot-vm,5104,8,Interface entered in promiscuous(sniffing) mode.
+2026-11-03T19:22:03.833Z,Parrot parrot-vm,5104,8,Interface entered in promiscuous(sniffing) mode.
+2026-11-03T19:22:04.858Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:04.861Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:04.863Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:04.865Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:04.867Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:04.870Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:04.872Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:04.874Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:04.877Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:04.879Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:04.881Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:04.884Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:04.886Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:06.361Z,Parrot parrot-vm,5104,8,Interface entered in promiscuous(sniffing) mode.
+2026-11-03T19:22:06.828Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:24.852Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:22:26.917Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:22:26.928Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:22:26.969Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:22:28.372Z,Parrot parrot-vm,5403,4,First time user executed sudo.
+2026-11-03T19:22:28.752Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:22:28.763Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:22:28.803Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:22:29.203Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:29:48.020Z,Parrot parrot-vm,5104,8,Interface entered in promiscuous(sniffing) mode.
+2026-11-03T19:29:49.586Z,Parrot parrot-vm,80710,10,Auditd: Device enables promiscuous mode.
+2026-11-03T19:29:50.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2223 as test.clinician
+2026-11-03T19:29:50.349Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:29:50.359Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:29:50.404Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:30:03.274Z,Parrot parrot-vm,554,5,File added to the system.
+2026-11-03T19:30:03.285Z,Parrot parrot-vm,5403,4,First time user executed sudo.
+2026-11-03T19:30:03.345Z,Parrot parrot-vm,100230,10,Account test.clinician added to privileged group sudo
+2026-11-03T19:30:03.347Z,Parrot parrot-vm,100230,10,Account test.clinician added to privileged group sudo
+2026-11-03T19:30:13.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2223 as test.clinician
+2026-11-03T19:30:13.976Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:30:13.984Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:30:14.029Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:30:15.832Z,Parrot parrot-vm,100231,12,"Root obtained via sudo by test.clinician, whose role has no root entitlement (RBAC/SoD violation)"
+2026-11-03T19:30:15.879Z,Parrot parrot-vm,554,5,File added to the system.
+2026-11-03T19:30:31.000Z,macOS DAEDMAC1009,100251,7,macOS host: SSH client used leaver account test.billing against 127.0.0.1:2223
+2026-11-03T19:30:31.159Z,Parrot parrot-vm,100210,10,JML leaver account test.billing attempted SSH login from 10.78.10.1 - account was deprovisioned
+2026-11-03T19:30:51.000Z,macOS DAEDMAC1009,100251,7,macOS host: SSH client used leaver account test.billing against 127.0.0.1:2223
+2026-11-03T19:30:51.420Z,Parrot parrot-vm,100211,11,Repeated login attempts by JML leaver account test.billing (2+ in 10 min)
+2026-11-03T19:31:06.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2223 as test.nurse
+2026-11-03T19:31:06.746Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:06.753Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:06.791Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:08.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2223 as test.nurse
+2026-11-03T19:31:08.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2223 as test.nurse
+2026-11-03T19:31:08.190Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:08.198Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:08.275Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:08.580Z,Parrot parrot-vm,554,5,File added to the system.
+2026-11-03T19:31:08.718Z,Parrot parrot-vm,100221,12,ePHI viewed by mover test.nurse (now Billing) through stale clinical group - record PT-1003
+2026-11-03T19:31:08.739Z,Parrot parrot-vm,550,7,Integrity checksum changed.
+2026-11-03T19:31:08.989Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:08.996Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:09.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2223 as test.nurse
+2026-11-03T19:31:09.069Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:09.351Z,Parrot parrot-vm,554,5,File added to the system.
+2026-11-03T19:31:09.375Z,Parrot parrot-vm,550,7,Integrity checksum changed.
+2026-11-03T19:31:09.402Z,Parrot parrot-vm,550,7,Integrity checksum changed.
+2026-11-03T19:31:09.653Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:09.660Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:09.734Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:11.000Z,macOS DAEDMAC1009,100250,3,macOS host: SSH client connecting to 127.0.0.1:2223 as test.nurse
+2026-11-03T19:31:11.408Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:11.415Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:11.488Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:11.814Z,Parrot parrot-vm,554,5,File added to the system.
+2026-11-03T19:31:11.842Z,Parrot parrot-vm,553,7,File deleted.
+2026-11-03T19:31:11.858Z,Parrot parrot-vm,554,5,File added to the system.
+2026-11-03T19:31:52.822Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:52.828Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:52.871Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:54.093Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:31:54.450Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:54.456Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:54.536Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:31:54.896Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:32:34.837Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:34.850Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:34.892Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:36.213Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:32:36.877Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:36.884Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:36.967Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:37.384Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:32:42.051Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:42.063Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:42.142Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:42.577Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:32:42.986Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:42.990Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:43.071Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:43.489Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:32:44.600Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:44.614Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:44.692Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:45.116Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:32:45.582Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:45.586Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:45.666Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:32:46.066Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:34:06.266Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:06.280Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:06.360Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:08.248Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:34:09.089Z,Parrot parrot-vm,503,3,Wazuh agent started.
+2026-11-03T19:34:10.127Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:10.138Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:10.221Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:10.676Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:34:12.930Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:12.941Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:13.025Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:13.484Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:34:15.857Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:15.868Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:15.952Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:16.379Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:34:17.158Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:17.171Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:17.250Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:17.779Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:34:18.330Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:18.342Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:18.425Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:18.888Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:34:19.453Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:19.459Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:19.540Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:20.111Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:34:20.574Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:20.586Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:20.666Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:34:21.142Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:34:24.211Z,Parrot parrot-vm,553,7,File deleted.
+2026-11-03T19:34:26.383Z,Parrot parrot-vm,553,7,File deleted.
+2026-11-03T19:34:27.409Z,Parrot parrot-vm,554,5,File added to the system.
+2026-11-03T19:35:37.669Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:35:37.692Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:35:37.771Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:35:41.032Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:35:41.040Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:35:41.123Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:35:41.605Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.
+2026-11-03T19:35:42.101Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:35:42.110Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:35:42.194Z,Parrot parrot-vm,5715,3,sshd: authentication success.
+2026-11-03T19:35:42.751Z,Parrot parrot-vm,5402,3,Successful sudo to ROOT executed.

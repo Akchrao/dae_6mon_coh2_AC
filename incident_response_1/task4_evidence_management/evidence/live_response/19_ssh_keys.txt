@@ -1,0 +1,11 @@
+== /root/.ssh/authorized_keys
+/root/.ssh/authorized_keys is not a public key file.
+== /home/ir-analyst/.ssh/authorized_keys
+256 SHA256:VhxOSueGx204aKnTXxjpyFMubkwPdwFlP60kCIxxwa4 ir-analyst@ir-forensics (ED25519)
+== /home/test.clinician/.ssh/authorized_keys
+256 SHA256:XpRA2t9M6w0xGTqCK2xDlPfGqJF8eAU/f2FRsuolWoM ir3-lab-macos-host (ED25519)
+total 16
+drwx------ 2 root         root         4096 Nov  3 19:34 .
+drwx------ 5 root         root         4096 Nov  3 19:34 ..
+-rw------- 1 test.billing test.billing  100 Nov  3 19:21 test.billing.authorized_keys
+-rw------- 1 test.nurse   test.nurse    100 Nov  3 19:21 test.nurse.authorized_keys

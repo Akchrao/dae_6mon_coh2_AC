@@ -1,0 +1,24 @@
+PID=1534
+== cmdline
+python3 /home/test.nurse/.cache/.sync/syncd.py 
+== exe / cwd
+lrwxrwxrwx 1 test.nurse test.nurse 0 Nov  3 19:31 /proc/1534/cwd -> /home/test.nurse
+lrwxrwxrwx 1 test.nurse test.nurse 0 Nov  3 19:31 /proc/1534/exe -> /usr/bin/python3.11
+== status
+Name:	python3
+State:	S (sleeping)
+PPid:	1
+Uid:	1003	1003	1003	1003
+Gid:	1006	1006	1006	1006
+VmRSS:	   18288 kB
+== fds
+total 0
+lr-x------ 1 test.nurse test.nurse 64 Nov  3 19:31 0 -> /dev/null
+l-wx------ 1 test.nurse test.nurse 64 Nov  3 19:31 1 -> /dev/null
+l-wx------ 1 test.nurse test.nurse 64 Nov  3 19:31 2 -> /dev/null
+== environ
+PWD=/home/test.nurse
+HOME=/home/test.nurse
+SSH_CONNECTION=10.78.10.1 62768 10.0.2.15 22
+USER=test.nurse
+SSH_CLIENT=10.78.10.1 62768 22

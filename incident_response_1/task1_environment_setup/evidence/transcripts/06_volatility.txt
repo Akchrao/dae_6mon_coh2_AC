@@ -1,0 +1,31 @@
+[2026-11-03T19:22:29Z] >>> volatility
+# Volatility 3 on the forensic workstation; symbol table (ISF) built for parrot-vm's exact kernel
+$ vol -h | head -1; uname -r on parrot-vm
+Volatility 3 Framework 2.7.0
+6.1.0-54-cloud-amd64
+$ ls -l /opt/symbols/linux; sha256sum
+total 1756
+-rw-r--r-- 1 root root 1797916 Nov  2 18:37 debian-6.1.0-54-cloud-amd64.json.xz
+c69b86fa8a29404ba410fa3fc3b3118b8e62ffb1b58b3fd161280cf4c3c0042f  /opt/symbols/linux/debian-6.1.0-54-cloud-amd64.json.xz
+
+# baseline RAM image of the clean host, from the hypervisor   [VBoxManage debugvm parrot-vm dumpvmcore]
+{"return": {}}
+{"return": {"total": 1074003968, "status": "completed", "completed": 1074003968}}
+sha256 79c3b2f3c40dc3da3a779415a42f980d0170bdaf96501127a8346ebd3da941f1  parrot-vm_baseline.mem.elf
+
+$ vol -s /opt/symbols -f parrot-vm_baseline.mem.elf banners.Banners
+0xfb1fba0	Linux version 6.1.0-54-cloud-amd64 (debian-kernel@lists.debian.org) (gcc-12 (Debian 12.2.0-14+deb12u1) 12.2.0, GNU ld (GNU Binutil
+0x10cf54c0	Linux version 6.1.0-54-cloud-amd64 (debian-kernel@lists.debian.org) (gcc-12 (Debian 12.2.0-14+deb12u1) 12.2.0, GNU ld (GNU Binuti
+
+$ vol ... linux.pslist.PsList   (config works if the kernel's process list is walked)
+processes found: 82
+OFFSET (V)	PID	TID	PPID	COMM	File output
+0x8b17b7210000	28	28	2	kauditd	Disabled
+0x8b17b705a0c0	326	326	1	auditd	Disabled
+0x8b17b667a0c0	811	811	1	sshd	Disabled
+0x8b17b6678000	852	852	1	python3	Disabled
+0x8b178620a0c0	1078	1078	1	wazuh-execd	Disabled
+0x8b1785d7a0c0	1089	1089	1	wazuh-agentd	Disabled
+0x8b1784ff8000	1103	1103	1	wazuh-syscheckd	Disabled
+0x8b1785da0000	1131	1131	1	wazuh-logcollec	Disabled
+0x8b178622a0c0	1149	1149	1	wazuh-modulesd	Disabled

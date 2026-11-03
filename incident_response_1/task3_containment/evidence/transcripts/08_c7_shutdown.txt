@@ -1,0 +1,33 @@
+[2026-11-03T19:34:12Z] >>> c7_shutdown
+# C7 over the quarantine path (ir-forensics -> 10.78.50.2:2222 -> parrot-vm)
+## IR1-2026-002 (Tara Jones, mover)
+$ pkill -KILL -f "^python3 .*[s]yncd"; pkill -KILL -u test.nurse; sleep 1; pgrep -u test.nurse || echo no test.nurse processes
+no test.nurse processes
+$ systemctl stop cron && systemctl mask cron && systemctl is-active cron
+Created symlink /etc/systemd/system/cron.service → /dev/null.
+inactive
+$ systemctl stop ehr-portal; systemctl disable ehr-portal 2>&1; echo "active=$(systemctl is-active ehr-portal) enabled=$(systemctl is-enabled ehr-portal)"
+Removed "/etc/systemd/system/multi-user.target.wants/ehr-portal.service".
+active=inactive enabled=disabled
+$ usermod -L -e 1 test.nurse && gpasswd -d test.nurse clinical && usermod -aG disabled-users test.nurse && id test.nurse
+Removing user test.nurse from group clinical
+uid=1003(test.nurse) gid=1006(test.nurse) groups=1006(test.nurse),1002(billing),1003(disabled-users)
+$ install -d -m 700 /root/ir-quarantine && mv /home/test.nurse/.ssh/authorized_keys /root/ir-quarantine/test.nurse.authorized_keys && ls /root/ir-quarantine
+test.nurse.authorized_keys
+
+## IR1-2026-003 (Sathya Hasi, unapproved sudo grant)
+$ gpasswd -d test.clinician sudo && getent group sudo
+Removing user test.clinician from group sudo
+sudo:x:27:it_admin
+
+## IR1-2026-001 (Jeevan Smith, leaver: blocked by DenyGroups, but the SSH key was still on the host)
+$ mv /home/test.billing/.ssh/authorized_keys /root/ir-quarantine/test.billing.authorized_keys && ls /root/ir-quarantine
+test.billing.authorized_keys
+test.nurse.authorized_keys
+
+## sshd: listen on the quarantine address only, responder only
+$ printf "ListenAddress 10.0.3.15\nAllowUsers ir-analyst\n" > /etc/ssh/sshd_config.d/00-ir-containment.conf && sshd -t && systemctl reload ssh && sshd -T | grep -E "^(listenaddress|allowusers)"
+listenaddress 10.0.3.15:22
+allowusers ir-analyst
+$ su -s /bin/sh test.nurse -c true 2>&1; echo "login as test.nurse: exit=$?"; setpriv --reuid=test.nurse --regid=test.nurse --init-groups cat /srv/ehr/clinical/PT-1003.txt 2>&1; echo "read PT-1003 with test.nurse current groups: exit=$?"
+kex_exchange_identification: read: Connection reset by peer

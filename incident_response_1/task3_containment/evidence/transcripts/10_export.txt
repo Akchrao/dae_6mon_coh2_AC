@@ -1,0 +1,14 @@
+$ capinfos IR1-2026-002_live_tcpdump.pcap
+Number of packets:   60
+First packet time:   2026-11-03 19:31:30.641144
+Last packet time:    2026-11-03 19:31:50.735658
+$ capinfos hypervisor_nic0_clinical.pcap
+Number of packets:   22 k
+First packet time:   2026-11-03 19:21:00.044217
+Last packet time:    2026-11-03 19:35:33.571427
+$ capinfos hypervisor_nic1_quarantine.pcap
+Number of packets:   1756
+First packet time:   2026-11-03 19:22:44.118274
+Last packet time:    2026-11-03 19:35:33.575076
+POSTs to the IOC on the wire: 10; uploads logged by the drop site: 10
+evidence index: 29 files

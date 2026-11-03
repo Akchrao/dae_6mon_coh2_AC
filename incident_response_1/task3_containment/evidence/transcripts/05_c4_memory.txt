@@ -1,0 +1,25 @@
+[2026-11-03T19:32:32Z] >>> c4_memory
+# C4a process memory of the uploader - gdb gcore in the guest
+Saved corefile /dev/shm/syncd.1534
+[Inferior 1 (process 1534) detached]
+-rw-r--r-- 1 root root 11973688 Nov  3 19:32 /dev/shm/syncd.1534
+acquired /dev/shm/syncd.1534 -> /evid/IR1-2026-002/IR1-2026-002_syncd.core  bytes=11973688
+  sha256 source(parrot-vm)=1d4ccb577d0dcdd5b1cd512b473e62dc06cc8340c1251a23d3161db1ac5a802a
+  sha256 copy(ir-forensics)=1d4ccb577d0dcdd5b1cd512b473e62dc06cc8340c1251a23d3161db1ac5a802a  MATCH
+      7 /home/test.nurse/.cache/.sync/syncd.py
+      3 10.78.99.66
+      2 MRN: SYN-0003
+      2 10.78.99.66:8080
+      1 ~/.cache/.sync/pt1003.txt
+      1 unclosed file <_io.BufferedReader name='/home/test.nurse/.cache/.sync/pt1003.txt'>
+      1 syncd/0.3
+      1 syncd.py
+      1 pt1003.txt
+      1 http://10.78.99.66:8080/sync
+      1 er-Agent: syncd/0.3
+      1 User-Agent: syncd/0.3
+
+# C4b full RAM image from the hypervisor   [VBoxManage debugvm parrot-vm dumpvmcore]
+{"return": {}}
+{"return": {"total": 1074003968, "status": "completed", "completed": 1074003968}}
+sha256 7010d346a57e2818d14b61d8ba9dd780258f73cf3c3f7bc77a4c5789d4fe9a0c  IR1-2026-002_parrot-vm.mem.elf
