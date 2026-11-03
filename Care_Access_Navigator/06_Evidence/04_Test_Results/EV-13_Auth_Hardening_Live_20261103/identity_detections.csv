@@ -1,0 +1,23 @@
+rule_id,severity,time_utc,subject,detail
+CAN-ID-005 privilege change,High,2026-10-06T16:29:23.791000+00:00,test.billing1,CREATE role-mappings: billing (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-06T16:29:24.215000+00:00,test.nurse1,CREATE role-mappings: nurse (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-06T16:29:24.636000+00:00,test.clinician1,CREATE role-mappings: clinician (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-06T16:29:25.063000+00:00,test.hr1,CREATE role-mappings: hr (by admin event)
+CAN-ID-005 privilege change,High,2026-10-06T16:29:25.497000+00:00,test.itsupport1,CREATE role-mappings: it-support (by admin event)
+CAN-ID-005 privilege change,High,2026-10-06T16:29:25.922000+00:00,test.secanalyst1,CREATE role-mappings: security-analyst (by admin event)
+CAN-ID-005 privilege change,Medium,2026-10-06T16:29:26.344000+00:00,test.vendor1,CREATE role-mappings: vendor (by admin event)
+CAN-ID-007 excessive patient-record access,High,2026-10-20T13:06:18+00:00,test.nurse1,24 distinct patient records in 60 min (threshold 15)
+CAN-ID-005 privilege change,High,2026-11-03T21:20:20.694000+00:00,test.billing2,CREATE groups: Billing (by admin event)
+CAN-ID-005 privilege change,Medium,2026-11-03T21:20:20.732000+00:00,test.clinician2,CREATE groups: Clinicians (by admin event)
+CAN-ID-001 brute force,High,2026-11-03T21:20:24.319000+00:00,test.vendor1,22 failed logins in 10 min
+CAN-ID-005 privilege change,Medium,2026-11-03T21:20:55.630000+00:00,test.billing1,DELETE role-mappings: billing (by admin event)
+CAN-ID-005 privilege change,Medium,2026-11-03T21:20:55.644000+00:00,test.clinician1,DELETE role-mappings: clinician (by admin event)
+CAN-ID-005 privilege change,Medium,2026-11-03T21:20:55.655000+00:00,test.hr1,DELETE role-mappings: hr (by admin event)
+CAN-ID-005 privilege change,Medium,2026-11-03T21:20:55.663000+00:00,test.itsupport1,DELETE role-mappings: it-support (by admin event)
+CAN-ID-005 privilege change,Medium,2026-11-03T21:20:55.672000+00:00,test.nurse1,DELETE role-mappings: nurse (by admin event)
+CAN-ID-005 privilege change,Medium,2026-11-03T21:20:55.680000+00:00,test.secanalyst1,DELETE role-mappings: security-analyst (by admin event)
+CAN-ID-005 privilege change,Medium,2026-11-03T21:20:55.693000+00:00,test.vendor1,DELETE role-mappings: vendor (by admin event)
+CAN-ID-004 unauthorized app access,Medium,2026-11-03T21:21:09.173000+00:00,test.billing2,client=ehr-simulator
+CAN-ID-003 login while locked out,Medium,2026-11-03T21:21:24.899000+00:00,test.vendor1,client=billing-app
+CAN-ID-004 unauthorized app access,Medium,2026-11-03T21:21:31.352000+00:00,test.clinician2,client=billing-app
+CAN-ID-004 unauthorized app access,Medium,2026-11-03T21:21:32.924000+00:00,test.clinician2,client=hr-app

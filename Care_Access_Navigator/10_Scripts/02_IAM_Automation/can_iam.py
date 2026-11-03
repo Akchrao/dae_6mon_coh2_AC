@@ -39,10 +39,11 @@ REALM = os.environ.get("KC_REALM", "care-access-navigator")
 EVID = os.environ.get("CAN_EVIDENCE", "./evidence")
 
 # Business role -> Keycloak realm role -> RBAC group (one group per job function)
+# (names match the groups built by hand in the live lab, Week 2 build log)
 ROLE_GROUPS = {
-    "clinician": "HRMC-Clinicians", "nurse": "HRMC-Nurses", "billing": "HRMC-Billing",
-    "hr": "HRMC-HR", "it-support": "HRMC-IT-Support",
-    "security-analyst": "HRMC-Security-Analysts", "vendor": "HRMC-Vendors",
+    "clinician": "Clinicians", "nurse": "Nurses", "billing": "Billing",
+    "hr": "HR", "it-support": "IT-Support",
+    "security-analyst": "Security-Analysts", "vendor": "Vendors",
 }
 PRIVILEGED = {"it-support", "security-analyst", "billing"}   # MFA required (policy 4.6 / PCI 8.4.2)
 MFA_CLIENTS = ["billing-app", "hr-app"]                       # apps bound to the MFA flow
@@ -170,17 +171,26 @@ def cmd_harden(kc, a):
     otp_sub = next(e for e in ex if e.get("authenticationFlow") and "Conditional OTP" in e["displayName"])
     sub_alias = urllib.parse.quote(otp_sub["displayName"])
     sub_ex = kc.get(f"/authentication/flows/{sub_alias}/executions")
+    for e in sub_ex:   # "user configured" lets un-enrolled users skip MFA; the role condition replaces it
+        if e.get("providerId") == "conditional-user-configured":
+            kc.delete(f"/authentication/executions/{e['id']}")
     if not any(e.get("providerId") == "conditional-user-role" for e in sub_ex):
-        for e in sub_ex:   # replace "user configured" (lets un-enrolled users skip MFA) with "user role"
-            if e.get("providerId") == "conditional-user-configured":
-                kc.delete(f"/authentication/executions/{e['id']}")
         kc.post(f"/authentication/flows/{sub_alias}/executions/execution", {"provider": "conditional-user-role"})
-        sub_ex = kc.get(f"/authentication/flows/{sub_alias}/executions")
-        cond = next(e for e in sub_ex if e.get("providerId") == "conditional-user-role")
-        kc.put(f"/authentication/flows/{sub_alias}/executions", {"id": cond["id"], "requirement": "REQUIRED"})
+    sub_ex = kc.get(f"/authentication/flows/{sub_alias}/executions")
+    cond = next(e for e in sub_ex if e.get("providerId") == "conditional-user-role")
+    kc.put(f"/authentication/flows/{sub_alias}/executions", {"id": cond["id"], "requirement": "REQUIRED"})
+    if not cond.get("authenticationConfig"):   # a hand-added condition may have no role configured yet
         kc.post(f"/authentication/executions/{cond['id']}/config",
                 {"alias": "cond-mfa-required-role", "config": {"condUserRole": "mfa-required", "negate": "false"}})
+    while kc.get(f"/authentication/flows/{sub_alias}/executions")[0]["id"] != cond["id"]:
         kc.post(f"/authentication/executions/{cond['id']}/raise-priority")   # condition before OTP form
+    for e in kc.get(f"/authentication/flows/{fq}/executions"):
+        # a role condition placed directly in the forms flow (outside the conditional sub-flow) has no effect
+        if e.get("providerId") == "conditional-user-role" and e["level"] == 1:
+            cfg = kc.get(f"/authentication/config/{e['authenticationConfig']}") if e.get("authenticationConfig") else {}
+            kc.delete(f"/authentication/executions/{e['id']}")
+            log("harden.mfa_removed_misplaced_condition", config=cfg.get("config"),
+                why="condition sat outside the Conditional OTP sub-flow; superseded by role mfa-required")
     for e in kc.get(f"/authentication/flows/{sub_alias}/executions"):
         if e.get("providerId") == "auth-otp-form" and e["requirement"] != "REQUIRED":
             kc.put(f"/authentication/flows/{sub_alias}/executions", {"id": e["id"], "requirement": "REQUIRED"})
