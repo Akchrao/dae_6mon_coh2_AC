@@ -1,0 +1,11 @@
+kpi,formula,numerator,denominator,value,unit,target,measured_on,note
+Privileged MFA enforcement,privileged local accounts forced through OTP / privileged local accounts,4,4,100.0,%,100%,2026-11-03,Policy enforced realm-wide by role mfa-required (EV-13)
+Privileged MFA enrolment,privileged users with OTP enrolled / privileged users,0,5,0.0,%,100%,2026-11-03,Enrolment happens at next sign-in (CA-13)
+Access review completion,accounts with reviewer_decision / accounts,0,16,0.0,%,100% per quarter,2026-11-03,Sign-off pending (CA-05)
+Flagged accounts (High),count risk=High,5,,5,count,0,2026-11-03,AR-2026-Q4
+Open High audit findings,count rating=High and not closed,1,,1,count,0 by Dec 2026,2026-11-03,F-03 (EX-02)
+Control test pass rate (11/03),PASS / tests run on 2026-11-03,12,14,85.7,%,>= 90%,2026-11-03,W5 retests + end-to-end run
+Control test pass rate (10/13 audit),PASS / tests in CAN-IA-2026-01,8,14,57.1,%,>= 90%,2026-11-03,Baseline for the before/after story
+Corrective actions verified,Verified actions / all actions,6,17,35.3,%,trend up,2026-11-03,Exceptions and CA tracker
+Open exceptions,exceptions not closed,7,,7,count,each within expiry,2026-11-03,Exception register
+Residual High risks,count residual_rating=High,3,,3,count,<= 1,2026-11-03,risks.csv (scores from Risk Management 1)

@@ -13,3 +13,17 @@ ENC-01,1,Deny storage over HTTP,PASS,2026-10-13,CAN-IA-2026-01
 ENC-01,2,Deny TLS 1.0 storage,PASS,2026-10-13,CAN-IA-2026-01
 ENC-01,3,Allow compliant HTTPS/TLS1.2,PASS,2026-10-13,CAN-IA-2026-01
 ENC-01,4,IdP transport TLS,EXCEPTION,2026-10-13,CAN-IA-2026-01
+AC-01,4,MFA enforcement (retest),PASS,2026-11-03,CAN-W5-RETEST-2026-11-03
+AC-01,5,Lockout and password policy (retest),PASS,2026-11-03,CAN-W5-RETEST-2026-11-03
+AC-01,6,Completed access review (retest),FAIL,2026-11-03,CAN-W5-RETEST-2026-11-03
+AC-01,TC-01,New clinician receives approved role,PASS,2026-11-03,CAN-E2E-2026-11-03
+AC-04,TC-02,Billing user attempts clinical / admin function,PASS,2026-11-03,CAN-E2E-2026-11-03
+AC-03,TC-03,Employee changes from Nurse to Billing,PASS,2026-11-03,CAN-E2E-2026-11-03
+AC-02,TC-04,Employee termination simulated,PASS,2026-11-03,CAN-E2E-2026-11-03
+IA-02,TC-05,Repeated failed authentication,PASS,2026-11-03,CAN-E2E-2026-11-03
+IA-02,TC-05 first run,Repeated failed authentication,FAIL,2026-11-03,CAN-E2E-2026-11-03
+AU-02,TC-06,Disabled user attempts login,PASS,2026-11-03,CAN-E2E-2026-11-03
+AC-05,TC-07,Unexpected privileged-role assignment,PASS,2026-11-03,CAN-E2E-2026-11-03
+VM-01,TC-08,Vendor account reaches expiry,PASS,2026-11-03,CAN-E2E-2026-11-03
+AR-01,TC-09,Quarterly access review identifies excess access,PASS,2026-11-03,CAN-E2E-2026-11-03
+CA-01,TC-10,High-risk control gap identified,PASS,2026-11-03,CAN-E2E-2026-11-03

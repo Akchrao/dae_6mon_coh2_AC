@@ -1,0 +1,274 @@
+{
+ "run_start_utc": "2026-11-03T21:25:52.900486+00:00",
+ "run_end_utc": "2026-11-03T21:26:28Z",
+ "realm": "care-access-navigator",
+ "results": [
+  {
+   "tc": "TC-01",
+   "scenario": "New clinician receives approved role",
+   "expected": "Only clinician-approved application access is granted",
+   "steps": [
+    "can_iam.py joiner (REQ-2026-0601, group Clinicians)",
+    "first sign-in completed",
+    "sign in to all 4 apps"
+   ],
+   "actual": {
+    "groups": [
+     "Clinicians"
+    ],
+    "roles": [
+     "clinician"
+    ],
+    "logins": {
+     "ehr-simulator": "LOGGED_IN (auth code issued)",
+     "patient-portal": "LOGGED_IN (auth code issued)",
+     "billing-app": "DENIED (role not approved for this app)",
+     "hr-app": "DENIED (role not approved for this app)"
+    }
+   },
+   "result": "PASS",
+   "evidence": "can_iam_audit_log.jsonl: JOINER, E2E.login"
+  },
+  {
+   "tc": "TC-02",
+   "scenario": "Billing user attempts clinical / admin function",
+   "expected": "Access denied",
+   "steps": [
+    "sign in as test.billing2 to ehr-simulator, patient-portal, hr-app"
+   ],
+   "actual": {
+    "logins": {
+     "ehr-simulator": "DENIED (role not approved for this app)",
+     "patient-portal": "DENIED (role not approved for this app)",
+     "hr-app": "DENIED (role not approved for this app)"
+    }
+   },
+   "result": "PASS",
+   "evidence": "E2E.login; keycloak_login_events.csv (LOGIN_ERROR access_denied); CAN-ID-004"
+  },
+  {
+   "tc": "TC-03",
+   "scenario": "Employee changes from Nurse to Billing",
+   "expected": "Old access removed; new billing access granted",
+   "steps": [
+    "joiner nurse (REQ-2026-0602)",
+    "EHR sign-in before",
+    "can_iam.py mover (CHG-2026-0602)",
+    "EHR + Billing sign-in after"
+   ],
+   "actual": {
+    "before": {
+     "snapshot": {
+      "username": "test.nurse2",
+      "enabled": true,
+      "groups": [
+       "Nurses"
+      ],
+      "effective_roles": [
+       "nurse"
+      ],
+      "sessions": 0
+     },
+     "ehr": "LOGGED_IN (auth code issued)"
+    },
+    "after": {
+     "snapshot": {
+      "username": "test.nurse2",
+      "enabled": true,
+      "groups": [
+       "Billing"
+      ],
+      "effective_roles": [
+       "billing"
+      ],
+      "sessions": 0
+     },
+     "ehr": "DENIED (role not approved for this app)",
+     "billing": "MFA_REQUIRED (OTP setup/prompt shown)"
+    }
+   },
+   "result": "PASS",
+   "evidence": "can_iam_audit_log.jsonl: MOVER removed/added"
+  },
+  {
+   "tc": "TC-04",
+   "scenario": "Employee termination simulated",
+   "expected": "Identity disabled and access revoked/removed",
+   "steps": [
+    "can_iam.py leaver (TERM-2026-0602)",
+    "old password tried on ehr-simulator"
+   ],
+   "actual": {
+    "after": {
+     "username": "test.nurse2",
+     "enabled": false,
+     "groups": [],
+     "effective_roles": [],
+     "sessions": 0
+    },
+    "login": "DENIED (account disabled)"
+   },
+   "result": "PASS",
+   "evidence": "can_iam_audit_log.jsonl: LEAVER verification"
+  },
+  {
+   "tc": "TC-05",
+   "scenario": "Repeated failed authentication",
+   "expected": "SIEM detects/alerts based on configured threshold",
+   "steps": [
+    "11 wrong passwords for test.vendor1",
+    "can_iam.py detect"
+   ],
+   "actual": {
+    "locked": true,
+    "numFailures": 10,
+    "alerts": []
+   },
+   "result": "PASS (retest)",
+   "evidence": "identity_detections.csv CAN-ID-001; E2E.lockout",
+   "first_run": {
+    "result": "FAIL",
+    "actual": {
+     "locked": true,
+     "numFailures": 10,
+     "alerts": []
+    }
+   },
+   "corrective_action": "CA-10: CAN-ID-001 de-duplication defect fixed",
+   "retest": {
+    "start_utc": "2026-11-03T21:31:01.087974+00:00",
+    "locked": true,
+    "numFailures": 10,
+    "alerts": [
+     {
+      "rule_id": "CAN-ID-001 brute force",
+      "severity": "High",
+      "time_utc": "2026-11-03T21:31:01.134000+00:00",
+      "subject": "test.vendor1",
+      "detail": "11 failed logins in 10 min"
+     }
+    ],
+    "note": "fresh burst run after the 10-minute window of the earlier W5 test had closed"
+   },
+   "root_cause": "first run: TC-05 attempts fell inside the 10-minute window of the 21:20 W5 lockout test, and CAN-ID-001 raised only one alert per user for all history (defect, fixed as CA-10)"
+  },
+  {
+   "tc": "TC-06",
+   "scenario": "Disabled user attempts login",
+   "expected": "Event is visible and investigated",
+   "steps": [
+    "terminated test.nurse2 signs in (TC-04)",
+    "can_iam.py detect"
+   ],
+   "actual": {
+    "alerts": [
+     {
+      "rule_id": "CAN-ID-002 disabled-account login",
+      "severity": "High",
+      "time_utc": "2026-11-03T21:26:10.470000+00:00",
+      "subject": "test.nurse2",
+      "detail": "client=ehr-simulator"
+     }
+    ]
+   },
+   "result": "PASS",
+   "evidence": "identity_detections.csv CAN-ID-002; keycloak_login_events.csv user_disabled"
+  },
+  {
+   "tc": "TC-07",
+   "scenario": "Unexpected privileged-role assignment",
+   "expected": "Change is detected/reviewed and unauthorized privilege removed",
+   "steps": [
+    "insider adds test.vendor1 to Billing (no ticket)",
+    "access review",
+    "remove from Billing (CA-07)",
+    "can_iam.py detect"
+   ],
+   "actual": {
+    "alerts": [
+     {
+      "rule_id": "CAN-ID-005 privilege change",
+      "severity": "High",
+      "time_utc": "2026-11-03T21:26:10.489000+00:00",
+      "subject": "test.vendor1",
+      "detail": "CREATE groups: Billing (by admin event)"
+     },
+     {
+      "rule_id": "CAN-ID-005 privilege change",
+      "severity": "Medium",
+      "time_utc": "2026-11-03T21:26:10.641000+00:00",
+      "subject": "test.vendor1",
+      "detail": "DELETE groups: Billing (by admin event)"
+     }
+    ],
+    "review_flags": "MULTIPLE_ROLES_SOD_CHECK;VENDOR_NO_END_DATE;PRIVILEGED_NO_MFA_ENROLLED;STALE_NO_LOGIN_90D",
+    "after_roles": [
+     "vendor"
+    ]
+   },
+   "result": "PASS",
+   "evidence": "identity_detections.csv CAN-ID-005; access_review_AR-E2E-TC07-20261103.csv"
+  },
+  {
+   "tc": "TC-08",
+   "scenario": "Vendor account reaches expiry",
+   "expected": "Access is disabled or flagged for review",
+   "steps": [
+    "vendor joiner with access_end_date=2026-11-02 (REQ-2026-0603)",
+    "access review",
+    "leaver (TERM-2026-0603)"
+   ],
+   "actual": {
+    "review_flags": "ACCESS_PAST_END_DATE",
+    "risk": "High",
+    "after": {
+     "username": "test.vendor2",
+     "enabled": false,
+     "groups": [],
+     "effective_roles": [],
+     "sessions": 0
+    }
+   },
+   "result": "PASS",
+   "evidence": "access_review_AR-E2E-TC08-20261103.csv; LEAVER"
+  },
+  {
+   "tc": "TC-09",
+   "scenario": "Quarterly access review identifies excess access",
+   "expected": "Finding becomes remediation task",
+   "steps": [
+    "access review",
+    "flag DISABLED_BUT_HAS_ACCESS on Jeevan Smith (leaver)",
+    "corrective action CA-09: remove role",
+    "re-review"
+   ],
+   "actual": {
+    "before_flags": "DISABLED_BUT_HAS_ACCESS;PRIVILEGED_NO_MFA_ENROLLED",
+    "removed": [
+     "billing"
+    ],
+    "after_flags": "",
+    "after_roles": ""
+   },
+   "result": "PASS",
+   "evidence": "access_review_AR-E2E-TC09-BEFORE/AFTER-20261103.csv; E2E.remediation"
+  },
+  {
+   "tc": "TC-10",
+   "scenario": "High-risk control gap identified",
+   "expected": "Risk is recorded, assigned and tracked",
+   "steps": [
+    "audit finding F-03 (no 12-month log retention, High)",
+    "risk R03 credential compromise / monitoring gap",
+    "exception EX-02 with compensating controls",
+    "corrective action CA-03",
+    "dashboard tile Open High findings"
+   ],
+   "actual": {
+    "trace": "F-03 -> R03 -> EX-02 -> CA-03 -> audit_findings.csv / exceptions.csv (Tableau)"
+   },
+   "result": "PASS",
+   "evidence": "CAN_DOC_Exceptions_and_Corrective_Actions_v1.0.xlsx; Tableau_Dataset"
+  }
+ ]
+}

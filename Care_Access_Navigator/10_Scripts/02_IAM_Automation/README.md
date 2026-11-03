@@ -2,15 +2,15 @@
 
 One Python file (standard library only, so there's nothing to `pip install` and no admin rights needed). It closes the Compliance 1 audit findings F-01, F-02, F-04 and F-05 in your Keycloak realm, and it produces the evidence for JML, access review, MFA, lockout and SAML SSO.
 
-> **Tested on 2026-10-13** against a replica of your realm (Keycloak 26.0.7, same 7 roles, 4 clients, 7 test users and the same weak settings as evidence E-AC-01/E-AC-02). See `replica-test-evidence/`. The replica is not your lab, so you still need to run it on your Mac to get your own evidence.
+> **Run on the live lab on 2026-11-03** (Week 5 hardening, evidence `06_Evidence/04_Test_Results/EV-13_Auth_Hardening_Live_20261103/`) and used for the Week 12 end-to-end tests (`e2e_tests.py`, evidence `EV-14_End_to_End_Tests_20261103/`). The first test run on 2026-10-13 was against a replica; see `replica-test-evidence/`.
 
 ---
 
 ## Before you start (5 min)
 
-1. Start your lab: open **Terminal**, then run `cd ~/Desktop/dae_6mon_coh2_AC/care-access-navigator-iam-lab && docker compose up -d`
+1. Start your lab: open **Terminal**, then run `cd ~/Desktop/dae_6mon_coh2_AC/Care_Access_Navigator/03_IAM_Lab/01_Keycloak/01_Config && docker compose up -d`
 2. Check it's up: open http://localhost:8080 in the browser and sign in to the admin console. **Stop and confirm.**
-3. **Export your realm first.** This is your rollback point. In the admin console, open **Realm settings**, then **Action** (top right), then **Partial export**. Tick groups/roles and clients, and save the file as `CAN_realm_export_BEFORE_2026-10-xx.json` in `semester_3/Care_Access_Navigator/03_IAM_Lab/01_Keycloak/02_Realm_Exports/`.
+3. **Export your realm first.** This is your rollback point. In the admin console, open **Realm settings**, then **Action** (top right), then **Partial export**. Tick groups/roles and clients, and save the file as `CAN_realm_export_BEFORE_2026-10-xx.json` in `Care_Access_Navigator/03_IAM_Lab/01_Keycloak/02_Realm_Exports/`.
 4. In the same Terminal, set your admin login. Use the values from your `.env`, and **never commit them to GitHub**:
    ```bash
    cd ~/Desktop/dae_6mon_coh2_AC/Care_Access_Navigator/10_Scripts/02_IAM_Automation
@@ -34,10 +34,13 @@ One Python file (standard library only, so there's nothing to `pip install` and 
 | 8 | `python3 can_iam.py review --review-id AR-2026-Q4` | Quarterly access-review CSV with risk flags. Open it in Excel, fill `reviewer_decision`, and sign. | Week 4 Day 4, F-05 |
 | 8b | `python3 can_iam.py detect --ehr-log sample_ehr_access_log.csv` | Simulated SIEM: rules CAN-ID-001 to 007 over Keycloak events (brute force, disabled-account login, login while locked, unapproved app, privilege change, **expired access still in use**) plus the synthetic EHR log (**excessive patient-record access**, 15+ patients in 60 min) → `identity_detections.csv`. To trigger CAN-ID-006, create a vendor with `joiner ... --end-date` set to yesterday, then sign in as them. See `docs/adr/ADR-SIEM-choice.md` | Proof of detection, Week 6; all 5 design-doc monitoring use cases |
 | 9 | `python3 can_iam.py saml-demo --username test.clinician1 --password '<pw>'` | SAML 2.0 federation: partner realm logs in through HRMC and receives a signed assertion | Federation (SAML/SSO) |
+| 10 | `python3 e2e_tests.py` | Test case catalog TC-01..TC-10 end to end (joiner, denied app, mover, leaver, lockout + detection, disabled login, unexpected privilege, vendor expiry, access-review remediation) → `e2e_results.json` | Week 12 Day 1 |
 
 After each run, `evidence/` holds `can_iam_audit_log.jsonl` (who/what/when, before vs after), the CSVs and XML, and a fresh `EVIDENCE-INDEX-SHA256.txt`.
 
 ## Things to know (gotchas)
+
+* RBAC groups are the ones built in the lab: `Clinicians`, `Nurses`, `Billing`, `HR`, `IT-Support`, `Security-Analysts`, `Vendors` (`ROLE_GROUPS` at the top of the script).
 
 * **Entra ID users (`entra-id.*`) get their role from Entra**, not from a Keycloak group. `harden --migrate` skips them, `review` doesn't flag their directly mapped role, `app-gate` grants app access through the job role so they aren't blocked, and `mover` refuses them (change their app role in Entra instead). `leaver` still disables the Keycloak copy and reminds you to block sign-in in Entra too.
 * **Entra ID users (`entra-id.*`)** log in through Entra, not the Keycloak password form, so Keycloak's OTP step doesn't apply to them. Enforce MFA on the Entra side with **Security defaults** (free) or Conditional Access (needs P1), and write that down as a compensating control.

@@ -576,11 +576,14 @@ def cmd_detect(kc, a):
         who = users.get(e.get("userId")) or (e.get("details") or {}).get("username", "?")
         fails.setdefault(who, []).append(ts(e["time"]))
     for who, times in fails.items():
-        for i in range(len(times)):
+        i = 0
+        while i < len(times):   # one alert per burst; a later burst on the same user alerts again
             win = [t for t in times[i:] if (t - times[i]).total_seconds() <= 600]
             if len(win) >= 5:
                 alert("CAN-ID-001 brute force", "High", times[i], who, f"{len(win)} failed logins in 10 min")
-                break
+                i += len(win)
+            else:
+                i += 1
     for e in ev:
         who = users.get(e.get("userId")) or (e.get("details") or {}).get("username", "?")
         err = e.get("error", "")

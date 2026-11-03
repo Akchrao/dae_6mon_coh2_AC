@@ -1,0 +1,18 @@
+action_id,source,issue,action,owner,due,status,verification_criterion,verification_evidence,verified_on
+CA-01,F-01,MFA not enforced,Bind browser-mfa-privileged realm-wide with role condition mfa-required,IAM Analyst,2026-11-06,Verified,Privileged sign-in shows the OTP step,EV-13: test.billing2 billing-app MFA_REQUIRED,2026-11-03
+CA-02,F-02,Lockout disabled,"bruteForceProtected on, 10 failures, 30 minutes",IAM Analyst,2026-10-23,Verified (late),11 wrong passwords lock the account,EV-13 VERIFY.lockout PASS,2026-11-03
+CA-03,F-03,No 12-month log retention,Archive identity and cloud logs to low-cost storage with a 365-day lifecycle rule (cost approval needed first),Security Officer,2027-01-31,Open (EX-02),Logs older than 90 days can be queried,-,
+CA-04,F-04,Password standard below PCI,"length(12), history 4",IAM Analyst,2026-10-23,Verified (late),11-character and reused passwords rejected,EV-13 VERIFY.password_policy,2026-11-03
+CA-05,F-05,No completed access review,Run review; reviewer records a decision per account and signs,IAM Analyst + managers,2026-12-15,In progress,"Every row has reviewer_decision, reviewer, date",access_review_AR-AFTER-HARDEN-20261103.csv (decisions pending),
+CA-06,F-06,IdP over HTTP,Put Keycloak behind a TLS reverse proxy,IT Support,2027-01-31,Open (EX-05),Sign-in page served over HTTPS with TLS 1.2+,-,
+CA-07,TC-07,Vendor added to Billing without a ticket,Remove the membership; investigate who made it,IAM Analyst,2026-11-03,Verified,Vendor holds only the vendor role,EV-14 E2E.remediation TC-07,2026-11-03
+CA-08,Access review,test.vendor1 has no sponsor or end date,Sponsor sets an end date or the account is removed with the leaver step,IT Manager (sponsor),2026-11-10,Open,Review shows no VENDOR_NO_END_DATE,-,
+CA-09,TC-09,Leaver (Jeevan Smith) kept the billing role on the disabled Keycloak copy,Remove the role under TERM-2026-0301; add the IdP-role check to the leaver procedure,IAM Analyst,2026-11-03,Verified,Re-review shows no DISABLED_BUT_HAS_ACCESS,EV-14 AR-E2E-TC09-AFTER,2026-11-03
+CA-10,TC-05,"Brute-force rule CAN-ID-001 alerted only once per user, ever",Alert once per 10-minute burst,Security Analyst,2026-11-03,Verified,A new burst on the same user raises a new alert,EV-14 TC-05 retest,2026-11-03
+CA-11,EX-03,Keycloak port 8080 published on all interfaces,Publish as 127.0.0.1:8080 in docker-compose,IT Support,2026-11-10,Open,Port not reachable from another host,-,
+CA-12,EX-07,Lab passwords exposed in public git history,Rotate Keycloak admin and database passwords,IAM Analyst,2026-11-10,Open,Old password rejected,-,
+CA-13,Access review,Privileged users not yet enrolled in OTP,Enrolment forced at next sign-in; follow up on accounts not enrolled within 7 days,IAM Analyst,2026-11-10,In progress,Review shows mfa_enrolled = True for all privileged users,-,
+CA-14,Board audit,Status deck and design doc overstate progress (MVP deck slides 3 and 10; design doc section 14),Update both to the verified status,Student,2026-11-04,Open,Every claim traces to evidence,-,
+CA-15,SV-01..04,PKCE not enforced on public clients,Set pkce.code.challenge.method = S256,IAM Analyst,2026-12-15,Open,Sign-in without code_challenge fails,-,
+CA-16,SV-05,Automation signs in as the human admin,Create a service-account client with only the realm-management roles can_iam.py needs,IAM Analyst,2027-01-31,Open,can_iam.py runs with client credentials,-,
+CA-17,SV-06,Entra broker client secret expiry unknown,Record the expiry and set a reminder 30 days before,IAM Analyst,2026-11-10,Open,Expiry recorded in the register,-,
