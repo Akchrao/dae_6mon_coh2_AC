@@ -1,7 +1,8 @@
-# Tableau dataset: Care Access Navigator GRC dashboard (Week 11 starter)
+# tableau_dataset (moved)
 
-The CSVs below come from evidence that already exists: the RiskMgmt1 register, Compliance 1 audit CAN-IA-2026-01, E-LOG-01 alert history, the incident records and KPI definitions. `access_review_AR-2026-Q4.csv` and `identity_detections.csv` are **samples from the replica test run**. Replace them with the files `can_iam.py review` and `can_iam.py detect` produce on your own lab.
+This folder's content was moved on 2026-11-03 when the repository was organised by semester
+and by the Care Access Navigator workspace structure (CAN_DOC_Workspace_Structure_v0.1).
 
-**Tableau Public (free) publishes workbooks publicly.** That's fine here because everything is synthetic, but never load real data.
+**New location:** [`Care_Access_Navigator/08_Reporting/02_Dashboards/Tableau_Dataset/`](../../Care_Access_Navigator/08_Reporting/02_Dashboards/Tableau_Dataset/)
 
-Suggested views: (1) Risk heat map: inherent vs residual (risks.csv). (2) Audit findings by rating/status with a target-date Gantt. (3) Control test pass rate (control_tests.csv). (4) Identity detections by rule over time. (5) Access review: flagged accounts by flag and department. (6) KPI tiles from kpi_definitions.csv.
+This folder is kept so the original course structure is still visible on GitHub.

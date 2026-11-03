@@ -5,3 +5,6 @@ Care_Access_Navigator/keycloak-26.7.1.tar
 *.zip
 __pycache__/
 *.pyc
+
+# Lab secrets (use .env.example as the template)
+Care_Access_Navigator/03_IAM_Lab/01_Keycloak/01_Config/.env

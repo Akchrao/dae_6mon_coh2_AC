@@ -20,7 +20,7 @@ Deploying a full SIEM platform (Wazuh manager + indexer + dashboard, Splunk, or 
 - Neither platform changes the identity controls being demonstrated.
 
 ## Decision
-Detection is delivered as a **simulated SIEM detection layer**: the `detect` command in `capstone_next_steps/scripts/can_iam.py`. The detection logic, alert format and triage workflow are real; only the SIEM platform is left out.
+Detection is delivered as a **simulated SIEM detection layer**: the `detect` command in `Care_Access_Navigator/10_Scripts/02_IAM_Automation/can_iam.py`. The detection logic, alert format and triage workflow are real; only the SIEM platform is left out.
 
 | SIEM function | How the simulation does it |
 |---|---|
@@ -64,7 +64,7 @@ Wording for deliverables: *"A full SIEM platform (Wazuh/Splunk/Sentinel) was out
 
 ## References
 - Design document v1.2: Tech Stack, Monitoring use cases, Section 13 substitution note
-- `capstone_next_steps/scripts/can_iam.py` (`detect`) and `README.md` step 8b
-- `capstone_next_steps/scripts/sample_ehr_access_log.csv` (synthetic, for CAN-ID-007)
+- `Care_Access_Navigator/10_Scripts/02_IAM_Automation/can_iam.py` (`detect`) and `README.md` step 8b
+- `Care_Access_Navigator/10_Scripts/02_IAM_Automation/sample_ehr_access_log.csv` (synthetic, for CAN-ID-007)
 - Readiness Audit & Roadmap v2: §3.6 Monitoring unauthorized access; B6 attack simulation (INC-20261020-01)
 - Related: [ADR-OpenCTI-scope](ADR-OpenCTI-scope.md)
