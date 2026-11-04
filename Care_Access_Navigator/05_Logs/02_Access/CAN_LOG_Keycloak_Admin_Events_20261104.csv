@@ -1,0 +1,232 @@
+time_utc,operation,resource_type,resource_path,target_user,detail,admin_user,ip
+2026-09-17T20:11:36.769000+00:00,UPDATE,REALM,events/config,,,admin (master realm),192.168.65.1
+2026-09-17T20:12:42.384000+00:00,UPDATE,REALM,,,,admin (master realm),192.168.65.1
+2026-09-17T20:12:42.401000+00:00,UPDATE,REALM,events/config,,,admin (master realm),192.168.65.1
+2026-09-21T16:16:54.072000+00:00,CREATE,IDENTITY_PROVIDER,identity-provider/instances/entra-id,,,admin (master realm),192.168.65.1
+2026-09-21T16:17:40.074000+00:00,UPDATE,IDENTITY_PROVIDER,identity-provider/instances/entra-id,,,admin (master realm),192.168.65.1
+2026-09-21T17:24:21.992000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/bf45d193-94c7-491c-b30b-772e2753c366,,email-mapper,admin (master realm),192.168.65.1
+2026-09-21T17:24:29.950000+00:00,UPDATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/bf45d193-94c7-491c-b30b-772e2753c366,,email-mapper,admin (master realm),192.168.65.1
+2026-09-21T17:28:18.937000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/03464631-80e6-47b1-a140-c813640b1c47,,firstname-mapper,admin (master realm),192.168.65.1
+2026-09-21T17:28:24.763000+00:00,UPDATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/03464631-80e6-47b1-a140-c813640b1c47,,firstname-mapper,admin (master realm),192.168.65.1
+2026-09-21T17:28:30.982000+00:00,UPDATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/03464631-80e6-47b1-a140-c813640b1c47,,firstname-mapper,admin (master realm),192.168.65.1
+2026-09-21T17:33:06.325000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/68bd915f-8388-450f-9f33-7c2d6259fe16,,lastname-mapper,admin (master realm),192.168.65.1
+2026-09-21T17:33:08.861000+00:00,UPDATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/68bd915f-8388-450f-9f33-7c2d6259fe16,,lastname-mapper,admin (master realm),192.168.65.1
+2026-09-21T17:33:25.879000+00:00,UPDATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/bf45d193-94c7-491c-b30b-772e2753c366,,email-mapper,admin (master realm),192.168.65.1
+2026-09-21T17:33:30.977000+00:00,UPDATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/bf45d193-94c7-491c-b30b-772e2753c366,,email-mapper,admin (master realm),192.168.65.1
+2026-09-21T17:33:44.046000+00:00,UPDATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/03464631-80e6-47b1-a140-c813640b1c47,,firstname-mapper,admin (master realm),192.168.65.1
+2026-09-21T17:33:49.295000+00:00,UPDATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/03464631-80e6-47b1-a140-c813640b1c47,,firstname-mapper,admin (master realm),192.168.65.1
+2026-09-21T17:44:40.448000+00:00,UPDATE,IDENTITY_PROVIDER,identity-provider/instances/entra-id,,,admin (master realm),192.168.65.1
+2026-09-21T17:44:45.775000+00:00,UPDATE,IDENTITY_PROVIDER,identity-provider/instances/entra-id,,,admin (master realm),192.168.65.1
+2026-09-21T18:24:56.388000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/1fe93829-7772-4697-bc4c-682f0662ea0b,,username-template-mapper,admin (master realm),192.168.65.1
+2026-09-21T18:24:59.015000+00:00,UPDATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/1fe93829-7772-4697-bc4c-682f0662ea0b,,username-template-mapper,admin (master realm),192.168.65.1
+2026-09-21T18:25:23.221000+00:00,DELETE,USER,users/b0a65b74-1c52-4696-8310-250f311e4efd,,,admin (master realm),192.168.65.1
+2026-09-21T18:27:56.006000+00:00,UPDATE,IDENTITY_PROVIDER,identity-provider/instances/entra-id,,,admin (master realm),192.168.65.1
+2026-09-21T18:28:24.450000+00:00,UPDATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/1fe93829-7772-4697-bc4c-682f0662ea0b,,username-template-mapper,admin (master realm),192.168.65.1
+2026-09-21T18:28:25.899000+00:00,UPDATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/1fe93829-7772-4697-bc4c-682f0662ea0b,,username-template-mapper,admin (master realm),192.168.65.1
+2026-09-21T19:41:10.670000+00:00,DELETE,IDENTITY_PROVIDER,identity-provider/instances/entra-id,,,admin (master realm),127.0.0.1
+2026-09-21T19:41:11.070000+00:00,CREATE,IDENTITY_PROVIDER,identity-provider/instances/entra-id,,,admin (master realm),127.0.0.1
+2026-09-21T19:42:03.326000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/bde0d491-5b01-43c1-afc6-4d85845b1b40,,firstname-mapper,admin (master realm),127.0.0.1
+2026-09-21T19:42:03.705000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/e5ba148b-aa7b-4312-b143-b0a35ec459d6,,lastname-mapper,admin (master realm),127.0.0.1
+2026-09-21T19:42:04.104000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/bd4cdafc-842f-4fdb-b240-d770f983f044,,email-mapper,admin (master realm),127.0.0.1
+2026-09-21T19:42:04.481000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/561faa60-948e-465a-a889-960b1177c087,,username-template-mapper,admin (master realm),127.0.0.1
+2026-09-21T19:50:04.454000+00:00,UPDATE,IDENTITY_PROVIDER,identity-provider/instances/entra-id,,,admin (master realm),172.18.0.1
+2026-09-21T19:54:33.911000+00:00,DELETE,USER,users/bbc32683-ba82-41a7-bf76-13a45dec7535,,,admin (master realm),127.0.0.1
+2026-09-21T19:56:37.017000+00:00,DELETE,USER,users/c3222e0f-0fb6-4938-8017-d8ebd619788f,,,admin (master realm),127.0.0.1
+2026-09-22T15:43:14.113000+00:00,UPDATE,CLIENT,clients/1f83d0cb-a829-473b-87cb-8c56c48afa45,,,admin (master realm),172.18.0.1
+2026-09-22T15:44:28.953000+00:00,CREATE,REALM_SCOPE_MAPPING,clients/1f83d0cb-a829-473b-87cb-8c56c48afa45/scope-mappings/realm,,billing,admin (master realm),172.18.0.1
+2026-09-22T16:21:27.360000+00:00,UPDATE,CLIENT,clients/4f9cd5db-8f5f-4cea-9f7f-91e87accc6d0,,,admin (master realm),172.18.0.1
+2026-09-22T16:22:23.767000+00:00,CREATE,REALM_SCOPE_MAPPING,clients/4f9cd5db-8f5f-4cea-9f7f-91e87accc6d0/scope-mappings/realm,,"clinician,nurse",admin (master realm),172.18.0.1
+2026-09-22T16:36:14.542000+00:00,UPDATE,CLIENT,clients/04512244-d2f4-493b-830a-dc2ed9e8f896,,,admin (master realm),172.18.0.1
+2026-09-22T16:36:30.230000+00:00,CREATE,REALM_SCOPE_MAPPING,clients/04512244-d2f4-493b-830a-dc2ed9e8f896/scope-mappings/realm,,"clinician,nurse",admin (master realm),172.18.0.1
+2026-09-22T16:37:14.918000+00:00,UPDATE,CLIENT,clients/b39f8819-1f73-4e52-bf25-7856de60e5b0,,,admin (master realm),172.18.0.1
+2026-09-22T16:37:47.197000+00:00,CREATE,REALM_SCOPE_MAPPING,clients/b39f8819-1f73-4e52-bf25-7856de60e5b0/scope-mappings/realm,,hr,admin (master realm),172.18.0.1
+2026-09-22T16:39:47.298000+00:00,CREATE,REALM_SCOPE_MAPPING,clients/b39f8819-1f73-4e52-bf25-7856de60e5b0/scope-mappings/realm,,it-support,admin (master realm),172.18.0.1
+2026-09-22T16:42:03.179000+00:00,UPDATE,REALM,,,,admin (master realm),172.18.0.1
+2026-09-22T16:42:14.227000+00:00,UPDATE,REALM,,,,admin (master realm),172.18.0.1
+2026-09-22T16:42:23.739000+00:00,UPDATE,REALM,,,,admin (master realm),172.18.0.1
+2026-09-22T16:42:31.809000+00:00,UPDATE,REALM,,,,admin (master realm),172.18.0.1
+2026-09-22T16:42:40.473000+00:00,UPDATE,REALM,,,,admin (master realm),172.18.0.1
+2026-09-22T16:42:54.071000+00:00,UPDATE,REALM,,,,admin (master realm),172.18.0.1
+2026-09-22T16:42:59.997000+00:00,UPDATE,REALM,,,,admin (master realm),172.18.0.1
+2026-09-22T16:46:33.122000+00:00,UPDATE,REALM,,,,admin (master realm),172.18.0.1
+2026-09-22T16:47:22.623000+00:00,UPDATE,REALM,,,,admin (master realm),172.18.0.1
+2026-09-22T17:57:30.506000+00:00,CREATE,AUTH_FLOW,authentication/flows/browser/copy,,,admin (master realm),172.18.0.1
+2026-09-22T17:58:19.057000+00:00,DELETE,AUTH_FLOW,authentication/flows/be2109d3-c207-4fee-9a5c-38bca7617224,,,admin (master realm),172.18.0.1
+2026-09-22T18:00:01.073000+00:00,CREATE,AUTH_FLOW,authentication/flows/browser/copy,,,admin (master realm),172.18.0.1
+2026-09-22T19:45:47.373000+00:00,CREATE,AUTH_EXECUTION_FLOW,authentication/flows/browser-mfa-privileged/executions/flow,,,admin (master realm),172.18.0.1
+2026-09-22T19:47:06.687000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/browser-mfa-privileged/executions,,,admin (master realm),172.18.0.1
+2026-09-22T20:14:03.172000+00:00,DELETE,AUTH_EXECUTION,authentication/executions/d780eb7e-93a4-48b5-9f4b-25e29efbb916,,,admin (master realm),172.18.0.1
+2026-09-22T20:28:52.980000+00:00,CREATE,AUTH_EXECUTION,authentication/flows/browser-mfa-privileged forms/executions/execution,,,admin (master realm),172.18.0.1
+2026-09-22T20:33:24.089000+00:00,CREATE,AUTH_EXECUTION,authentication/flows/browser-mfa-privileged forms/executions/execution,,,admin (master realm),172.18.0.1
+2026-09-22T20:33:34.484000+00:00,DELETE,AUTH_EXECUTION,authentication/executions/9a728a17-650e-4e2b-bbea-61511ff66708,,,admin (master realm),172.18.0.1
+2026-09-22T20:33:39.573000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/browser-mfa-privileged/executions,,,admin (master realm),172.18.0.1
+2026-09-22T20:34:40.919000+00:00,CREATE,AUTH_EXECUTION,authentication/executions/ce80394a-7af5-4759-b833-70d4c615d791/config,,,admin (master realm),172.18.0.1
+2026-09-30T16:13:00.286000+00:00,UPDATE,IDENTITY_PROVIDER,identity-provider/instances/entra-id,,,admin (master realm),172.18.0.1
+2026-09-30T17:59:21.742000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/a81d4a3c-8063-4a2c-8aed-8c4489472e4f,,role-mapper,admin (master realm),172.18.0.1
+2026-09-30T17:59:25.105000+00:00,UPDATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/a81d4a3c-8063-4a2c-8aed-8c4489472e4f,,role-mapper,admin (master realm),172.18.0.1
+2026-09-30T18:12:19.840000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/bbdddc8f-54eb-4725-9ae6-4a82ab22b0c2,,security-analyst,admin (master realm),172.18.0.1
+2026-09-30T18:12:26.722000+00:00,UPDATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/bbdddc8f-54eb-4725-9ae6-4a82ab22b0c2,,security-analyst,admin (master realm),172.18.0.1
+2026-10-06T16:27:29.207000+00:00,DELETE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/a81d4a3c-8063-4a2c-8aed-8c4489472e4f,,,admin (master realm),127.0.0.1
+2026-10-06T16:27:29.616000+00:00,DELETE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/bbdddc8f-54eb-4725-9ae6-4a82ab22b0c2,,,admin (master realm),127.0.0.1
+2026-10-06T16:27:30.034000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/c3c96567-7190-4264-8749-e4d6a668f1cf,,entra-role-billing,admin (master realm),127.0.0.1
+2026-10-06T16:27:30.449000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/aaa926d1-5f7c-4e7a-8d61-28bc3548a333,,entra-role-nurse,admin (master realm),127.0.0.1
+2026-10-06T16:27:30.862000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/d3f36db9-3393-47e5-ae87-490e8efe46ad,,entra-role-clinician,admin (master realm),127.0.0.1
+2026-10-06T16:27:31.278000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/43afd550-9968-43fb-8d91-aebbd7a2caac,,entra-role-hr,admin (master realm),127.0.0.1
+2026-10-06T16:27:31.692000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/4f822d50-0289-4218-8c76-141b40b004a3,,entra-role-it-support,admin (master realm),127.0.0.1
+2026-10-06T16:27:32.110000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/661b995b-b5e3-493c-bc38-774c128a0c98,,entra-role-security-analyst,admin (master realm),127.0.0.1
+2026-10-06T16:27:32.528000+00:00,CREATE,IDENTITY_PROVIDER_MAPPER,identity-provider/instances/entra-id/mappers/bd18457b-43dd-4aba-9d5d-fa06b9063feb,,entra-role-vendor,admin (master realm),127.0.0.1
+2026-10-06T16:27:32.950000+00:00,UPDATE,IDENTITY_PROVIDER,identity-provider/instances/entra-id,,,admin (master realm),127.0.0.1
+2026-10-06T16:29:23.366000+00:00,DELETE,USER,users/aefcc8ca-4fd6-4db3-a264-7a68b7f3a33e,,,admin (master realm),127.0.0.1
+2026-10-06T16:29:23.791000+00:00,CREATE,REALM_ROLE_MAPPING,users/a467268e-9afc-43e0-8b4c-23af8305ecc1/role-mappings/realm,test.billing1,billing,admin (master realm),127.0.0.1
+2026-10-06T16:29:24.215000+00:00,CREATE,REALM_ROLE_MAPPING,users/68946225-9acc-4d2e-8162-02d23c103e92/role-mappings/realm,test.nurse1,nurse,admin (master realm),127.0.0.1
+2026-10-06T16:29:24.636000+00:00,CREATE,REALM_ROLE_MAPPING,users/57c3cff1-c392-4e51-be98-3d4e68fbcba8/role-mappings/realm,test.clinician1,clinician,admin (master realm),127.0.0.1
+2026-10-06T16:29:25.063000+00:00,CREATE,REALM_ROLE_MAPPING,users/8e71e27e-b217-4131-85bd-561dd8431cd2/role-mappings/realm,test.hr1,hr,admin (master realm),127.0.0.1
+2026-10-06T16:29:25.497000+00:00,CREATE,REALM_ROLE_MAPPING,users/d487e772-527a-4ac7-a413-c3ab1f89909f/role-mappings/realm,test.itsupport1,it-support,admin (master realm),127.0.0.1
+2026-10-06T16:29:25.922000+00:00,CREATE,REALM_ROLE_MAPPING,users/f351dc91-77bf-4e7c-a556-e7be77d73f92/role-mappings/realm,test.secanalyst1,security-analyst,admin (master realm),127.0.0.1
+2026-10-06T16:29:26.344000+00:00,CREATE,REALM_ROLE_MAPPING,users/7dbba25d-5620-4492-9fee-2c6c65e4bd8d/role-mappings/realm,test.vendor1,vendor,admin (master realm),127.0.0.1
+2026-10-06T17:21:44.289000+00:00,UPDATE,IDENTITY_PROVIDER,identity-provider/instances/entra-id,,,admin (master realm),127.0.0.1
+2026-10-19T18:19:05.216000+00:00,UPDATE,USER,users/6a8e4918-36b2-4cad-a936-c182b6d561fa,entra-id.test.billing@chakhilaraogmail.onmicrosoft.com,,admin (master realm),172.18.0.1
+2026-10-19T18:28:27.314000+00:00,UPDATE,USER,users/6a8e4918-36b2-4cad-a936-c182b6d561fa,entra-id.test.billing@chakhilaraogmail.onmicrosoft.com,,admin (master realm),172.18.0.1
+2026-11-03T21:20:20.594000+00:00,CREATE,USER,users/76a47e65-1d09-4ca2-8f62-59ff99469b90,test.billing2,,admin (master realm),172.18.0.1
+2026-11-03T21:20:20.694000+00:00,CREATE,GROUP_MEMBERSHIP,users/76a47e65-1d09-4ca2-8f62-59ff99469b90/groups/21f784e8-0113-46d4-b761-4d0fdebc4477,test.billing2,Billing,admin (master realm),172.18.0.1
+2026-11-03T21:20:20.721000+00:00,CREATE,USER,users/8a9ad65a-9bab-4624-b6e1-fc52ee11f0f7,test.clinician2,,admin (master realm),172.18.0.1
+2026-11-03T21:20:20.732000+00:00,CREATE,GROUP_MEMBERSHIP,users/8a9ad65a-9bab-4624-b6e1-fc52ee11f0f7/groups/f6473e62-9fd3-45b3-b315-1e9d72c81d53,test.clinician2,Clinicians,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.313000+00:00,UPDATE,REALM,,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.358000+00:00,CREATE,REALM_ROLE,roles/mfa-required,,mfa-required,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.373000+00:00,DELETE,AUTH_EXECUTION,authentication/executions/17434d40-62d5-4c4e-af92-9dcb7630c9ad,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.387000+00:00,CREATE,AUTH_EXECUTION,authentication/flows/browser-mfa-privileged Browser - Conditional OTP/executions/execution,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.406000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/browser-mfa-privileged Browser - Conditional OTP/executions,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.415000+00:00,CREATE,AUTH_EXECUTION,authentication/executions/4056e919-fe28-4aa6-98fb-b9309a4d9477/config,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.430000+00:00,DELETE,AUTH_EXECUTION,authentication/executions/ce80394a-7af5-4759-b833-70d4c615d791,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.455000+00:00,CREATE,REALM_ROLE_MAPPING,groups/a5ef9fda-29c4-4d5f-8d26-9eb07469ff4f/role-mappings/realm,,mfa-required,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.463000+00:00,CREATE,REALM_ROLE_MAPPING,groups/1ca13f4a-ad74-4206-9a73-69552723e89f/role-mappings/realm,,mfa-required,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.470000+00:00,CREATE,REALM_ROLE_MAPPING,groups/21f784e8-0113-46d4-b761-4d0fdebc4477/role-mappings/realm,,mfa-required,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.475000+00:00,UPDATE,REALM,,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.496000+00:00,UPDATE,CLIENT,clients/1f83d0cb-a829-473b-87cb-8c56c48afa45,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.509000+00:00,UPDATE,CLIENT,clients/b39f8819-1f73-4e52-bf25-7856de60e5b0,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.525000+00:00,UPDATE,USER_PROFILE,users/profile,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.546000+00:00,CREATE,REALM_ROLE_MAPPING,groups/f6473e62-9fd3-45b3-b315-1e9d72c81d53/role-mappings/realm,,clinician,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.553000+00:00,CREATE,REALM_ROLE_MAPPING,groups/e72c0328-8930-40ac-958c-70f3c2e45765/role-mappings/realm,,nurse,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.563000+00:00,CREATE,REALM_ROLE_MAPPING,groups/21f784e8-0113-46d4-b761-4d0fdebc4477/role-mappings/realm,,billing,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.569000+00:00,CREATE,REALM_ROLE_MAPPING,groups/db75e633-fa1c-4ee1-aa6e-5d9fef5d0a1b/role-mappings/realm,,hr,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.574000+00:00,CREATE,REALM_ROLE_MAPPING,groups/1ca13f4a-ad74-4206-9a73-69552723e89f/role-mappings/realm,,it-support,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.580000+00:00,CREATE,REALM_ROLE_MAPPING,groups/a5ef9fda-29c4-4d5f-8d26-9eb07469ff4f/role-mappings/realm,,security-analyst,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.585000+00:00,CREATE,REALM_ROLE_MAPPING,groups/5dbb3bdb-82ac-4d10-bb60-308f4fb02d42/role-mappings/realm,,vendor,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.594000+00:00,CREATE,REALM_ROLE_MAPPING,groups/a5ef9fda-29c4-4d5f-8d26-9eb07469ff4f/role-mappings/realm,,mfa-required,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.602000+00:00,CREATE,REALM_ROLE_MAPPING,groups/1ca13f4a-ad74-4206-9a73-69552723e89f/role-mappings/realm,,mfa-required,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.607000+00:00,CREATE,REALM_ROLE_MAPPING,groups/21f784e8-0113-46d4-b761-4d0fdebc4477/role-mappings/realm,,mfa-required,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.630000+00:00,DELETE,REALM_ROLE_MAPPING,users/a467268e-9afc-43e0-8b4c-23af8305ecc1/role-mappings/realm,test.billing1,billing,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.644000+00:00,DELETE,REALM_ROLE_MAPPING,users/57c3cff1-c392-4e51-be98-3d4e68fbcba8/role-mappings/realm,test.clinician1,clinician,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.655000+00:00,DELETE,REALM_ROLE_MAPPING,users/8e71e27e-b217-4131-85bd-561dd8431cd2/role-mappings/realm,test.hr1,hr,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.663000+00:00,DELETE,REALM_ROLE_MAPPING,users/d487e772-527a-4ac7-a413-c3ab1f89909f/role-mappings/realm,test.itsupport1,it-support,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.672000+00:00,DELETE,REALM_ROLE_MAPPING,users/68946225-9acc-4d2e-8162-02d23c103e92/role-mappings/realm,test.nurse1,nurse,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.680000+00:00,DELETE,REALM_ROLE_MAPPING,users/f351dc91-77bf-4e7c-a556-e7be77d73f92/role-mappings/realm,test.secanalyst1,security-analyst,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.693000+00:00,DELETE,REALM_ROLE_MAPPING,users/7dbba25d-5620-4492-9fee-2c6c65e4bd8d/role-mappings/realm,test.vendor1,vendor,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.841000+00:00,CREATE,REALM_ROLE,roles/app-access-billing-app,,app-access-billing-app,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.849000+00:00,CREATE,REALM_ROLE_MAPPING,groups/21f784e8-0113-46d4-b761-4d0fdebc4477/role-mappings/realm,,app-access-billing-app,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.853000+00:00,CREATE,REALM_ROLE,roles/billing/composites,,app-access-billing-app,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.861000+00:00,CREATE,AUTH_FLOW,authentication/flows/browser-mfa-privileged/copy,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.871000+00:00,CREATE,AUTH_EXECUTION_FLOW,authentication/flows/gate-billing-app browser-mfa-privileged forms/executions/flow,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.879000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/gate-billing-app browser-mfa-privileged forms/executions,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.884000+00:00,CREATE,AUTH_EXECUTION,authentication/flows/gate-billing-app deny-unauthorized/executions/execution,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.890000+00:00,CREATE,AUTH_EXECUTION,authentication/flows/gate-billing-app deny-unauthorized/executions/execution,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.899000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/gate-billing-app deny-unauthorized/executions,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.905000+00:00,CREATE,AUTH_EXECUTION,authentication/executions/5b65cd68-5ced-4179-a98a-0edc0cc40145/config,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.911000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/gate-billing-app deny-unauthorized/executions,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.916000+00:00,CREATE,AUTH_EXECUTION,authentication/executions/3e931707-5b6f-440b-b2e3-cff7773836a8/config,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.925000+00:00,UPDATE,CLIENT,clients/1f83d0cb-a829-473b-87cb-8c56c48afa45,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.933000+00:00,CREATE,REALM_ROLE,roles/app-access-ehr-simulator,,app-access-ehr-simulator,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.940000+00:00,CREATE,REALM_ROLE_MAPPING,groups/f6473e62-9fd3-45b3-b315-1e9d72c81d53/role-mappings/realm,,app-access-ehr-simulator,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.943000+00:00,CREATE,REALM_ROLE,roles/clinician/composites,,app-access-ehr-simulator,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.949000+00:00,CREATE,REALM_ROLE_MAPPING,groups/e72c0328-8930-40ac-958c-70f3c2e45765/role-mappings/realm,,app-access-ehr-simulator,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.953000+00:00,CREATE,REALM_ROLE,roles/nurse/composites,,app-access-ehr-simulator,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.960000+00:00,CREATE,AUTH_FLOW,authentication/flows/browser-mfa-privileged/copy,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.972000+00:00,CREATE,AUTH_EXECUTION_FLOW,authentication/flows/gate-ehr-simulator browser-mfa-privileged forms/executions/flow,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.982000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/gate-ehr-simulator browser-mfa-privileged forms/executions,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.988000+00:00,CREATE,AUTH_EXECUTION,authentication/flows/gate-ehr-simulator deny-unauthorized/executions/execution,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:55.995000+00:00,CREATE,AUTH_EXECUTION,authentication/flows/gate-ehr-simulator deny-unauthorized/executions/execution,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.004000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/gate-ehr-simulator deny-unauthorized/executions,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.010000+00:00,CREATE,AUTH_EXECUTION,authentication/executions/e0383dad-fad1-4ffb-9de5-525e90a75034/config,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.017000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/gate-ehr-simulator deny-unauthorized/executions,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.024000+00:00,CREATE,AUTH_EXECUTION,authentication/executions/6217c2e6-b71b-449d-9d20-7990ade121d5/config,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.036000+00:00,UPDATE,CLIENT,clients/04512244-d2f4-493b-830a-dc2ed9e8f896,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.042000+00:00,CREATE,REALM_ROLE,roles/app-access-patient-portal,,app-access-patient-portal,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.050000+00:00,CREATE,REALM_ROLE_MAPPING,groups/f6473e62-9fd3-45b3-b315-1e9d72c81d53/role-mappings/realm,,app-access-patient-portal,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.053000+00:00,CREATE,REALM_ROLE,roles/clinician/composites,,app-access-patient-portal,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.060000+00:00,CREATE,REALM_ROLE_MAPPING,groups/e72c0328-8930-40ac-958c-70f3c2e45765/role-mappings/realm,,app-access-patient-portal,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.064000+00:00,CREATE,REALM_ROLE,roles/nurse/composites,,app-access-patient-portal,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.070000+00:00,CREATE,AUTH_FLOW,authentication/flows/browser-mfa-privileged/copy,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.080000+00:00,CREATE,AUTH_EXECUTION_FLOW,authentication/flows/gate-patient-portal browser-mfa-privileged forms/executions/flow,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.088000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/gate-patient-portal browser-mfa-privileged forms/executions,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.093000+00:00,CREATE,AUTH_EXECUTION,authentication/flows/gate-patient-portal deny-unauthorized/executions/execution,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.099000+00:00,CREATE,AUTH_EXECUTION,authentication/flows/gate-patient-portal deny-unauthorized/executions/execution,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.106000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/gate-patient-portal deny-unauthorized/executions,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.111000+00:00,CREATE,AUTH_EXECUTION,authentication/executions/b5669fb9-7b20-45df-97ea-b541aca014ad/config,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.116000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/gate-patient-portal deny-unauthorized/executions,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.122000+00:00,CREATE,AUTH_EXECUTION,authentication/executions/889f62ec-8a78-4a3c-8fab-0d6f4f9ed96e/config,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.138000+00:00,UPDATE,CLIENT,clients/4f9cd5db-8f5f-4cea-9f7f-91e87accc6d0,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.148000+00:00,CREATE,REALM_ROLE,roles/app-access-hr-app,,app-access-hr-app,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.153000+00:00,CREATE,REALM_ROLE_MAPPING,groups/db75e633-fa1c-4ee1-aa6e-5d9fef5d0a1b/role-mappings/realm,,app-access-hr-app,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.157000+00:00,CREATE,REALM_ROLE,roles/hr/composites,,app-access-hr-app,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.161000+00:00,CREATE,REALM_ROLE_MAPPING,groups/1ca13f4a-ad74-4206-9a73-69552723e89f/role-mappings/realm,,app-access-hr-app,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.164000+00:00,CREATE,REALM_ROLE,roles/it-support/composites,,app-access-hr-app,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.168000+00:00,CREATE,AUTH_FLOW,authentication/flows/browser-mfa-privileged/copy,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.176000+00:00,CREATE,AUTH_EXECUTION_FLOW,authentication/flows/gate-hr-app browser-mfa-privileged forms/executions/flow,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.184000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/gate-hr-app browser-mfa-privileged forms/executions,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.189000+00:00,CREATE,AUTH_EXECUTION,authentication/flows/gate-hr-app deny-unauthorized/executions/execution,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.193000+00:00,CREATE,AUTH_EXECUTION,authentication/flows/gate-hr-app deny-unauthorized/executions/execution,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.200000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/gate-hr-app deny-unauthorized/executions,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.206000+00:00,CREATE,AUTH_EXECUTION,authentication/executions/702fcb90-ab8e-405c-8c24-46b9835ccfda/config,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.212000+00:00,UPDATE,AUTH_EXECUTION,authentication/flows/gate-hr-app deny-unauthorized/executions,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.217000+00:00,CREATE,AUTH_EXECUTION,authentication/executions/ad9eb403-e3bd-4d24-94a5-59a620725730/config,,,admin (master realm),172.18.0.1
+2026-11-03T21:20:56.225000+00:00,UPDATE,CLIENT,clients/b39f8819-1f73-4e52-bf25-7856de60e5b0,,,admin (master realm),172.18.0.1
+2026-11-03T21:21:26.459000+00:00,DELETE,USER_LOGIN_FAILURE,attack-detection/brute-force/users/7dbba25d-5620-4492-9fee-2c6c65e4bd8d,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:16.580000+00:00,CREATE,USER,users/c9ebc172-0008-4fd0-8fbb-c5c27743d8dd,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:16.601000+00:00,CREATE,GROUP_MEMBERSHIP,users/c9ebc172-0008-4fd0-8fbb-c5c27743d8dd/groups/f6473e62-9fd3-45b3-b315-1e9d72c81d53,,Clinicians,admin (master realm),172.18.0.1
+2026-11-03T21:25:16.652000+00:00,ACTION,USER,users/c9ebc172-0008-4fd0-8fbb-c5c27743d8dd/reset-password,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:16.665000+00:00,UPDATE,USER,users/c9ebc172-0008-4fd0-8fbb-c5c27743d8dd,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:27.747000+00:00,CREATE,USER,users/f5919dad-97d2-4bd9-9b9e-23d7243dfa8c,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:27.757000+00:00,CREATE,GROUP_MEMBERSHIP,users/f5919dad-97d2-4bd9-9b9e-23d7243dfa8c/groups/e72c0328-8930-40ac-958c-70f3c2e45765,,Nurses,admin (master realm),172.18.0.1
+2026-11-03T21:25:27.800000+00:00,ACTION,USER,users/f5919dad-97d2-4bd9-9b9e-23d7243dfa8c/reset-password,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:27.806000+00:00,UPDATE,USER,users/f5919dad-97d2-4bd9-9b9e-23d7243dfa8c,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:29.409000+00:00,DELETE,GROUP_MEMBERSHIP,users/f5919dad-97d2-4bd9-9b9e-23d7243dfa8c/groups/e72c0328-8930-40ac-958c-70f3c2e45765,,Nurses,admin (master realm),172.18.0.1
+2026-11-03T21:25:29.416000+00:00,CREATE,GROUP_MEMBERSHIP,users/f5919dad-97d2-4bd9-9b9e-23d7243dfa8c/groups/21f784e8-0113-46d4-b761-4d0fdebc4477,,Billing,admin (master realm),172.18.0.1
+2026-11-03T21:25:29.422000+00:00,UPDATE,USER,users/f5919dad-97d2-4bd9-9b9e-23d7243dfa8c,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:29.429000+00:00,ACTION,USER,users/f5919dad-97d2-4bd9-9b9e-23d7243dfa8c/logout,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:29.438000+00:00,UPDATE,USER,users/f5919dad-97d2-4bd9-9b9e-23d7243dfa8c,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:32.636000+00:00,UPDATE,USER,users/f5919dad-97d2-4bd9-9b9e-23d7243dfa8c,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:32.642000+00:00,ACTION,USER,users/f5919dad-97d2-4bd9-9b9e-23d7243dfa8c/logout,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:32.651000+00:00,DELETE,GROUP_MEMBERSHIP,users/f5919dad-97d2-4bd9-9b9e-23d7243dfa8c/groups/21f784e8-0113-46d4-b761-4d0fdebc4477,,Billing,admin (master realm),172.18.0.1
+2026-11-03T21:25:32.674000+00:00,UPDATE,USER,users/f5919dad-97d2-4bd9-9b9e-23d7243dfa8c,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:34.299000+00:00,CREATE,GROUP_MEMBERSHIP,users/7dbba25d-5620-4492-9fee-2c6c65e4bd8d/groups/21f784e8-0113-46d4-b761-4d0fdebc4477,test.vendor1,Billing,admin (master realm),172.18.0.1
+2026-11-03T21:25:46.075000+00:00,DELETE,GROUP_MEMBERSHIP,users/7dbba25d-5620-4492-9fee-2c6c65e4bd8d/groups/21f784e8-0113-46d4-b761-4d0fdebc4477,test.vendor1,Billing,admin (master realm),172.18.0.1
+2026-11-03T21:25:46.096000+00:00,DELETE,USER,users/c9ebc172-0008-4fd0-8fbb-c5c27743d8dd,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:46.104000+00:00,DELETE,USER,users/f5919dad-97d2-4bd9-9b9e-23d7243dfa8c,,,admin (master realm),172.18.0.1
+2026-11-03T21:25:52.929000+00:00,CREATE,USER,users/61908c96-f661-40de-b22a-05e4e97a3fb7,test.clinician3,,admin (master realm),172.18.0.1
+2026-11-03T21:25:52.938000+00:00,CREATE,GROUP_MEMBERSHIP,users/61908c96-f661-40de-b22a-05e4e97a3fb7/groups/f6473e62-9fd3-45b3-b315-1e9d72c81d53,test.clinician3,Clinicians,admin (master realm),172.18.0.1
+2026-11-03T21:25:53.015000+00:00,ACTION,USER,users/61908c96-f661-40de-b22a-05e4e97a3fb7/reset-password,test.clinician3,,admin (master realm),172.18.0.1
+2026-11-03T21:25:53.025000+00:00,UPDATE,USER,users/61908c96-f661-40de-b22a-05e4e97a3fb7,test.clinician3,,admin (master realm),172.18.0.1
+2026-11-03T21:26:03.984000+00:00,CREATE,USER,users/41aeeb8b-6c92-4ef2-9798-bbf4970e59b2,test.nurse2,,admin (master realm),172.18.0.1
+2026-11-03T21:26:03.993000+00:00,CREATE,GROUP_MEMBERSHIP,users/41aeeb8b-6c92-4ef2-9798-bbf4970e59b2/groups/e72c0328-8930-40ac-958c-70f3c2e45765,test.nurse2,Nurses,admin (master realm),172.18.0.1
+2026-11-03T21:26:04.034000+00:00,ACTION,USER,users/41aeeb8b-6c92-4ef2-9798-bbf4970e59b2/reset-password,test.nurse2,,admin (master realm),172.18.0.1
+2026-11-03T21:26:04.041000+00:00,UPDATE,USER,users/41aeeb8b-6c92-4ef2-9798-bbf4970e59b2,test.nurse2,,admin (master realm),172.18.0.1
+2026-11-03T21:26:05.638000+00:00,DELETE,GROUP_MEMBERSHIP,users/41aeeb8b-6c92-4ef2-9798-bbf4970e59b2/groups/e72c0328-8930-40ac-958c-70f3c2e45765,test.nurse2,Nurses,admin (master realm),172.18.0.1
+2026-11-03T21:26:05.644000+00:00,CREATE,GROUP_MEMBERSHIP,users/41aeeb8b-6c92-4ef2-9798-bbf4970e59b2/groups/21f784e8-0113-46d4-b761-4d0fdebc4477,test.nurse2,Billing,admin (master realm),172.18.0.1
+2026-11-03T21:26:05.651000+00:00,UPDATE,USER,users/41aeeb8b-6c92-4ef2-9798-bbf4970e59b2,test.nurse2,,admin (master realm),172.18.0.1
+2026-11-03T21:26:05.655000+00:00,ACTION,USER,users/41aeeb8b-6c92-4ef2-9798-bbf4970e59b2/logout,test.nurse2,,admin (master realm),172.18.0.1
+2026-11-03T21:26:05.662000+00:00,UPDATE,USER,users/41aeeb8b-6c92-4ef2-9798-bbf4970e59b2,test.nurse2,,admin (master realm),172.18.0.1
+2026-11-03T21:26:08.855000+00:00,UPDATE,USER,users/41aeeb8b-6c92-4ef2-9798-bbf4970e59b2,test.nurse2,,admin (master realm),172.18.0.1
+2026-11-03T21:26:08.859000+00:00,ACTION,USER,users/41aeeb8b-6c92-4ef2-9798-bbf4970e59b2/logout,test.nurse2,,admin (master realm),172.18.0.1
+2026-11-03T21:26:08.864000+00:00,DELETE,GROUP_MEMBERSHIP,users/41aeeb8b-6c92-4ef2-9798-bbf4970e59b2/groups/21f784e8-0113-46d4-b761-4d0fdebc4477,test.nurse2,Billing,admin (master realm),172.18.0.1
+2026-11-03T21:26:08.872000+00:00,UPDATE,USER,users/41aeeb8b-6c92-4ef2-9798-bbf4970e59b2,test.nurse2,,admin (master realm),172.18.0.1
+2026-11-03T21:26:10.489000+00:00,CREATE,GROUP_MEMBERSHIP,users/7dbba25d-5620-4492-9fee-2c6c65e4bd8d/groups/21f784e8-0113-46d4-b761-4d0fdebc4477,test.vendor1,Billing,admin (master realm),172.18.0.1
+2026-11-03T21:26:10.641000+00:00,DELETE,GROUP_MEMBERSHIP,users/7dbba25d-5620-4492-9fee-2c6c65e4bd8d/groups/21f784e8-0113-46d4-b761-4d0fdebc4477,test.vendor1,Billing,admin (master realm),172.18.0.1
+2026-11-03T21:26:10.669000+00:00,CREATE,USER,users/1c647dd7-a366-4027-9571-35a73dc3334d,test.vendor2,,admin (master realm),172.18.0.1
+2026-11-03T21:26:10.681000+00:00,CREATE,GROUP_MEMBERSHIP,users/1c647dd7-a366-4027-9571-35a73dc3334d/groups/5dbb3bdb-82ac-4d10-bb60-308f4fb02d42,test.vendor2,Vendors,admin (master realm),172.18.0.1
+2026-11-03T21:26:10.827000+00:00,UPDATE,USER,users/1c647dd7-a366-4027-9571-35a73dc3334d,test.vendor2,,admin (master realm),172.18.0.1
+2026-11-03T21:26:10.830000+00:00,ACTION,USER,users/1c647dd7-a366-4027-9571-35a73dc3334d/logout,test.vendor2,,admin (master realm),172.18.0.1
+2026-11-03T21:26:10.835000+00:00,DELETE,GROUP_MEMBERSHIP,users/1c647dd7-a366-4027-9571-35a73dc3334d/groups/5dbb3bdb-82ac-4d10-bb60-308f4fb02d42,test.vendor2,Vendors,admin (master realm),172.18.0.1
+2026-11-03T21:26:10.841000+00:00,UPDATE,USER,users/1c647dd7-a366-4027-9571-35a73dc3334d,test.vendor2,,admin (master realm),172.18.0.1
+2026-11-03T21:26:10.979000+00:00,DELETE,REALM_ROLE_MAPPING,users/6a8e4918-36b2-4cad-a936-c182b6d561fa/role-mappings/realm,entra-id.test.billing@chakhilaraogmail.onmicrosoft.com,billing,admin (master realm),172.18.0.1
+2026-11-03T21:26:28.317000+00:00,DELETE,USER_LOGIN_FAILURE,attack-detection/brute-force/users/7dbba25d-5620-4492-9fee-2c6c65e4bd8d,,,admin (master realm),172.18.0.1
+2026-11-03T21:31:18.354000+00:00,DELETE,USER_LOGIN_FAILURE,attack-detection/brute-force/users/7dbba25d-5620-4492-9fee-2c6c65e4bd8d,,,admin (master realm),172.18.0.1

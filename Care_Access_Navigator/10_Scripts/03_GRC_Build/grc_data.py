@@ -358,6 +358,9 @@ ACTIONS = [
     ("CA-16", "SV-05", "Automation signs in as the human admin", "Create a service-account client with only the "
      "realm-management roles can_iam.py needs", "IAM Analyst", "2027-01-31", "Open",
      "can_iam.py runs with client credentials", "-", ""),
+    ("CA-18", "LP-01", "IT-Support can sign in to hr-app although its role description excludes HR data",
+     "Owner decides: narrow IT-Support to account administration, or document the business reason", "HR Manager + IAM Analyst",
+     "2026-12-15", "Open", "Role description and hr-app gate agree", "-", ""),
     ("CA-17", "SV-06", "Entra broker client secret expiry unknown", "Record the expiry and set a reminder 30 days "
      "before", "IAM Analyst", "2026-11-10", "Open", "Expiry recorded in the register", "-", ""),
 ]
@@ -411,6 +414,14 @@ EVIDENCE = [
      "Care_Access_Navigator/08_Reporting/02_Dashboards/Tableau_Dataset/risks.csv"),
     ("CA-01", "CAT", "Exceptions and corrective-action tracker",
      "Care_Access_Navigator/07_GRC/04_Remediation/CAN_DOC_Exceptions_and_Corrective_Actions_v1.0.xlsx"),
+    ("AC-01", "W3", "RBAC matrix, least privilege, SoD and access-request register",
+     "Care_Access_Navigator/03_IAM_Lab/CAN_DOC_RBAC_SoD_Access_Request_v1.0.xlsx"),
+    ("AC-03", "W3-WF", "Access request and approval workflow diagram",
+     "Care_Access_Navigator/02_Diagrams/02_Workflows/CAN_DGM_Access_Request_Workflow_v1.0.pdf"),
+    ("AU-01", "LOGS", "Exported Keycloak login/admin events, detections, automation audit (05_Logs, hash index)",
+     "Care_Access_Navigator/05_Logs/EVIDENCE-INDEX-SHA256.txt"),
+    ("RA-01", "ASSETS", "Asset inventory (applications, infrastructure, data types, identities)",
+     "Care_Access_Navigator/04_Applications/01_Application_Inventory/CAN_DOC_Asset_Inventory_v1.0.xlsx"),
     ("SC-01", "E-ENC-01", "TLS enforcement re-performance (Compliance 1 audit)",
      "Semester_5/Compliance_1/audit-evidence/E-ENC-01_tls_enforcement.txt"),
 ]
