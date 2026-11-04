@@ -23,3 +23,8 @@ python build_w1_w3.py && python build_tableau.py && python build_workbooks.py &&
 ```
 
 `pdfstyle.py` is the same house style as the Incident Response 1 packages.
+
+> **2026-11-04:** CISO Assistant is now the system of record for the GRC registers (see `07_GRC/README.md`).
+> `grc_data.py` stays the source the registers were written in; after changing it, rerun
+> `../04_CISO_Assistant` (build_payload.py + load_ciso.py) and re-export, rather than rebuilding the superseded
+> workbooks (control catalog, exceptions/corrective actions, evidence index).
