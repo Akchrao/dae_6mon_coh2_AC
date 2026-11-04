@@ -124,7 +124,7 @@ PRIVILEGED = [
     ("PA-01", "admin (master realm)", "Keycloak", "Full administrator of every realm, user and flow",
      "1: lab administrator (author)", "Builds and operates the IAM lab", "Security Officer (self-approved in lab)",
      "No (EX-03)", "Strong password kept in local .env (not in git since 11/03); realm export before every change",
-     "Admin events (realm care-access-navigator); CAN-ID-005 on role/group changes", "Quarterly", "Gap: EX-03"),
+     "Admin events (realm care-access-navigator); CAN-ID-005 on role/group changes; port bound to localhost (CA-11)", "Quarterly", "Gap: EX-03"),
     ("PA-02", "it-support (group IT-Support)", "Keycloak / hr-app",
      "User support; may sign in to hr-app", "test.itsupport1", "Workforce account support",
      "IT Manager + IAM Analyst", "Yes (enforced 11/03)", "Group-based; app gate", "CAN-ID-005 High on membership add",
@@ -340,16 +340,19 @@ ACTIONS = [
     ("CA-10", "TC-05", "Brute-force rule CAN-ID-001 alerted only once per user, ever",
      "Alert once per 10-minute burst", "Security Analyst", ISO_DATE, "Verified",
      "A new burst on the same user raises a new alert", "EV-14 TC-05 retest", ISO_DATE),
-    ("CA-11", "EX-03", "Keycloak port 8080 published on all interfaces", "Publish as 127.0.0.1:8080 in docker-compose",
-     "IT Support", "2026-11-10", "Open", "Port not reachable from another host", "-", ""),
+    ("CA-11", "EX-03", "Keycloak port 8080 published on all interfaces", "Publish as 127.0.0.1:8080 in docker-compose "
+     "(and pin the compose project name so the existing database volume is kept)", "IT Support", "2026-11-10", "Verified",
+     "Port not reachable from another host", "EV-13 audit log CA-11.applied; LAN-IP request refused; app checks still pass",
+     "2026-11-04"),
     ("CA-12", "EX-07", "Lab passwords exposed in public git history", "Rotate Keycloak admin and database passwords",
      "IAM Analyst", "2026-11-10", "Open", "Old password rejected", "-", ""),
     ("CA-13", "Access review", "Privileged users not yet enrolled in OTP", "Enrolment forced at next sign-in; "
      "follow up on accounts not enrolled within 7 days", "IAM Analyst", "2026-11-10", "In progress",
      "Review shows mfa_enrolled = True for all privileged users", "-", ""),
     ("CA-14", "Board audit", "Status deck and design doc overstate progress (MVP deck slides 3 and 10; design doc "
-     "section 14)", "Update both to the verified status", "Student", "2026-11-04", "Open",
-     "Every claim traces to evidence", "-", ""),
+     "section 14)", "Update both to the verified status", "Student", "2026-11-04", "Verified",
+     "Every claim traces to evidence", "MVP deck v1.1 (slides 3, 10); design doc v1.3 section 14 (PDF export of the deck "
+     "still to do)", "2026-11-04"),
     ("CA-15", "SV-01..04", "PKCE not enforced on public clients", "Set pkce.code.challenge.method = S256",
      "IAM Analyst", "2026-12-15", "Open", "Sign-in without code_challenge fails", "-", ""),
     ("CA-16", "SV-05", "Automation signs in as the human admin", "Create a service-account client with only the "

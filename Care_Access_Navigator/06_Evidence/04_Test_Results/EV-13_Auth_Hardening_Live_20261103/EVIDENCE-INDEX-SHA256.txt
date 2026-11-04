@@ -1,6 +1,6 @@
-EVIDENCE INDEX — can_iam.py (SHA-256, computed 2026-11-03T21:22:50Z)
+EVIDENCE INDEX — can_iam.py (SHA-256, computed 2026-11-04T16:17:51Z)
 f953250a118e9063132f0575c9363e8169548cb0c890ba4ec9e5e6f12b124df0      2033 bytes  access_review_AR-AFTER-HARDEN-20261103.csv
 c1c1fabfd58fc193e10c6bced6b34c8c035f0541ebf07158a90401ccc1f789fa      2198 bytes  access_review_AR-BASELINE-20261103.csv
-33a6c3dff7c4689d273b3c81854405c5e58d9afaf51a6e5f36b8b783e56cec12     10778 bytes  can_iam_audit_log.jsonl
+1009ab8cfb236e441c478d5cba3c9f765fc25ee19d9e444865a00fc7271b6635     11450 bytes  can_iam_audit_log.jsonl
 8f85137f630a3bf33768efc088df18f5b6b5e69639806992a386de7186f5baf4      2792 bytes  identity_detections.csv
 9012cbbb00736791ca0a011638b5e9627470a53656d1a2620ff28e9f9c87f984     14789 bytes  keycloak_login_events.csv

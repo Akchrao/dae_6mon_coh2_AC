@@ -6,6 +6,6 @@ Flagged accounts (High),count risk=High,5,,5,count,0,2026-11-03,AR-2026-Q4
 Open High audit findings,count rating=High and not closed,1,,1,count,0 by Dec 2026,2026-11-03,F-03 (EX-02)
 Control test pass rate (11/03),PASS / tests run on 2026-11-03,12,14,85.7,%,>= 90%,2026-11-03,W5 retests + end-to-end run
 Control test pass rate (10/13 audit),PASS / tests in CAN-IA-2026-01,8,14,57.1,%,>= 90%,2026-11-03,Baseline for the before/after story
-Corrective actions verified,Verified actions / all actions,6,17,35.3,%,trend up,2026-11-03,Exceptions and CA tracker
+Corrective actions verified,Verified actions / all actions,8,17,47.1,%,trend up,2026-11-03,Exceptions and CA tracker
 Open exceptions,exceptions not closed,7,,7,count,each within expiry,2026-11-03,Exception register
 Residual High risks,count residual_rating=High,3,,3,count,<= 1,2026-11-03,risks.csv (scores from Risk Management 1)
