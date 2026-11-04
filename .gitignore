@@ -8,3 +8,6 @@ __pycache__/
 
 # Lab secrets (use .env.example as the template)
 Care_Access_Navigator/03_IAM_Lab/01_Keycloak/01_Config/.env
+
+# Local CISO Assistant databases
+/ciso-assistant-community/db/
