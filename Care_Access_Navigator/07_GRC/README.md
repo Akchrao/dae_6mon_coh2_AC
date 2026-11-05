@@ -1,7 +1,7 @@
 # 07_GRC - Governance, Risk and Compliance
 
 **System of record (from 2026-11-04): CISO Assistant Community Edition v4.2.1**, self-hosted at
-`https://localhost:8443` (`Semester_5/CISO_Assistant/ciso-assistant-community`, domain *Care Access Navigator - IAM & GRC*).
+`https://localhost:8443` (`ciso-assistant-community`, domain *Care Access Navigator - IAM & GRC*).
 The registers were loaded from `10_Scripts/03_GRC_Build/grc_data.py` by `10_Scripts/04_CISO_Assistant/` and every file
 named `CAN_DOC_CISO_*` here is an export from CISO Assistant. The database itself is local and not in git.
 

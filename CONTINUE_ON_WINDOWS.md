@@ -24,7 +24,7 @@ git config --global user.email "<the same email you use on the Mac>"
 # Mac uses LF line endings, Windows uses CRLF - this keeps them from showing up as fake changes
 git config --global core.autocrlf true
 
-# Semester_5/CISO_Assistant/ciso-assistant-community has very deep folder paths; without this, clone fails with "Filename too long"
+# ciso-assistant-community has very deep folder paths; without this, clone fails with "Filename too long"
 git config --global core.longpaths true
 ```
 
@@ -44,12 +44,12 @@ The first push to GitHub will ask you to sign in - pick **"Sign in with your bro
 
 ## 2. Running CISO Assistant on Windows
 
-The full source is in `Semester_5\CISO_Assistant\ciso-assistant-community\`. It runs in Docker (Mac version is **v4.1.5**, images tagged `:latest`).
+The full source is in `ciso-assistant-community\`. It runs in Docker (Mac version is **v4.1.5**, images tagged `:latest`).
 
 1. Start **Docker Desktop** and wait until it says "Engine running".
 2. In PowerShell:
    ```powershell
-   cd C:\dev\dae_6mon_coh2_AC\Semester_5\CISO_Assistant\ciso-assistant-community
+   cd C:\dev\dae_6mon_coh2_AC\ciso-assistant-community
    Set-ExecutionPolicy -Scope Process Bypass     # allows the .ps1 script for this window only
    .\docker-compose.ps1
    ```
@@ -65,15 +65,15 @@ docker compose down       # stop
 ### ⚠️ Your CISO Assistant DATA is not in Git
 
 Everything you entered in the app (frameworks, risk assessments, assets, users...) lives in
-`Semester_5\CISO_Assistant\ciso-assistant-community\db\` - a ~170 MB SQLite database. That folder is **git-ignored on purpose**
+`ciso-assistant-community\db\` - a ~170 MB SQLite database. That folder is **git-ignored on purpose**
 (it's too big for GitHub and contains secret keys). So a fresh Windows setup starts with an **empty** app.
 
 To bring your Mac data over, pick one:
 
 **Option A - Copy the `db` folder (simplest, exact copy)**
-1. On the Mac: `cd Semester_5/CISO_Assistant/ciso-assistant-community && docker compose down` (stops cleanly so nothing is lost mid-write).
-2. Copy the whole `Semester_5/CISO_Assistant/ciso-assistant-community/db/` folder to a USB stick / Google Drive / OneDrive.
-3. On Windows, put it at `C:\dev\dae_6mon_coh2_AC\Semester_5\CISO_Assistant\ciso-assistant-community\db\`
+1. On the Mac: `cd ciso-assistant-community && docker compose down` (stops cleanly so nothing is lost mid-write).
+2. Copy the whole `ciso-assistant-community/db/` folder to a USB stick / Google Drive / OneDrive.
+3. On Windows, put it at `C:\dev\dae_6mon_coh2_AC\ciso-assistant-community\db\`
    (replace it if one exists - stop Docker first with `docker compose down`).
 4. Start with **`docker compose up -d`** - do **not** run `docker-compose.ps1` (it refuses when a DB already exists).
 5. Log in with your **Mac** username and password.

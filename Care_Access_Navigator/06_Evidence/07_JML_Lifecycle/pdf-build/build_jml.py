@@ -5,7 +5,7 @@ import sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 EV = os.path.dirname(HERE)                                   # Care_Access_Navigator/06_Evidence/07_JML_Lifecycle
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(EV)))   # repository root
-sys.path.insert(0, os.path.join(REPO, "Semester_5", "Compliance_1", "pdf-build"))
+sys.path.insert(0, os.path.join(REPO, "compliance_1", "pdf-build"))
 from style import *  # noqa: F401,F403  (shared house style)
 from reportlab.platypus import CondPageBreak
 from PIL import Image as PILImage

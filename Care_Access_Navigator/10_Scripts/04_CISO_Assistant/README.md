@@ -6,9 +6,9 @@ Matching is by ref_id / evidence name, so a rerun updates the records instead of
 ```bash
 cd Care_Access_Navigator/10_Scripts/04_CISO_Assistant
 python3 build_payload.py            # writes <ciso>/db/import_tmp/payload.json and copies the evidence files
-touch ../../../Semester_5/CISO_Assistant/ciso-assistant-community/db/import_tmp/DRY_RUN   # optional: roll back
+touch ../../../ciso-assistant-community/db/import_tmp/DRY_RUN   # optional: roll back
 docker exec -i backend sh -c 'cd /code && uv run python manage.py shell' < load_ciso.py
-rm -rf ../../../Semester_5/CISO_Assistant/ciso-assistant-community/db/import_tmp
+rm -rf ../../../ciso-assistant-community/db/import_tmp
 ```
 
 Back up `db/ciso-assistant.sqlite3` first (`sqlite3 db/ciso-assistant.sqlite3 ".backup <file>"`), and stop the

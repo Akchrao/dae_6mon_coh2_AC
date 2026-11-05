@@ -15,7 +15,7 @@ control catalog, exceptions, corrective actions, evidence index). Live results a
 | `build_e2e_pdf.py` | `06_Evidence/04_Test_Results/CAN_DOC_End_to_End_Test_Report_v1.0.pdf` |
 | `build_w12_pdfs.py` | portfolio index + lessons learned, 5-minute demo script |
 
-Run order (needs reportlab and openpyxl, e.g. the venv in `Semester_4/Cloud_Security_1/pdf-build/.venv`):
+Run order (needs reportlab and openpyxl, e.g. the venv in `cloud_security_1/pdf-build/.venv`):
 
 ```bash
 python build_w1_w3.py && python build_tableau.py && python build_workbooks.py && python build_w5_pdf.py \

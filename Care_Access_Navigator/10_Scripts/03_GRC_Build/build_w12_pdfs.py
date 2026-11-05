@@ -40,7 +40,7 @@ DELIV = [  # (deliverable from plan section 15, contents, file, status)
      "Care_Access_Navigator/06_Evidence/05_Access_Reviews/CAN_DOC_Access_Review_AR-2026-Q4_v1.0.xlsx",
      "Reviewer sign-off pending (CA-05)"),
     ("SIEM use cases + incident", "Wazuh rules, CAN-ID identity rules, IR1-2026-002 report",
-     "Semester_5/Incident_Response_1/task5_ir_documentation/README.md", "Done"),
+     "incident_response_1/task5_ir_documentation/README.md", "Done"),
     ("Risk register", "R01-R05 with inherent/residual scores and treatment status",
      "Care_Access_Navigator/08_Reporting/02_Dashboards/Tableau_Dataset/risks.csv", "Done"),
     ("Control matrix + compliance mapping", "16 controls mapped to HIPAA, CSF 2.0, SP 800-53, ISO 27001, PCI DSS; gap assessment",

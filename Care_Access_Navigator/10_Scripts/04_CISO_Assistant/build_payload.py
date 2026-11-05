@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(HERE), "03_GRC_Build"))
 import grc_data as g  # noqa: E402
 
 REPO = g.REPO
-CISO = os.path.join(REPO, "Semester_5", "CISO_Assistant", "ciso-assistant-community")
+CISO = os.path.join(REPO, "ciso-assistant-community")
 OUT = os.path.join(CISO, "db", "import_tmp")
 CAN = "Care_Access_Navigator/"
 
