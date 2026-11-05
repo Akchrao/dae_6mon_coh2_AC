@@ -86,6 +86,7 @@ EXTRA_EVIDENCE = [
      ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05", "AR-01", "VM-01", "AU-02", "CA-01"]),
     ("EV-15", "Access review AR-2026-Q4 (reviewer sign-off pending, CA-05)", EV15 + "EV-15_Access_Review_AR-2026-Q4_20261103/access_review_AR-2026-Q4.csv", ["AR-01"]),
     ("EV-15", "Access review AR-2026-Q4 sign-off workbook", EV15 + "CAN_DOC_Access_Review_AR-2026-Q4_v1.0.xlsx", ["AR-01"]),
+    ("EV-17", "Entra ID Security defaults enabled (2026-11-05)", SHOT + "EV-17_Entra_Security_Defaults_20261105.png", ["IA-01"]),
     ("JML-15", "Entra ID audit log export for the JML cycle", CAN + "06_Evidence/07_JML_Lifecycle/JML-15-entra-audit-log.txt", ["AC-02"]),
     ("CTL-CAT", "Control catalog and HIPAA/NIST/ISO/PCI mapping (W9)", CAN + "07_GRC/02_Controls/CAN_DOC_Control_Catalog_and_Mapping_v1.0.xlsx", ["CA-01", "RA-01"]),
 ]
@@ -193,6 +194,7 @@ def main():
         exceptions=list(g.EXCEPTIONS) + [EX_08], ex_status=EX_STATUS, ex_severity=EX_SEVERITY,
         actions=g.ACTIONS, f_severity=F_SEVERITY, ca_control=CA_CONTROL, ca_control_by_id=CA_CONTROL_BY_ID,
         ca_status=CA_STATUS, iso_date=g.ISO_DATE,
+        ex_evidence={"EX-01": "EV-17"},
     )
     json.dump(payload, open(os.path.join(OUT, "payload.json"), "w"), indent=1)
     print(f"payload: {len(ASSETS)} assets, {len(payload['risks'])} risks, {len(g.CONTROLS)} controls, "

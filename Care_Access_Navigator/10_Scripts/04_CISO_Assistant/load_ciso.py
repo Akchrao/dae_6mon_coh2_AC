@@ -123,17 +123,20 @@ with transaction.atomic():
     # ---------------------------------------------------------------- exceptions (W10 Wed register)
     exc = {}
     for (xid, cid, what, why, comp, risk, req, appr, approved, expires, status) in P["exceptions"]:
-        st = P["ex_status"].get(status, "approved" if approved not in ("-", "") else "in_review")
+        st = "resolved" if status.startswith("Resolved") else P["ex_status"].get(
+            status, "approved" if approved not in ("-", "") else "in_review")
         desc = (f"{what}\n\nBusiness justification: {why}\nCompensating controls: {comp}\nControl: {cid}  Risk: {risk}"
                 f"\nRequested by: {req}  Approved by: {appr}  Approved on: {approved}")
         x, _ = upsert(SecurityException, {"ref_id": xid},
                       {"name": f"{xid} {what[:80]}", "description": desc, "observation": f"Register status: {status}",
                        "status": st, "severity": P["ex_severity"][xid], "expiration_date": d(expires), "folder": dom,
-                       "approver": user if st == "approved" else None})
+                       "approver": user if st in ("approved", "resolved") else None})
         x.owners.add(actor)
         exc[xid] = x
         if cid in ctl:
             ctl[cid].security_exceptions.add(x)
+    for xid, eid in P.get("ex_evidence", {}).items():
+        exc[xid].evidences.add(*[o for n, o in evd.items() if n.startswith(eid + " - ")])
     log.append(f"exceptions: {len(exc)}")
 
     # ---------------------------------------------------------------- risk scenarios (W8 register + scoring)
