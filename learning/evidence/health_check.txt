@@ -1,0 +1,6 @@
+# GET https://localhost:8443/api/health/  (2026-11-05T17:48Z)
+{"status":"ok"}
+HTTP 200
+
+# docker inspect backend health status
+healthy (last check exit 0)

@@ -1,0 +1,1360 @@
+﻿urn;ref_id;name;description;typical_evidence;annotation;compliance_result;extended_result;requirement_progress;score;observations;applied_controls;answers
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.308;164.308;;"Administrative Safeguards:
+Defined in the Security Rule as the “administrative actions and policies, and procedures to manage the selection, development, implementation, and maintenance of security measures to protect electronic protected health information and to manage the conduct of the covered entity's workforce in relation to the protection of that information.”";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.308(a)(1);164.308(a)(1);;"Security Management Process:
+HIPAA Standard: Implement policies and procedures to prevent, detect, contain, and correct security violations.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node4;;1. Identify all ePHI and Relevant Information Systems;"Identify where ePHI is generated within the organization, where it enters the organization, where it moves within the organization, where it is stored, and where it leaves the organization.
+
+Identify all systems  that house ePHI. Be sure to identify mobile devices, medical equipment, and medical IoT devices that store, process, or transmit ePHI.
+
+Include all hardware and software that are used to collect, store, process, or transmit ePHI.
+
+Analyze business functions and verify the ownership and control of information system elements as necessary.
+
+Consider the impact of a merger or acquisition on risks to ePHI. During a merger or acquisition, new data pathways may be introduced that lead to ePHI being stored, processed, or transmitted in previously unanticipated places.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node4:question:1] Has all ePHI generated, stored, processed, and transmitted within the organization been identified? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node4:question:2] Are all hardware and software for which the organization is responsible periodically inventoried? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node4:question:3] Is the hardware and software inventory updated on a regular basis? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node4:question:4] Have hardware and software that maintains or transmits ePHI been identified? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node4:question:5] Does this inventory include removable media and remote access devices? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node4:question:6] Is the current configuration of organizational systems documented, including connections to other systems? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node4:question:7] Has a BIA been performed? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node6;;2. Conduct Risk Assessment;Conduct an accurate and thorough assessment of the potential risks and vulnerabilities to the confidentiality, integrity, and availability of ePHI held by the covered entity or business associate.;;;compliant;;done;;[2026-11-03] 164.308(a)(1)(ii)(A) risk analysis. Controls: RA-01 (Implemented).;Security risks are identified, scored and treated;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node6:question:1] Are there any prior risk assessments, audit comments, security requirements, and/or security test results? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node6:question:2] Is there intelligence available from agencies, the Office of the Inspector General (OIG), the US-CERT, virus alerts, and/or vendors? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node6:question:3] What are the human, natural, and environmental threats to systems that contain, store, process, or transmit ePHI? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node6:question:4] What are the current and planned controls? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node6:question:5] Have likelihood and impact been determined for relevant threats and vulnerabilities? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node6:question:6] Have risk ratings been determined for relevant threats and vulnerabilities? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node6:question:7] Is the facility located in a region prone to any natural disasters, such as earthquakes, floods, or fires? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node6:question:8] Has responsibility been assigned to check all hardware and software – including hardware and software used for remote access – to determine whether selected security settings are enabled? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node6:question:9] Is there an analysis of current safeguards and their effectiveness relative to the identified risks? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node6:question:10] Have all processes involving ePHI been considered, including creating, receiving, maintaining, and transmitting it? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node8;;Implementation Specification (Required);Conduct an accurate and thorough assessment of the potential risks and vulnerabilities to the confidentiality, integrity, and availability of ePHI held by the covered entity or business associate.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node10;;3. Implement a Risk Management Program;"Implement security measures sufficient to reduce risks and vulnerabilities to a reasonable and appropriate level to comply with §164.306(a).
+
+Risk management should be performed with regular frequency to examine past decisions, reevaluate risk likelihood and impact levels, and assess the effectiveness of past remediation efforts
+
+Create a Risk Management policy and program that outlines organizational risk appetite and risk tolerance, personnel duties, responsible parties, the frequency of risk management, and required documentation.
+
+A risk management methodology is included in Section 4.
+
+Risk management resources are also included in Appendix F.";;;compliant;;done;;"[2026-11-03] 164.308(a)(1)(ii)(B) risk management. Controls: RA-01 (Implemented); CA-01 (Implemented).";Control gaps are tracked to verified remediation,Security risks are identified, scored and treated;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node10:question:1] Is executive leadership and/or management involved in risk management decisions? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node10:question:2] Has a risk management program been created with related policies? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node10:question:3] Does the regulated entity need to engage other resources (e.g., external expertise) to assist in risk management? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node10:question:4] Do current safeguards ensure the confidentiality, integrity, and availability of all ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node10:question:5] Do current safeguards protect against reasonably anticipated uses or disclosures of ePHI that are not permitted by the Privacy Rule? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node10:question:6] Has the regulated entity used the results of risk assessment and risk management processes to guide the selection and implementation of appropriate controls to protect ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node10:question:7] Has the regulated entity protected against all reasonably anticipated threats or hazards to the security and integrity of ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node10:question:8] Has the regulated entity assured compliance with all policies and procedures by its workforce? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node12;;Implementation Specification (Required);Implement security measures sufficient to reduce risks and vulnerabilities to a reasonable and appropriate level to comply with §164.306(a);;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node14;;4. Acquire IT Systems and Services;"Regulated entities should consider how cloud services and other third-party IT system and service offerings can both assist regulated entities in protecting ePHI while also potentially introducing new risks to ePHI.
+
+Although the HIPAA Security Rule does not require purchasing any particular technology, adequately protecting information may require additional hardware, software, or services. Considerations for their selection should include the following:";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node14:question:1] Will new security controls work with the existing IT architecture? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node14:question:2] Have the security requirements of the organization been compared to the security features of existing or proposed hardware and software? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node14:question:3] Has a cost-benefit analysis been conducted to determine the reasonableness of the investment given the security risks identified? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node14:question:4] Has a training strategy been developed? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node16;;5. Create and Deploy Policies and Procedures;"Implement the decisions concerning the management, operational, and technical controls selected to mitigate identified risks.
+
+Create policies that clearly establish roles and responsibilities, and assign ultimate responsibility for the implementation of each control to particular individuals or offices.
+
+Create procedures to be followed to accomplish particular security-related tasks.
+
+Establish a frequency for reviewing policy and procedures";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node16:question:1] Has the regulated entity documented an organizational risk assessment/management policy that outlines the duties, responsible parties, frequency, and required documentation of the risk management program? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node16:question:2] Are policies and procedures in place for security? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node16:question:3] Is there a formal (documented) system security plan? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node16:question:4] Is there a formal contingency plan? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node16:question:5] Is there a process for communicating policies and procedures to the affected workforce members? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node16:question:6] Are policies and procedures reviewed and updated as needed? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node18;;6. Develop and Implement a Sanction Policy;"Apply appropriate sanctions against workforce members who fail to comply with the security policies and procedures of the covered entity or business associate
+
+Develop policies and procedures for imposing appropriate sanctions (e.g., reprimand, termination) for noncompliance with the organization’s security policies.
+
+Implement sanction policy as cases arise.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node18:question:1] Does the regulated entity have existing sanction policies and procedures to meet the requirements of this implementation specification? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node18:question:2] If not, can existing sanction policies be modified to include language related to violations of these policies and procedures? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node18:question:3] Is there a formal process in place to address system misuse, abuse, and fraudulent activity? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node18:question:4] Have workforce members been made aware of policies concerning sanctions for inappropriate access, use, and disclosure of ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node18:question:5] Has the need and appropriateness of a tiered structure of sanctions that accounts for the magnitude of harm and possible types of inappropriate disclosures been considered? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node18:question:6] How will managers and workforce members be notified regarding suspect activity? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node20;;Implementation Specification (Required);Apply appropriate sanctions against workforce members who fail to comply with the security policies and procedures of the covered entity or business associate;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node22;;7. Develop and Deploy the Information System Activity Review Process;"Implement procedures to regularly review records of information system activity, such as audit logs, access reports, and security incident tracking reports.
+
+Implement regular reviews of information system activity, and consider ways to automate the review for the protection of ePHI.";;;partially_compliant;;done;;"[2026-11-03] 164.308(a)(1)(ii)(D) information system activity review process. Controls: AU-02 (Implemented); AR-01 (Partially implemented).";Alerts are raised and investigated,Access is reviewed periodically and findings are remediated;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node22:question:1] Is there a policy that establishes what reviews will be conducted? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node22:question:2] Are there corresponding procedures that describe the specifics of the reviews? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node22:question:3] Who is responsible for the overall process and results? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node22:question:4] How often will reviews take place? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node22:question:5] How often will review results be analyzed? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node22:question:6] Has the regulated entity considered all available capabilities to automate the reviews? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node22:question:7] Where will audit information reside (e.g., separate server)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node22:question:8] Will it be stored external to the organization (e.g., cloud service provider)? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node24;;Implementation Specification (Required);Implement procedures to regularly review records of information system activity, such as audit logs, access reports, and security incident tracking reports.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node26;;8. Develop Appropriate Standard Operating Procedures;Determine the types of audit trail data and monitoring procedures that will be needed to derive exception reports.;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node26:question:1] How will exception reports or logs be reviewed? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node26:question:2] Where will monitoring reports and their reviews be documented and maintained? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node28;;9. Implement the Information System Activity Review and Audit Process;"Activate the necessary review process.
+
+Begin auditing and logging activity.";;;compliant;;done;;"[2026-11-03] 164.308(a)(1)(ii)(D) activity review and audit in operation. Controls: AU-01 (Implemented); AU-02 (Implemented).";Alerts are raised and investigated,Security-relevant identity events are logged;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node28:question:1] What mechanisms will be implemented to assess the effectiveness of the review process (measures)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node28:question:2] What is the plan to revise the review process when needed? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.308(a)(2);164.308(a)(2);;"Assigned Security Responsibility:
+HIPAA Standard: Identify the security official who is responsible for the development and implementation of the policies and procedures required by this subpart for the covered entity or business associate.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node31;;1. Select a Security Official to be Assigned Responsibility for HIPAA Security;"Identify the individual who has final responsibility for security.
+
+Select an individual who is able to assess effective security to serve as the point of contact for security policy, implementation, and monitoring.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node31:question:1] Does the security official have adequate access and communications with senior officials in the organization, such as executives, chief information officers, chief compliance officers, and in-house counsel? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node31:question:2] Who in the organization is authorized to accept risks from systems on behalf of the organization? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node33;;2. Assign and Document the Individual’s Responsibility;"Document the assignment to one individual’s responsibilities in a job description.
+
+Communicate this assigned role to the entire organization.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node33:question:1] Is there a complete job description that accurately reflects assigned security duties and responsibilities? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node33:question:2] Have the staff members in the organization been notified as to whom to call in the event of a security problem? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.308(a)(3);164.308(a)(3);;"Workforce Security:
+HIPAA Standard: Implement policies and procedures to ensure that all members of its workforce have appropriate access to electronic protected health information, as provided under paragraph (a)(4) of this section, and to prevent those workforce members who do not have access under paragraph (a)(4) of this section from obtaining access to electronic protected health information.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node36;;1. Implement Policies and Procedures for Authorization and/or Supervision;Implement procedures for the authorization and/or supervision of workforce members who work with ePHI or in locations where it might be accessed.;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node36:question:1] Have chains of command and lines of authority been established? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node36:question:2] Have staff members been made aware of the identity and roles of their supervisors? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node38;;Implementation Specification (Addressable);Implement procedures for the authorization and/or supervision of workforce members who work with ePHI or in locations where it might be accessed.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node40;;2. Establish Clear Job Descriptions and Responsibilities;"Define roles and responsibilities for all job functions.
+
+Assign appropriate levels of security oversight, training, and access.
+
+Identify in writing who has the business need and who has been granted permission to view, alter, retrieve, and store ePHI and at what times, under what circumstances, and for what purposes.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node40:question:1] Are there written job descriptions that are correlated with appropriate levels of access to ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node40:question:2] Are these job descriptions reviewed and updated on a regular basis? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node40:question:3] Have staff members been provided copies of their job descriptions and informed of the access granted to them, as well as the conditions by which this access can be used? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node42;;3. Establish Criteria and Procedures for Hiring and Assigning Tasks;"Ensure that staff members have the necessary knowledge, skills, and abilities to fulfill particular roles (e.g., positions involving access to and use of sensitive information).
+
+Ensure that these requirements are included as part of the personnel hiring process.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node42:question:1] Have the qualifications of candidates for specific positions been checked against the job description? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node42:question:2] Have determinations been made that candidates for specific positions are able to perform the tasks of those positions? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node44;;4. Establish a Workforce Clearance Procedure;"Implement procedures to determine that the access of a workforce member to ePHI is appropriate.
+
+Implement appropriate screening of persons who will have access to ePHI.
+
+Implement a procedure for obtaining clearance from appropriate offices or individuals where access is provided or terminated.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node44:question:1] Is there an implementation strategy that supports the designated access authorities? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node44:question:2] Are applicants’ employment and educational references checked, if reasonable and appropriate? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node44:question:3] Have background checks been completed, if reasonable and appropriate? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node44:question:4] Are there procedures for determining that the appropriate workforce members have access to the necessary information? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node44:question:5] Do procedures exist for obtaining appropriate sign-offs to grant or terminate access to ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node44:question:6] Have clearance and supervision procedures been developed for non-US based workforce members that are applicable to their location? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node46;;Implementation Specification (Addressable);Implement procedures to determine that the access of a workforce member to ePHI is appropriate.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node48;;5. Establish Termination Procedures;"Implement procedures for terminating access to ePHI when the employment of or other arrangement with a workforce member ends or as required by determinations made as specified in §164.308(a)(3)(ii)(B).
+
+Develop a standard set of procedures that should be followed to recover access control devices (e.g., identification badges, keys, access cards) when employment ends.
+
+Deactivate computer access accounts (e.g., disable user IDs and passwords) and facility access (e.g., change facility security codes/PINs).";;;partially_compliant;;done;;"The termination procedure was tested using Jeevan Smith (TERM-2026-0301) on October 19, 2026. Entra ID account disablement, session revocation, and application-role removal were completed. However, the federated Keycloak account remained enabled until manually disabled and verified.
+
+The existing manual termination control is operational, but standardized offboarding documentation and automated Keycloak deprovisioning require further improvement. Remediation is tracked through R02 and planned control CAN-CTRL-JML-002.
+
+Finding: Incomplete Federated Account Deprovisioning
+
+During Jeevan Smith's termination test (TERM-2026-0301) on October 19, 2026, the Microsoft Entra ID account was disabled, sign-in sessions were revoked, and the Billing application role was removed.
+
+However, testing at 18:25 UTC showed that the federated Keycloak account remained enabled after the Entra ID termination actions. The Keycloak account was subsequently disabled manually and verified at approximately 18:28 UTC.
+
+This identifies a gap in automated account deprovisioning between Entra ID and Keycloak. No active Keycloak sessions or unauthorized EHR access were observed during this test.
+
+Existing control: CAN-CTRL-JML-001 – Manual Workforce Termination and Access Revocation.
+
+Recommendation: Implement automated Keycloak deprovisioning, session revocation, reconciliation, and alerting. Validate effectiveness through additional termination testing.
+
+Related risk: R02 – Incomplete Leaver Deprovisioning.
+
+Planned remediation: CAN-CTRL-JML-002 – Automated Keycloak Leaver Deprovisioning.
+
+Finding status: Open – Remediation pending.
+
+[2026-11-03] 164.308(a)(3)(ii)(C) termination procedures. Controls: AC-02 (Implemented); CAN-CTRL-JML-001 (Implemented); CAN-CTRL-JML-002 (Partially implemented). Termination procedure exists and the scripted Keycloak leaver step passed TC-04 and TC-09 (after CA-09) on 2026-11-03. Still open: an Entra ID termination does not disable the Keycloak copy automatically (CAN-FIND-001, CAN-CTRL-JML-002), so the federated path depends on the operator running the leaver step.";Terminated users are disabled and all access removed promptly,Automated Keycloak Leaver Deprovisioning,Workforce Termination and Access Revocation;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node48:question:1] Are there separate procedures for voluntary termination (e.g., retirement, promotion, transfer, change of employment) versus involuntary termination (e.g., termination for cause, reduction in force, involuntary transfer, criminal or disciplinary actions), if reasonable and appropriate? >> No
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node48:question:2] Is there a standard checklist for all action items that should be completed when a workforce member leaves (e.g., return of all access devices, deactivation of logon accounts [including remote access], and delivery of any needed data solely under the employee’s control)? >> No
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node48:question:3] Do other organizations need to be notified to deactivate accounts that the workforce member had access to in the performance of their employment duties? >> N/A"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node50;;Implementation Specification (Addressable);Implement procedures for terminating access to ePHI when the employment of or other arrangement with a workforce member ends or as required by determinations made as specified in §164.308(a)(3)(ii)(B).;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.308(a)(4);164.308(a)(4);;"Information Access Management:
+HIPAA Standard: Implement policies and procedures for authorizing access to electronic protected health information that are consistent with the applicable requirements of subpart E of this part.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node53;;1. Isolate Healthcare Clearinghouse Functions;"If a healthcare clearinghouse is part of a larger organization, the clearinghouse must implement policies and procedures that protect the ePHI of the clearinghouse from unauthorized access by the larger organization.
+
+Determine whether a component of the regulated entity constitutes a healthcare clearinghouse under the HIPAA Security Rule.
+
+If no clearinghouse functions exist, document this finding. If a clearinghouse exists within the organization, implement procedures for access that are consistent with the HIPAA Privacy Rule.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node53:question:1] If healthcare clearinghouse functions are performed, are policies and procedures implemented to protect ePHI from the other functions of the larger organization? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node53:question:2] Does the healthcare clearinghouse share hardware or software with a larger organization of which it is a part? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node53:question:3] Does the healthcare clearinghouse share staff or physical space with staff from a larger organization? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node53:question:4] Has a separate network or subsystem been established for the healthcare clearinghouse, if reasonable and appropriate? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node53:question:5] Has staff of the healthcare clearinghouse been trained to safeguard ePHI from disclosure to the larger organization, if required for compliance with the HIPAA Privacy Rule? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node55;;Implementation Specification (Required);If a healthcare clearinghouse is part of a larger organization, the clearinghouse must implement policies and procedures that protect the ePHI of the clearinghouse from unauthorized access by the larger organization.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node57;;2. Implement Policies and Procedures for Authorizing Access;"Implement policies and procedures for granting access to ePHI, such as through access to a workstation, transaction, program, process, or other mechanism.
+
+Decide and document procedures for how access to ePHI will be granted to workforce members within the organization.
+
+Select the basis for restricting access to ePHI.
+
+Select an access control method (e.g., identity-based, role-based, or other reasonable and appropriate means of access.)
+
+Decide and document how access to ePHI will be granted for privileged functions.
+
+Ensure that there is a list of personnel with authority to approve user requests to access ePHI and systems with ePHI.
+
+Identify authorized users with access to ePHI, including data owners and data custodians.
+
+Consider whether multiple access control methods are needed to protect ePHI according to the results of the risk assessment.
+
+Determine whether direct access to ePHI will ever be appropriate for individuals external to the organization (e.g., business partners or patients seeking access to their own ePHI).";;;partially_compliant;;done;;"[2026-11-03] 164.308(a)(4)(ii)(B) access authorization. Controls: AC-01 (Implemented); AC-05 (Partially implemented).";Users receive only the access their job requires (RBAC, least privilege),Privileged access is approved, limited and monitored;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node57:question:1] Have appropriate authorization and clearance procedures, as specified in Workforce Security (§ 164.308(a)(3)), been performed prior to granting access? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node57:question:2] Do the organization’s systems have the capacity to set access controls? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node57:question:3] Are there documented job descriptions that accurately reflect assigned duties and responsibilities and enforce segregation of duties? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node57:question:4] Has the organization documented procedures that specify how authorized personnel will be granted access to ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node57:question:5] Does the organization grant remote access to ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node57:question:6] What methods of access control are used (e.g., identity-based, role-based, location-based, or a combination) to protect ePHI? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node57:question:7] Are there additional access control requirements for users who will be accessing privileged functions? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node57:question:8] Have organizational personnel been explicitly authorized to approve user requests to access ePHI and/or systems with ePHI? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node59;;Implementation Specification (Addressable);Implement policies and procedures for granting access to ePHI, such as through access to a workstation, transaction, program, process, or other mechanism.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node61;;3. Implement Policies and Procedures for Access Establishment and Modification;"Implement policies and procedures that – based on the covered entity or business associate’s access authorization policies – establish, document, review, and modify a user's right of access to a workstation, transaction, program, or process.
+
+Establish standards for granting access to ePHI.
+
+Provide formal authorization from the appropriate authority before granting access to ePHI.
+
+Regularly review personnel access to ePHI to ensure that access is still authorized and needed.
+
+Modify personnel access to ePHI, as needed, based on review activities.";;;compliant;;done;;"[2026-11-03] 164.308(a)(4)(ii)(C) access establishment and modification. Controls: AC-03 (Implemented); AC-01 (Implemented).";Role changes remove old access before new access is granted,Users receive only the access their job requires (RBAC, least privilege);"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node61:question:1] Are duties separated such that only the minimum necessary ePHI is made available to each workforce member based on their job requirements? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node61:question:2] Are access decisions justified, approved, logged, and retained? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node61:question:3] Is personnel access to ePHI regularly reviewed to ensure that access is still authorized and needed? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node61:question:4] Are activities that review access to ePHI logged and retained, including decisions that arise from review activities? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node61:question:5] Are decisions related to the establishment and modification of workforce member authorization to access ePHI documented? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node63;;Implementation Specification (Addressable);Implement policies and procedures that – based on the covered entity or business associate’s access authorization policies – establish, document, review, and modify a user's right of access to a workstation, transaction, program, or process.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node65;;4. Evaluate Existing Security Measures Related to Access Controls;"Evaluate the security features of access controls that are already in place or those of any planned for implementation, as appropriate.
+
+Determine whether these security features involve alignment with other existing management, operational, and technical controls, such as policy standards, personnel procedures, the maintenance and review of audit trails, the identification and authentication of users, and physical access controls.";;;partially_compliant;;done;;[2026-11-03] 164.308(a)(4) evaluate access-control measures. Controls: AR-01 (Partially implemented).;Access is reviewed periodically and findings are remediated;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node65:question:1] Are there policies and procedures related to the security of access controls? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node65:question:2] If so, are they updated regularly? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node65:question:3] Are authentication mechanisms used to verify the identity of those accessing systems protected from inappropriate manipulation? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node65:question:4] Does management regularly review the list of access authorizations, including remote access authorizations, to verify that the list is accurate and has not been inappropriately altered? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.308(a)(5);164.308(a)(5);;"Security Awareness and Training:
+HIPAA Standard: Implement a security awareness and training program for all members of its workforce (including management).";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node68;;1. Conduct a Training Needs Assessment;"Determine the training needs of the organization.
+
+Interview and involve key personnel in assessing security training needs.
+
+Use feedback and analysis of past events to help determine training needs
+
+Review organizational behavior issues, past incidents, and/or breaches to determine what training is missing or needs reinforcement, improvement, or periodic reminders.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node68:question:1] What awareness, training, and education programs are needed? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node68:question:2] Which are required? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node68:question:3] Is the organization monitoring current threats to determine possible areas of training needs? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node68:question:4] Are there current, relevant threats (e.g., phishing, ransomware) about which personnel need training? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node68:question:5] Do workforce members need training on any particular organization devices (e.g., medical IoT) or technology that pose a risk to ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node68:question:6] What is the current status regarding how these needs are being addressed (e.g., how well are current efforts working)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node68:question:7] Where are the gaps between the needs and what is being done (e.g., what more needs to be done)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node68:question:8] What are the training priorities in terms of content and audience? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node70;;2. Develop and Approve a Training Strategy and a Plan;"Address the specific HIPAA policies that require security awareness and training in the security awareness and training program.
+
+Set organizational expectations for protecting ePHI.
+
+In the security awareness and training program, outline the program’s scope, goals, target audiences, learning objectives, deployment methods, and evaluation and measurement techniques, as well as the frequency of training";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node70:question:1] Is there a procedure in place to ensure that everyone in the organization receives security awareness training, including teleworkers and remote personnel? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node70:question:2] What type of security training is needed to address specific technical topics based on job responsibility? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node70:question:3] When should training be scheduled to ensure that compliance deadlines are met? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node70:question:4] Has the organization considered the training needs of non-employees (e.g., contractors, interns)? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node70:question:5] Is there a need to implement information security training tailored to individual roles? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node72;;3. Protection from Malicious Software, Login Monitoring, and Password Management;"As reasonable and appropriate, train workforce members regarding procedures for:
+
+Incorporate information concerning workforce members’ roles and responsibilities in implementing these implementation specifications into training and awareness efforts.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node72:question:1] Do workforce members know the importance of the timely application of system patches to protect against malicious software and the exploitation of vulnerabilities? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node72:question:2] Are workforce members aware that login attempts may be monitored? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node72:question:3] Do workforce members who monitor login attempts know to whom to report discrepancies? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node72:question:4] Do workforce members understand their roles and responsibilities in selecting a password of appropriate strength, safeguarding their password, and changing a password when it has been compromised or is suspected of being compromised? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node72:question:5] Are there policies in place that prohibit workforce members from sharing passwords with others? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node74;;Implementation Specification (Protection from Malicious Software);As reasonable and appropriate, train workforce members regarding procedures for:;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node76;;Implementation Specification (Log-in Monitoring);As reasonable and appropriate, train workforce members regarding procedures for:;;;compliant;;done;;"[2026-11-03] 164.308(a)(5)(ii)(C) log-in monitoring. Controls: AU-02 (Implemented); IA-02 (Implemented).";"Alerts are raised and investigated,Lockout after repeated failures; strong password standard";
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node78;;Implementation Specification (Password Management);As reasonable and appropriate, train workforce members regarding procedures for:;;;partially_compliant;;done;;"[2026-11-03] 164.308(a)(5)(ii)(D) password management. Controls: IA-02 (Implemented). Password standard enforced (length 12, history 4; EV-13). Lab passwords that were committed to the public repository before 2026-11-03 are not yet rotated (EX-07, CA-12).";"Lockout after repeated failures; strong password standard";
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node80;;4. Develop Appropriate Awareness and Training Content, Materials, and Methods;"Select topics to be included in the training materials, and consider current and relevant topics (e.g., phishing, email security) for the protection of ePHI.
+
+Incorporate new information from email advisories, online IT security daily news websites, and periodicals, as reasonable and appropriate.
+
+Consider using a variety of media and avenues according to what is appropriate for the organization based on workforce size, location, level of education, and other factors.
+
+Training should be an ongoing, evolving process in response to environmental and operational changes that affect the security of ePHI.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node80:question:1] Are the topics selected for training and awareness the most relevant to the threats, vulnerabilities, and risks identified during the risk assessment? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node80:question:2] Does the organization periodically review the topics covered in training and awareness in light of updates to the risk assessment and current threats? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node80:question:3] Have workforce members received a copy of and do they have ready access to the organization’s security procedures and policies? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node80:question:4] Do workforce members know whom to contact and how to handle a security incident? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node80:question:5] Do workforce members understand the consequences of noncompliance with the stated security policies? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node80:question:6] Do workforce members who travel, telework, or work remotely know how to handle physical laptop security issues and information security issues? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node80:question:7] Has the regulated entity researched available training resources? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node80:question:8] Is dedicated training staff available for the delivery of security training? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node80:question:9] If not, who will deliver the training? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node80:question:10] What is the security training budget? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node82;;5. Implement the Training;"Schedule and conduct the training outlined in the strategy and plan.
+
+Implement any reasonable technique to disseminate the security messages in an organization, including newsletters, screensavers, video recordings, email messages, teleconferencing sessions, staff meetings, and computer-based training.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node82:question:1] Have all workforce members received adequate training to fulfill their security responsibilities? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node82:question:2] Are there sanctions if workforce members do not complete the required training? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node84;;6. Implement Security Reminders;"Implement periodic security updates.
+
+Provide periodic security updates to staff, business associates, and contractors.
+
+Consider the benefits of ongoing communication with staff (e.g., emails, newsletters) on training topics to achieve HIPAA compliance and protect ePHI.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node84:question:1] What methods are available or already in use to make or keep workforce members aware of security (e.g., posters, booklets, anti-phishing training)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node84:question:2] Is the organization making use of existing resources (e.g., from the 405(d) program or other resources listed in Appendix F) to remind staff of important security topics? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node84:question:3] Is security refresher training performed on a periodic basis (e.g., annually)? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node84:question:4] Is security awareness discussed with all new hires? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node84:question:5] Are security topics reinforced during routine staff meetings? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node86;;Implementation Specification (Addressable);Implement periodic security updates.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node88;;7. Monitor and Evaluate the Training Plan;"Keep the security awareness and training program current.
+
+Solicit trainee feedback to determine whether the training and awareness are successfully reaching the intended audience.
+
+Conduct training whenever changes occur in the technology and practices as appropriate.
+
+Monitor the training program implementation to ensure that all workforce members participate.
+
+Implement corrective actions when problems arise.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node88:question:1] Are the workforce members' training and professional development programs documented and monitored, if reasonable and appropriate? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node88:question:2] How are new workforce members trained on security? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node88:question:3] Are new non-employees (e.g., contractors, interns) trained on security? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.308(a)(6);164.308(a)(6);;"Security Incident Procedures:
+HIPAA Standard: Implement policies and procedures to address security incidents.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node91;;1. Determine the Goals of Incident Response;"Gain an understanding as to what constitutes a true security incident. Under the HIPAA Security Rule, a security incident is the attempted or successful unauthorized access, use, disclosure, modification, or destruction of information or interference with system operations in an information system (45 CFR § 164.304).
+
+Ensure that the incident response program covers all parts of the organization in which ePHI is created, stored, processed, or transmitted.
+
+Determine how the organization will respond to a security incident.
+
+Establish a reporting mechanism and a process to coordinate responses to the security incident.
+
+Provide direct technical assistance, advise vendors to address product-related problems, and provide liaisons to legal and criminal investigative groups as needed.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node91:question:1] Has the HIPAA-required security risk assessment resulted in a list of potential physical or technological events that could lead to a breach of security? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node91:question:2] Is there a procedure in place for reporting and handling incidents? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node91:question:3] Has an analysis been conducted that relates reasonably anticipated organizational threats (that could result in a security incident) to the methods that would be used for mitigation? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node91:question:4] Have the key functions of the organization been prioritized to determine what would need to be restored first in the event of a disruption? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node93;;2. Develop and Deploy an Incident Response Team or Other Reasonable and Appropriate Response Mechanism;"Determine whether the size, scope, mission, and other aspects of the organization justify the reasonableness and appropriateness of maintaining a standing incident response team.
+
+Identify appropriate individuals to be part of a formal incident response team if the organization has determined that implementing an incident response team is reasonable and appropriate.
+
+Consider assigning secondary personnel to be part of the incident response team in the event that primary personnel are unavailable.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node93:question:1] Do members of the team have adequate knowledge of the organization’s hardware and software? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node93:question:2] Do members of the team have the authority to speak for the organization to the media, law enforcement, and clients or business partners? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node93:question:3] Has the incident response team received appropriate training in incident response activities? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node95;;3. Develop and Implement Policy and Procedures to Respond to and Report Security Incidents;"Identify and respond to suspected or known security incidents; mitigate, to the extent practicable, harmful effects of security incidents that are known to the covered entity or business associate; and document security incidents and their outcomes.
+
+Ensure that an organizational incident response policy is in place that addresses all parts of the organization in which ePHI is created, stored, processed, or transmitted.
+
+Document incident response procedures that can provide a single point of reference to guide the day-to-day operations of the incident response team.
+
+Review incident response procedures with staff who have roles and responsibilities related to incident response; solicit suggestions for improvements; and make changes to reflect input if reasonable and appropriate.
+
+Consider conducting tests of the incident response plan.
+
+Update the procedures as required based on changing organizational needs.";;;compliant;;done;;[2026-11-03] 164.308(a)(6)(ii) incident response and reporting. Controls: IR-01 (Implemented).;Incidents are handled with a tested playbook;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node95:question:1] Has the organization determined that maintaining a staffed security incident hotline would be reasonable and appropriate? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node95:question:2] Has the organization developed processes for documenting and tracking incidents? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node95:question:3] Has the organization determined reasonable and appropriate mitigation options for security incidents? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node95:question:4] Has the organization developed standardized incident report templates to record necessary information related to incidents? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node95:question:5] Has the organization determined that information captured in the reporting templates is reasonable and appropriate to investigate an incident? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node95:question:6] Has the organization determined the conditions under which information related to a security breach will be disclosed to the media? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node95:question:7] Have appropriate (internal and external) persons who should be informed of a security breach been identified? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node95:question:8] Has a contact information list been prepared? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node95:question:9] Has a written incident response plan been developed and provided to the incident response team? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node95:question:10] Has the incident response plan been tested? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node97;;Implementation Specification (Required);"Identify and respond to suspected or known security incidents; mitigate, to the extent practicable, harmful effects of security incidents that are known to the covered entity or business associate; and document security incidents and their outcomes.";;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node99;;4. Incorporate Post-Incident Analysis into Updates and Revisions;"Measure effectiveness and update security incident response procedures to reflect lessons learned, and identify actions to take that will improve security controls after a security incident.
+
+Incidents caused by or influenced by known risks should feed back into the risk assessment process for a reevaluation of impact and/or likelihood.
+
+Remediation and corrective action plans that arise from incidents should serve as input to the risk assessment/management process.";;;compliant;;done;;[2026-11-03] 164.308(a)(6) post-incident analysis. Controls: IR-01 (Implemented).;Incidents are handled with a tested playbook;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node99:question:1] Has the organization analyzed records (e.g., log files, malware) to understand the nature, extent, and scope of the incident? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node99:question:2] Does the organization reassess risk to ePHI based on findings from this analysis? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node99:question:3] Does the incident response team keep adequate documentation of security incidents and their outcomes, which may include what weaknesses were exploited and how access to the information was gained? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node99:question:4] Do records reflect the new contacts and resources identified for responding to an incident? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node99:question:5] Does the organization consider whether current procedures were adequate for responding to a particular security incident? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.308(a)(7);164.308(a)(7);;"Contingency Plan:
+HIPAA Standard: Establish (and implement as needed) policies and procedures for responding to an emergency or other occurrence (for example, fire, vandalism, system failure, and natural disaster) that damages systems that contain electronic protected health information";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node102;;1. Develop a Contingency Planning Policy;"Define the organization’s overall contingency objectives.
+
+Establish the organizational framework, roles, and responsibilities for this area.
+
+Address scope, resource requirements, training, testing, plan maintenance, and backup requirements.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node102:question:1] What critical services must be provided within specified time frames? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node102:question:2] Have cross-functional dependencies been identified to determine how a failure in one system may negatively impact another one? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node104;;2. Conduct an Applications and Data Criticality Analysis;"Assess the relative criticality of specific applications and data in support of other Contingency Plan components.
+
+Identify the activities and material involving ePHI that are critical to business operations.
+
+Identify the critical services or operations and the manual and automated processes that support them involving ePHI.
+
+Determine the amount of time that the organization can tolerate disruptions to these operations, materials, or services (e.g., due to power outages).
+
+Evaluate the current and available levels of redundancy and geographic distribution of any storage service providers to identify risks to service availability and determine restoration times.
+
+Consider whether any vendor/service provider arrangements are critical to operations and address them as appropriate to ensure availability and reliability.
+
+Establish cost-effective strategies for recovering these critical services or processes.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node104:question:1] What hardware, software, and personnel are critical to daily operations? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node104:question:2] What is the impact on desired service levels if these critical assets are not available? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node104:question:3] What, if any, support is provided by external providers (e.g., cloud service providers, internet service providers, utilities, or contractors)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node104:question:4] What is the nature and degree of impact on the operation if any of the critical resources or service providers are not available? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node104:question:5] Has the organization identified vendors or service providers that are critical to business operations? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node104:question:6] Has the organization sufficiently addressed the availability and reliability of these services (e.g., via service level agreements, contracts)? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node106;;Implementation Specification (Addressable);Assess the relative criticality of specific applications and data in support of other Contingency Plan components.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node108;;3. Identify Preventive Measures;"Identify preventive measures for each defined scenario that could result in the loss of a critical service operation involving the use of ePHI.
+
+Ensure that identified preventive measures are practical and feasible in terms of their applicability in a given environment.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node108:question:1] What alternatives for continuing operations of the organization are available in case of the loss of any critical function or resource? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node108:question:2] What is the cost associated with the preventive measures that may be considered? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node108:question:3] Are the preventive measures feasible (i.e., affordable and practical for the environment)? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node108:question:4] What plans, procedures, or agreements need to be initiated to enable the implementation of the preventive measures if they are necessary? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node110;;4. Develop Recovery Strategy;"Finalize the set of contingency procedures that should be invoked for all identified impacts, including emergency mode operation. The strategy must be adaptable to the existing operating environment and address allowable outage times and the associated priorities identified in Key Activity 2.
+
+If part of the strategy depends on external organizations for support, ensure that formal agreements are in place with specific requirements stated.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node110:question:1] Have procedures related to recovery from emergency or disastrous events been documented? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node110:question:2] Has a coordinator who manages, maintains, and updates the plan been designated? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node110:question:3] Has an emergency call list been distributed to all workforce members? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node110:question:4] Have recovery procedures been documented? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node110:question:5] Has a determination been made regarding when the plan needs to be activated (e.g., anticipated duration of outage, tolerances for outage or loss of capability, impact on service delivery, etc.)? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node112;;5. Data Backup Plan and Disaster Recovery Plan;"Establish and implement procedures to create and maintain retrievable exact copies of ePHI.
+
+Establish (and implement as needed) procedures to restore any loss of data.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node112:question:1] Is there a formal, written contingency plan? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node112:question:2] Does it address disaster recovery and data backup? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node112:question:3] Does the disaster recovery plan address what data is to be restored and in what order? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node112:question:4] Do data backup procedures exist that include all ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node112:question:5] Is the frequency of backups appropriate for the environment? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node112:question:6] Are responsibilities assigned to conduct backup activities? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node112:question:7] Are data backup procedures documented and available to other staff? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node112:question:8] Are backup logs reviewed and data restoration tests conducted to ensure the integrity of data backups? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node112:question:9] Is at least one copy of the data backup stored offline to protect against corruption due to ransomware or other similar attacks? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node112:question:10] Are backups or images of operating systems, devices, software, and configuration files necessary to support the confidentiality, integrity, and availability of ePHI included in the data backup plan? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node114;;Implementation Specification (Required);Establish and implement procedures to create and maintain retrievable exact copies of ePHI.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node116;;Implementation Specification (Required);Establish (and implement as needed) procedures to restore any loss of data.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node118;;6. Develop and Implement an Emergency Mode Operation Plan;"Establish (and implement as needed) procedures to enable the continuation of critical business processes to protect the security of ePHI while operating in emergency mode.
+
+“Emergency mode” operation involves only those critical business processes that must occur to protect the security of ePHI during and immediately after a crisis situation.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node118:question:1] Have procedures been developed to continue the critical functions identified in Key Activity 2? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node118:question:2] If so, have those critical functions that also involve the use of ePHI been identified? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node118:question:3] Would different staff, facilities, or systems be needed to perform those functions? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node118:question:4] Has the security of ePHI in that alternative mode of operation been assured? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node120;;Implementation Specification (Required);Establish (and implement as needed) procedures to enable the continuation of critical business processes to protect the security of ePHI while operating in emergency mode.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node122;;7. Testing and Revision Procedure;"Implement procedures for the periodic testing and revision of contingency plans.
+
+Test the contingency plan on a predefined cycle (stated in the policy developed under Key Activity 1), if reasonable and appropriate.
+
+Train those with defined plan responsibilities in their roles.
+
+If possible, involve external entities (e.g., vendors, alternative site or service providers) in testing exercises.
+
+Make key decisions regarding how the testing is to occur (e.g., tabletop exercise versus staging a real operational scenario, including actual loss of capability).
+
+Decide how to segment the type of testing based on the assessment of business impact and the acceptability of a sustained loss of service.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node122:question:1] How is the contingency plan to be tested? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node122:question:2] Does testing lend itself to a phased approach? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node122:question:3] Is it feasible to actually take down functions or services for the purposes of testing? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node122:question:4] Has the organization conducted backup recovery testing to ensure that critical data can be recovered using existing data backups? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node122:question:5] Does the backup recovery testing verify the ability to recover data and operations based on identified testing scenarios using actual tests (i.e., not tabletop exercises)? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node122:question:6] Can testing be done during normal business hours or must it take place during off hours? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node122:question:7] Have the tests included personnel with contingency planning responsibilities? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node122:question:8] Have the results of each test been documented and any problems with the test reviewed and corrected? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node122:question:9] If full testing is infeasible, has a tabletop scenario (e.g., a classroom-like exercise) been considered? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node122:question:10] How frequently will the plan be tested (e.g., annually)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node122:question:11] When should the plan be revised? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node124;;Implementation Specification (Addressable);Implement procedures for the periodic testing and revision of contingency plans.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.308(a)(8);164.308(a)(8);;"Evaluation:
+HIPAA Standard: Perform a periodic technical and nontechnical evaluation, based initially upon the standards implemented under this rule and subsequently, in response to environmental or operational changes affecting the security of electronic protected health information, that establishes the extent to which a covered entity’s or business associate’s security policies and procedures meet the requirements of this subpart.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node127;;1. Determine Whether Internal or External Evaluation is Most Appropriate;"Decide whether the evaluation will be conducted with internal staff resources or external consultants.
+
+Engage external expertise to assist the internal evaluation team where additional skills and expertise are determined to be reasonable and appropriate.
+
+Use internal resources to supplement an external source of help because these internal resources can provide the best institutional knowledge and history of internal policies and practices.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node127:question:1] Which staff has the technical experience and expertise to evaluate the systems? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node127:question:2] Are the evaluators sufficiently independent to provide objective reporting? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node127:question:3] How much training will staff need on security-related technical and non-technical issues? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node127:question:4] If an outside vendor is used, what factors should be considered when selecting the vendor, such as credentials and experience? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node127:question:5] What is the budget for internal resources to assist with an evaluation? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node127:question:6] What is the budget for external services to assist with an evaluation? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node129;;2. Develop Standards and Measurements for Reviewing All Standards and Implementation Specifications of the Security Rule;"Develop and document organizational policies and procedures for conducting evaluation.
+
+Once security controls have been implemented in response to the organization’s risk assessment and management processes, periodically review these implemented security measures to ensure their continued effectiveness in protecting ePHI.
+
+Consider determining any specific evaluation metrics and/or measurements to be captured during evaluation. Metrics and/or measurements can assist in tracking progress over time.
+
+Use an evaluation strategy and tool that considers all elements of the HIPAA Security Rule and can be tracked, such as a questionnaire or checklist.
+
+Implement tools that can provide reports on the level of compliance, integration, or maturity of a particular security safeguard deployed to protect ePHI.
+
+If available, consider engaging corporate, legal, or regulatory compliance staff when conducting the analysis.
+
+Leverage any existing reports or documentation that may already be prepared by the organization addressing the compliance, integration, or maturity of a particular security safeguard deployed to protect ePHI.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node129:question:1] Has the organization documented policies and procedures for conducting the evaluation of security controls? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node129:question:2] Have management, operational, and technical issues been considered? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node129:question:3] Do the elements of each evaluation procedure (e.g., questions, statements, or other components) address individual, measurable security safeguards for ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node129:question:4] Has the organization developed evaluation procedures that capture any desired metrics or measurements? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node129:question:5] Has the organization determined that the procedure must be tested in a few areas or systems? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node129:question:6] Does the evaluation tool consider all standards and implementation specifications of the HIPAA Security Rule? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node129:question:7] Does the evaluation tool address the protection of ePHI that is collected, used, or disclosed? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node131;;3. Conduct Evaluation;"Determine in advance what departments and/or staff will participate in the evaluation.
+
+Determine what constitutes an environmental or operational change that affects the security of ePHI.
+
+Determine when evaluations are conducted in response to an environmental or operational change that affects the security of ePHI (e.g., prior to the change, contemporaneous with the change, after the change).
+
+Secure management support for the evaluation process to ensure participation.
+
+Collect and document all needed information. Collection methods may include the use of interviews, surveys, and the outputs of automated tools, such as access control auditing tools, system logs, and the results of penetration testing.
+
+Conduct penetration testing (where testers attempt to compromise system security for the sole purpose of testing the effectiveness of security controls), if reasonable and appropriate.
+
+Evaluation may include reviewing organizational policies and procedures, assessing the implementation of security controls, collecting evidence of security control implementation, and performing physical walk- throughs.";;;compliant;;done;;[2026-11-03] 164.308(a)(8) evaluation. Controls: CA-01 (Implemented).;Control gaps are tracked to verified remediation;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node131:question:1] If available, have staff members with knowledge of IT security been consulted and included in the evaluation team? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node131:question:2] Are appropriate personnel notified of planned environmental or operational changes that could affect the security of ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node131:question:3] Is a change management process in place that includes identification and communication of environmental and operational changes that could affect the security of ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node131:question:4] If penetration testing has been determined to be reasonable and appropriate, has specifically worded, written approval from senior management been received for any planned penetration testing? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node131:question:5] Has the process been formally communicated to those who have been assigned roles and responsibilities in the evaluation process? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node131:question:6] Has the organization explored the use of automated tools to support the evaluation process? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node133;;4. Document Results;"Document each evaluation finding, as well as remediation options, recommendations, and decisions.
+
+Document known gaps between identified risks, mitigating security controls, and any acceptance of risk, including justification.
+
+Develop security program priorities, and establish targets for continuous improvement.
+
+Utilize the results of evaluations to inform impactful security changes to protect ePHI.
+
+Communicate evaluation results, metrics, and/or measurements to relevant organizational personnel.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node133:question:1] Does the process support the development of security recommendations? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node133:question:2] When determining how best to display evaluation results, have written reports that highlight key findings and recommendations been considered? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node133:question:3] If a written final report is to be circulated among key staff, have steps been taken to ensure that it is made available only to those persons designated to receive it? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node133:question:4] Does the organization use evaluation results to enhance the protection of ePHI rather than for the sake of compliance? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node135;;5. Repeat Evaluations Periodically;"Establish the frequency of evaluations, and consider the sensitivity of the ePHI controlled by the organization as well as the organization's size, complexity, and environmental and/or operational changes (e.g., other relevant laws or accreditation requirements).
+
+In addition to periodic reevaluations, consider repeating evaluations when environmental and operational changes that affect the security of ePHI are made to the organization (e.g., if new technology is adopted or if there are newly recognized risks to the security of ePHI).";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node135:question:1] Do security policies specify that evaluations will be repeated when environmental and operational changes are made that affect the security of ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node135:question:2] Do policies on the frequency of security evaluations reflect any and all relevant federal or state laws that bear on environmental or operational changes affecting the security of ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node135:question:3] Has the organization explored the use of automated tools to support periodic evaluations? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.308(b)(1);164.308(b)(1);;"Business Associate Contracts and Other Arrangements:
+HIPAA Standard: A covered entity may permit a business associate to create, receive, maintain, or transmit electronic protected health information on the covered entity’s behalf only if the covered entity obtains satisfactory assurances, in accordance with § 164.314(a), that the business associate will appropriately safeguard the information. A covered entity is not required to obtain such satisfactory assurances from a business associate that is a subcontractor.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node138;;1. Identify Entities that are Business Associates Under the HIPAA Security Rule;"Identify the individual or department who will be responsible for coordinating the execution of business associate agreements or other arrangements.
+
+Reevaluate the list of business associates to determine who has access to ePHI in order to assess whether the list is complete and current.
+
+Identify systems covered by the contract/agreement.
+
+Business associates must have a BAA in place with each of their subcontractor business associates. Subcontractor business associates are also directly liable for their own Security Rule violations.";;;partially_compliant;;done;;"[2026-11-03] 164.308(b)(1) business associates identified. Controls: VM-01 (Partially implemented). Vendor rules require a sponsor, end date and BAA; test.vendor1 has no sponsor or end date (CA-08). No signed BAA is evidenced in the lab.";Vendor access is sponsored, time-boxed and removed at expiry;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node138:question:1] Does each written and executed BAA contain sufficient language to ensure that ePHI and any other required information types will be protected? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node138:question:2] Have all organizations or vendors that provide a service or function on behalf of the organization been identified? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node138:question:3] Such services may include: >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node138:question:4] Have outsourced functions that involve the use of ePHI been considered? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node138:question:5] Such functions may include: >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node140;;2. Establish a Process for Measuring Contract Performance and Terminating the Contract if Security Requirements Are Not Being Met;"Maintain clear lines of communication between covered entities and business associates regarding the protection of ePHI as per the BAA or contract.
+
+Establish criteria for measuring contract performance.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node140:question:1] What is the service being performed? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node140:question:2] What is the expected outcome? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node140:question:3] Is there a process for reporting security incidents related to the agreement? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node140:question:4] Are additional assurances of protections for ePHI from the business associate necessary? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node140:question:5] If so, where will such additional assurances be documented (e.g., in the BAA, service-level agreement, or other documentation), and how will they be met (e.g., providing documentation of implemented safeguards, audits, certifications)? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node142;;3. Written Contract or Other Arrangement;"Document the satisfactory assurances required by this standard through a written contract or other arrangement with the business associate that meets the applicable requirements of §164.314(a). Readers may find useful resources in Appendix F, including OCR BAA guidance and/or templates that include applicable language.
+
+Execute new or update existing agreements or arrangements as appropriate.
+
+Identify roles and responsibilities.
+
+Include security requirements in business associate contracts and agreements to address the confidentiality, integrity, and availability of ePHI.
+
+Specify any training requirements associated with the contract/agreement or arrangement, if reasonable and appropriate.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node142:question:1] Who is responsible for coordinating and preparing the final agreement or arrangement? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node142:question:2] Does the agreement or arrangement specify how information is to be transmitted to and from the business associate? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node142:question:3] Have security controls been specified for the business associate? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node142:question:4] Are clear responsibilities identified and established regarding potentially overlapping HIPAA obligations (e.g., if hosting ePHI in the cloud, will the CE, BA, or both address encryption)? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node142:question:5] Have appropriate organizational personnel been trained in the process of initiating and maintaining a business associate agreement (BAA)? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node144;;Implementation Specification (Required);Document the satisfactory assurances required by this standard through a written contract or other arrangement with the business associate that meets the applicable requirements of §164.314(a). Readers may find useful resources in Appendix F, including OCR BAA guidance and/or templates that include applicable language.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.310;164.310;;"Physical Safeguards:
+Defined as the “physical measures, policies, and procedures to protect a covered entity’s electronic information systems and related buildings and equipment, from natural and environmental hazards, and unauthorized intrusion.”";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.310(a);164.310(a);;"Facility Access Controls:
+HIPAA Standard: Implement policies and procedures to limit physical access to its electronic information systems and the facility or facilities in which they are housed, while ensuring that properly authorized access is allowed.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node148;;1. Conduct an Analysis of Existing Physical Security Vulnerabilities;"Inventory facilities and identify shortfalls and/or vulnerabilities in current physical security capabilities.
+
+Assign degrees of significance to each vulnerability identified and ensure that proper access is allowed.
+
+Determine which types of facilities require access controls to safeguard ePHI, such as:";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node148:question:1] If reasonable and appropriate, do non-public areas have locks and cameras? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node148:question:2] Are computing devices protected from public access or viewing? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node148:question:3] Are entrances and exits that lead to locations with ePHI secured? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node148:question:4] Do policies and procedures already exist regarding access to and use of facilities and equipment? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node148:question:5] Are there possible natural or human-made disasters that could happen in the environment? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node148:question:6] Do normal physical protections exist (e.g., locks on doors, windows, and other means of preventing unauthorized access)? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node148:question:7] Are network wiring cables protected and not exposed to unauthorized personnel? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node148:question:8] Is there a list of workforce members who can access the facility after hours via the use of keys, badge access, and knowledge of the security or alarm system? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node150;;2. Identify Corrective Measures;"Identify and assign responsibility for the measures and activities necessary to correct deficiencies, and ensure that proper physical access is allowed.
+
+Develop and deploy policies and procedures to ensure that repairs, upgrades, and/or modifications are made to the appropriate physical areas of the facility while ensuring that proper access is allowed.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node150:question:1] Who is responsible for security? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node150:question:2] Is a workforce member other than the security official responsible for facility/physical security? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node150:question:3] Are facility access control policies and procedures already in place? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node150:question:4] Do they need to be revised? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node150:question:5] What training will be needed for workforce members to understand the policies and procedures? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node150:question:6] How will decisions and actions be documented? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node150:question:7] Is a property owner or external party (e.g., cloud service provider) required to make physical changes to meet the requirements? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node152;;3. Develop a Facility Security Plan;"Implement policies and procedures to safeguard the facility and the equipment therein from unauthorized physical access, tampering, and theft.
+
+Implement appropriate measures to provide physical security protection for ePHI in a regulated entity’s possession.
+
+Include documentation of the facility inventory, physical maintenance records, and a history of changes, upgrades, and other modifications.
+
+Identify points of access to the facility and existing security controls.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node152:question:1] Is there an inventory of facilities and existing security practices? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node152:question:2] What are the current procedures for securing the facilities (e.g., exterior, interior, equipment, access controls, maintenance records)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node152:question:3] Is a workforce member other than the security official responsible for the facility plan? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node152:question:4] Is there a contingency plan already in place, under revision, or under development? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node154;;Implementation Specification (Addressable);Implement policies and procedures to safeguard the facility and the equipment therein from unauthorized physical access, tampering, and theft.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node156;;4. Develop Access Control and Validation Procedures;"Implement procedures to control and validate a person's access to facilities based on their role or function, including visitor control and control of access to software programs for testing and revision.
+
+Implement procedures to provide facility access to authorized personnel and visitors and exclude unauthorized persons.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node156:question:1] What are the policies and procedures in place for controlling access by staff, contractors, visitors, and probationary workforce members? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node156:question:2] Do the procedures identify individuals, roles, or job functions that are authorized to access software programs for testing and revision? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node156:question:3] How many access points exist in each facility? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node156:question:4] Is there an inventory? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node156:question:5] Is monitoring equipment necessary? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node156:question:6] Is there a periodic review of personnel with physical access? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node158;;Implementation Specification (Addressable);Implement procedures to control and validate a person's access to facilities based on their role or function, including visitor control and control of access to software programs for testing and revision.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node160;;5. Establish Contingency Operations Procedures;Establish (and implement as needed) procedures that allow facility access in support of the restoration of lost data under the Disaster Recovery Plan and Emergency Mode Operations Plan in the event of an emergency.;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node160:question:1] Are there procedures to allow facility access while restoring lost data in the event of an emergency? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node160:question:2] Who needs access to ePHI in the event of a disaster? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node160:question:3] What is the backup plan for access to the facility and/or ePHI? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node160:question:4] Who is responsible for the contingency plan for access to ePHI? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node160:question:5] Who is responsible for implementing the contingency plan for access to ePHI in each department or unit? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node160:question:6] Will the contingency plan be appropriate in the event of all types of potential disasters (e.g., fire, flood, earthquake, etc.)? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node162;;Implementation Specification (Addressable);Establish (and implement as needed) procedures that allow facility access in support of the restoration of lost data under the Disaster Recovery Plan and Emergency Mode Operations Plan in the event of an emergency.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node164;;6. Maintain Maintenance Records;Implement policies and procedures to document repairs and modifications to the physical components of a facility that are related to security (e.g., hardware, walls, doors, and locks).;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node164:question:1] Are policies and procedures developed and implemented that specify how to document repairs and modifications to the physical components of a facility that are related to security? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node164:question:2] Are records of repairs to hardware, walls, doors, and locks maintained? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node164:question:3] Has responsibility for maintaining these records been assigned? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node166;;Implementation Specification (Addressable);Implement policies and procedures to document repairs and modifications to the physical components of a facility that are related to security (e.g., hardware, walls, doors, and locks).;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.310(b);164.310(b);;"Workstation Use:
+HIPAA Standard: Implement policies and procedures that specify the proper functions to be performed, the manner in which those functions are to be performed, and the physical attributes of the surroundings of a specific workstation or class of workstation that can access electronic protected health information.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node169;;1. Identify Workstation and Device Types and Functions or Uses;"Inventory workstations and devices that create, store, process or transmit ePHI. Be sure to consider the multitude of computing devices (e.g., medical equipment, medical IoT devices, tablets, smart phones, etc.).
+
+Develop policies and procedures for each type of device and identify and accommodate their unique issues.
+
+Classify devices based on the capabilities, connections, and allowable activities for each device used.
+
+Determine the proper function and manner by which specific workstations or classes of workstations are permitted to access ePHI (e.g., applications permitting access to ePHI that are allowed on workstations used by a hospital’s customer service call center or its radiology department).";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node169:question:1] Do the policies and procedures identify devices that access ePHI and those that do not? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node169:question:2] Is there an inventory of device types and locations in the organization? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node169:question:3] Who is responsible for this inventory and its maintenance? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node169:question:4] What tasks are commonly performed on a given device or type of device? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node169:question:5] Are all types of computing devices used as workstations identified along with the use of these devices? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node169:question:6] Are all devices that create, store, process, or transmit ePHI owned by the regulated entity? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node169:question:7] Are some devices personally owned or owned by another party? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node169:question:8] Has the organization considered the use of automation to manage device inventory? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node171;;2. Identify the Expected Performance of Each Type of Workstation and Device;Develop and document policies and procedures related to the proper use and performance of devices that create, store, process, or transmit ePHI.;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node171:question:1] How are these devices used in day-to-day operations? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node171:question:2] Which devices are involved in various work activities? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node171:question:3] What are key operational risks that could result in a breach of security? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node171:question:4] Do the policies and procedures address the use of these devices for any personal use? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node171:question:5] Has the organization updated training and awareness content to include the proper use and performance of these devices? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node173;;3. Analyze Physical Surroundings for Physical Attributes;"Ensure that any risks associated with a device’s surroundings are known and analyzed for possible negative impacts.
+
+Develop policies and procedures that will prevent or preclude the unauthorized access of unattended devices, limit the ability of unauthorized persons to view sensitive information, and dispose of sensitive information as needed.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node173:question:1] Do the policies and procedures specify where to place devices to only allow viewing by authorized personnel? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node173:question:2] Where are devices located? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node173:question:3] Where does work on ePHI occur? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node173:question:4] Are some devices stationary? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node173:question:5] Are some devices mobile and leave the physical facility? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node173:question:6] Is viewing by unauthorized individuals restricted or limited on these devices? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node173:question:7] Do changes need to be made in the space configuration? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node173:question:8] Do workforce members understand the security requirements for the data they use in their day-to-day jobs? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node173:question:9] Are any computing components (e.g., servers, workstations, medical devices) kept in locations that put the confidentiality, integrity, and availability of ePHI at risk? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.310(c);164.310(c);;"Workstation Security:
+HIPAA Standard: Implement physical safeguards for all workstations that access electronic protected health information, to restrict access to authorized users.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node176;;1. Identify All Methods of Physical Access to Workstations and Devices;"Document the different ways that users access workstations and other devices that create, store, process, or transmit ePHI. Be sure to consider the multitude of computing devices (e.g., medical equipment, medical IoT devices, tablets, smart phones, etc.).
+
+Consider any mobile devices that leave the physical facility as well as remote workers who access devices that create, store, process, or transmit ePHI.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node176:question:1] Is there an inventory of all current device locations? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node176:question:2] Are any devices located in public areas? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node176:question:3] Are laptops or other computing devices used as workstations to create, access, store, process, or transmit ePHI? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node178;;2. Analyze the Risks Associated with Each Type of Access;Determine which type of access identified in Key Activity 1 poses the greatest threat to the security of ePHI.;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node178:question:1] Do any devices leave the facility? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node178:question:2] Are any devices housed in areas that are more vulnerable to unauthorized use, theft, or viewing of the data they contain? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node178:question:3] What are the options for modifying the current access configuration to protect ePHI? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node180;;3. Identify and Implement Physical Safeguards for Workstations and Devices;"Implement physical safeguards and other security measures to minimize the possibility of inappropriate access to ePHI through computing devices.
+
+If there are impediments to physically securing devices and/or the facilities where devices are located, additional safeguards should be considered, such as:";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node180:question:1] Are physical safeguards implemented for all devices that access ePHI to restrict access to authorized users? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node180:question:2] Are devices and other tools used in the provisioning of treatment, payment and operations protected from unauthorized access, viewing, modification, and/or theft within mobile healthcare environments? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node180:question:3] What safeguards are in place,(e.g., locked doors, screen barriers, cameras, guards)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node180:question:4] Are additional physical safeguards needed to protect devices with ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node180:question:5] Do any devices need to be relocated to enhance physical security? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node180:question:6] Are safeguards such as anti-theft devices, physical privacy screens, or other procedures used to help prevent unauthorized audio and video recording >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node180:question:7] Have workforce members been trained on security? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node180:question:8] Are some devices not owned by the organization? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node180:question:9] Do these ownership considerations preclude the use of any physical security controls on the device? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node180:question:10] Do the policies and procedures specify the use of additional security measures to protect devices with ePHI, such as using privacy screens, enabling password-protected screen savers, or logging off the device? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.310(d);164.310(d);;"Device and Media Controls:
+HIPAA Standard: Implement policies and procedures that govern the receipt and removal of hardware and electronic media that contain electronic protected health information into and out of a facility, and the movement of these items within the facility.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node183;;1. Implement Methods for the Final Disposal of ePHI;"Implement policies and procedures to address the final disposition of ePHI and/or the hardware or electronic media on which it is stored.
+
+Determine and document the appropriate methods to dispose of hardware, software, and the data itself.
+
+Ensure that ePHI is properly destroyed and cannot be recreated.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node183:question:1] What ePHI is created, stored, processed, and transmitted by the organization? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node183:question:2] On what media is it located? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node183:question:3] Is data stored on removable, reusable media (e.g., flash drives, Secure Digital (SD) memory cards)? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node183:question:4] Are policies and procedures developed and implemented that address the disposal of ePHI and/or the hardware and media on which ePHI is stored? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node183:question:5] Is there a process for destroying data on all media? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node183:question:6] What are the options for disposing of data on hardware? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node183:question:7] What are the costs? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node183:question:8] Prior to disposal, have media and devices containing ePHI been sanitized  in accordance with SP 800-88? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node185;;Implementation Specification (Required);Implement policies and procedures to address the final disposition of ePHI and/or the hardware or electronic media on which it is stored.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node187;;2. Develop and Implement Procedures for the Reuse of Electronic Media;"Implement procedures for the removal of ePHI from electronic media before the media become available for reuse.
+
+Ensure that ePHI previously stored on any electronic media cannot be accessed and reused.
+
+Identify removable media and their uses.
+
+Ensure that ePHI is removed from reusable media before they are used to record new information.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node187:question:1] Do policies and procedures already exist regarding the reuse of electronic media (i.e., hardware and software)? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node187:question:2] Have reused media been erased to the point where previous ePHI is neither readily available nor recoverable? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node187:question:3] Is one individual and/or department responsible for coordinating the disposal of data and the reuse of the hardware and software? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node187:question:4] Are workforce members appropriately trained on the security risks to ePHI when reusing software and hardware? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node189;;Implementation Specification (Required);Implement procedures for the removal of ePHI from electronic media before the media become available for reuse.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node191;;3. Maintain Accountability for Hardware and Electronic Media;"Maintain a record of the movements of hardware and electronic media and any person responsible for them.
+
+Ensure that ePHI is not inadvertently released or shared with any unauthorized party.
+
+Ensure that an individual is responsible for and records the receipt and removal of hardware and software with ePHI.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node191:question:1] Have policies and procedures been implemented that govern the receipt and removal of hardware and electronic media that contain ePHI into and out of a facility, and the movement of these items within the facility? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node191:question:2] Has a process been implemented to maintain a record of the movements of and persons responsible for hardware and electronic media that contain ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node191:question:3] Where is data stored (i.e., what type of media)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node191:question:4] What procedures already exist to track hardware and software within the organization (e.g., an enterprise inventory management system)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node191:question:5] If workforce members are allowed to remove electronic media that contain or may be used to access ePHI, do procedures exist to track the media externally? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node191:question:6] Who is responsible for maintaining records of hardware and software? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node193;;Implementation Specification (Addressable);Maintain a record of the movements of hardware and electronic media and any person responsible for them.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node195;;4. Develop Data Backup and Storage Procedures;"Create a retrievable exact copy of ePHI, when needed, before movement of equipment.
+
+Ensure that an exact retrievable copy of the data is retained and protected to maintain the integrity of ePHI during equipment relocation.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node195:question:1] Has a process been implemented to create a retrievable, exact copy of ePHI when needed and before the movement of equipment? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node195:question:2] Are backup files maintained offsite to ensure data availability in the event that data is lost while transporting or moving electronic media that contain ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node195:question:3] If data were to be unavailable while media are transported or moved for a period of time, what would the business impact be? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node197;;Implementation Specification (Addressable);Create a retrievable exact copy of ePHI, when needed, before movement of equipment.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.312;164.312;;"Technical Safeguards:
+Defined as the “the technology and the policy and procedures for its use that protect electronic protected health information and control access to it.”";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.312(a);164.312(a);;"Access Control:
+HIPAA Standard: Implement technical policies and procedures for electronic information systems that maintain electronic protected health information to allow access only to those persons or software programs that have been granted access rights as specified in § 164.308(a)(4).";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node201;;1. Analyze Workloads and Operations to Identify the Access Needs of All Users;"Identify an approach for access control.
+
+Consider all applications and systems containing ePHI that should only be available to authorized users, processes, and services.
+
+Integrate these activities into the access granting and management process.";;;compliant;;done;;[2026-11-03] 164.312(a)(1) access needs analysed. Controls: AC-01 (Implemented).;Users receive only the access their job requires (RBAC, least privilege);"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node201:question:1] Have all applications and systems with ePHI been identified? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node201:question:2] What user roles are defined for those applications and systems? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node201:question:3] Is access to systems containing ePHI only granted to authorized processes and services? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node201:question:4] Where is the ePHI supporting those applications and systems currently housed (e.g., stand-alone computer, network storage, database)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node201:question:5] Are data and/or systems being accessed remotely? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node201:question:6] Have access decisions been based on determinations from § 164.308(a)(4) Information Access Management? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node203;;2. Identify Technical Access Control Capabilities;"Determine the access control capabilities of all systems with ePHI.
+
+Determine whether network infrastructure can limit access to systems with ePHI (e.g., network segmentation).
+
+Implement technical access controls to limit access to ePHI to only that which has been granted in accordance with the regulated entity’s information access management policies and procedures (see 45 CFR 164.308(a)(4)).";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node203:question:1] How are the systems accessed for viewing, modifying, or creating data? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node203:question:2] Can identified technical access controls limit access to ePHI to only what is authorized in accordance with the regulated entity’s information access management policies and procedures (see 45 CFR 164.308(a)(4))? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node205;;3. Ensure that All System Users Have Been Assigned a Unique Identifier;"Assign a unique name and/or number for identifying and tracking user identity.
+
+Ensure that system activity can be traced to a specific user.
+
+Ensure that the necessary data is available in the system logs to support audit and other related business functions.";;;compliant;;done;;[2026-11-03] 164.312(a)(2)(i) unique user identification. Controls: AC-01 (Implemented).;Users receive only the access their job requires (RBAC, least privilege);"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node205:question:1] How should the identifier be established (e.g., length and content)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node205:question:2] Should the identifier be self-selected, organizationally selected, or randomly generated? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node205:question:3] Are logs associated with access events created? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node205:question:4] Are these access logs regularly reviewed? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node205:question:5] Can the unique user identifier be used to track user access to ePHI? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node207;;Implementation Specification (Required);Assign a unique name and/or number for identifying and tracking user identity.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node209;;4. Develop Access Control Policy  and Procedures;"Establish a formal policy for access control that will guide the development of procedures.
+
+Specify requirements for access control that are both feasible and cost-effective.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node209:question:1] Have rules of behavior been established and communicated to system users? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node209:question:2] How will rules of behavior be enforced? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node211;;5. Implement Access Control Procedures Using Selected Hardware and Software;Implement the policy and procedures using existing or additional hardware or software solutions.;;;compliant;;done;;"[2026-11-03] 164.312(a)(1) access control implemented. Controls: AC-04 (Implemented); AC-01 (Implemented).";Each application admits only approved job roles,Users receive only the access their job requires (RBAC, least privilege);"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node211:question:1] Who will manage the access control procedures? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node211:question:2] Are current users trained in access control management? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node211:question:3] Will user training be needed to implement access control procedures? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node211:question:4] Do the medical devices in use by the organization support user authentication? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node211:question:5] Are there processes in place to manage this authentication? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node213;;6. Review and Update Access for Users and Processes;"Enforce the policy and procedures as a matter of ongoing operations.
+
+Determine whether any changes are needed for access control mechanisms.
+
+Ensure that the modification of technical controls that affect a user’s access to ePHI continue to limit access to ePHI to that which has been granted in accordance with the regulated entity’s information access management policies and procedures (see 45 CFR 164.308(a)(4)).
+
+Establish procedures for updating access when users require the following:";;;partially_compliant;;done;;[2026-11-03] 164.312(a)(1) access reviewed and updated. Controls: AR-01 (Partially implemented).;Access is reviewed periodically and findings are remediated;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node213:question:1] Have new workforce members/users been given proper instructions for protecting data and systems? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node213:question:2] What are the procedures for new employee/user access to data and systems? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node213:question:3] Are there procedures for reviewing and, if appropriate, modifying access authorizations for existing users, services, and processes? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node213:question:4] Do users and processes have the appropriate set of permissions to ePHI to which they were granted access and to the appropriate systems that create, store, process, or transmit ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node213:question:5] Has the regulated entity considered the use of automation for reviewing the access needs of users and processes? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node215;;7. Establish an Emergency Access Procedure;"Establish (and implement as needed) procedures for obtaining necessary electronic protected health information during an emergency.
+
+Identify a method for supporting continuity of operations should the normal access procedures be disabled or unavailable due to system problems.";;;partially_compliant;;done;;[2026-11-03] 164.312(a)(2)(ii) emergency access procedure. Controls: AC-05 (Partially implemented). Break-glass procedure designed, account not provisioned (EX-04).;Privileged access is approved, limited and monitored;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node215:question:1] Are there policies and procedures in place to provide appropriate access to ePHI in emergency situations? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node215:question:2] When should the emergency access procedure be activated? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node215:question:3] Who is authorized to make the decision? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node215:question:4] Who has assigned roles in the process? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node215:question:5] Will systems automatically default to settings and functionalities that will enable the emergency access procedure or will the mode be activated by the system administrator or other authorized individual? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node217;;Implementation Specification (Required);Establish (and implement as needed) procedures for obtaining necessary electronic protected health information during an emergency.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node219;;8. Automatic Logoff and Encryption and Decryption;Consider whether the addressable implementation specifications of this standard are reasonable and appropriate:;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node219:question:1] Are automatic logoff features available for any of the regulated entity’s operating systems or other major applications? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node219:question:2] If applications have been created or developed in-house, is it reasonable and appropriate to modify them to feature an automatic logoff capability? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node219:question:3] What period of inactivity prior to automatic logoff is reasonable and appropriate for the regulated entity? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node219:question:4] What encryption capabilities are available for the regulated entity’s ePHI? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node219:question:5] Is encryption appropriate for storing and maintaining ePHI (i.e., at rest)? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node219:question:6] Based on the risk assessment, is encryption needed to effectively protect ePHI at rest from unauthorized access? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node219:question:7] Is email encryption necessary for the organization to protect ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node219:question:8] Are automated confidentiality statements needed for email leaving the organization? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node221;;Implementation Specification (Automatic Logoff);Consider whether the addressable implementation specifications of this standard are reasonable and appropriate:;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node223;;Implementation Specification (Encryption and Decryption);Consider whether the addressable implementation specifications of this standard are reasonable and appropriate:;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node225;;9. Terminate Access if it is No Longer Required;"Ensure that access to ePHI is terminated if the access is no longer authorized.
+
+Consider implementing a user recertification process to ensure that least privilege is enforced.";;;compliant;;done;;[2026-11-03] 164.312(a)(1) access terminated when no longer required. Controls: AC-02 (Implemented).;Terminated users are disabled and all access removed promptly;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node225:question:1] Are rules being enforced to remove access by staff members who no longer have a need to know because they have changed assignments or have stopped working for the organization? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node225:question:2] Does the organization revisit user access requirements regularly to ensure least privilege? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.312(b);164.312(b);;"Audit Controls:
+HIPAA Standard: Implement hardware, software, and/or procedural mechanisms that record and examine activity in information systems that contain or use electronic protected health information.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node228;;1. Determine the Activities that Will Be Tracked or Audited;"Determine the appropriate scope of audit controls that will be necessary in information systems that contain or use ePHI based on the regulated entity’s risk assessment and other organizational factors.
+
+Determine what activities need to be captured using the results of the risk assessment and risk management processes.";;;compliant;;done;;[2026-11-03] 164.312(b) activities to be audited. Controls: AU-01 (Implemented).;Security-relevant identity events are logged;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node228:question:1] Where is ePHI at risk in the organization? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node228:question:2] What systems, applications, or processes make ePHI vulnerable to unauthorized or inappropriate tampering, uses, or disclosures? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node228:question:3] What activities will be audited (e.g., creating ePHI, accessing ePHI, modifying ePHI, transmitting ePHI, and/or deleting files or records that contain ePHI)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node228:question:4] What should the audit record include (e.g., user responsible for the activity; event type, date, or time)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node228:question:5] Are audit records generated for all systems/devices that create, store, process, or transmit ePHI? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node230;;2. Select the Tools that Will Be Deployed for Auditing and System Activity Reviews;Evaluate existing system capabilities and determine whether any changes or upgrades are necessary.;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node230:question:1] What tools are in place? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node230:question:2] What are the most appropriate monitoring tools for the organization (e.g., third party, freeware, or operating system-provided)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node230:question:3] Are changes/upgrades to information systems reasonable and appropriate? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node232;;3. Develop and Deploy the Information System Activity Review/Audit Policy;Document and communicate to the workforce the organization’s decisions on audits and reviews.;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node232:question:1] Who is responsible for the overall audit process and results? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node232:question:2] How often will audits take place? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node232:question:3] How often will audit results be analyzed? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node232:question:4] What is the organization’s sanction policy for employee violations? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node232:question:5] Where will audit information reside (e.g., separate server)? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node234;;4. Develop Appropriate Standard Operating Procedures;"Determine the types of audit trail data and monitoring procedures that will be needed to derive exception reports.
+
+Determine the frequency of audit log reviews based on the risk assessment and risk management processes.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node234:question:1] How will exception reports or logs be reviewed? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node234:question:2] Has the organization considered the use of automation to assist in the monitoring and review of system activity? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node234:question:3] Are the organization’s monitoring system activity and logs reviewed frequently enough to sufficiently protect ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node234:question:4] Where will monitoring reports be filed and maintained? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node234:question:5] Is there a formal process in place to address system misuse, abuse, and fraudulent activity? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node234:question:6] How will managers and workforce members be notified, when appropriate, regarding suspect activity? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node236;;5. Implement the Audit/System Activity Review Process;"Activate the necessary audit system.
+Begin logging and auditing procedures.";;;compliant;;done;;[2026-11-03] 164.312(b) audit / activity review process. Controls: AU-02 (Implemented).;Alerts are raised and investigated;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node236:question:1] What mechanisms (e.g., metrics) will be implemented to assess the effectiveness of the audit process? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node236:question:2] What is the plan to revise the audit process when needed? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.312(c);164.312(c);;"Integrity:
+HIPAA Standard: Implement policies and procedures to protect electronic protected health information from improper alteration or destruction.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node239;;1. Identify All Users Who Have Been Authorized to Access ePHI;"Identify all approved users with the ability to alter or destroy ePHI, if reasonable and appropriate.
+
+Address this Key Activity in conjunction with the identification of unauthorized sources in Key Activity 2.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node239:question:1] How are users authorized to access the information? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node239:question:2] Is there a sound basis for why they need the access? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node239:question:3] Have they been trained on how to use the information? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node239:question:4] Is there an audit trail established for all accesses to the information? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node241;;2. Identify Any Possible Unauthorized Sources that May Be Able to Intercept the Information and Modify It;"Identify scenarios that may result in modification to the ePHI by unauthorized sources (e.g., hackers, ransomware, insider threats, business competitors, user errors).
+
+Conduct this activity as part of a risk analysis.
+
+Consider how the organization will detect unauthorized modification to ePHI";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node241:question:1] What are likely sources that could jeopardize information integrity? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node241:question:2] What can be done to protect the integrity of the information when it is residing in a system (at rest)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node241:question:3] What procedures and policies can be established to decrease or prevent alteration of the information during transmission? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node241:question:4] What options exist to detect the unauthorized modification of ePHI? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node243;;3. Develop the Integrity Policy and Requirements;Establish a formal written set of integrity requirements based on the results of the analysis completed in Key Activities 1 and 2.;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node243:question:1] Have the requirements been discussed and agreed to by identified key personnel involved in the processes that are affected? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node243:question:2] Have the requirements been documented? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node243:question:3] Has a written policy been developed and communicated to personnel? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node245;;4. Implement Procedures to Address These Requirements;"Identify and implement methods that will be used to protect ePHI from unauthorized modification.
+
+Identify and implement tools and techniques to be developed or procured that support the assurance of integrity.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node245:question:1] Are current audit, logging, and access control techniques sufficient to address the integrity of ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node245:question:2] If not, what additional techniques (e.g., quality control process, transaction and output reconstruction) can be utilized to check the integrity of ePHI? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node245:question:3] Are technical solutions in place to prevent and detect the malicious alteration or destruction of ePHI (e.g., anti-malware, anti-ransomware, file integrity monitoring solutions)? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node245:question:4] Can the additional training of users decrease instances attributable to human errors? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node247;;5. Implement a Mechanism to Authenticate ePHI;"Implement electronic mechanisms to corroborate that ePHI has not been altered or destroyed in an unauthorized manner.
+
+Consider possible mechanisms for integrity verification, such as:";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node247:question:1] Are the uses of both electronic and non-electronic mechanisms necessary for the protection of ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node247:question:2] Are appropriate electronic authentication tools available? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node247:question:3] Are available electronic authentication tools interoperable with other applications and system components? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node247:question:4] If ePHI is detected as altered by unauthorized users or improperly altered by authorized users, is a process in place to respond? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node247:question:5] Is this response process tied to organizational incident management processes? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node249;;Implementation Specification (Addressable);Implement electronic mechanisms to corroborate that ePHI has not been altered or destroyed in an unauthorized manner.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node251;;6. Establish a Monitoring Process to Assess How the Implemented Process is Working;"Review existing processes to determine whether objectives are being addressed.
+
+Continually reassess integrity processes as technology and operational environments change to determine whether they need to be revised.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node251:question:1] Are there reported instances of information integrity problems? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node251:question:2] Have they decreased since integrity procedures were implemented? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node251:question:3] Does the process, as implemented, provide a higher level of assurance that information integrity is being maintained? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.312(d);164.312(d);;"Person or Entity Authentication:
+HIPAA Standard: Implement procedures to verify that a person or entity seeking access to electronic protected health information is the one claimed.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node254;;1. Determine Authentication Applicability to Current Systems/Applications;"Identify the methods available for authentication. Under the HIPAA Security Rule, authentication is the corroboration that a person is the one claimed (45 CFR § 164.304).
+
+Identify points of electronic access that require or should require authentication. Ensure that the regulated entity’s risk analysis properly assesses risks for such access points (e.g., risks of unauthorized access from within the enterprise could be different than those of remote unauthorized access).
+
+Authentication requires establishing the validity of a transmission source and/or verifying an individual’s claim that they have been authorized for specific access privileges to information and information systems.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node254:question:1] What authentication methods are available? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node254:question:2] What are the advantages and disadvantages of each method? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node254:question:3] Can risks of unauthorized access be sufficiently reduced for each point of electronic access with available authentication methods? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node254:question:4] What will it cost to implement the available methods in the environment? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node254:question:5] Are there trained staff who can maintain the system or should outsourced support be considered? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node254:question:6] Are passwords being used? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node254:question:7] If so, are they unique to the individual? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node254:question:8] Is MFA being used? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node254:question:9] If so, how and where is it implemented? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node256;;2. Evaluate Available Authentication Options;"Weigh the relative advantages and disadvantages of commonly used authentication approaches.
+
+There are three commonly used authentication approaches available:
+
+MFA utilizes two or more authentication approaches to enforce stronger authentication.
+
+Consider implementing MFA solutions when the risk to ePHI is sufficiently high.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node256:question:1] What are the strengths and weaknesses of each available option? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node256:question:2] Which can be best supported with assigned resources (e.g., budget/staffing)? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node256:question:3] What level of authentication is appropriate for each access to ePHI based on the assessment of risk? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node256:question:4] Has the organization identified all instances of access to ePHI (including by services, vendors, or application programming interfaces [APIs]) and considered appropriate authentication requirements based on the risk assessment? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node256:question:5] Has the organization considered MFA for access to ePHI that poses high risk (e.g., remote access, access to privileged functions)? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node256:question:6] Has the organization researched available MFA options and made a selection based on risk to ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node256:question:7] Is outside vendor support required to implement the process? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node256:question:8] Are there password-less authentication options (e.g., biometric authentication) available that can sufficiently address the risk to ePHI? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node258;;3. Select and Implement   Authentication Options;"Consider the results of the analysis conducted under Key Activity 2, and select appropriate authentication methods based on the results of the risk assessment and risk management processes.
+
+Implement the methods selected in organizational operations and activities.";;;partially_compliant;;done;;"[2026-11-03] 164.312(d) person or entity authentication. Controls: IA-01 (Partially implemented); IA-02 (Implemented).";"Lockout after repeated failures; strong password standard,Privileged and cardholder-data users pass MFA";"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node258:question:1] Has the organization’s selection of authentication methods been made based on the results of the risk assessment? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node258:question:2] If passwords are being used as an authentication element, are they of sufficient length and strength to protect ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node258:question:3] Is this enforced by technical policies? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node258:question:4] Has necessary user and support staff training been completed? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node258:question:5] Have a formal authentication policy and procedures been established and communicated? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node258:question:6] Has necessary testing been completed to ensure that the authentication system is working as prescribed? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node258:question:7] Do the procedures include ongoing system maintenance and updates? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node258:question:8] Is the process implemented in such a way that it does not compromise the authentication information (e.g., password file encryption, etc.)? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.312(e)(1);164.312(e)(1);;"Transmission Security:
+HIPAA Standard: Implement technical security measures to guard against unauthorized access to electronic protected health information that is being transmitted over an electronic communications network.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node261;;1. Identify Any Possible Unauthorized Sources that May Be Able to Intercept and/or Modify the Information;"Identify all pathways by which ePHI will be transmitted into, within, and outside of the organization.
+
+Identify scenarios (e.g., telehealth, claims processing) that may result in access to or modification of the ePHI by unauthorized sources during transmission (e.g., hackers, disgruntled workforce members, business competitors).
+
+Identify scenarios and pathways that may put ePHI at a high level of risk.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node261:question:1] Have all pathways by which ePHI will be transmitted (e.g., file transfers, email, web portals, mobile apps, communications with servers or databases containing ePHI, online tracking) been identified? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node261:question:2] Has a risk assessment been used to determine transmission pathways and scenarios that may pose high risk to ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node261:question:3] What measures exist to protect ePHI in transmission? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node261:question:4] Have appropriate protection mechanisms been identified for all scenarios and pathways by which ePHI is transmitted? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node261:question:5] Is there an auditing process in place to verify that ePHI has been protected against unauthorized access during transmission? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node261:question:6] Are there trained staff members to monitor transmissions? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node263;;2. Develop and Implement Transmission Security Policy and Procedures;"Establish a formal written set of requirements for transmitting ePHI.
+
+Identify methods of transmission that will be used to safeguard ePHI.
+
+Identify tools and techniques that will be used to support the transmission security policy.
+
+Implement procedures for transmitting ePHI using hardware and/or software, if needed.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node263:question:1] Have the requirements been discussed and agreed to by identified key personnel involved in transmitting ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node263:question:2] Has a written policy been developed and communicated to system users? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node265;;3. Implement Integrity Controls;Implement security measures to ensure that electronically transmitted ePHI is not improperly modified without detection until disposed of.;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node265:question:1] What security measures are currently used to protect ePHI during transmission? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node265:question:2] What measures are planned to protect ePHI in transmission? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node265:question:3] Is there assurance that information is not altered during transmission? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node267;;Implementation Specification (Addressable);Implement security measures to ensure that electronically transmitted ePHI is not improperly modified without detection until disposed of.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node269;;4. Implement Encryption;Implement a mechanism to encrypt ePHI whenever appropriate.;;;partially_compliant;;done;;[2026-11-03] 164.312(e)(2)(ii) encryption in transit. Controls: SC-01 (Partially implemented).;ePHI and credentials are encrypted in transit (TLS 1.2+);"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node269:question:1] Is encryption reasonable and appropriate to protect ePHI in transmission? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node269:question:2] Based on the risk assessment, is encryption needed to effectively protect the information from unauthorized access during transmission? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node269:question:3] Has the organization considered the use of email encryption and automated confidentiality statements when emailing outside of the organization? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node269:question:4] Is encryption feasible and cost-effective in this environment? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node269:question:5] What encryption algorithms and mechanisms are available? >> [free text]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node269:question:6] Are available encryption algorithms and mechanisms of sufficient strength to protect electronically transmitted ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node269:question:7] Is electronic transmission hardware/software configured so that the strength of encryption used in transmitting ePHI cannot be weakened? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node269:question:8] Have all applications used on devices  that support the provisioning of health services been assessed to verify that strong transmission security is implemented? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node269:question:9] Does the covered entity have the appropriate staff to maintain a process for encrypting ePHI during transmission? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node269:question:10] Are workforce members skilled in the use of encryption? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node271;;Implementation Specification (Addressable);Implement a mechanism to encrypt ePHI whenever appropriate.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.314;164.314;;"Organizational Requirements:
+Includes standards for business associate contracts and other arrangements between a covered entity and a business associate and between a business associate and a subcontractor, as well as requirements for group health plans.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.314(a);164.314(a);;"Business Associate Contracts or Other Arrangements:
+HIPAA Standard: (i) The contract or other arrangement between the covered entity and its business associate required by § 164.308(b)(3) must meet the requirements of paragraph (a)(2)(i), (a)(2)(ii), or (a)(2)(iii) of this section, as applicable. (ii) A covered entity is in compliance with paragraph (a)(1) of this section if it has another arrangement in place that meets the requirements of § 164.504(e)(3). (iii) The requirements of paragraphs (a)(2)(i) and (a)(2)(ii) of this section apply to the contract or other arrangement between a business associate and a subcontractor required by § 164.308(b)(4) in the same manner as such requirements apply to contracts or other arrangements between a covered entity and business associate.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node275;;1. Contract Must Provide that Business Associates Will Comply with the Applicable Requirements of the Security Rule;"Contracts between covered entities and business associates must provide that business associates will implement administrative, physical, and technical safeguards that reasonably and appropriately protect the confidentiality, integrity, and availability of the ePHI that the business associate creates, receives, maintains, or transmits on behalf of the covered entity.
+
+Readers may find useful resources in Appendix F, including OCR BAA guidance and templates that include applicable language.";;;not_assessed;;to_do;;;;[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node275:question:1] Does the written agreement between the covered entity and the business associate address the applicable functions related to creating, receiving, maintaining, and transmitting ePHI that the business associate is to perform on behalf of the covered entity? >> [Yes / No / N/A]
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node277;;Implementation Specification (Required);Contracts between covered entities and business associates must provide that business associates will implement administrative, physical, and technical safeguards that reasonably and appropriately protect the confidentiality, integrity, and availability of the ePHI that the business associate creates, receives, maintains, or transmits on behalf of the covered entity.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node279;;2. Contract Must Provide that the Business Associates Enter into Contracts with Subcontractors to Ensure the Protection of ePHI;In accordance with § 164.308(b)(2), ensure that any subcontractors that create, receive, maintain, or transmit ePHI on behalf of the business associate agree to comply with the applicable requirements of this subpart by entering into a contract or other arrangement that complies with this section.;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node279:question:1] Has the business associate identified all of its subcontractors that will create, receive, maintain, or transmit ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node279:question:2] Has the business associate ensured that contracts in accordance with § 164.314 are in place with its subcontractors identified in the previous question? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node281;;Implementation Specification (Required);In accordance with § 164.308(b)(2), ensure that any subcontractors that create, receive, maintain, or transmit ePHI on behalf of the business associate agree to comply with the applicable requirements of this subpart by entering into a contract or other arrangement that complies with this section.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node283;;3. Contract Must Provide that Business Associates will Report Security Incidents;"Report to the covered entity any security incident of which it becomes aware, including breaches of unsecured PHI as required by § 164.410.
+
+Maintain clear lines of communication between covered entities and business associates regarding the protection of ePHI as per the BAA or contract.
+
+Establish a reporting mechanism and a process for the business associate to use in the event of a security incident or breach.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node283:question:1] Is there a procedure in place for reporting security incidents, including breaches of unsecured PHI by business associates? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node283:question:2] Have key business associate staff been identified as points of contact in the event of a security incident or breach? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node283:question:3] Does the contract include clear time frames and responsibilities regarding the investigation and reporting of security incidents and breaches? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node285;;Implementation Specification (Required);Report to the covered entity any security incident of which it becomes aware, including breaches of unsecured PHI as required by § 164.410.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node287;;4. Other Arrangements;The covered entity complies with paragraph (a)(1) of this section if it has another arrangement in place that meets the requirements of § 164.504(e)(3).;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node287:question:1] Has the covered entity made a good faith attempt to obtain satisfactory assurances that the security standards required by this section are met? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node287:question:2] Are attempts to obtain satisfactory assurances and the reasons that assurances cannot be obtained documented? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node289;;Implementation Specification (Required);The covered entity complies with paragraph (a)(1) of this section if it has another arrangement in place that meets the requirements of § 164.504(e)(3).;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node291;;5. Business Associate Contracts with Subcontractors;The requirements of paragraphs (a)(2)(i) and (a)(2)(ii) of this section apply to the contract or other arrangement between a business associate and a subcontractor in the same manner as such requirements apply to contracts or other arrangements between a covered entity and business associate.;;;not_assessed;;to_do;;;;[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node291:question:1] Do business associate contracts or other arrangements between the business associate and its subcontractors include appropriate language to comply with paragraphs (a)(2)(i) and (a)(2)(ii) of this section? >> [Yes / No / N/A]
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node293;;Implementation Specification (Required);The requirements of paragraphs (a)(2)(i) and (a)(2)(ii) of this section apply to the contract or other arrangement between a business associate and a subcontractor in the same manner as such requirements apply to contracts or other arrangements between a covered entity and business associate.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.314(b);164.314(b);;"Requirements for Group Health Plans:
+HIPAA Standard: Except when the only electronic protected health information disclosed to a plan sponsor is disclosed pursuant to § 164.504(f)(1)(ii) or (iii), or as authorized under § 164.508, a group health plan must ensure that its plan documents provide that the plan sponsor will reasonably and appropriately safeguard electronic protected health information created, received, maintained, or transmitted to or by the plan sponsor on behalf of the group health plan.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node296;;1. Amend Plan Documents of the Group Health Plan to Address the Plan Sponsor’s Security of ePHI;Amend the plan documents to incorporate provisions to require the plan sponsor to implement administrative, technical, and physical safeguards that will reasonably and appropriately protect the confidentiality, integrity, and availability of ePHI that it creates, receives, maintains, or transmits on behalf of the group health plan.;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node296:question:1] Does the plan sponsor fall under the exception described in the standard? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node296:question:2] Do the plan documents require the plan sponsor to reasonably and appropriately safeguard ePHI? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node298;;Implementation Specification (Required);Amend the plan documents to incorporate provisions to require the plan sponsor to implement administrative, technical, and physical safeguards that will reasonably and appropriately protect the confidentiality, integrity, and availability of ePHI that it creates, receives, maintains, or transmits on behalf of the group health plan.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node300;;2. Amend Plan Documents of the Group Health Plan to Address Adequate Separation;Amend the plan documents to incorporate provisions to require the plan sponsor to ensure that the adequate separation between the group health plan and plan sponsor required by §164.504(f)(2)(iii) is supported by reasonable and appropriate security measures.;;;not_assessed;;to_do;;;;[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node300:question:1] Do plan documents address the obligation to keep ePHI secure with respect to the plan sponsor’s workforce members, classes of workforce members, or other persons who will be given access to ePHI? >> [Yes / No / N/A]
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node302;;Implementation Specification (Required);Amend the plan documents to incorporate provisions to require the plan sponsor to ensure that the adequate separation between the group health plan and plan sponsor required by §164.504(f)(2)(iii) is supported by reasonable and appropriate security measures.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node304;;3. Amend Plan Documents of the Group Health Plan to Address the Security of ePHI Supplied to the Plan Sponsors’ Agents and Subcontractors;Amend plan documents to incorporate provisions to require the plan sponsor to report any security incident of which it becomes aware to the group health plan.;;;not_assessed;;to_do;;;;[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node304:question:1] Do the plan documents of the group health plan address the issue of subcontractors and other agents of the plan sponsor implementing reasonable and appropriate security measures? >> [Yes / No / N/A]
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node306;;Implementation Specification (Required);Amend plan documents to incorporate provisions to require the plan sponsor to ensure that any agent to whom it provides ePHI agrees to implement reasonable and appropriate security measures to protect the ePHI.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node308;;4. Amend Plan Documents of Group Health Plans to Address the Reporting of Security Incidents;"Amend plan documents to incorporate provisions to require the plan sponsor to report any security incident of which it becomes aware to the group health plan.
+
+Establish a specific policy for security incident reporting.
+
+Establish a reporting mechanism and a process for the plan sponsor to use in the event of a security incident.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node308:question:1] Is there a procedure in place for security incident reporting? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node308:question:2] Are procedures in place for responding to security incidents? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node310;;Implementation Specification (Required);Amend plan documents to incorporate provisions to require the plan sponsor to report any security incident of which it becomes aware to the group health plan.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.316;164.316;;"Policies and Procedures and Documentation Requirements:
+Requires the implementation of reasonable and appropriate policies and procedures to comply with the standards, implementation specifications, and other requirements of the Security Rule; the maintenance of written (may be electronic) documentation and/or records that include the policies, procedures, actions, activities, or assessments required by the Security Rule; and retention, availability, and update requirements related to the documentation.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.316(a);164.316(a);;"Policies and Procedures:
+HIPAA Standard: Implement reasonable and appropriate policies and procedures to comply with the standards, implementation specifications, or other requirements of this subpart, taking into account those factors specified in § 164.306(b)(2)(i), (ii), (iii), and (iv). This standard is not to be construed to permit or excuse an action that violates any other standard, implementation specification, or other requirements of this subpart. A covered entity or business associate may change its policies and procedures at any time, provided that the changes are documented and are implemented in accordance with this subpart.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node314;;1. Create and Deploy Policies and Procedures;"Implement reasonable and appropriate policies and procedures to comply with the standards, implementation specifications, and other requirements of the HIPAA Security Rule.
+
+Consider the importance of documenting processes and procedures for demonstrating the adequate implementation of recognized security practices.
+
+Periodically evaluate written policies and procedures to verify that:";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node314:question:1] Are reasonable and appropriate policies and procedures to comply with each of the standards, applicable implementation specifications, and other requirements of the HIPAA Security Rule in place? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node314:question:2] Are policies and procedures reasonable and appropriate given: >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node316;;2. Update the Documentation of the Policy and Procedures;Change policies and procedures as is reasonable and appropriate at any time, provided that the changes are documented and implemented in accordance with the requirements of the HIPAA Security Rule.;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node316:question:1] Is a process in place for periodically reevaluating the policies and procedures and updating them as necessary? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node316:question:2] Should HIPAA documentation be updated in response to periodic evaluations, following security incidents, and/or after acquisitions of new technology or new procedures? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node316:question:3] As policies and procedures are changed, are new versions made available and are workforce members appropriately trained? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:164.316(b);164.316(b);;"Documentation:
+HIPAA Standard: (i) Maintain the policies and procedures implemented to comply with this subpart in written (which may be electronic) form; and (ii) if an action, activity or assessment is required by this subpart to be documented, maintain a written (which may be electronic) record of the action, activity, or assessment.";;;;;;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node319;;1. Draft, Maintain, and Update Required Documentation;"Document decisions concerning the management, operational, and technical controls selected to mitigate identified risks.
+
+Written documentation may be incorporated into existing manuals, policies, and other documents or be created specifically for the purpose of demonstrating compliance with the HIPAA Security Rule.
+
+Consider the importance of documenting the processes and procedures for demonstrating the adequate implementation of recognized security practices.
+
+Use feedback from risk assessments and contingency plan tests to help determine when to update documentation.";;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node319:question:1] Are all required policies and procedures documented? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node319:question:2] Should HIPAA Security Rule documentation be maintained by the individual responsible for HIPAA Security Rule implementation? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node319:question:3] Should HIPAA Security Rule documentation be updated in response to periodic evaluations, following security incidents, and/or after acquisitions of new technology or new procedures? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node319:question:4] Have dates of creation and validity periods been included in all documentation? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node319:question:5] Has appropriate management reviewed and approved all documentation? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node319:question:6] Are actions, activities, and assessments required by the Security Rule documented as appropriate? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node321;;2. Retain Documentation for at Least Six Years;Retain documentation required by paragraph (b)(1) of this section for six years from the date of its creation or the date when it last was in effect, whichever is later.;;;non_compliant;;done;;[2026-11-03] 164.316(b)(2) retention (security log retention policy). Controls: AU-03 (Not implemented).;Security logs are kept 12 months;[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node321:question:1] Have documentation retention requirements under HIPAA been aligned with the organization’s other data retention policies? >> [Yes / No / N/A]
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node323;;Implementation Specification (Required);Retain documentation required by paragraph (b)(1) of this section for six years from the date of its creation or the date when it last was in effect, whichever is later.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node325;;3. Ensure that Documentation is Available to Those Responsible for Implementation;Make documentation available to those persons responsible for implementing the procedures to which the documentation pertains.;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node325:question:1] Is the location of the documentation known to all staff who need to access it? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node325:question:2] Is availability of the documentation made known as part of education, training, and awareness activities? >> [Yes / No / N/A]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node327;;Implementation Specification (Required);Make documentation available to those persons responsible for implementing the procedures to which the documentation pertains.;;;not_assessed;;to_do;;;;
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node329;;4. Update Documentation as Required;Review documentation periodically and update as needed in response to environmental or operational changes that affect the security of the ePHI.;;;not_assessed;;to_do;;;;"[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node329:question:1] Is there a version control procedure that allows for the verification of the timeliness of policies and procedures, if reasonable and appropriate? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node329:question:2] Is there a process for soliciting input on updates of policies and procedures from staff, if reasonable and appropriate? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node329:question:3] Are policies and procedures updated in response to environmental or operational changes that affect the security of ePHI? >> [Yes / No / N/A]
+
+[urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node329:question:4] When were the policies and procedures last updated or reviewed? >> [free text]"
+urn:intuitem:risk:req_node:nist-sp-800-66-rev2:node331;;Implementation Specification (Required);Review documentation periodically and update as needed in response to environmental or operational changes that affect the security of the ePHI.;;;not_assessed;;to_do;;;;

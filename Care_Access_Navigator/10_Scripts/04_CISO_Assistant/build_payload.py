@@ -86,6 +86,7 @@ EXTRA_EVIDENCE = [
      ["AC-01", "AC-02", "AC-03", "AC-04", "AC-05", "AR-01", "VM-01", "AU-02", "CA-01"]),
     ("EV-15", "Access review AR-2026-Q4 (reviewer sign-off pending, CA-05)", EV15 + "EV-15_Access_Review_AR-2026-Q4_20261103/access_review_AR-2026-Q4.csv", ["AR-01"]),
     ("EV-15", "Access review AR-2026-Q4 sign-off workbook", EV15 + "CAN_DOC_Access_Review_AR-2026-Q4_v1.0.xlsx", ["AR-01"]),
+    ("W2-ENTRA", "Entra ID identity governance design (W2 Wed, 2026-11-05)", CAN + "03_IAM_Lab/CAN_DOC_Entra_ID_Identity_Governance_Design_v1.0.pdf", ["AC-01", "AC-02", "IA-01"]),
     ("EV-17", "Entra ID Security defaults enabled (2026-11-05)", SHOT + "EV-17_Entra_Security_Defaults_20261105.png", ["IA-01"]),
     ("JML-15", "Entra ID audit log export for the JML cycle", CAN + "06_Evidence/07_JML_Lifecycle/JML-15-entra-audit-log.txt", ["AC-02"]),
     ("CTL-CAT", "Control catalog and HIPAA/NIST/ISO/PCI mapping (W9)", CAN + "07_GRC/02_Controls/CAN_DOC_Control_Catalog_and_Mapping_v1.0.xlsx", ["CA-01", "RA-01"]),

@@ -8,7 +8,7 @@ This folder is an index only. The course work lives in each course's own folder 
 |---|---|---|
 | Compliance 1 | [`compliance_1/`](../compliance_1/) | Tasks 1-5 reports, compliance tracker, audit evidence (`audit-evidence/`, SHA-256 indexed) |
 | Incident Response 1 | [`incident_response_1/`](../incident_response_1/) | Tasks 1-6 (environment, log analysis, containment, evidence management, IR documentation, post-incident), lab files, evidence |
-| CISO Assistant (new tool) | [`ciso-assistant-community/`](../ciso-assistant-community/) | Self-hosted GRC platform (run from this folder with `docker compose up -d`, https://localhost:8443), learning plan in `learning_plan/`, CISO exports and End-to-End GRC Documentation |
+| CISO Assistant (new tool) | [`ciso-assistant-community/`](../ciso-assistant-community/) | Self-hosted GRC platform (run from this folder with `docker compose up -d`, https://localhost:8443), CISO exports and End-to-End GRC Documentation; learning documents and evidence in [`learning/evidence/`](../learning/evidence/) |
 
 ## Teach-backs
 
@@ -21,7 +21,7 @@ This folder is an index only. The course work lives in each course's own folder 
 
 ## What is planned this semester
 
-CISO Assistant learning plan ([`PLAN_CISO_Newtool.md`](../ciso-assistant-community/learning_plan/PLAN_CISO_Newtool.md)):
+CISO Assistant learning plan ([`learning/evidence/PLAN.md`](../learning/evidence/PLAN.md); tutorial, notes, README, reflection and evidence in [`learning/evidence/`](../learning/evidence/)):
 
 | Week | Plan |
 |---|---|

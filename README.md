@@ -11,7 +11,7 @@ Every course has its own lower-case folder at the top level holding its task doc
 | [Semester 2](Semester_2/) | [`logic_1/`](logic_1/), [`version_control_1/`](version_control_1/), [`design_1/`](design_1/), [`figma_1/`](figma_1/), [`python_1/`](python_1/), [`prompt_engineering_1/`](prompt_engineering_1/), [`markdown_activity/`](markdown_activity/), [`project_moodbuddy/`](project_moodbuddy/) |
 | [Semester 3](Semester_3/) | [`unix_1/`](unix_1/), [`unix_2/`](unix_2/), [`network_security_1/`](network_security_1/), [`cyber_threats_and_vulnerabilities_1/`](cyber_threats_and_vulnerabilities_1/) |
 | [Semester 4](Semester_4/) | [`risk_management_1/`](risk_management_1/), [`cloud_security_1/`](cloud_security_1/) |
-| [Semester 5](Semester_5/) | [`compliance_1/`](compliance_1/), [`incident_response_1/`](incident_response_1/), [`ciso-assistant-community/`](ciso-assistant-community/) (CISO Assistant tool, learning plan and exports) |
+| [Semester 5](Semester_5/) | [`compliance_1/`](compliance_1/), [`incident_response_1/`](incident_response_1/), [`ciso-assistant-community/`](ciso-assistant-community/) (CISO Assistant tool and exports), [`learning/`](learning/) (CISO Assistant learning plan, tutorial, notes, reflection and evidence in `learning/evidence/`) |
 
 `Semester_2/` … `Semester_5/` hold only a README describing what that semester covered and planned.
 

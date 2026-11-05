@@ -1,4 +1,4 @@
-# ciso-assistant-community/learning_plan/PLAN.md
+# learning/PLAN.md
 
 > This is my one-page learning plan for the month. I will complete and commit this file during the 15-minute selection clinic. It records the technology I chose to learn, why I chose it for my capstone, the three focused tasks I will complete, and the proof I will capture to show I did the work.
 
@@ -16,7 +16,7 @@ I commit to treat this plan as my personal roadmap: I will keep dates realistic,
 ## Chosen technology
 
 -   **Technology name:** CISO Assistant Community Edition (intuitem), an open-source GRC platform
--   **Technology version (if applicable):** Latest stable release tag from the project's GitHub Releases page (I will record the exact version number here after the first install). I will not use the `main` branch, since the project says it can have breaking changes.
+-   **Technology version (if applicable):** CISO Assistant Community Edition **v4.2.1** (build 26293b6ed) on the Mac, from the published Docker images (`backend:latest`, `frontend:latest`); v4.1.5 was used on the Windows laptop until 2026-11-04. Not built from the `main` branch.
 
 ### Why I chose this technology
 
@@ -39,7 +39,7 @@ Scope note: CISO Assistant covers governance, risk and compliance only. Keycloak
 
 1. Finalize the **Chosen technology** and **Why I chose this technology** fields above.
 2. Draft three small integration tasks below with realistic start and target completion dates.
-3. Commit this file to the repository at `ciso-assistant-community/learning_plan/PLAN.md` before the end of the 15-minute clinic.
+3. Commit this file to the repository at `learning/PLAN.md` before the end of the 15-minute clinic.
 4. Record where I will start Task 1 (for example: local branch name or workspace folder) under Task 1.
 5. If a task feels too large, I will make it smaller and update the dates here.
 
@@ -53,8 +53,8 @@ Scope note: CISO Assistant covers governance, risk and compliance only. Keycloak
 -   **Start date:** 2026-10-29
 -   **Target completion date:** 2026-11-04
 -   **Success criterion (explicit):** I can log in at `https://localhost:8443`, both framework libraries show as loaded, and all 5 assets appear in the asset list with an owner and a type (primary or supporting).
--   **Proof method (what I will capture to show success):** Screenshot of the logged-in dashboard, screenshot of the asset list, output of `docker compose ps` showing the containers running, and a short "install steps and issues" note in `ciso-assistant-community/learning_plan/README.md`.
--   **Where I will start Task 1:** local branch `feature/ciso-assistant-setup`, workspace folder `ciso-assistant-community/learning_plan/ciso-assistant/`
+-   **Proof method (what I will capture to show success):** Screenshot of the logged-in dashboard, screenshot of the asset list, output of `docker compose ps` showing the containers running, and a short "install steps and issues" note in `learning/README.md`.
+-   **Where I will start Task 1:** local branch `feature/ciso-assistant-setup`, workspace folder `learning/ciso-assistant/`
 
 **Task 2 — Title: Build the IAM risk register and applied controls**
 
@@ -62,7 +62,7 @@ Scope note: CISO Assistant covers governance, risk and compliance only. Keycloak
 -   **Start date:** 2026-11-05
 -   **Target completion date:** 2026-11-11
 -   **Success criterion (explicit):** At least 8 risks exist with inherent and residual scores, and each risk is linked to at least 1 asset and at least 1 applied control. Every applied control has an owner and a status.
--   **Proof method (what I will capture to show success):** Screenshot of the risk matrix view, an exported risk register (CSV or Excel) saved to `ciso-assistant-community/learning_plan/evidence/risk_register_export.csv`, and a short table in `ciso-assistant-community/learning_plan/README.md` mapping each risk to its control.
+-   **Proof method (what I will capture to show success):** Screenshot of the risk matrix view, an exported risk register (CSV or Excel) saved to `learning/evidence/risk_register_export.csv`, and a short table in `learning/README.md` mapping each risk to its control.
 
 **Task 3 — Title: Run a HIPAA access-control assessment, attach evidence, and export dashboard data**
 
@@ -70,7 +70,7 @@ Scope note: CISO Assistant covers governance, risk and compliance only. Keycloak
 -   **Start date:** 2026-11-12
 -   **Target completion date:** 2026-11-18
 -   **Success criterion (explicit):** At least 15 requirements are assessed with a status, at least 5 have evidence attached, and at least 3 gaps have a remediation action or documented exception with an owner and due date. The compliance chart shows non-zero results.
--   **Proof method (what I will capture to show success):** Screenshot of the assessment progress and compliance chart, screenshot of an evidence item linked to a requirement, exported assessment data saved to `ciso-assistant-community/learning_plan/evidence/assessment_export.csv`, and a one-paragraph summary of the gaps in `ciso-assistant-community/learning_plan/README.md`.
+-   **Proof method (what I will capture to show success):** Screenshot of the assessment progress and compliance chart, screenshot of an evidence item linked to a requirement, exported assessment data saved to `learning/evidence/assessment_export.csv`, and a one-paragraph summary of the gaps in `learning/README.md`.
 
 > Note: Each task is small enough to be one focused build session or one short demo.
 
@@ -92,4 +92,25 @@ Scope note: CISO Assistant covers governance, risk and compliance only. Keycloak
 -   **Week 1 (Oct 28 – Nov 4):** Commit this PLAN and complete Task 1 (install, frameworks, assets).
 -   **Week 2 (Nov 5 – Nov 11):** Complete Task 2 (risk register and applied controls).
 -   **Week 3 (Nov 12 – Nov 18):** Complete Task 3 (assessment, evidence, gaps, exports) and get a peer review of the evidence.
--   **Week 4 (Nov 19 – Nov 25):** Finalize exports, write `ciso-assistant-community/learning_plan/README.md` and `ciso-assistant-community/learning_plan/REFLECTION.md`, and add the CISO Assistant screenshots to my demo materials.
+-   **Week 4 (Nov 19 – Nov 25):** Finalize exports, write `learning/README.md` and `learning/REFLECTION.md`, and add the CISO Assistant screenshots to my demo materials.
+
+---
+
+## Status update - 2026-11-05
+
+| Task | Planned | Result | Success criterion |
+|---|---|---|---|
+| 1 Deploy and model the environment | Oct 29 - Nov 4 | Done | Met: login at `https://localhost:8443`; NIST SP 800-66 rev2 (HIPAA) and NIST CSF 2.0 loaded; 7 assets (1 primary, 6 supporting) each with owner and type |
+| 2 IAM risk register and applied controls | Nov 5 - Nov 11 | Done early (Nov 4) | **Partly met:** 5 risks (R01-R05), not the planned 8; each has inherent, current and residual scores and at least 1 asset and 1 control; all 18 controls have an owner and a status |
+| 3 HIPAA assessment, evidence, exports | Nov 12 - Nov 18 | Done early (Nov 4) | Met: 25 requirements assessed (target 15); all 25 have evidence (target 5); 10 open gaps with owner and due date (CAN-FIND-001 still needs a due date) plus 8 exceptions (target 3); compliance chart non-zero |
+
+Changes from the plan:
+
+-   Work happened in the existing repository on `main`, in `ciso-assistant-community/` and `learning/`, not on a `feature/ciso-assistant-setup` branch.
+-   The risks came from the Risk Management 1 register (R01-R05). Three more risks would be needed to reach 8; candidates from the plan list not yet entered as separate risks: missed access review, privilege escalation through a direct role, repeated failed logins.
+-   Records were loaded with a script (`Care_Access_Navigator/10_Scripts/04_CISO_Assistant/`) from the project registers instead of typed one by one; R02 and the HIPAA termination requirement were entered by hand in the UI first.
+-   The Tableau report was replaced by CISO Assistant's own dashboards (exception EX-08, pending instructor acceptance).
+
+Proof: [`README.md`](README.md) (install notes, risk-to-control table, gap summary), [`evidence/`](./), screenshots in
+`Care_Access_Navigator/08_Reporting/02_Dashboards/EV-16_*`.
+
