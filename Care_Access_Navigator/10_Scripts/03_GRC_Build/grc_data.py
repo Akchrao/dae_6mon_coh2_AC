@@ -309,7 +309,7 @@ EXCEPTIONS = [
     ("EX-07", "IA-02", "Lab passwords were committed to the public repository before 2026-11-03",
      "Mistake; the .env file is now untracked and git-ignored",
      "Lab is localhost-only; .env.example holds placeholders", "R03", "IAM Analyst", "Security Officer", ISO_DATE,
-     "2026-11-10", "Open: rotate (CA-12)"),
+     "2026-12-01", "Open: rotate (CA-12)"),
 ]
 
 # ---------------------------------------------------------------- Week 10 Day 4: corrective actions to verification
@@ -333,7 +333,7 @@ ACTIONS = [
     ("CA-07", "TC-07", "Vendor added to Billing without a ticket", "Remove the membership; investigate who made it",
      "IAM Analyst", ISO_DATE, "Verified", "Vendor holds only the vendor role", "EV-14 E2E.remediation TC-07", ISO_DATE),
     ("CA-08", "Access review", "test.vendor1 has no sponsor or end date", "Sponsor sets an end date or the account "
-     "is removed with the leaver step", "IT Manager (sponsor)", "2026-11-10", "Open",
+     "is removed with the leaver step", "IT Manager (sponsor)", "2026-12-01", "Open",
      "Review shows no VENDOR_NO_END_DATE", "-", ""),
     ("CA-09", "TC-09", "Leaver (Jeevan Smith) kept the billing role on the disabled Keycloak copy",
      "Remove the role under TERM-2026-0301; add the IdP-role check to the leaver procedure", "IAM Analyst", ISO_DATE,
@@ -346,9 +346,9 @@ ACTIONS = [
      "Port not reachable from another host", "EV-13 audit log CA-11.applied; LAN-IP request refused; app checks still pass",
      "2026-11-04"),
     ("CA-12", "EX-07", "Lab passwords exposed in public git history", "Rotate Keycloak admin and database passwords",
-     "IAM Analyst", "2026-11-10", "Open", "Old password rejected", "-", ""),
+     "IAM Analyst", "2026-12-01", "Open", "Old password rejected", "-", ""),
     ("CA-13", "Access review", "Privileged users not yet enrolled in OTP", "Enrolment forced at next sign-in; "
-     "follow up on accounts not enrolled within 7 days", "IAM Analyst", "2026-11-10", "In progress",
+     "follow up on accounts not enrolled within 7 days", "IAM Analyst", "2026-12-01", "In progress",
      "Review shows mfa_enrolled = True for all privileged users", "-", ""),
     ("CA-14", "Board audit", "Status deck and design doc overstate progress (MVP deck slides 3 and 10; design doc "
      "section 14)", "Update both to the verified status", "Student", "2026-11-04", "Verified",
@@ -363,7 +363,7 @@ ACTIONS = [
      "Owner decides: narrow IT-Support to account administration, or document the business reason", "HR Manager + IAM Analyst",
      "2026-12-15", "Open", "Role description and hr-app gate agree", "-", ""),
     ("CA-17", "SV-06", "Entra broker client secret expiry unknown", "Record the expiry and set a reminder 30 days "
-     "before", "IAM Analyst", "2026-11-10", "Open", "Expiry recorded in the register", "-", ""),
+     "before", "IAM Analyst", "2026-12-01", "Open", "Expiry recorded in the register", "-", ""),
 ]
 
 # ---------------------------------------------------------------- Week 10 Day 1: evidence index by control

@@ -77,9 +77,9 @@ total). A second audit maps the controls to 15 NIST CSF 2.0 subcategories.
 **Gap summary.** The one non-compliant requirement is log retention: security logs are kept 90 days, not 12 months,
 because the Azure Log Analytics workspace was removed to stop charges (exception EX-02, corrective action CA-03, due
 2027-01-31). The main partial gaps are leaver deprovisioning, where an Entra ID termination still does not disable the
-Keycloak account automatically (CAN-FIND-001, control CAN-CTRL-JML-002, so R02 stays High); privileged users not yet enrolled in OTP (CA-13, due 2026-11-10); lab passwords
-exposed in git history and not yet rotated (EX-07, CA-12, due 2026-11-10); the identity provider served over HTTP in the
-lab (EX-05, CA-06); and a vendor account without sponsor or end date (CA-08, due 2026-11-10). The quarterly access review AR-2026-Q4 was signed off on 2026-11-09 (CA-05 verified). In total 9 open gaps have
+Keycloak account automatically (CAN-FIND-001, control CAN-CTRL-JML-002, so R02 stays High); privileged users not yet enrolled in OTP (CA-13, due 2026-12-01); lab passwords
+exposed in git history and not yet rotated (EX-07, CA-12, due 2026-12-01); the identity provider served over HTTP in the
+lab (EX-05, CA-06); and a vendor account without sponsor or end date (CA-08, due 2026-12-01). The quarterly access review AR-2026-Q4 was signed off on 2026-11-09 (CA-05 verified). In total 9 open gaps have
 an owner and a due date and 8 exceptions are recorded (EX-01 resolved on 2026-11-05 with the Entra Security defaults
 screenshot EV-17).
 
