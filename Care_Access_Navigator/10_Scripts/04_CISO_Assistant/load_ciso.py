@@ -170,8 +170,11 @@ with transaction.atomic():
         for (cid, *_rest) in P["controls"]:
             rk = _rest[7]
             hit = ref in rk or (rk.startswith("R01-R05"))
-            if hit:
-                (s.existing_applied_controls if ctl[cid].status == "active" else s.applied_controls).add(ctl[cid])
+            if hit:  # a control sits in exactly one list: existing when active, additional otherwise
+                if ctl[cid].status == "active":
+                    s.existing_applied_controls.add(ctl[cid]); s.applied_controls.remove(ctl[cid])
+                else:
+                    s.applied_controls.add(ctl[cid]); s.existing_applied_controls.remove(ctl[cid])
     for xid, x in exc.items():
         risk = next(e[5] for e in P["exceptions"] if e[0] == xid)
         if risk.startswith("R"):

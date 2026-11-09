@@ -85,7 +85,7 @@ s += table([["Process", "Rule", "Evidence"],
              "TERM-2026-0301 (Jeevan Smith); TC-04, TC-09"],
             ["Access review", "Quarterly review of every account in the realm, including Entra-federated ones "
              "(source = entra-id); flags stale, privileged-without-MFA and disabled-but-has-access accounts; reviewer "
-             "decision and sign-off per account", "AR-2026-Q4 (sign-off pending, CA-05)"],
+             "decision and sign-off per account", "AR-2026-Q4 (signed 2026-11-09, CA-05 verified)"],
             ["Authentication", "MFA for every Entra user through Security defaults; no legacy authentication",
              "EV-17"],
             ["Privileged access", "Single named Global Administrator; privilege only through job-function roles; "

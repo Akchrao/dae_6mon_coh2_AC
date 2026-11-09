@@ -102,7 +102,7 @@ Scope note: CISO Assistant covers governance, risk and compliance only. Keycloak
 |---|---|---|---|
 | 1 Deploy and model the environment | Oct 29 - Nov 4 | Done | Met: login at `https://localhost:8443`; NIST SP 800-66 rev2 (HIPAA) and NIST CSF 2.0 loaded; 7 assets (1 primary, 6 supporting) each with owner and type |
 | 2 IAM risk register and applied controls | Nov 5 - Nov 11 | Done early (Nov 4) | **Partly met:** 5 risks (R01-R05), not the planned 8; each has inherent, current and residual scores and at least 1 asset and 1 control; all 18 controls have an owner and a status |
-| 3 HIPAA assessment, evidence, exports | Nov 12 - Nov 18 | Done early (Nov 4) | Met: 25 requirements assessed (target 15); all 25 have evidence (target 5); 10 open gaps with owner and due date (CAN-FIND-001 still needs a due date) plus 8 exceptions (target 3); compliance chart non-zero |
+| 3 HIPAA assessment, evidence, exports | Nov 12 - Nov 18 | Done early (Nov 4) | Met: 25 requirements assessed (target 15); all 25 have evidence (target 5); 9 open gaps with owner and due date (CAN-FIND-001 still needs a due date) plus 8 exceptions (target 3); compliance chart non-zero |
 
 Changes from the plan:
 

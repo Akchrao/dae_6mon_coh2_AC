@@ -41,12 +41,12 @@ DELIV = [  # (deliverable from plan section 15, contents, file, status)
      "Care_Access_Navigator/07_GRC/02_Controls/CAN_DOC_Authentication_and_Privileged_Access_v1.0.pdf", "Done"),
     ("Access review", "Quarterly review AR-2026-Q4 with flags and sign-off sheet",
      "Care_Access_Navigator/06_Evidence/05_Access_Reviews/CAN_DOC_Access_Review_AR-2026-Q4_v1.0.xlsx",
-     "Reviewer sign-off pending (CA-05)"),
+     "Done (signed 2026-11-09, CA-05 verified)"),
     ("SIEM use cases + incident", "Wazuh rules, CAN-ID identity rules, IR1-2026-002 report",
      "incident_response_1/task5_ir_documentation/README.md", "Done"),
     ("Risk register", "R01-R05 in CISO Assistant: inherent, current and residual levels, treatment, linked controls",
      "Care_Access_Navigator/07_GRC/01_Risks/CAN_DOC_CISO_Risk_Assessment_R01-R05_v2.0.pdf", "Done"),
-    ("Control matrix + compliance mapping", "18 controls; HIPAA audit (25 requirements: 14 compliant, 10 partial, 1 "
+    ("Control matrix + compliance mapping", "18 controls; HIPAA audit (25 requirements: 17 compliant, 7 partial, 1 "
      "non-compliant) and NIST CSF 2.0 mapping (15 subcategories) in CISO Assistant; SP 800-53/ISO/PCI in the catalog",
      "Care_Access_Navigator/07_GRC/03_Compliance/CAN_DOC_CISO_HIPAA_Audit_v2.0.xlsx", "Done"),
     ("Exceptions + corrective actions", "8 exceptions (EX-01 resolved) and 18 corrective actions + CAN-FIND-001 as "
@@ -69,7 +69,7 @@ DELIV = [  # (deliverable from plan section 15, contents, file, status)
 CRITERIA = [  # plan section 17
     ("IAM", "At least one complete JML workflow, RBAC matrix, access request and access-review demonstration",
      "JML cycle (Entra + Keycloak) and automated JML in TC-01/03/04; RBAC app matrix enforced; access review run",
-     "Met (review sign-off pending)"),
+     "Met"),
     ("Monitoring", "At least three useful detection use cases with controlled test events and investigation",
      "CAN-ID-001/002/004/005/007 fired on controlled events; Wazuh rules 100210/100221/100231 in IR 1", "Met"),
     ("Incident response", "One end-to-end simulated access incident from detection through lessons learned",
@@ -186,10 +186,10 @@ SEG = [
      "IA-01 maps to HIPAA 164.312(d) and CSF PR.AA-03 with evidence EV-13 and EV-17 attached. Exception EX-02 (log "
      "retention): compensating controls and an expiry date.", "IAM findings become measurable governance and risk actions."),
     ("3:45-4:30", "Dashboard", "CISO Assistant Analytics, then the risk matrix and the HIPAA audit donut",
-     "25 HIPAA access requirements assessed: 14 compliant, 10 partially compliant, 1 non-compliant (log retention). "
+     "25 HIPAA access requirements assessed: 17 compliant, 7 partially compliant, 1 non-compliant (log retention). "
      f"Control test pass rate {K['Control test pass rate (10/13 audit)']['value']}% &rarr; "
      f"{K['Control test pass rate (11/03)']['value']}%. Open items are visible with owners and dates: OTP enrolment "
-     "(CA-13) and review sign-off (CA-05).", "Security posture is communicated to management."),
+     "(CA-13) and vendor end date (CA-08); the access review was signed off on 2026-11-09 (CA-05).", "Security posture is communicated to management."),
     ("4:30-5:00", "Outcome", "Deck closing slide",
      f"{passed} of {len(E2E)} end-to-end tests passed; the one failure exposed a real detection bug that was fixed and "
      "retested. One lesson: configuration that exists is not configuration that works; test the negative path.",

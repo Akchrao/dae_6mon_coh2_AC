@@ -54,8 +54,8 @@ controls still being implemented.
 
 | Risk | Name | Inherent | Current | Residual | Existing controls | Additional controls | Exceptions |
 |---|---|---|---|---|---|---|---|
-| R01 | Excessive RBAC privileges | very high | medium | medium | AC-01, AC-03, AC-04, CA-01, RA-01 | AR-01 | - |
-| R02 | Incomplete leaver deprovisioning across Entra ID and Keycloak | high | high | low | AC-02, CA-01, CAN-CTRL-JML-001, RA-01 | AR-01, CAN-CTRL-JML-002 | - |
+| R01 | Excessive RBAC privileges | very high | medium | medium | AC-01, AC-03, AC-04, AR-01, CA-01, RA-01 | - | - |
+| R02 | Incomplete leaver deprovisioning across Entra ID and Keycloak | high | high | low | AC-02, AR-01, CA-01, CAN-CTRL-JML-001, RA-01 | CAN-CTRL-JML-002 | - |
 | R03 | Credential compromise | very high | medium | medium | AU-01, AU-02, CA-01, IA-02, IR-01, RA-01 | AU-03, IA-01, SC-01 | EX-01 (resolved), EX-02, EX-05, EX-07 |
 | R04 | Privileged account misuse | high | medium | medium | AU-01, AU-02, CA-01, IR-01, RA-01 | AC-05 | EX-03, EX-04 |
 | R05 | Expired vendor access | high | low | low | CA-01, RA-01 | VM-01 | - |
@@ -71,16 +71,15 @@ risk matrix screenshot `EV-16_CISO_Dashboard_Risk_Heatmap_20261104.png`.
 ## Task 3 - HIPAA assessment and gaps
 
 Audit *Healthcare IAM - HIPAA Security Rule Access Controls Audit* (NIST SP 800-66 rev2): **25 access-related requirements
-assessed - 14 compliant, 10 partially compliant, 1 non-compliant**; all 25 have evidence attached (43 evidence items in
+assessed - 17 compliant, 7 partially compliant, 1 non-compliant**; all 25 have evidence attached (43 evidence items in
 total). A second audit maps the controls to 15 NIST CSF 2.0 subcategories.
 
 **Gap summary.** The one non-compliant requirement is log retention: security logs are kept 90 days, not 12 months,
 because the Azure Log Analytics workspace was removed to stop charges (exception EX-02, corrective action CA-03, due
 2027-01-31). The main partial gaps are leaver deprovisioning, where an Entra ID termination still does not disable the
-Keycloak account automatically (CAN-FIND-001, control CAN-CTRL-JML-002, so R02 stays High); access review sign-off
-not yet recorded (CA-05, due 2026-12-15); privileged users not yet enrolled in OTP (CA-13, due 2026-11-10); lab passwords
+Keycloak account automatically (CAN-FIND-001, control CAN-CTRL-JML-002, so R02 stays High); privileged users not yet enrolled in OTP (CA-13, due 2026-11-10); lab passwords
 exposed in git history and not yet rotated (EX-07, CA-12, due 2026-11-10); the identity provider served over HTTP in the
-lab (EX-05, CA-06); and a vendor account without sponsor or end date (CA-08, due 2026-11-10). In total 10 open gaps have
+lab (EX-05, CA-06); and a vendor account without sponsor or end date (CA-08, due 2026-11-10). The quarterly access review AR-2026-Q4 was signed off on 2026-11-09 (CA-05 verified). In total 9 open gaps have
 an owner and a due date and 8 exceptions are recorded (EX-01 resolved on 2026-11-05 with the Entra Security defaults
 screenshot EV-17).
 

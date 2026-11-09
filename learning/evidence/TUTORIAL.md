@@ -105,7 +105,7 @@ on localhost; that is expected for a local lab.
 -   The audit shows the termination requirement as **Partially compliant** with the evidence and both controls linked.
 -   The finding shows its requirement, the planned control and its owner.
 -   In this project, after loading the full registers the same way: 5 risks, 18 controls, 43 evidence items,
-    25 HIPAA requirements assessed (14 compliant, 10 partially compliant, 1 non-compliant), 15 NIST CSF 2.0
+    25 HIPAA requirements assessed (17 compliant, 7 partially compliant, 1 non-compliant), 15 NIST CSF 2.0
     subcategories, 8 exceptions and 19 findings.
 
 ![Risk heat map](EV-16_CISO_Dashboard_Risk_Heatmap_20261104.png)
