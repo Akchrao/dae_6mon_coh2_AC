@@ -29,8 +29,14 @@ layout: single
   
   <div style="background:#f8f9fa; padding:1.5rem; border-radius:8px; border-left:4px solid #333;">
     <h3 style="margin:0 0 0.5rem; color:#2c3e50;">GitHub</h3>
-    <p style="margin:0; font-size:1.1rem;"><a href="https://github.com/Akchrao" style="color:#333; text-decoration:none;">github.com/Akchrao</a></p>
+    <p style="margin:0; font-size:1.1rem;"><a href="https://github.com/Akchrao/dae_6mon_coh2_AC" style="color:#333; text-decoration:none;">github.com/Akchrao/dae_6mon_coh2_AC</a></p>
     <p style="margin:0.5rem 0 0; color:#6c757d; font-size:0.9rem;">Explore my capstone artifacts and technical contributions</p>
+  </div>
+
+  <div style="background:#f8f9fa; padding:1.5rem; border-radius:8px; border-left:4px solid #1F7A70;">
+    <h3 style="margin:0 0 0.5rem; color:#2c3e50;">Resume and Location</h3>
+    <p style="margin:0; font-size:1.1rem;"><a href="{{ '/assets/files/Akhila_Chennamaneni_Resume.pdf' | relative_url }}" style="color:#1F7A70; text-decoration:none;">Download my resume (PDF)</a></p>
+    <p style="margin:0.5rem 0 0; color:#6c757d; font-size:0.9rem;">Based in Stamford, CT · open to IAM Analyst and GRC roles</p>
   </div>
   
 </div>
@@ -63,7 +69,7 @@ layout: single
   
   <div style="background:#d1ecf1; padding:1rem; border-radius:6px; text-align:center;">
     <h4 style="margin:0 0 0.5rem; color:#0c5460;">GRC & Risk</h4>
-    <p style="margin:0; font-size:0.9rem; color:#6c757d;">HIPAA compliance, NIST controls, Risk registers</p>
+    <p style="margin:0; font-size:0.9rem; color:#6c757d;">CISO Assistant, HIPAA and NIST CSF mapping, risk registers</p>
   </div>
   
   <div style="background:#d4edda; padding:1rem; border-radius:6px; text-align:center;">

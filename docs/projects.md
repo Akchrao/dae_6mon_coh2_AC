@@ -26,7 +26,9 @@ This project simulates a healthcare cybersecurity environment that combines **Id
 **Impact:**
 - Demonstrated end-to-end identity lifecycle governance for a simulated healthcare workforce.
 - Established a repeatable control testing and evidence collection methodology for HIPAA compliance.
-- Visualized security posture through automated GRC reporting.
+- Visualized security posture through CISO Assistant dashboards and reports.
+
+**[Read the full capstone write-up →]({{ '/capstone/' | relative_url }})**
 
 ---
 
@@ -50,7 +52,7 @@ Hands-on experience in managing Salesforce CRM systems, supporting end-users, an
 <div style="text-align:center; margin-top:3rem; padding:2rem; background:#f8f9fa; border-radius:8px;">
   <h3>Interested in Collaboration?</h3>
   <p>I am always looking for opportunities to apply my IAM and Salesforce skills to solve complex security and operational challenges.</p>
-  <p><a href="/contact/" style="background:#0070f3; color:white; padding:0.5rem 1.5rem; text-decoration:none; border-radius:99px; font-weight:600;">Get in Touch</a></p>
+  <p><a href="{{ '/contact/' | relative_url }}" style="background:#0070f3; color:white; padding:0.5rem 1.5rem; text-decoration:none; border-radius:99px; font-weight:600;">Get in Touch</a></p>
   
   <div style="text-align:center; margin-top:2rem;">
   <a href="https://www.mydae.org/" target="_blank" rel="noopener">

@@ -3,6 +3,8 @@ main:
       url: /
     - title: "About"
       url: /about/
+    - title: "Capstone"
+      url: /capstone/
     - title: "Projects"
       url: /projects/
     - title: "Resume"

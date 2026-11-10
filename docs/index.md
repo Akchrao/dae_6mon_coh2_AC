@@ -10,8 +10,8 @@ permalink: /
     Bridging the gap between Identity & Access Management (IAM), Governance, Risk & Compliance (GRC), and Salesforce CRM operations.
   </p>
   <div style="display: flex; gap: 1rem;">
-    <a href="/projects/" class="btn btn--primary btn--large">View Capstone Project</a>
-    <a href="/contact/" class="btn btn--light btn--large" style="border-radius: 99px; border: 1px solid #eee;">Get in Touch</a>
+    <a href="{{ '/capstone/' | relative_url }}" class="btn btn--primary btn--large">View Capstone Project</a>
+    <a href="{{ '/contact/' | relative_url }}" class="btn btn--light btn--large" style="border-radius: 99px; border: 1px solid #eee;">Get in Touch</a>
   </div>
 </div>
 
@@ -21,9 +21,11 @@ permalink: /
     <p>Healthcare IAM + GRC Capstone project demonstrating identity lifecycle management, RBAC, and HIPAA/NIST control mapping in a simulated environment.</p>
     <ul style="padding-left: 1.2rem; color: #666;">
       <li>Identity Governance with Keycloak</li>
-      <li>GRC Tracking & Risk Assessment</li>
+      <li>GRC in CISO Assistant: risk, HIPAA and NIST CSF audits</li>
       <li>Least Privilege & Access Reviews</li>
+      <li>Detection & Incident Response (Wazuh)</li>
     </ul>
+    <p><a href="{{ '/capstone/' | relative_url }}">Read the full capstone →</a></p>
   </div>
 
   <div class="project-card">
