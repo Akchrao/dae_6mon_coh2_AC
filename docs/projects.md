@@ -11,7 +11,7 @@ layout: single
 ## Care Access Navigator: Healthcare IAM + GRC Capstone
 
 <div style="background:#f8f9fa; padding:1.5rem; border-radius:8px; margin:1rem 0; border-left:4px solid #0070f3;">
-  <p><strong>Tech Stack:</strong> Keycloak, Microsoft Entra ID, Tableau, Python, Monday.com, Lucidchart</p>
+  <p><strong>Tech Stack:</strong> Keycloak, Microsoft Entra ID, CISO Assistant, Wazuh, Python, Docker, Monday.com, Lucidchart</p>
   <p><strong>Status:</strong> Completed (Capstone)</p>
 </div>
 
@@ -21,7 +21,7 @@ This project simulates a healthcare cybersecurity environment that combines **Id
 - **Identity Governance Lab**: Configured Keycloak for RBAC, least privilege, and identity lifecycle management (JML workflows).
 - **GRC Framework Implementation**: Developed a risk register, control matrix, and evidence index mapped to HIPAA and NIST frameworks.
 - **Security Monitoring**: Simulated authentication and access anomalies, demonstrating end-to-end incident response for identity-related threats.
-- **Tableau Management Reporting**: Integrated IAM, risk, and compliance metrics into a professional GRC dashboard.
+- **GRC in CISO Assistant**: Risk register, HIPAA (NIST SP 800-66) and NIST CSF 2.0 audits, evidence, exceptions and corrective actions, reported through CISO Assistant dashboards.
 
 **Impact:**
 - Demonstrated end-to-end identity lifecycle governance for a simulated healthcare workforce.

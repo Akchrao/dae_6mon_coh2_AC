@@ -23,7 +23,7 @@ Having completed my **Cybersecurity Capstone Project (Care Access Navigator)**, 
 - **Identity Governance** – Implementing joiner-mover-leaver (JML) workflows and role-based access control (RBAC).  
 - **GRC Operations** – Mapping technical controls to HIPAA/NIST frameworks and managing risk registers.  
 - **Business Analysis** – Gathering elicitation requirements and documenting functional specifications for security enhancements.  
-- **Data Analytics** – Leveraging Tableau and Excel to visualize access metrics, incident trends, and compliance status. 
+- **GRC Reporting** – Using CISO Assistant dashboards and reports to show risk levels, compliance status, and corrective actions. 
 - **Salesforce Administration** – Optimizing security models, sharing rules, and automation flows within Salesforce Orgs.
 
 ---
@@ -32,8 +32,8 @@ Having completed my **Cybersecurity Capstone Project (Care Access Navigator)**, 
 
 **IAM & GRC Tools:**  
 - Identity Providers *(Keycloak, Microsoft Entra ID concepts)*  
-- GRC Platforms *(Monday.com, Excel Risk Registers)*  
-- Data Visualization *(Tableau, Lucidchart)* 
+- GRC Platform *(CISO Assistant: risk register, HIPAA and NIST CSF audits, evidence, exceptions)*  
+- Reporting and Diagrams *(CISO Assistant dashboards, Lucidchart)* 
 
 **Salesforce & CRM:**  
 - Salesforce CRM *(Flows, Reports, Security & Sharing, NPSP)*  

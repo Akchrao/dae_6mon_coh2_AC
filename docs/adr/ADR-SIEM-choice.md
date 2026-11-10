@@ -68,3 +68,5 @@ Wording for deliverables: *"A full SIEM platform (Wazuh/Splunk/Sentinel) was out
 - `Care_Access_Navigator/10_Scripts/02_IAM_Automation/sample_ehr_access_log.csv` (synthetic, for CAN-ID-007)
 - Readiness Audit & Roadmap v2: §3.6 Monitoring unauthorized access; B6 attack simulation (INC-20261020-01)
 - Related: [ADR-OpenCTI-scope](ADR-OpenCTI-scope.md)
+
+> **Update 2026-11:** the Tableau dashboard was replaced by CISO Assistant dashboards and reports (exception EX-08). References to Tableau above describe the plan at the time of this decision.

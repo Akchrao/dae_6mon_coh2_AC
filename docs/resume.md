@@ -70,7 +70,7 @@ Recommended Salesforce best practices and process improvements to enhance system
 - Configured **Keycloak** as the primary identity provider for users, groups, and RBAC roles.
 - Implemented joiner-mover-leaver (JML) workflows and periodic access reviews.
 - Mapped technical controls to **HIPAA Security Rule** and **NIST framework** concepts.
-- Built a **GRC Dashboard in Tableau** to communicate security posture and compliance status.
+- Ran the project's **GRC in CISO Assistant** (risk register, HIPAA and NIST CSF audits, evidence, exceptions) and reported security posture through its dashboards.
 
 ## Education
 
@@ -88,7 +88,7 @@ Recommended Salesforce best practices and process improvements to enhance system
 
 - **Salesforce**: Automation (Flows), Security & Sharing, Reports & Analytics, Data Loader, NPSP.
 - **IAM & GRC**: Identity Governance (Keycloak), RBAC, Risk Assessment, HIPAA/NIST Mapping.
-- **Tools**: Tableau, SQL, Asana, Jira, Monday.com, Lucidchart, Microsoft Excel.
+- **Tools**: CISO Assistant, SQL, Asana, Jira, Monday.com, Lucidchart, Microsoft Excel.
 - **Methodologies**: Agile, SDLC, Requirement Elicitation.
 
 
