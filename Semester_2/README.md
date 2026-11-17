@@ -12,7 +12,7 @@ This folder is an index only. The course work lives in each course's own folder 
 | Markdown Activity | [`markdown_activity/`](../markdown_activity/) | `demo.md` |
 | Project MoodBuddy | [`project_moodbuddy/`](../project_moodbuddy/) | MoodBuddy project deck (shared deliverable of several Semester 2 courses) |
 | Logic 1 | [`logic_1/`](../logic_1/) | Deliverable was the MoodBuddy deck (see `project_moodbuddy/`) |
-| Design 1 | [`design_1/`](../design_1/) | Deliverable was the MoodBuddy deck (see `project_moodbuddy/`) |
+| Design 1 | [`design_1/`](../design_1/) | MoodBuddy design project: empathy map, research, purpose, brainstorm, prototype (PDF) |
 | Version Control 1 | [`version_control_1/`](../version_control_1/) | Deliverable was the MoodBuddy deck; Git weekly status deck is in `Status_Updates_and_Teachback/` |
 
 ## Status updates

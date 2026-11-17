@@ -6,8 +6,8 @@ This folder is an index only. The course work lives in each course's own folder 
 
 | Course | Folder | What it holds |
 |---|---|---|
-| Unix 1 | [`unix_1/`](../unix_1/) | No files saved in the repository |
-| Unix 2 | [`unix_2/`](../unix_2/) | Lab screenshot (2026-09-02) |
+| Unix 1 | [`unix_1/`](../unix_1/) | Final project submission (PDF) and screenshots |
+| Unix 2 | [`unix_2/`](../unix_2/) | Final project submission (PDF), screenshots and a lab screenshot (2026-09-02) |
 | Network Security 1 | [`network_security_1/`](../network_security_1/) | Assignment tasks 1-5 and tasks 6-7 (PDF) |
 | Cyber Threats and Vulnerabilities 1 | [`cyber_threats_and_vulnerabilities_1/`](../cyber_threats_and_vulnerabilities_1/) | Assignment 1, task 3 and course report (PDF) |
 
