@@ -1,0 +1,8 @@
+flowchart TB
+    P["1. Policy and people<br/>POL-SEC-01, training, login banner, incident reporting guide"] --> I
+    I["2. Identity<br/>Entra ID + Keycloak: RBAC, MFA, lockout, JML automation, access reviews"] --> N
+    N["3. Network<br/>Segmented subnets with NSG rules, bastion, no RDP from the internet (Cloud Security 1 / Network Security 1)"] --> H
+    H["4. Host<br/>SSH keys only, hardened containers (non-root, read-only), Wazuh agent, file integrity monitoring"] --> A
+    A["5. Application<br/>Per-app role gates, minimum necessary, TLS"] --> D
+    D["6. Data<br/>Classification, encryption, integrity hashes, retention"] --> M
+    M["7. Monitoring and response<br/>Wazuh correlation rules, SOC triage, IR playbooks, case tracker"]

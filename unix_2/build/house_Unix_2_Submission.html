@@ -1,0 +1,69 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Unix 2: Final Project Submission</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Unix 2: Final Project Submission</div><div class='subsub'>File commands, arguments, kernels and shells, aliases and prompt customization in the macOS Terminal</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Unix 2 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Scope:</td><td>Final project</td></tr><tr><td class='k'>Environment:</td><td>macOS Terminal (zsh / bash), folder ~/Desktop/unix_demo</td></tr><tr><td class='k'>Date:</td><td>November 17, 2026</td></tr></table>
+
+
+<h2>Rubric checklist</h2>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th>Criterion</th><th>Evidence</th><th>Screenshot</th></tr>
+<tr><td>Commands: cp, mkdir, less, mv, rm</td><td><code>mkdir backup3</code>, <code>cp notes.txt backup3/</code>, <code>mv backup3/notes.txt backup3/moved.txt</code>, <code>rm a.txt b.txt c.txt</code>, <code>less /etc/shells</code></td><td>1, 2</td></tr>
+<tr><td>Arguments: multiple arguments, and an argument to an option</td><td><code>touch a.txt b.txt c.txt</code> and <code>ls -l a.txt b.txt backup3</code> (multiple arguments); <code>head -n 1 notes.txt</code> (argument <code>1</code> given to option <code>-n</code>)</td><td>1</td></tr>
+<tr><td>Kernels and shells: default shell, current shell, switch shell</td><td><code>echo $SHELL</code> &rarr; <code>/bin/zsh</code> (default); <code>echo $0</code> &rarr; <code>-zsh</code> (current); <code>bash</code> switches shell, then <code>echo $0</code> &rarr; <code>bash</code></td><td>3</td></tr>
+<tr><td>Environment: create an alias and customize the prompt</td><td><code>alias ll='ls -la'</code> then <code>ll</code>; <code>PS1='Akhila@DAE:\w$ '</code> changes the prompt to <code>Akhila@DAE:~/Desktop/unix_demo$</code></td><td>3</td></tr>
+</table>
+<h2>Screenshot 1: mkdir, cp, mv, rm and arguments</h2>
+<img src="1_mkdir_cp_mv_rm_arguments.png">
+<div class="cap"><code>mkdir</code> makes the folder <code>backup3</code>, <code>cp</code> copies <code>notes.txt</code> into it, <code>mv</code> renames the copy to <code>moved.txt</code>, <code>touch</code> and <code>ls -l</code> take several arguments, <code>head -n 1</code> passes the argument <code>1</code> to the option <code>-n</code>, and <code>rm</code> deletes the three files.</div>
+<h2 class="pb">Screenshot 2: less</h2>
+<img src="2_less.png" style="max-height:760px">
+<div class="cap"><code>less /etc/shells</code> opens the list of available shells one screen at a time; <code>(END)</code> at the bottom shows the pager is open (press q to quit).</div>
+<h2 class="pb">Screenshot 3: shells, alias and custom prompt</h2>
+<img src="3_shells_alias_prompt.png">
+<div class="cap">Default shell <code>/bin/zsh</code>, current shell <code>-zsh</code>, switch to <code>bash</code> (confirmed by <code>echo $0</code>), alias <code>ll</code> working, and the custom prompt <code>Akhila@DAE:~/Desktop/unix_demo$</code>.</div>
+</body></html>

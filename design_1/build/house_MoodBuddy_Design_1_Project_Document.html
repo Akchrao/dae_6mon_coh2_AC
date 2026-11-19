@@ -1,0 +1,165 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Design 1: Final Project Submission</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Design 1: Final Project Submission</div><div class='subsub'>Design thinking behind the MoodBuddy Python mood tracker: empathy map, research, purpose statement, brainstorm and conversational prototype</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Design 1 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Scope:</td><td>Final project</td></tr><tr><td class='k'>Environment:</td><td>MoodBuddy Python program (python_1/MoodBuddy.py) and Figma flowchart (figma_1/)</td></tr><tr><td class='k'>Date:</td><td>November 17, 2026</td></tr></table>
+
+
+
+
+<h2>Overview</h2>
+<p>MoodBuddy is a Python program I wrote that asks a user for their name and age, lets them pick one of six moods
+(Happy, Sad, Angry, Lazy, Anxious, Excited) and replies with a message and a suggested activity matched to their
+age group. It saves every check-in to a JSON file, so it remembers each user, and it shows a gentle warning when the
+same negative mood keeps coming back. This document records the design thinking behind it, following the five
+Design 1 rubric criteria.</p>
+
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:32%">Rubric criterion</th><th>Section</th></tr>
+<tr><td>Create an Empathy Map</td><td>1. Empathy Map</td></tr>
+<tr><td>Document Research (3 sources)</td><td>2. Research</td></tr>
+<tr><td>Define a Purpose Statement</td><td>3. Purpose Statement</td></tr>
+<tr><td>Brainstorm Ideas (3)</td><td>4. Brainstorm</td></tr>
+<tr><td>Create a Conversational Prototype</td><td>5. Conversational Prototype</td></tr>
+</table>
+
+<h2>1. Empathy Map</h2>
+<p><b>User:</b> Sam, 21, a college student who also works part-time.</p>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:50%">Says</th><th>Thinks</th></tr>
+<tr><td><ul><li>&ldquo;I'm fine, just tired.&rdquo;</li><li>&ldquo;I don't have time to write a journal.&rdquo;</li><li>&ldquo;I can't remember how I felt last week.&rdquo;</li></ul></td>
+<td><ul><li>Is it normal to feel anxious this often?</li><li>Mood apps look complicated and want my data.</li><li>I wish someone just told me one thing to try.</li></ul></td></tr>
+<tr><th>Does</th><th>Feels</th></tr>
+<tr><td><ul><li>Skips breaks and self-care in busy weeks</li><li>Scrolls the phone when stressed or bored</li><li>Notices a bad mood only after several days</li></ul></td>
+<td><ul><li>Anxious before exams and shifts</li><li>Overwhelmed, sometimes lazy and unmotivated</li><li>Happy on good days, but forgets them quickly</li></ul></td></tr>
+<tr><th>Pains</th><th>Gains</th></tr>
+<tr><td>No time, forgets mood patterns, doesn't want to share feelings with people or big apps.</td>
+<td>A check-in under a minute, one small activity to try, and a heads-up when bad moods repeat.</td></tr>
+</table>
+
+<h2 class="pb">2. Research</h2>
+<p>I looked at two existing mood apps (market research) and one psychology study.</p>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:22%">Source</th><th style="width:40%">What I learned</th><th>How MoodBuddy uses it</th></tr>
+<tr><td><b>Daylio: Journal &amp; Mood Tracker</b><br><span style="font-size:9pt">Market &middot; daylio.net</span></td>
+<td>Users log a mood with one tap and pick activities, with no writing needed. Streaks and statistics show patterns over time.</td>
+<td>Six numbered mood choices; every check-in is saved with a timestamp and counted.</td></tr>
+<tr><td><b>How We Feel</b><br><span style="font-size:9pt">Market &middot; howwefeel.org, built with the Yale Center for Emotional Intelligence</span></td>
+<td>A free app that helps people name an emotion and then suggests a short strategy, such as a breathing exercise.</td>
+<td>Every mood gets a message plus one suggested activity (for example, box breathing for anxiety).</td></tr>
+<tr><td><b>&ldquo;Putting Feelings Into Words&rdquo;</b><br><span style="font-size:9pt">Research &middot; Lieberman et al., 2007</span></td>
+<td>A brain-imaging study found that naming a feeling (affect labeling) reduces the brain's emotional reaction to it.</td>
+<td>The check-in itself helps: the user names their mood before getting a response.</td></tr>
+</table>
+
+<h2>3. Purpose Statement</h2>
+<div class="quote">MoodBuddy is a simple Python mood tracker where a user names one of six moods and gets an age-appropriate
+message and activity in under a minute. It is being made so busy students, families and older adults (ages 4 to 100)
+can build a daily habit of naming their feelings and notice repeating negative moods early.</div>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:15%">What</th><td>A Python mood tracker: six moods, a message and an activity, and a saved history</td></tr>
+<tr><th>Why</th><td>Naming feelings helps, and repeated negative moods should be noticed early</td></tr>
+<tr><th>Who</th><td>Busy students, families and older adults, ages 4 to 100 (seven age groups, Child to Elder)</td></tr>
+</table>
+
+<h2>4. Brainstorm</h2>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:24%">Idea</th><th style="width:36%">Description</th><th>Strength</th><th>Weakness</th></tr>
+<tr><td><b>1. Daily mood journal</b></td><td>The user writes a few lines each day in answer to a prompt.</td><td>Rich detail</td><td>Slow; Sam has no time to write</td></tr>
+<tr class="chosen"><td><b>2. Mood check-in with tracking and warnings</b> (chosen)</td><td>Pick one of six moods and get a message and an activity; counts are saved, and a gentle warning appears if the same negative mood comes up three times.</td><td>Under a minute; remembers patterns</td><td>Less detail than a journal</td></tr>
+<tr><td><b>3. Daily reminder bot</b></td><td>Sends a scheduled quote or a reminder to take a break.</td><td>Nudges the habit</td><td>No tracking; needs a phone and notifications</td></tr>
+</table>
+<p class="note"><b>Why idea 2:</b> it fits Sam's &ldquo;no time&rdquo; pain, uses quick numbered choices (Daylio), pairs a mood
+with an action (How We Feel) and makes naming the feeling the first step (Lieberman 2007).</p>
+
+<h2 class="pb">5. Conversational Prototype</h2>
+<h3>Purpose</h3>
+<p>Name one of six moods and get an age-appropriate message and activity in under a minute; spot repeating negative moods early.</p>
+<h3>Research behind it</h3>
+<ul>
+<li>Daylio: quick numbered choices and a saved history</li>
+<li>How We Feel: an emotion paired with one strategy</li>
+<li>Lieberman 2007: naming the mood comes first</li>
+<li>Empathy map: Sam has no time, so a check-in takes under a minute</li>
+</ul>
+<h3>Sample conversation (text taken from the MoodBuddy program)</h3>
+<div class="chat">
+<div class="bot">Welcome to MoodBuddy! &nbsp;Enter your name:</div>
+<div class="user">Sam</div>
+<div class="bot">How old are you, Sam?</div>
+<div class="user">21</div>
+<div class="bot">Welcome, Sam! A new MoodBuddy record was created.<br>How is your mood today? &nbsp;1. Happy &middot; 2. Sad &middot; 3. Angry &middot; 4. Lazy &middot; 5. Anxious &middot; 6. Excited</div>
+<div class="user">5</div>
+<div class="bot">Anxiety at this stage of life is very common. You are not alone in feeling this way.<br>
+Suggested activity: Practice box breathing: breathe in for 4, hold for 4, breathe out for 4, hold for 4.</div>
+<div class="bot"><i>(After the third anxious check-in with no good mood in between)</i><br>Sam, anxiety has appeared in several check-ins.
+You do not have to manage it alone. Reach out for support.<br>MoodBuddy offers general encouragement and is not emergency care.</div>
+</div>
+
+<h3>How the prototype meets the purpose</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:28%">Purpose</th><th>Design feature</th></tr>
+<tr><td>Under a minute</td><td>Name, age and one number for the mood. Invalid input simply asks again.</td></tr>
+<tr><td>Right message for the person</td><td>Age maps to seven groups (Child, Preteen, Teen, Young Adult, Adult, Senior, Elder), so a 9-year-old and a 70-year-old get different words.</td></tr>
+<tr><td>Name it, then act</td><td>Every mood gets a message and one activity to try.</td></tr>
+<tr><td>Notice patterns early</td><td>Sad, Angry and Anxious are counted; if one comes up three times with no good mood in between, a gentle warning appears. Everything is saved to a JSON file.</td></tr>
+</table>
+
+<h3 class="pb">Visual representation: program flowchart (Figma)</h3>
+<div class="fig"><img src="flow_doc.png"></div>
+<div class="cap">MoodBuddy flowchart: name and age intake, user record lookup, and the mood check-in loop with warning logic and save.</div>
+
+<h2>References</h2>
+<ol>
+<li>Daylio: Journal &amp; Mood Tracker. https://daylio.net</li>
+<li>How We Feel. https://howwefeel.org (built with the Yale Center for Emotional Intelligence)</li>
+<li>Lieberman, M. D., Eisenberger, N. I., Crockett, M. J., Tom, S. M., Pfeifer, J. H., &amp; Way, B. M. (2007).
+Putting feelings into words: Affect labeling disrupts amygdala activity in response to affective stimuli.
+<i>Psychological Science, 18</i>(5), 421&ndash;428.</li>
+</ol>
+</body></html>

@@ -1,0 +1,25 @@
+flowchart LR
+    subgraph SRC["Data sources"]
+        W[Windows Security events<br/>HRMC-WS-PFS-02, HRMC-FS01<br/>imported samples, JSON]
+        L[hrmc-linux-srv01<br/>LIVE Wazuh agent 4.9.2<br/>auth.log, FIM, outbound TCP]
+        K[Keycloak sign-in + admin events<br/>JSON]
+        E[EHR access audit<br/>JSON]
+    end
+    subgraph MGR["Wazuh manager 4.9.2"]
+        R[remoted :1514/tcp<br/>agent channel, TLS]
+        LC[logcollector<br/>/var/log/soc1/*.json]
+        A[analysisd<br/>decoders + rules<br/>soc1_rules + zz_sm1_rules]
+        M[maild<br/>email routing]
+        F[Filebeat]
+    end
+    L -- "encrypted agent protocol" --> R
+    W --> LC
+    K --> LC
+    E --> LC
+    R --> A
+    LC --> A
+    A --> F --> IX[(Wazuh indexer<br/>OpenSearch :9200)]
+    IX --> DB[Wazuh dashboard :5601<br/>HRMC Security Monitoring]
+    A --> M --> MH[MailHog :8025<br/>soc-tier1 / soc-lead]
+    HC[health_check.py<br/>collection, processing, storage] -. reads .-> A
+    HC -. reads .-> IX

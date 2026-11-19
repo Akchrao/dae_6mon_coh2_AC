@@ -1,0 +1,79 @@
+{
+ "iterations": 100000,
+ "seed": 42,
+ "inherent": {
+  "mean": 6307468,
+  "p50": 5416487,
+  "p90": 12576485,
+  "p95": 15145470,
+  "p99": 20534745
+ },
+ "residual": {
+  "mean": 2734090,
+  "p50": 2043942,
+  "p90": 6415152,
+  "p95": 7992463,
+  "p99": 11368485
+ },
+ "residual_with_insurance": {
+  "premium": 1695000,
+  "premium_basis": "expected covered loss x 1.35",
+  "retention_per_event": 1000000,
+  "limit_per_event": 10000000,
+  "mean": 3173241,
+  "p95": 5434617,
+  "p99": 6695000
+ },
+ "treatment_cost_total": 840000,
+ "appetite": {
+  "statement": "Annual IAM-related loss above $5M should be no more than 5% likely (P95 <= $5M)",
+  "inherent_p95_within": false,
+  "residual_p95_within": false,
+  "with_insurance_p95_within": false
+ },
+ "portfolio_ROSI_pct": 325,
+ "option_fido2_plus_insurance": {
+  "extra_control": "Phishing-resistant MFA (FIDO2) + conditional access for all ePHI roles (R03)",
+  "extra_annual_cost": 150000,
+  "residual_mean_before_insurance": 2089256,
+  "residual_p95_before_insurance": 6525589,
+  "premium": 1182000,
+  "mean_total_cost": 2545600,
+  "p95_total": 4488186,
+  "within_appetite": true
+ },
+ "scenarios": [
+  {
+   "scenario": "S0 Baseline (residual, controls as tested)",
+   "assumption": "Register residual scores",
+   "mean": 2726480,
+   "p90": 6383017,
+   "p95": 7947542,
+   "p99": 11252284
+  },
+  {
+   "scenario": "S1 Expansion year 1 (EU + India sites not yet at HRMC control level)",
+   "assumption": "Frequency x1.5 for privilege, credential and vendor risks",
+   "mean": 3700815,
+   "p90": 8055670,
+   "p95": 9893958,
+   "p99": 13669930
+  },
+  {
+   "scenario": "S2 Major breach stress (GDPR + HIPAA penalties, class action)",
+   "assumption": "Loss per event x2 for credential compromise and privileged misuse",
+   "mean": 4665514,
+   "p90": 11681442,
+   "p95": 14731409,
+   "p99": 21481183
+  },
+  {
+   "scenario": "S3 Controls fail (MFA / JML automation outage for a year)",
+   "assumption": "Residual reduction lost for R02, R03",
+   "mean": 4265890,
+   "p90": 9084302,
+   "p95": 11060100,
+   "p99": 15240905
+  }
+ ]
+}

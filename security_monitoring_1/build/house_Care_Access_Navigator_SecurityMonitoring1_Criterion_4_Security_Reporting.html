@@ -1,0 +1,74 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Security Monitoring 1 — Criterion 4: Security Reporting</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Security Monitoring 1 — Criterion 4: Security Reporting</div><div class='subsub'>Monitoring environment, security event analysis, monitoring implementation and reporting with Wazuh, a live Linux agent and imported Windows samples</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Security Monitoring 1 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Rubric criterion:</td><td>Criterion 4: Security Reporting</td></tr><tr><td class='k'>Environment:</td><td>Wazuh 4.9.2; live Linux agent hrmc-linux-srv01; Windows Security samples (option B, instructor-approved); capstone Keycloak and EHR logs</td></tr><tr><td class='k'>Date:</td><td>November 18, 2026</td></tr></table><div class="note"><b>Windows source (option B, agreed with the instructor):</b> no live Windows host was available, so Windows Security events were
+<b>imported as samples</b> in the Microsoft Security log schema (event IDs 4624, 4625, 4634, 4663, 4732, 5156). Every imported event is tagged
+<code>"sample": "imported-synthetic"</code>. The <b>Linux source is live</b>: a Debian 12 server (<code>hrmc-linux-srv01</code>) runs the official Wazuh agent 4.9.2,
+connected to the manager over the agent protocol (port 1514/tcp), and its SSH, file and network activity in this report is real.</div><h2>4. Security Reporting</h2>
+<h3>4.1 Standardized alert documentation (3 alert types)</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:14%>Field</th><th style=width:29%>100604 Remote RDP logon from outside</th><th style=width:29%>100612 / 100651 Mass EHR export reads &rarr; exfiltration</th><th>100630 Linux connection to a known-bad address</th></tr><tr><td>Level / severity</td><td>10 / SEV-3 (SEV-1 if followed by data access)</td><td>12 / 15 &rarr; SEV-1</td><td>12 &rarr; SEV-2</td></tr><tr><td>Source</td><td>Windows Security 4624</td><td>Windows 4663 + 5156</td><td>Linux agent, outbound_tcp command</td></tr><tr><td>MITRE ATT&amp;CK</td><td>T1021.001, T1078</td><td>T1005, T1039, T1041</td><td>T1041</td></tr><tr><td>Trigger logic</td><td>logon_type 10 and ip not 10.x / 127.x</td><td>20+ reads on EHR_Exports in 60 s by one user; then connection to 203.0.113.0/24</td><td>remote address in 203.0.113.0/24 in the 30 s connection list</td></tr><tr><td>Triage steps</td><td>Is the user expected to work remotely? VPN record? Failures before it?</td><td>Which files, which process, where did data go?</td><td>Which process holds the socket (ss -tnp)? Who is logged in?</td></tr><tr><td>False positives</td><td>Approved remote support through a jump host</td><td>Approved bulk export job (scheduled task, change ticket)</td><td>Monitoring or update servers mis-listed</td></tr><tr><td>Escalation</td><td>To Tier 2 if from outside AND followed by access</td><td>Incident Commander + Privacy Officer immediately</td><td>Tier 2; isolate host if confirmed</td></tr><tr><td>Response</td><td>Disable account, revoke sessions, block IP</td><td>Disable account, block IP, preserve file-server logs, start HIPAA assessment</td><td>Block egress, isolate container/host, collect volatile data</td></tr><tr><td>Example in this lab</td><td>HRMC\test.billing1 from 203.0.113.77 (19:17:27 UTC)</td><td>30 reads by rclone.exe, then 203.0.113.77:443 (19:18:13)</td><td>172.21.0.6:53766 -&gt; 203.0.113.77:443 (19:16:56)</td></tr></table>
+<h3 class="pb">4.2 Security metrics</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:13%>Category</th><th style=width:27%>Metric</th><th style=width:28%>Value</th><th>How it is measured</th></tr><tr><td>Operational</td><td>Events dropped</td><td>0</td><td>analysisd state file</td></tr><tr><td>Operational</td><td>Mean time to detect (event &rarr; alert)</td><td>median 1.5 s, max 2.8 s</td><td>alert timestamp minus event_time, scenario events</td></tr><tr><td>Operational</td><td>Alert volume (scenario day)</td><td>117 total, 27 at level 10+</td><td>indexer query from scenario start</td></tr><tr><td>Operational</td><td>Notifications sent</td><td>23</td><td>MailHog inbox export</td></tr><tr><td>Coverage</td><td>Log sources</td><td>5 configured; 4 active in the scenario window (Windows samples, Linux agent, Keycloak sign-in, EHR access); Keycloak admin idle (no admin activity, replays on demand)</td><td>configured localfiles + agents vs. alerts per data.src</td></tr><tr><td>Coverage</td><td>Scenario types</td><td>3/3 (authentication, file access, network activity)</td><td>rules per scenario (section 1.4)</td></tr><tr><td>Coverage</td><td>ATT&amp;CK techniques with a detection</td><td>11: T1005, T1021.001, T1021.004, T1039, T1041, T1070.004, T1078, T1110, T1110.001, T1213, T1485</td><td>rule.mitre.id on alerts that fired</td></tr><tr><td>Coverage</td><td>Servers with an agent</td><td>1/1 (hrmc-linux-srv01)</td><td>agent_control</td></tr><tr><td>Effectiveness</td><td>Detection rate</td><td>9/9 = 100%</td><td>attack steps with at least one alert</td></tr><tr><td>Effectiveness</td><td>False positives at level 10+ in the normal week</td><td>0 (0.0%)</td><td>high alerts with data.src windows_security before the scenario</td></tr><tr><td>Effectiveness</td><td>Rule defects found by testing</td><td>1 (100650 load order), fixed</td><td>manager log + re-run</td></tr></table>
+<h3 class="pb">4.3 Security summary report (18 November 2026)</h3>
+<p><b>Overview.</b> Monitoring covered 1 live Linux server, 6 Windows workstations and a file server (imported samples), Keycloak and the EHR. A normal 7-day week was quiet
+(no high alerts). On 18 November the attack scenario produced 117 alerts in about 6 minutes, 27 of them high or critical.</p>
+<p><b>Alert trend.</b> Windows activity in the normal week followed working days (file reads 34-59 a day, failed logons 0-5 a day) and fell at the weekend; the scenario day spike is
+entirely the attack (see the trend chart in 3.5 and the dashboard below).</p>
+<p><b>Significant findings.</b></p>
+<ol><li><b>Critical:</b> likely exfiltration of 30 EHR export files by rclone.exe to 203.0.113.77 (100651).</li>
+<li><b>Critical:</b> billing account used from outside the network to open patient charts (100650): HIPAA breach risk assessment required.</li>
+<li><b>High:</b> SSH password guessing succeeded on hrmc-linux-srv01 (40112), followed by staging and deletion in /srv/ehr_exports.</li>
+<li><b>Operational:</b> one agent outage and one storage incident in the monitoring platform itself, both fixed (section 3.6).</li></ol>
+<p><b>Recommendations.</b> (1) Block RDP from the internet; require VPN + MFA for remote access. (2) Remove clinical-data access from the billing role (least privilege, capstone RBAC).
+(3) Use SSH keys and fail2ban-style lockout on Linux servers. (4) Allow-list outbound connections from servers and workstations; alert on sync tools like rclone.
+(5) Deploy real Windows agents when hosts are available, to replace the imported samples. (6) Keep the health check scheduled and review the dashboard each shift.</p>
+<h3>4.4 Real-time dashboard</h3>
+<div class="fig"><img src="../screenshots/SS-01.png" style=max-height:640px><div class="cap">Screenshot 1: custom dashboard 'HRMC Security Monitoring' (auto-refresh every 30 s): totals, high alerts, alerts by source and agent, alerts over time by level, top rules, users with high alerts, MITRE techniques</div></div>
+<div class="fig"><img src="../screenshots/SS-03.png" style=max-height:600px><div class="cap">Screenshot 3: Threat Hunting, rule.groups:sm1 and rule.level >= 10: 18 hits, from cross-source 100650 down to the password guessing 100602</div></div>
+</body></html>

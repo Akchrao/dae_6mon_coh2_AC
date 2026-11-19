@@ -1,0 +1,3 @@
+{"at": "2026-11-18T00:00:00Z", "id": "CA-15", "route": "ESCALATE-CCO", "reason": "AI score 0.88 >= 0.85", "ai_score": 0.88, "sla_due": "2026-11-20"}
+{"at": "2026-11-18T00:00:00Z", "id": "EX-06", "route": "ESCALATE-COMMITTEE", "reason": "exception expired 13 days ago: renew with new evidence or close", "ai_score": 0.61, "sla_due": "2026-11-25"}
+{"at": "2026-11-18T00:00:00Z", "id": "EX-08", "route": "ESCALATE-COMMITTEE", "reason": "exception expired 13 days ago: renew with new evidence or close", "ai_score": 0.61, "sla_due": "2026-11-25"}

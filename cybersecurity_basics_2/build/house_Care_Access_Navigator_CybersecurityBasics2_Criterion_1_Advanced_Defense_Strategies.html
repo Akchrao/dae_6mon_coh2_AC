@@ -1,0 +1,75 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Cybersecurity Basics 2 — Criterion 1: Advanced Cybersecurity Defense Strategies</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Cybersecurity Basics 2 — Criterion 1: Advanced Cybersecurity Defense Strategies</div><div class='subsub'>Defense strategies, incident response, SOC fundamentals, security policy and governance, and security documentation for HRMC</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Cybersecurity Basics 2 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Rubric criterion:</td><td>Criterion 1: Advanced Cybersecurity Defense Strategies</td></tr><tr><td class='k'>Environment:</td><td>Entra ID + Keycloak (capstone), Wazuh with live Linux agent, IR1 forensic lab, CISO Assistant</td></tr><tr><td class='k'>Date:</td><td>November 19, 2026</td></tr></table><div class="note"><b>How this course fits the capstone.</b> Every criterion is shown on the same hospital, accounts, roles, risks and tools as the Care Access Navigator
+project, reusing evidence from earlier courses where it already exists and adding new, real work where the rubric asks for it: two incidents on the live Linux
+server were investigated and <b>resolved on 2026-11-19</b> (cases CB2-2026-001 and CB2-2026-002), and a security policy, procedure, guide, two playbooks and a knowledge base were written.</div><h2>1. Advanced Cybersecurity Defense Strategies</h2>
+<h3>1.1 Zero Trust Architecture: access enforced at every layer</h3>
+<p>Zero Trust means <i>never trust, always verify</i>: no user, device or network location is trusted by default, every request is checked against identity,
+role and context, and access is the minimum needed. In the capstone, a request has to pass <b>four layers</b>, each able to stop it on its own:</p>
+<div class="fig"><img src="../diagrams/zero_trust.png"><div class="cap">Source: diagrams/zero_trust.mmd</div></div>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:18%>Layer</th><th style=width:38%>Control (Care Access Navigator)</th><th>Evidence that it is enforced</th></tr><tr><td>1. Identity provider (Entra ID)</td><td>Assignment required on the Keycloak broker app; MFA via Security defaults; app roles carry the job role</td><td>Control test AC-01 #3 'Entra assignment required' PASS (audit CAN-IA-2026-01); EV-17 Security defaults; leaver Jeevan Smith refused at Microsoft sign-in</td></tr><tr><td>2. Identity broker (Keycloak)</td><td>Role mapped from Entra with sync FORCE; MFA for privileged and payment roles; lockout after 10 failures</td><td>Screenshot CB2-03: billing user <b>MFA_REQUIRED</b>; test.vendor1 locked after 10 failures; CAN-ID-001 brute-force alert</td></tr><tr><td>3. Application gate</td><td>Each app admits only approved roles (EHR: clinician, nurse; Billing: billing)</td><td>Screenshot CB2-02: clinician <b>LOGGED_IN</b> to the EHR but <b>DENIED</b> on billing-app</td></tr><tr><td>4. Continuous verification</td><td>Wazuh correlates sign-ins, record access and connections; a session is not trusted just because it started</td><td>SOC 1 and Security Monitoring 1: cross-source rule 100650, account-compromise rule 100507</td></tr><tr><td>Host (servers)</td><td>SSH keys only, MaxAuthTries 3, system-use banner (added 2026-11-19)</td><td>Password login refused: 'Permission denied (publickey)' (section 3.3)</td></tr></table>
+<div class="fig2"><div class="fig"><img src="../screenshots/CB2-02_app_gate_denied.png" style=max-height:300px><div class="cap">CB2-02: application gate (can_iam.py verify, live run 2026-11-17)</div></div><div class="fig"><img src="../screenshots/CB2-03_mfa_lockout_alert.png" style=max-height:300px><div class="cap">CB2-03: MFA and lockout enforced, brute-force alert raised (same run)</div></div></div>
+<h3 class="pb">1.2 Defense in depth</h3>
+<p>Defense in depth layers different controls so that one failure is caught by the next. HRMC uses seven layers; at least three of them stopped or exposed each attack in the labs:</p>
+<div class="fig"><img src="../diagrams/defense_in_depth.png" style=max-height:820px><div class="cap">Source: diagrams/defense_in_depth.mmd</div></div>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:40%>Attack (lab)</th><th>Layers that acted</th></tr><tr><td>Leaver Jeevan Smith tried to sign in (capstone JML)</td><td>Identity (Entra disabled) &rarr; identity broker (Keycloak copy disabled, after the 12-minute gap) &rarr; monitoring (CAN-ID-002)</td></tr><tr><td>SSH password guessing on hrmc-linux-srv01 (CB2-2026-001)</td><td>Monitoring (5763, 40112) &rarr; host (keys only, account locked) &rarr; policy (banner, PB-01)</td></tr><tr><td>Billing account reading EHR exports and sending them out (SM1-SCN-01)</td><td>Application (billing not approved for clinical data, 100521) &rarr; data (FIM / object-access logging) &rarr; monitoring (100651 level 15)</td></tr></table>
+<h3>1.3 Supply-chain security: one risk identified and mitigated</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:22%></th><th style=width:36%>Before (baseline image)</th><th>After (hardened image)</th></tr><tr><td>Base image</td><td>python:3.12-slim (general-purpose, unpinned tag)</td><td>Chainguard Python, <b>pinned by sha256 digest</b>, multi-stage build</td></tr><tr><td>Known vulnerabilities (Trivy, 2026-10-06)</td><td><b>172</b>: 44 High, 63 Medium, 63 Low, 2 Unknown</td><td><b>0</b></td></tr><tr><td>Software bill of materials</td><td>none</td><td>CycloneDX SBOM, 39 components (<code>reports/hardened/sbom.cdx.json</code>)</td></tr><tr><td>Runtime</td><td>root, writable, shell + pip present</td><td>UID 65532, read-only filesystem, all capabilities dropped, no-new-privileges, no shell, no pip</td></tr></table>
+<p><b>Risk:</b> third-party code inherited through the container base image (and through any later tag change upstream). <b>Mitigation:</b> minimal base, digest pinning
+(the build cannot silently change), vulnerability scanning in the build, SBOM for future CVE look-ups, and a locked-down runtime. Source: Cloud Security 1, Criterion 3
+(<code>cloud_security_1/can-ehr-container/</code>). The pinned base image is kept locally so the build stays reproducible.</p>
+<h3 class="pb">1.4 Advanced security model: Clark-Wilson applied to Care Access Navigator</h3>
+<p>Healthcare needs <b>integrity</b> as much as confidentiality: a wrong role or a changed record harms patients. <b>Bell-LaPadula</b> (no read up, no write down) protects
+confidentiality with security levels; HRMC uses its idea only for data classification labels (Restricted, Confidential, Internal, Public). <b>Clark-Wilson</b> protects integrity
+through well-formed transactions and separation of duties, which is exactly how access is managed in the capstone:</p>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:30%>Clark-Wilson element</th><th>Care Access Navigator implementation</th></tr><tr><td>CDIs (constrained data items)</td><td>Access entitlements (Keycloak role mappings and groups), EHR patient records, billing records</td></tr><tr><td>UDIs (unconstrained data items)</td><td>Access requests from managers, raw log data, imported files</td></tr><tr><td>TPs (transformation procedures)</td><td><code>can_iam.py</code> joiner / mover / leaver (the only way entitlements change, with a ticket); EHR application functions behind the role gate</td></tr><tr><td>IVPs (integrity verification procedures)</td><td>Quarterly access review AR-2026-Q4 (16/16 accounts signed), <code>can_iam.py verify</code>, end-to-end tests TC-01 to TC-10, FIM hash checks</td></tr><tr><td>Certification rule: separation of duties</td><td>Approver (the department manager) &ne; implementer (IAM analyst), both recorded per ticket in JML-LOG.csv; SoD rules in CAN_DOC_RBAC_SoD_Access_Request_v1.0</td></tr><tr><td>Certification rule: TPs log what they do</td><td>Append-only <code>can_iam_audit_log.jsonl</code>, hashed into the evidence index</td></tr><tr><td>Enforcement rule: only TPs change CDIs</td><td>Users cannot change their own roles; Keycloak admin is restricted (EX-03 / EX-04 govern the gaps)</td></tr><tr><td>Enforcement rule: users are authenticated</td><td>Entra MFA (Security defaults) and Keycloak OTP for privileged roles</td></tr><tr><td>Enforcement rule: user &rarr; TP &rarr; CDI triples</td><td>Role &rarr; application client &rarr; data: a clinician reaches EHR records only through the EHR app; billing cannot (CB2-02)</td></tr></table>
+<p><b>Result:</b> the leaver gap found in the capstone (Keycloak copy still enabled 12 minutes after the Entra disable) was exactly a Clark-Wilson IVP failure caught by verification,
+and is tracked as finding CAN-FIND-001 until automatic deprovisioning is built.</p>
+</body></html>

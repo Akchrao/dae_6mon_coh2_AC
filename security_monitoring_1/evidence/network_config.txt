@@ -1,0 +1,25 @@
+# Network configuration (docker network inspect single-node_default), 2026-11-18T19:22:19Z
+
+hrmc-jumpbox  172.21.0.7/16
+hrmc-linux-srv01  172.21.0.6/16
+single-node-mailhog-1  172.21.0.2/16
+single-node-wazuh.dashboard-1  172.21.0.5/16
+single-node-wazuh.indexer-1  172.21.0.3/16
+single-node-wazuh.manager-1  172.21.0.4/16
+
+# Published ports
+single-node-wazuh.manager-1  0.0.0.0:1514-1515->1514-1515/tcp, [::]:1514-1515->1514-1515/tcp, 0.0.0.0:514->514/udp, [::]:514->514/udp, 0.0.0.0:55000->55000/tcp, [::]:55000->55000/tcp
+hrmc-jumpbox  
+hrmc-linux-srv01  
+single-node-wazuh.dashboard-1  0.0.0.0:5601->5601/tcp, [::]:5601->5601/tcp
+single-node-wazuh.indexer-1  0.0.0.0:9200->9200/tcp, [::]:9200->9200/tcp
+single-node-mailhog-1  0.0.0.0:8025->8025/tcp, [::]:8025->8025/tcp
+
+# Agent connection
+   Agent ID:   001
+   Agent Name: hrmc-linux-srv01
+   IP address: any
+   Status:     Active
+   Client version:      Wazuh v4.9.2
+   Last keep alive:     1795029737
+2026/11/18 19:19:57 wazuh-agentd: INFO: (4102): Connected to the server ([wazuh.manager]:1514/tcp).

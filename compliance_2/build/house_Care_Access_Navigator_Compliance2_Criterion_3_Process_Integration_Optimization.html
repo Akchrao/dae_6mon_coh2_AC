@@ -1,0 +1,71 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Compliance 2 — Criterion 3: Process Integration &amp; Optimization</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Compliance 2 — Criterion 3: Process Integration &amp; Optimization</div><div class='subsub'>Enterprise compliance program for HRMC's multinational expansion: strategy, automation, process optimization, auditing, quantitative risk and performance</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Compliance 2 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Rubric criterion:</td><td>Criterion 3: Process Integration &amp; Optimization</td></tr><tr><td class='k'>Environment:</td><td>CISO Assistant (live, read-only sync), Python workflow with AI triage, Monte Carlo risk model, capstone evidence</td></tr><tr><td class='k'>Date:</td><td>November 18, 2026</td></tr></table><div class="note"><b>Scenario.</b> HRMC is the fictional hospital used throughout my capstone (Care Access Navigator). For Compliance 2 it
+expands into a multinational group: the US hospital network, clinics in Ireland and Germany, and a shared-services centre in
+Hyderabad, India (10,800 staff). Everything measured (controls, audits, timings, logs, risks) comes from my capstone evidence
+and live systems; the expansion figures (sites, volumes, budgets, loss ranges) are planning assumptions and are labelled as such.</div><h2>3. Process Integration &amp; Optimization</h2>
+<h3>3.1 Integrated compliance platform with data synchronization</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:16%>Flow</th><th style=width:28%>From &amp;rarr; To</th><th style=width:34%>Sync method</th><th>Frequency</th></tr><tr><td>Identity events</td><td>Keycloak / Entra &rarr; Wazuh</td><td>Event export + log collection (SOC 1 lab)</td><td>Real time</td></tr><tr><td>JML actions</td><td>can_iam.py &rarr; audit log &rarr; evidence store</td><td>Append-only JSONL, SHA-256 indexed</td><td>Per action</td></tr><tr><td>GRC registers</td><td>CISO Assistant &rarr; workflow engine</td><td>Read-only export (ciso_sync_export.py)</td><td>On demand / hourly schedule</td></tr><tr><td>Decisions</td><td>Workflow engine &rarr; owners, CCO, committee</td><td>Work queue + escalation log</td><td>Every run</td></tr><tr><td>Evidence + results</td><td>Evidence store &rarr; CISO Assistant</td><td>Loader (load_ciso.py, upsert by ref_id: no duplicates)</td><td>After each test cycle</td></tr></table>
+<h3>3.2 Method (DMAIC)</h3>
+<ol><li><b>Define:</b> the access-request (joiner / mover / leaver) process, the most frequent compliance-relevant process (about 4,968 events a year at group scale).</li>
+<li><b>Measure:</b> baseline from the manual run on 2026-10-19 (JML evidence timestamps).</li>
+<li><b>Analyze:</b> waste = re-keying in two systems, manual verification, screenshots for evidence; defect = the leaver's Keycloak copy kept the billing role (CA-09).</li>
+<li><b>Improve:</b> automate provisioning + verification + evidence in one step (can_iam.py); approvals in the workflow.</li>
+<li><b>Control:</b> end-to-end tests TC-01 to TC-10, KPI on leaver timeliness, workflow monitoring.</li></ol>
+<h3 class="pb">3.3 Baseline measurements and results</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:30%>Event</th><th style=width:35%>Manual 2026-10-19 (measured)</th><th>Automated 2026-11-03 (measured)</th></tr><tr><td>Joiner</td><td>47.0 min</td><td>7 s</td></tr><tr><td>Mover</td><td>20.0 min</td><td>3 s</td></tr><tr><td>Leaver</td><td>15.0 min</td><td>2 s</td></tr></table>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:32%>Step per request</th><th style=width:11%>Baseline h</th><th style=width:11%>Optimized h</th><th>Basis</th></tr><tr><td>Request intake (email / form)</td><td>4.0</td><td>0.5</td><td>assumption: email triage vs. structured form</td></tr><tr><td>Manager approval</td><td>16.0</td><td>8.0</td><td>assumption: approval inside the workflow with reminder</td></tr><tr><td>Provisioning in Entra + Keycloak (avg of J/M/L)</td><td>0.456</td><td>0.0011</td><td>MEASURED</td></tr><tr><td>Verification of access</td><td>0.25</td><td>0.0</td><td>baseline: manual check (measured part of JML evidence); optimized: automatic in can_iam</td></tr><tr><td>Evidence filing for audit</td><td>0.5</td><td>0.0</td><td>assumption: screenshots + register vs. automatic JSONL audit log</td></tr></table>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:30%>Measure</th><th style=width:20%>Baseline</th><th style=width:25%>Optimized</th><th>Change</th></tr><tr><td>Provisioning time (measured)</td><td>27.3 min avg</td><td>4 s avg</td><td>&minus;99.8%</td></tr><tr><td>Touch time per request</td><td>1.21 h</td><td>0.001 h</td><td>&minus;99.9%</td></tr><tr><td>Lead time per request</td><td>21.21 h</td><td>8.5 h</td><td><b>&minus;59.9%</b> (target 30%)</td></tr><tr><td>Errors</td><td>1/3</td><td>0/3 (plus 6 more JML checks in TC-01..TC-09, all PASS)</td><td>defect removed</td></tr><tr><td>Leaver exposure window</td><td>12 min</td><td>0 min</td><td>eliminated</td></tr></table>
+<div class="fig"><img src="../outputs/process_before_after.png" style="max-height:300px"><div class="cap">Measured provisioning time and modelled lead/touch time (process_optimization.py)</div></div>
+<p>The 30% target is met on the most conservative measure (lead time, which still contains assumed approval waiting time). The efficiency
+claim does not depend on the assumptions: provisioning alone is measured.</p>
+<h3>3.4 Validation procedures</h3>
+<ul><li>TC-01 joiner, TC-02 least privilege, TC-03 mover, TC-04 leaver all PASS on 2026-11-03 (EV-14)</li><li>KPI &#x27;leaver deprovisioned and verified within 24 h&#x27; = 100% for automated leavers</li><li>Re-run of can_iam.py verify on 2026-11-17: clinician DENIED on billing-app, billing MFA_REQUIRED</li><li>Repeat the measurement at every quarterly access review; publish the KPI in the board pack (section 6).</li></ul>
+</body></html>

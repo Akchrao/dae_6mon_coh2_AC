@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:"DejaVu Sans",Arial;color:#1F2D33;font-size:11pt;line-height:1.45}h1{color:#1D4E5A;font-size:22pt;margin:0 0 4px}h2{color:#1D4E5A;font-size:14pt;border-bottom:2px solid #E8735A;padding-bottom:3px;margin:18px 0 8px}.meta{color:#5B6B70;font-size:10pt}table{border-collapse:collapse;width:100%;margin:8px 0}th,td{border:1px solid #D5E3DF;padding:6px 8px;text-align:left;vertical-align:top}th{background:#E3F2EE;color:#1D4E5A}img{max-width:100%;border:1px solid #ccc;margin:6px 0}.pb{page-break-before:always}code{background:#F1F1F1;padding:1px 4px}.cap{color:#5B6B70;font-size:10pt}</style></head><body>
+<h1>Unix 2 Project Submission</h1>
+<div class="meta">Akhila Chennamaneni &middot; DAE 6-Month Cybersecurity Cohort 2 &middot; macOS Terminal &middot; November 17, 2026</div>
+<h2>Rubric checklist</h2>
+<table><tr><th>Criterion</th><th>Evidence</th><th>Screenshot</th></tr>
+<tr><td>Commands: cp, mkdir, less, mv, rm</td><td><code>mkdir backup3</code>, <code>cp notes.txt backup3/</code>, <code>mv backup3/notes.txt backup3/moved.txt</code>, <code>rm a.txt b.txt c.txt</code>, <code>less /etc/shells</code></td><td>1, 2</td></tr>
+<tr><td>Arguments: multiple arguments, and an argument to an option</td><td><code>touch a.txt b.txt c.txt</code> and <code>ls -l a.txt b.txt backup3</code> (multiple arguments); <code>head -n 1 notes.txt</code> (argument <code>1</code> given to option <code>-n</code>)</td><td>1</td></tr>
+<tr><td>Kernels and shells: default shell, current shell, switch shell</td><td><code>echo $SHELL</code> &rarr; <code>/bin/zsh</code> (default); <code>echo $0</code> &rarr; <code>-zsh</code> (current); <code>bash</code> switches shell, then <code>echo $0</code> &rarr; <code>bash</code></td><td>3</td></tr>
+<tr><td>Environment: create an alias and customize the prompt</td><td><code>alias ll='ls -la'</code> then <code>ll</code>; <code>PS1='Akhila@DAE:\w$ '</code> changes the prompt to <code>Akhila@DAE:~/Desktop/unix_demo$</code></td><td>3</td></tr>
+</table>
+<h2>Screenshot 1: mkdir, cp, mv, rm and arguments</h2>
+<img src="1_mkdir_cp_mv_rm_arguments.png">
+<div class="cap"><code>mkdir</code> makes the folder <code>backup3</code>, <code>cp</code> copies <code>notes.txt</code> into it, <code>mv</code> renames the copy to <code>moved.txt</code>, <code>touch</code> and <code>ls -l</code> take several arguments, <code>head -n 1</code> passes the argument <code>1</code> to the option <code>-n</code>, and <code>rm</code> deletes the three files.</div>
+<h2 class="pb">Screenshot 2: less</h2>
+<img src="2_less.png" style="max-height:760px">
+<div class="cap"><code>less /etc/shells</code> opens the list of available shells one screen at a time; <code>(END)</code> at the bottom shows the pager is open (press q to quit).</div>
+<h2 class="pb">Screenshot 3: shells, alias and custom prompt</h2>
+<img src="3_shells_alias_prompt.png">
+<div class="cap">Default shell <code>/bin/zsh</code>, current shell <code>-zsh</code>, switch to <code>bash</code> (confirmed by <code>echo $0</code>), alias <code>ll</code> working, and the custom prompt <code>Akhila@DAE:~/Desktop/unix_demo$</code>.</div>
+</body></html>

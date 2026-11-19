@@ -1,0 +1,5 @@
+scenario,assumption,mean,p90,p95,p99
+"S0 Baseline (residual, controls as tested)",Register residual scores,2726480,6383017,7947542,11252284
+S1 Expansion year 1 (EU + India sites not yet at HRMC control level),"Frequency x1.5 for privilege, credential and vendor risks",3700815,8055670,9893958,13669930
+"S2 Major breach stress (GDPR + HIPAA penalties, class action)",Loss per event x2 for credential compromise and privileged misuse,4665514,11681442,14731409,21481183
+S3 Controls fail (MFA / JML automation outage for a year),"Residual reduction lost for R02, R03",4265890,9084302,11060100,15240905

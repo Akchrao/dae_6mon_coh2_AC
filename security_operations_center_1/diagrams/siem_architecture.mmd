@@ -1,0 +1,23 @@
+flowchart LR
+    subgraph Sources["Log sources"]
+        S1[Keycloak sign-in events<br/>JSON]
+        S2[Keycloak admin events<br/>JSON]
+        S3[EHR access audit<br/>JSON]
+        S4[Linux auth.log<br/>syslog]
+    end
+    subgraph Manager["Wazuh manager 4.9.2"]
+        LC[logcollector<br/>reads files] --> AN[analysisd<br/>decoders then rules]
+        AN --> AL[alerts.json / alerts.log]
+        AL --> MD[maild<br/>email notifications]
+        AL --> FB[Filebeat<br/>ships alerts]
+    end
+    S1 --> LC
+    S2 --> LC
+    S3 --> LC
+    S4 --> LC
+    FB --> IX[(Wazuh indexer<br/>OpenSearch storage + search)]
+    IX --> DB[Wazuh dashboard<br/>analyst UI :5601]
+    MD --> MH[MailHog test mailbox<br/>soc-tier1 / soc-lead :8025]
+    DB --> AN2[SOC analyst]
+    MH --> AN2
+    AN2 --> TR[Case tracker<br/>irtrack.py]

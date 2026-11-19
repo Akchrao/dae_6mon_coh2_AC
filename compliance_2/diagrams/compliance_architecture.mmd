@@ -1,0 +1,22 @@
+flowchart TB
+    subgraph GOV["1. Governance layer"]
+        direction LR
+        B[Board of Trustees<br/>Audit and Compliance Committee] --> CCO[Chief Compliance Officer<br/>Global Compliance Office]
+        CCO --> US[US Compliance Lead<br/>HIPAA Privacy + Security Officers]
+        CCO --> EU[EU Data Protection Officer<br/>GDPR Art. 37]
+        CCO --> IN[India Compliance Lead<br/>DPDP Act + shared services]
+        CCO --> CISO[CISO<br/>PCI DSS executive owner]
+    end
+    subgraph PROC["2. Process layer: one global process, regional rules"]
+        direction LR
+        P1[Policy + unified<br/>control framework] ~~~ P2[Risk assessment<br/>Monte Carlo] ~~~ P3[Control testing<br/>+ evidence] ~~~ P4[Multi-site<br/>audit] ~~~ P5[Breach clock<br/>72 h global] ~~~ P6[Data subject<br/>requests 30 d] ~~~ P7[Vendor /<br/>processor mgmt]
+    end
+    subgraph PLAT["3. Platform layer"]
+        direction LR
+        IAM[Entra ID + Keycloak<br/>JML automation] --> SIEM[Wazuh SIEM<br/>alerts + log evidence] --> EV[(Evidence store<br/>SHA-256 indexed)] --> GRC[(CISO Assistant<br/>GRC system of record<br/>domains US / EU / India)] <--> WF[Compliance workflow<br/>engine + AI triage]
+    end
+    subgraph DATA["4. Data residency"]
+        direction LR
+        D1[(US region<br/>US patients<br/>HIPAA + PCI DSS)] ~~~ D2[(EU region<br/>EU patients<br/>GDPR)] ~~~ D3[India shared services<br/>no patient data stored<br/>VDI access, pseudonymized billing]
+    end
+    GOV ==> PROC ==> PLAT ==> DATA

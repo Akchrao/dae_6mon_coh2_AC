@@ -1,0 +1,1068 @@
+[
+ {
+  "timestamp": "2026-11-17T21:26:41.002+0000",
+  "rule": {
+   "level": 5,
+   "description": "Keycloak failed sign-in for test.nurse2: invalid_user_credentials",
+   "id": "100501",
+   "mitre": {
+    "id": [
+     "T1110"
+    ],
+    "tactic": [
+     "Credential Access"
+    ],
+    "technique": [
+     "Brute Force"
+    ]
+   },
+   "firedtimes": 28,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "keycloak",
+    "authentication",
+    "authentication_failed"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950801.1188103",
+  "full_log": "{\"src\":\"keycloak_login\",\"event_time\":\"2026-11-17T21:26:39+00:00\",\"type\":\"LOGIN_ERROR\",\"error\":\"invalid_user_credentials\",\"username\":\"test.nurse2\",\"client\":\"ehr-simulator\",\"ip\":\"203.0.113.45\",\"auth_method\":\"openid-connect\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "src": "keycloak_login",
+   "event_time": "2026-11-17T21:26:39+00:00",
+   "type": "LOGIN_ERROR",
+   "error": "invalid_user_credentials",
+   "username": "test.nurse2",
+   "client": "ehr-simulator",
+   "ip": "203.0.113.45",
+   "auth_method": "openid-connect",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/keycloak_login.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:26:43.005+0000",
+  "rule": {
+   "level": 5,
+   "description": "Keycloak failed sign-in for test.nurse2: invalid_user_credentials",
+   "id": "100501",
+   "mitre": {
+    "id": [
+     "T1110"
+    ],
+    "tactic": [
+     "Credential Access"
+    ],
+    "technique": [
+     "Brute Force"
+    ]
+   },
+   "firedtimes": 29,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "keycloak",
+    "authentication",
+    "authentication_failed"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950803.1188810",
+  "full_log": "{\"src\":\"keycloak_login\",\"event_time\":\"2026-11-17T21:26:41+00:00\",\"type\":\"LOGIN_ERROR\",\"error\":\"invalid_user_credentials\",\"username\":\"test.nurse2\",\"client\":\"ehr-simulator\",\"ip\":\"203.0.113.45\",\"auth_method\":\"openid-connect\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "src": "keycloak_login",
+   "event_time": "2026-11-17T21:26:41+00:00",
+   "type": "LOGIN_ERROR",
+   "error": "invalid_user_credentials",
+   "username": "test.nurse2",
+   "client": "ehr-simulator",
+   "ip": "203.0.113.45",
+   "auth_method": "openid-connect",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/keycloak_login.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:26:45.006+0000",
+  "rule": {
+   "level": 5,
+   "description": "Keycloak failed sign-in for test.nurse2: invalid_user_credentials",
+   "id": "100501",
+   "mitre": {
+    "id": [
+     "T1110"
+    ],
+    "tactic": [
+     "Credential Access"
+    ],
+    "technique": [
+     "Brute Force"
+    ]
+   },
+   "firedtimes": 30,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "keycloak",
+    "authentication",
+    "authentication_failed"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950805.1189517",
+  "full_log": "{\"src\":\"keycloak_login\",\"event_time\":\"2026-11-17T21:26:43+00:00\",\"type\":\"LOGIN_ERROR\",\"error\":\"invalid_user_credentials\",\"username\":\"test.nurse2\",\"client\":\"ehr-simulator\",\"ip\":\"203.0.113.45\",\"auth_method\":\"openid-connect\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "src": "keycloak_login",
+   "event_time": "2026-11-17T21:26:43+00:00",
+   "type": "LOGIN_ERROR",
+   "error": "invalid_user_credentials",
+   "username": "test.nurse2",
+   "client": "ehr-simulator",
+   "ip": "203.0.113.45",
+   "auth_method": "openid-connect",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/keycloak_login.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:26:47.011+0000",
+  "rule": {
+   "level": 5,
+   "description": "Keycloak failed sign-in for test.nurse2: invalid_user_credentials",
+   "id": "100501",
+   "mitre": {
+    "id": [
+     "T1110"
+    ],
+    "tactic": [
+     "Credential Access"
+    ],
+    "technique": [
+     "Brute Force"
+    ]
+   },
+   "firedtimes": 31,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "keycloak",
+    "authentication",
+    "authentication_failed"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950807.1190224",
+  "full_log": "{\"src\":\"keycloak_login\",\"event_time\":\"2026-11-17T21:26:45+00:00\",\"type\":\"LOGIN_ERROR\",\"error\":\"invalid_user_credentials\",\"username\":\"test.nurse2\",\"client\":\"ehr-simulator\",\"ip\":\"203.0.113.45\",\"auth_method\":\"openid-connect\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "src": "keycloak_login",
+   "event_time": "2026-11-17T21:26:45+00:00",
+   "type": "LOGIN_ERROR",
+   "error": "invalid_user_credentials",
+   "username": "test.nurse2",
+   "client": "ehr-simulator",
+   "ip": "203.0.113.45",
+   "auth_method": "openid-connect",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/keycloak_login.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:26:49.014+0000",
+  "rule": {
+   "level": 10,
+   "description": "CAN-ID-001 Password guessing: 5+ failed Keycloak sign-ins for test.nurse2 within 2 minutes",
+   "id": "100502",
+   "mitre": {
+    "id": [
+     "T1110.001"
+    ],
+    "tactic": [
+     "Credential Access"
+    ],
+    "technique": [
+     "Password Guessing"
+    ]
+   },
+   "frequency": 5,
+   "firedtimes": 16,
+   "mail": true,
+   "groups": [
+    "soc1",
+    "keycloak",
+    "authentication",
+    "authentication_failures",
+    "correlation"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950809.1190931",
+  "previous_output": "{\"src\":\"keycloak_login\",\"event_time\":\"2026-11-17T21:26:45+00:00\",\"type\":\"LOGIN_ERROR\",\"error\":\"invalid_user_credentials\",\"username\":\"test.nurse2\",\"client\":\"ehr-simulator\",\"ip\":\"203.0.113.45\",\"auth_method\":\"openid-connect\",\"scenario\":\"SOC1-SCN-01\"}\n{\"src\":\"keycloak_login\",\"event_time\":\"2026-11-17T21:26:43+00:00\",\"type\":\"LOGIN_ERROR\",\"error\":\"invalid_user_credentials\",\"username\":\"test.nurse2\",\"client\":\"ehr-simulator\",\"ip\":\"203.0.113.45\",\"auth_method\":\"openid-connect\",\"scenario\":\"SOC1-SCN-01\"}\n{\"src\":\"keycloak_login\",\"event_time\":\"2026-11-17T21:26:41+00:00\",\"type\":\"LOGIN_ERROR\",\"error\":\"invalid_user_credentials\",\"username\":\"test.nurse2\",\"client\":\"ehr-simulator\",\"ip\":\"203.0.113.45\",\"auth_method\":\"openid-connect\",\"scenario\":\"SOC1-SCN-01\"}\n{\"src\":\"keycloak_login\",\"event_time\":\"2026-11-17T21:26:39+00:00\",\"type\":\"LOGIN_ERROR\",\"error\":\"invalid_user_credentials\",\"username\":\"test.nurse2\",\"client\":\"ehr-simulator\",\"ip\":\"203.0.113.45\",\"auth_method\":\"openid-connect\",\"scenario\":\"SOC1-SCN-01\"}",
+  "full_log": "{\"src\":\"keycloak_login\",\"event_time\":\"2026-11-17T21:26:47+00:00\",\"type\":\"LOGIN_ERROR\",\"error\":\"invalid_user_credentials\",\"username\":\"test.nurse2\",\"client\":\"ehr-simulator\",\"ip\":\"203.0.113.45\",\"auth_method\":\"openid-connect\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "src": "keycloak_login",
+   "event_time": "2026-11-17T21:26:47+00:00",
+   "type": "LOGIN_ERROR",
+   "error": "invalid_user_credentials",
+   "username": "test.nurse2",
+   "client": "ehr-simulator",
+   "ip": "203.0.113.45",
+   "auth_method": "openid-connect",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/keycloak_login.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:26:51.017+0000",
+  "rule": {
+   "level": 5,
+   "description": "Keycloak failed sign-in for test.nurse2: invalid_user_credentials",
+   "id": "100501",
+   "mitre": {
+    "id": [
+     "T1110"
+    ],
+    "tactic": [
+     "Credential Access"
+    ],
+    "technique": [
+     "Brute Force"
+    ]
+   },
+   "firedtimes": 32,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "keycloak",
+    "authentication",
+    "authentication_failed"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950811.1192676",
+  "full_log": "{\"src\":\"keycloak_login\",\"event_time\":\"2026-11-17T21:26:49+00:00\",\"type\":\"LOGIN_ERROR\",\"error\":\"invalid_user_credentials\",\"username\":\"test.nurse2\",\"client\":\"ehr-simulator\",\"ip\":\"203.0.113.45\",\"auth_method\":\"openid-connect\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "src": "keycloak_login",
+   "event_time": "2026-11-17T21:26:49+00:00",
+   "type": "LOGIN_ERROR",
+   "error": "invalid_user_credentials",
+   "username": "test.nurse2",
+   "client": "ehr-simulator",
+   "ip": "203.0.113.45",
+   "auth_method": "openid-connect",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/keycloak_login.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:26:53.019+0000",
+  "rule": {
+   "level": 13,
+   "description": "Possible account compromise: test.nurse2 signed in from 203.0.113.45 after a password-guessing burst",
+   "id": "100507",
+   "mitre": {
+    "id": [
+     "T1110",
+     "T1078"
+    ],
+    "tactic": [
+     "Credential Access",
+     "Defense Evasion",
+     "Persistence",
+     "Privilege Escalation",
+     "Initial Access"
+    ],
+    "technique": [
+     "Brute Force",
+     "Valid Accounts"
+    ]
+   },
+   "frequency": 2,
+   "firedtimes": 1,
+   "mail": true,
+   "groups": [
+    "soc1",
+    "keycloak",
+    "authentication",
+    "correlation",
+    "account_compromise"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950813.1193383",
+  "full_log": "{\"src\":\"keycloak_login\",\"event_time\":\"2026-11-17T21:26:51+00:00\",\"type\":\"LOGIN\",\"username\":\"test.nurse2\",\"client\":\"ehr-simulator\",\"ip\":\"203.0.113.45\",\"auth_method\":\"openid-connect\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "src": "keycloak_login",
+   "event_time": "2026-11-17T21:26:51+00:00",
+   "type": "LOGIN",
+   "username": "test.nurse2",
+   "client": "ehr-simulator",
+   "ip": "203.0.113.45",
+   "auth_method": "openid-connect",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/keycloak_login.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:26:55.024+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20100",
+   "id": "100520",
+   "firedtimes": 65,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950815.1194310",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:26:54+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20100\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:26:54+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20100",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:26:57.026+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20101",
+   "id": "100520",
+   "firedtimes": 66,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950817.1194869",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:26:56+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20101\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:26:56+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20101",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:26:59.029+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20102",
+   "id": "100520",
+   "firedtimes": 67,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950819.1195428",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:26:57+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20102\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:26:57+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20102",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:01.032+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20103",
+   "id": "100520",
+   "firedtimes": 68,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950821.1195987",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:26:59+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20103\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:26:59+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20103",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:01.032+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20104",
+   "id": "100520",
+   "firedtimes": 69,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950821.1196546",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:00+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20104\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:27:00+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20104",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:03.034+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20105",
+   "id": "100520",
+   "firedtimes": 70,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950823.1197105",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:02+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20105\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:27:02+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20105",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:05.037+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20106",
+   "id": "100520",
+   "firedtimes": 71,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950825.1197664",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:03+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20106\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:27:03+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20106",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:07.039+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20107",
+   "id": "100520",
+   "firedtimes": 73,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950827.1198223",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:05+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20107\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:27:05+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20107",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:07.039+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20108",
+   "id": "100520",
+   "firedtimes": 72,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950827.1198782",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:06+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20108\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:27:06+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20108",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:09.042+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20109",
+   "id": "100520",
+   "firedtimes": 74,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950829.1199341",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:08+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20109\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:27:08+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20109",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:11.044+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20110",
+   "id": "100520",
+   "firedtimes": 75,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950831.1199900",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:09+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20110\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:27:09+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20110",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:13.047+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20111",
+   "id": "100520",
+   "firedtimes": 76,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950833.1200459",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:11+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20111\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:27:11+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20111",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:13.047+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20112",
+   "id": "100520",
+   "firedtimes": 77,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950833.1201018",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:12+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20112\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:27:12+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20112",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:15.051+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20113",
+   "id": "100520",
+   "firedtimes": 78,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950835.1201577",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:14+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20113\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:27:14+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20113",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:17.052+0000",
+  "rule": {
+   "level": 12,
+   "description": "CAN-ID-007 Bulk patient-record access: test.nurse2 opened 15+ records within 60 seconds",
+   "id": "100522",
+   "mitre": {
+    "id": [
+     "T1213"
+    ],
+    "tactic": [
+     "Collection"
+    ],
+    "technique": [
+     "Data from Information Repositories"
+    ]
+   },
+   "frequency": 15,
+   "firedtimes": 9,
+   "mail": true,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access",
+    "correlation",
+    "data_exfiltration_risk"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950837.1202136",
+  "previous_output": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:14+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20113\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}\n{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:12+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20112\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}\n{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:11+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20111\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}\n{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:09+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20110\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}\n{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:08+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20109\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}\n{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:06+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20108\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}\n{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:05+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20107\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}\n{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:03+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20106\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}\n{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:02+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20105\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}\n{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:00+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20104\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}\n{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:26:59+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20103\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:15+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20114\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:27:15+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20114",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:19.057+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20116",
+   "id": "100520",
+   "firedtimes": 80,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950839.1205013",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:18+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20116\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:27:18+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20116",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:19.057+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20115",
+   "id": "100520",
+   "firedtimes": 79,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950839.1205572",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:17+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20115\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:27:17+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20115",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ },
+ {
+  "timestamp": "2026-11-17T21:27:21.059+0000",
+  "rule": {
+   "level": 3,
+   "description": "EHR access: test.nurse2 (nurse) view_chart SYN-PT-20117",
+   "id": "100520",
+   "firedtimes": 81,
+   "mail": false,
+   "groups": [
+    "soc1",
+    "ehr",
+    "ephi_access"
+   ]
+  },
+  "agent": {
+   "id": "000",
+   "name": "wazuh.manager"
+  },
+  "manager": {
+   "name": "wazuh.manager"
+  },
+  "id": "1794950841.1206131",
+  "full_log": "{\"src\":\"ehr_access\",\"event_time\":\"2026-11-17T21:27:20+00:00\",\"username\":\"test.nurse2\",\"role\":\"nurse\",\"patient_id\":\"SYN-PT-20117\",\"action\":\"view_chart\",\"workstation\":\"REMOTE-VPN\",\"scenario\":\"SOC1-SCN-01\"}",
+  "decoder": {
+   "name": "json"
+  },
+  "data": {
+   "action": "view_chart",
+   "src": "ehr_access",
+   "event_time": "2026-11-17T21:27:20+00:00",
+   "username": "test.nurse2",
+   "role": "nurse",
+   "patient_id": "SYN-PT-20117",
+   "workstation": "REMOTE-VPN",
+   "scenario": "SOC1-SCN-01"
+  },
+  "location": "/var/log/soc1/ehr_access.json"
+ }
+]

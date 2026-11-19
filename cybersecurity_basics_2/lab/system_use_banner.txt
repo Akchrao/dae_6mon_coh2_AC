@@ -1,0 +1,7 @@
+***************************************************************************
+ HealthLine Regional Medical Center - AUTHORIZED USE ONLY
+ This system holds protected health information (ePHI). Use is limited to
+ approved HRMC work under the HRMC Information Security Policy (POL-SEC-01),
+ section 4 "System Use". All activity is logged and monitored. Misuse may
+ lead to disciplinary action and legal penalties (HIPAA).
+***************************************************************************

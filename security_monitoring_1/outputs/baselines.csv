@@ -1,0 +1,8 @@
+metric,basis,mean,std_dev,p95,max,alert_threshold
+Windows logons per working hour,"7-day sample, 60 working hours",0.5,0.87,2,2,3.1
+Windows failed logons per working hour,"7-day sample, 60 working hours",0.28,0.66,2,3,4
+File reads per working hour,"7-day sample, 60 working hours",4.43,4.95,12,18,19.3
+Outbound connections per working hour,"7-day sample, 60 working hours",2.82,3.78,10,14,15
+Failed logons per user per day,7 days x 6 users,0.43,0.66,2,2,6
+File reads per user per active minute,"7 days, 336 user-minutes with reads",1,0.0,1,1,20 in 60 s (rule 100612)
+Keycloak failed sign-ins per active day,"capstone log, 3 active days",21,28.3,n/a (too few days),61,5 per user in 2 min (rule 100502)

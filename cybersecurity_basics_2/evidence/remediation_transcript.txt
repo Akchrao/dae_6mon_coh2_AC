@@ -1,0 +1,52 @@
+start 2026-11-19T16:32:58Z
+== VERIFY 1: password guessing is now refused (attacker retries tjones with the old guessed password)
+***************************************************************************
+ HealthLine Regional Medical Center - AUTHORIZED USE ONLY
+ This system holds protected health information (ePHI). Use is limited to
+ approved HRMC work under the HRMC Information Security Policy (POL-SEC-01),
+ section 4 "System Use". All activity is logged and monitored. Misuse may
+ lead to disciplinary action and legal penalties (HIPAA).
+***************************************************************************
+tjones@hrmc-linux-srv01: Permission denied (publickey).
+
+== VERIFY 2: legitimate key login for sathya shows the system-use banner
+***************************************************************************
+ HealthLine Regional Medical Center - AUTHORIZED USE ONLY
+ This system holds protected health information (ePHI). Use is limited to
+ approved HRMC work under the HRMC Information Security Policy (POL-SEC-01),
+ section 4 "System Use". All activity is logged and monitored. Misuse may
+ lead to disciplinary action and legal penalties (HIPAA).
+***************************************************************************
+logged in as sathya on hrmc-linux-srv01
+
+== VERIFY 3: tjones account state
+tjones L 2026-11-18 0 99999 7 -1
+tjones:x:1000:1000::/home/tjones:/usr/sbin/nologin
+
+== VERIFY 4: effective sshd settings
+maxauthtries 3
+permitrootlogin no
+passwordauthentication no
+kbdinteractiveauthentication no
+banner /etc/issue.net
+
+== FIM REMEDIATION: before
+total 12
+-rw-r--r-- 1 root root 23 Nov 18 19:09 export_2.csv
+-rw-r--r-- 1 root root 46 Nov 18 19:12 export_3.csv
+-rw-r--r-- 1 root root 92 Nov 18 19:16 staged_all_exports.csv
+aa384e34be2da51337b6877aba7942cd0b5916da86a2fb34c5ad500382b45dd1  /srv/ehr_exports/export_2.csv
+de5c03e8b0e1101ed0a74d22bfd7aa552df7ed80296aed6ef5d529230cf5a38b  /srv/ehr_exports/export_3.csv
+faef379a71630e49c5480091c43944d82217ca60cd499e919049db050c0044c4  /srv/ehr_exports/staged_all_exports.csv
+faef379a71630e49c5480091c43944d82217ca60cd499e919049db050c0044c4  /root/ir_evidence/staged_all_exports.csv
+-- staged file preserved as evidence (above), then removed; deleted export restored from the known-good copy
+== FIM REMEDIATION: after
+total 12
+-rw-r--r-- 1 root root 23 Nov 19 16:33 export_1.csv
+-rw-r--r-- 1 root root 23 Nov 18 19:09 export_2.csv
+-rw-r--r-- 1 root root 46 Nov 18 19:12 export_3.csv
+f5d8cf63d42ad3be968f39a1b443a86803a16ec93345f9819175e0577af8ce75  /srv/ehr_exports/export_1.csv
+aa384e34be2da51337b6877aba7942cd0b5916da86a2fb34c5ad500382b45dd1  /srv/ehr_exports/export_2.csv
+de5c03e8b0e1101ed0a74d22bfd7aa552df7ed80296aed6ef5d529230cf5a38b  /srv/ehr_exports/export_3.csv
+expected export_1.csv sha256 (known-good): f5d8cf63d42ad3be968f39a1b443a86803a16ec93345f9819175e0577af8ce75
+end 2026-11-19T16:33:24Z

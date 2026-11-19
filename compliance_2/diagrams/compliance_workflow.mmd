@@ -1,0 +1,23 @@
+flowchart LR
+    A[S1 Ingest<br/>live CISO Assistant snapshot<br/>+ control catalogue] --> B[S2 Evaluate<br/>open controls, findings,<br/>exceptions]
+    A -. bad record .-> DQ[Data-quality queue<br/>no crash]
+    B --> C[S3 AI triage<br/>logistic regression<br/>P material exposure]
+    C --> D3{D3 Exception?}
+    D3 -- expired --> EC[ESCALATE-COMMITTEE<br/>5 business days]
+    D3 -- expires in 14 d --> RM[REMIND owner<br/>7 days]
+    D3 -- valid --> MO[MONITOR]
+    D3 -- no --> D5{D5 Covered by an<br/>approved exception?}
+    D5 -- yes --> MO
+    D5 -- no --> D1{D1 Overdue?}
+    D1 -- "yes, AI >= 0.50" --> CC[ESCALATE-CCO<br/>2 business days]
+    D1 -- "yes, AI < 0.50" --> AO[ASSIGN-OWNER<br/>30 days]
+    D1 -- no --> D2{D2 AI score}
+    D2 -- ">= 0.85" --> CC
+    D2 -- "0.50-0.85" --> AO
+    D2 -- "< 0.50" --> MO
+    EC --> D4{D4 Human approval}
+    CC --> D4
+    D4 --> OUT[S6 Report<br/>work_queue.csv, escalations.jsonl,<br/>summary + metrics]
+    AO --> OUT
+    RM --> OUT
+    MO --> OUT

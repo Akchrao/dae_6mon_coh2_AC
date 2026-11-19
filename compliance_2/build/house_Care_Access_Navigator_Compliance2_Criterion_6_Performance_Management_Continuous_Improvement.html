@@ -1,0 +1,67 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Compliance 2 — Criterion 6: Performance Management &amp; Continuous Improvement</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Compliance 2 — Criterion 6: Performance Management &amp; Continuous Improvement</div><div class='subsub'>Enterprise compliance program for HRMC's multinational expansion: strategy, automation, process optimization, auditing, quantitative risk and performance</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Compliance 2 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Rubric criterion:</td><td>Criterion 6: Performance Management &amp; Continuous Improvement</td></tr><tr><td class='k'>Environment:</td><td>CISO Assistant (live, read-only sync), Python workflow with AI triage, Monte Carlo risk model, capstone evidence</td></tr><tr><td class='k'>Date:</td><td>November 18, 2026</td></tr></table><div class="note"><b>Scenario.</b> HRMC is the fictional hospital used throughout my capstone (Care Access Navigator). For Compliance 2 it
+expands into a multinational group: the US hospital network, clinics in Ireland and Germany, and a shared-services centre in
+Hyderabad, India (10,800 staff). Everything measured (controls, audits, timings, logs, risks) comes from my capstone evidence
+and live systems; the expansion figures (sites, volumes, budgets, loss ranges) are planning assumptions and are labelled as such.</div><h2>6. Performance Management &amp; Continuous Improvement</h2>
+<h3>6.1 KPI framework with benchmarks</h3>
+<table><tr><th style=width:11%>Category</th><th style=width:22%>KPI</th><th style=width:24%>Current (live)</th><th style=width:14%>Target</th><th>Benchmark / reference</th></tr><tr><td>Compliance</td><td>HIPAA requirements fully compliant</td><td>68.0% (17/25)</td><td>&gt;= 90% by Q4 2027</td><td>HHS OCR audit protocol: every addressable spec documented</td></tr><tr><td>Compliance</td><td>NIST CSF 2.0 subcategories met</td><td>66.7% (10/15)</td><td>Tier 3 &#x27;Repeatable&#x27; by 2028</td><td>NIST CSF implementation tiers 1-4</td></tr><tr><td>Control</td><td>Control test pass rate</td><td>85.7% (12/14, 2026-11-03)</td><td>&gt;= 95%</td><td>Internal target; first audit was 57.1%</td></tr><tr><td>Remediation</td><td>Corrective actions closed</td><td>50.0% (9/18)</td><td>&gt;= 90%</td><td>Forecast to reach 90% on 2026-12-20</td></tr><tr><td>Remediation</td><td>Corrective actions overdue</td><td>0</td><td>0</td><td>Zero tolerance for overdue Highs</td></tr><tr><td>Governance</td><td>Exceptions past expiry</td><td>2 (EX-06, EX-08)</td><td>0</td><td>Every exception renewed or closed before expiry</td></tr><tr><td>Operational</td><td>Leaver exposure window</td><td>0 min automated (manual was 12 min)</td><td>0 min; &lt;= 24 h at worst</td><td>PCI DSS 8.2.5: revoke immediately; HIPAA 164.308(a)(3)(ii)(C)</td></tr><tr><td>Operational</td><td>JML provisioning time</td><td>4 s automated</td><td>&lt; 5 min</td><td>Manual baseline 27.3 min</td></tr><tr><td>Operational</td><td>Compliance workflow run time</td><td>351 ms for 23 issues</td><td>&lt; 60 s</td><td>Replaces a weekly manual register review (about 4 h)</td></tr><tr><td>Risk</td><td>Residual annual IAM loss, P95</td><td>$8.0M (with FIDO2 + insurance $4.5M)</td><td>&lt;= $5M (appetite)</td><td>IBM Cost of a Data Breach 2025: healthcare average US$7.42M per breach</td></tr><tr><td>Risk</td><td>AI triage model quality</td><td>0.931 (accuracy 0.808)</td><td>&gt;= 0.85</td><td>Retrain quarterly; human approval on every escalation</td></tr><tr><td>Incident</td><td>First response to SEV-1</td><td>4.2 min (SOC1-2026-001)</td><td>&lt;= 15 min</td><td>IR playbook CAN-IR-PB-02; GDPR 72 h / HIPAA 60-day notice clocks</td></tr></table>
+<p>Formulas for every KPI are in the workbook (<code>KPI_Framework</code>). Industry reference points: IBM <i>Cost of a Data Breach Report 2025</i> (healthcare remains the costliest industry,
+about US$7.4M per breach); regulatory clocks (GDPR 72 h, HIPAA 60 days); NIST CSF 2.0 implementation tiers for maturity.</p>
+<h3 class="pb">6.2 Advanced monitoring with predictive capabilities and automated review</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:24%>Monitor</th><th style=width:40%>Predictive / automated element</th><th>Current output</th></tr><tr><td>Compliance workflow (daily)</td><td>AI score predicts which issues become material exposures</td><td>2 committee, 1 CCO, 8 owner, 11 monitor</td></tr><tr><td>Corrective-action burn-down (weekly)</td><td>Closure-rate forecast; items due within 14 days flagged before they slip</td><td>90% closure forecast 2026-12-20; at risk: CA-08, CA-12, CA-13, CA-17</td></tr><tr><td>Exception expiry (daily)</td><td>Reminder 14 days ahead; automatic committee escalation at expiry</td><td>Expired now: EX-06, EX-08</td></tr><tr><td>Risk model (quarterly)</td><td>Monte Carlo P95 vs appetite; scenario stress</td><td>Residual P95 $7.99M</td></tr><tr><td>Audit forecast (annual)</td><td>Poisson findings forecast per site sets audit staffing</td><td>EU sites highest</td></tr><tr><td>Security operations (real time)</td><td>Wazuh correlation rules, email escalation (SOC 1)</td><td>33 alert emails routed in the SOC 1 lab</td></tr></table>
+<p><b>Automated review process:</b> each Monday the workflow and analytics scripts run, the work queue and audit report regenerate, and the CCO reviews only the escalations;
+monthly, the KPI table goes to the compliance committee; quarterly, the board sees KPIs, the loss exceedance curve and roadmap status.</p>
+<h3>6.3 Continuous improvement program (PDCA) with measured results</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:12%>PDCA</th><th>Cycle 1 (Oct-Nov 2026, measured)</th></tr><tr><td>Plan</td><td>Compliance 1 internal audit CAN-IA-2026-01 (2026-10-13): 6 findings (F-01..F-06), 3 High</td></tr><tr><td>Do</td><td>Week 5 hardening: MFA for privileged roles, lockout, 12-char passwords, app gates (EV-13)</td></tr><tr><td>Check</td><td>Re-test 2026-11-03 and access review signed 2026-11-09: control pass rate 57.1% -&gt; 85.7%; High findings 3 -&gt; 1; 4 of 6 findings closed with evidence; E2E 9/10 then 10/10 after CA-10</td></tr><tr><td>Act</td><td>Remaining gaps governed as exceptions (EX-02, EX-05) with expiry dates; corrective actions tracked in CISO Assistant</td></tr></table>
+<div class="fig"><img src="../outputs/pdca_cycle1.png" style="max-height:260px"><div class="cap">Measured improvement: +28.6 percentage points in control pass rate in one cycle</div></div>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:12%>Cycle 2 (2027)</th><th>Plan</th></tr><tr><td>Plan</td><td>Targets from section 6.1; close EX-06 / EX-08 decisions; automatic Keycloak deprovisioning (CAN-FIND-001)</td></tr><tr><td>Do</td><td>Extend automation to EU + India; FIDO2 pilot; works-council agreement</td></tr><tr><td>Check</td><td>First multi-site audit (section 4); compare actual findings with the Poisson forecast to calibrate it</td></tr><tr><td>Act</td><td>Re-weight the AI triage model on real committee outcomes; update the unified control set; feed lessons into the 2028 roadmap</td></tr></table>
+
+</body></html>

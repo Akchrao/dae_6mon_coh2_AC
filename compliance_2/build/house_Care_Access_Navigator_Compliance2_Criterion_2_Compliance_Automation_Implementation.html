@@ -1,0 +1,77 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Compliance 2 — Criterion 2: Compliance Automation Implementation</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Compliance 2 — Criterion 2: Compliance Automation Implementation</div><div class='subsub'>Enterprise compliance program for HRMC's multinational expansion: strategy, automation, process optimization, auditing, quantitative risk and performance</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Compliance 2 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Rubric criterion:</td><td>Criterion 2: Compliance Automation Implementation</td></tr><tr><td class='k'>Environment:</td><td>CISO Assistant (live, read-only sync), Python workflow with AI triage, Monte Carlo risk model, capstone evidence</td></tr><tr><td class='k'>Date:</td><td>November 18, 2026</td></tr></table><div class="note"><b>Scenario.</b> HRMC is the fictional hospital used throughout my capstone (Care Access Navigator). For Compliance 2 it
+expands into a multinational group: the US hospital network, clinics in Ireland and Germany, and a shared-services centre in
+Hyderabad, India (10,800 staff). Everything measured (controls, audits, timings, logs, risks) comes from my capstone evidence
+and live systems; the expansion figures (sites, volumes, budgets, loss ranges) are planning assumptions and are labelled as such.</div><h2>2. Compliance Automation Implementation</h2>
+<h3>2.1 Tools implemented</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:20%>Tool</th><th style=width:52%>What it automates</th><th>Status</th></tr><tr><td>CISO Assistant (live sync)</td><td><code>automation/ciso_sync_export.py</code> exports controls, exceptions, findings, risks and audit results read-only from the GRC system of record</td><td>Implemented; snapshot 2026-11-18: 18 controls, 8 exceptions, 19 findings</td></tr><tr><td>Compliance workflow engine</td><td><code>automation/compliance_workflow.py</code>: 6 stages, 5 decision points, AI triage, exception handling, escalation with SLAs</td><td>Implemented; 23 issues in 351 ms</td></tr><tr><td>JML automation</td><td><code>can_iam.py</code> joiner / mover / leaver with verification and JSONL audit log (capstone)</td><td>Implemented (EV-14)</td></tr><tr><td>Wazuh SIEM</td><td>Log evidence and alerting for monitoring controls (SOC 1 lab)</td><td>Implemented</td></tr></table>
+<h3>2.2 Multi-stage workflow with automated decision points</h3>
+<div class="fig"><img src="../diagrams/compliance_workflow.png"><div class="cap">Source: diagrams/compliance_workflow.mmd</div></div>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:22%>Stage / decision</th><th>Logic</th></tr><tr><td>S1 Ingest</td><td>Live CISO Assistant snapshot + capstone control catalogue. A malformed record goes to a data-quality queue instead of stopping the run.</td></tr><tr><td>S2 Evaluate</td><td>Open issues = controls not fully implemented or failing, unresolved findings, open exceptions</td></tr><tr><td>S3 AI triage</td><td>Probability that the issue is a material compliance exposure (section 2.4)</td></tr><tr><td>D3 Exception status</td><td>Expired &rarr; ESCALATE-COMMITTEE (5 business days); expires within 14 days &rarr; REMIND; valid &rarr; MONITOR</td></tr><tr><td>D5 Covered by exception?</td><td>If an approved, unexpired exception with compensating controls covers the control &rarr; MONITOR (prevents escalation overload)</td></tr><tr><td>D1 Overdue?</td><td>Past due and AI &ge; 0.50 &rarr; ESCALATE-CCO (2 business days); else ASSIGN-OWNER</td></tr><tr><td>D2 AI score band</td><td>&ge; 0.85 ESCALATE-CCO; 0.50-0.85 ASSIGN-OWNER (30 days); &lt; 0.50 MONITOR</td></tr><tr><td>D4 Human approval</td><td>Every escalation needs a named approver before it is sent: the AI recommends, people decide</td></tr><tr><td>S6 Report</td><td><code>work_queue.csv</code>, <code>escalations.jsonl</code>, <code>workflow_summary.json</code></td></tr></table>
+<h3 class="pb">2.3 Run on live data (2026-11-18)</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:40%>Route</th><th>Count</th></tr><tr><td>ESCALATE-COMMITTEE</td><td>2</td></tr><tr><td>ESCALATE-CCO</td><td>1</td></tr><tr><td>REMIND</td><td>1</td></tr><tr><td>ASSIGN-OWNER</td><td>8</td></tr><tr><td>MONITOR</td><td>11</td></tr></table>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:10%>ID</th><th style=width:8%>Type</th><th style=width:7%>Control</th><th style=width:7%>AI score</th><th style=width:13%>Path</th><th style=width:15%>Route</th><th>Reason</th></tr><tr><td>EX-06</td><td>exception</td><td>IR-01</td><td>0.61</td><td>S2>S3>D3>D4</td><td>ESCALATE-COMMITTEE</td><td>exception expired 13 days ago: renew with new evidence or close</td></tr><tr><td>EX-08</td><td>exception</td><td>CA-01</td><td>0.61</td><td>S2>S3>D3>D4</td><td>ESCALATE-COMMITTEE</td><td>exception expired 13 days ago: renew with new evidence or close</td></tr><tr><td>CA-15</td><td>finding</td><td>IA-01</td><td>0.88</td><td>S2>S3>D2>D4</td><td>ESCALATE-CCO</td><td>AI score 0.88 &gt;= 0.85</td></tr><tr><td>EX-07</td><td>exception</td><td>IA-02</td><td>0.71</td><td>S2>S3>D3</td><td>REMIND</td><td>exception expires in 13 days</td></tr><tr><td>CAN-FIND-001</td><td>finding</td><td>AC-02</td><td>0.8</td><td>S2>S3>D2</td><td>ASSIGN-OWNER</td><td>AI score 0.80 in 0.50-0.85</td></tr><tr><td>CA-08</td><td>finding</td><td>VM-01</td><td>0.76</td><td>S2>S3>D2</td><td>ASSIGN-OWNER</td><td>AI score 0.76 in 0.50-0.85</td></tr><tr><td>IA-01</td><td>control</td><td>IA-01</td><td>0.71</td><td>S2>S3>D2</td><td>ASSIGN-OWNER</td><td>AI score 0.71 in 0.50-0.85</td></tr><tr><td>AU-03</td><td>control</td><td>AU-03</td><td>0.97</td><td>S2>S3>D5</td><td>MONITOR</td><td>covered by approved exception EX-02 until 2027-01-31; compensating controls in place</td></tr><tr><td>CA-03</td><td>finding</td><td>AU-03</td><td>0.88</td><td>S2>S3>D5</td><td>MONITOR</td><td>covered by approved exception EX-02 until 2027-01-31; compensating controls in place</td></tr></table>
+<div class="ok"><b>What the automation caught:</b> exceptions <b>EX-06 and EX-08 expired on 2026-11-05</b> while still "in review". A manual weekly register check had not
+flagged them; the workflow escalated both to the compliance committee on its first run. Before the D5 rule was added, the first version escalated 13 issues to the CCO;
+tuning it to respect approved exceptions cut that to 1, which is the kind of alert-fatigue control an enterprise program needs.</div>
+<h3>2.4 AI integration</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:16%>Item</th><th>Detail</th></tr><tr><td>Model</td><td>Logistic regression, 6 features: inherent_risk, frameworks, ephi, days_overdue, prior_fail, impl_gap; implemented without external libraries</td></tr><tr><td>Training data</td><td>560 labelled historical issues (synthetic history representing past committee decisions); 240 held out</td></tr><tr><td>Quality</td><td>Accuracy 0.808, precision 0.769, recall 0.904, AUC 0.931</td></tr><tr><td>Weights</td><td>bias -5.41, inherent_risk 2.74, frameworks 1.71, ephi 1.24, days_overdue 3.2, prior_fail 1.6, impl_gap 2.28 (overdue days and inherent risk weigh most)</td></tr><tr><td>Governance</td><td>Human approval on every escalation (D4); decisions concern compliance issues, not individuals, so GDPR Art. 22 automated-decision rules are not triggered, which the DPIA records; quarterly retraining on real committee outcomes; drift check = AUC below 0.85 triggers review</td></tr></table>
+<h3>2.5 Exception handling and escalation procedures</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:26%>Situation</th><th style=width:34%>Automated handling</th><th>Escalation</th></tr><tr><td>Bad or missing data in a record</td><td>Logged to the data-quality queue; the run continues</td><td>GRC analyst fixes the source record in CISO Assistant</td></tr><tr><td>Exception expiring in 14 days or less</td><td>REMIND owner</td><td>If not renewed by expiry &rarr; committee</td></tr><tr><td>Exception expired</td><td>ESCALATE-COMMITTEE, 5 business days</td><td>Committee renews with new evidence or closes it</td></tr><tr><td>Finding overdue, AI &ge; 0.50</td><td>ESCALATE-CCO, 2 business days</td><td>CCO re-plans or accepts risk formally</td></tr><tr><td>Escalation not acted on within SLA</td><td>Re-raised on the next run with SLA breached</td><td>Board audit and compliance committee report</td></tr></table>
+<h3 class="pb">2.6 Costs, savings, ROI and payback</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:70%>One-time cost</th><th>USD</th></tr><tr><td>Workflow engine + AI triage build (320 h)</td><td>$27,200</td></tr><tr><td>CISO Assistant deployment + data sync (160 h)</td><td>$13,600</td></tr><tr><td>SIEM (Wazuh) integration (120 h)</td><td>$10,200</td></tr><tr><td>JML automation hardening for 3 regions (200 h)</td><td>$17,000</td></tr><tr><td>Training: 200 staff x 1 h</td><td>$12,000</td></tr><tr><td>Program + change management (300 h)</td><td>$28,500</td></tr><tr><td>Privacy review of the AI step: GDPR Art. 22 / DPIA (60 h)</td><td>$9,000</td></tr><tr><td>Validation testing of the automation (120 h)</td><td>$10,200</td></tr><tr><td>Open-source licences (CISO Assistant CE, Wazuh, Keycloak)</td><td>$0</td></tr><tr><td><b>Total one-time</b></td><td><b>$127,700</b></td></tr></table>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:70%>Annual cost</th><th>USD</th></tr><tr><td>Hosting: 3 VMs / containers</td><td>$9,000</td></tr><tr><td>Platform administration (0.5 FTE)</td><td>$55,000</td></tr><tr><td>Model retraining and rule tuning (80 h)</td><td>$6,800</td></tr><tr><td><b>Total annual</b></td><td><b>$70,800</b></td></tr></table>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:70%>Annual operational saving (full adoption)</th><th>USD</th></tr><tr><td>JML touch time</td><td>$317,717</td></tr><tr><td>Control testing and evidence collection</td><td>$65,520</td></tr><tr><td>Access review preparation</td><td>$50,400</td></tr><tr><td>External audit preparation</td><td>$36,000</td></tr><tr><td><b>Total</b></td><td><b>$469,637</b></td></tr></table>
+<p>JML saving: 4,968 joiner/mover/leaver events a year &times; (72.3 &minus; 2.6) minutes,
+using the provisioning times measured in section 3. About <b>7,985 staff hours</b> are freed each year. Year 1 assumes 60% adoption while the EU and India sites onboard.</p>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:30%>Measure</th><th style=width:30%>Hard savings only</th><th>Including credited risk reduction</th></tr><tr><td>Payback</td><td>7.3 months</td><td>-</td></tr><tr><td>3-year NPV (8%)</td><td>$726,202</td><td>$1,030,898</td></tr><tr><td>3-year ROI</td><td>259%</td><td>-</td></tr></table>
+<div class="fig"><img src="../outputs/roi_cumulative.png" style="max-height:300px"><div class="cap">Cumulative cash position (roi_model.py). Risk credit = 25% of the modelled R02 + R05 loss reduction (section 5).</div></div>
+</body></html>

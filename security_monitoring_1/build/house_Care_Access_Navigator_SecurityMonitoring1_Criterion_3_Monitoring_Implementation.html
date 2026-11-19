@@ -1,0 +1,87 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Security Monitoring 1 — Criterion 3: Monitoring Implementation</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Security Monitoring 1 — Criterion 3: Monitoring Implementation</div><div class='subsub'>Monitoring environment, security event analysis, monitoring implementation and reporting with Wazuh, a live Linux agent and imported Windows samples</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Security Monitoring 1 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Rubric criterion:</td><td>Criterion 3: Monitoring Implementation</td></tr><tr><td class='k'>Environment:</td><td>Wazuh 4.9.2; live Linux agent hrmc-linux-srv01; Windows Security samples (option B, instructor-approved); capstone Keycloak and EHR logs</td></tr><tr><td class='k'>Date:</td><td>November 18, 2026</td></tr></table><div class="note"><b>Windows source (option B, agreed with the instructor):</b> no live Windows host was available, so Windows Security events were
+<b>imported as samples</b> in the Microsoft Security log schema (event IDs 4624, 4625, 4634, 4663, 4732, 5156). Every imported event is tagged
+<code>"sample": "imported-synthetic"</code>. The <b>Linux source is live</b>: a Debian 12 server (<code>hrmc-linux-srv01</code>) runs the official Wazuh agent 4.9.2,
+connected to the manager over the agent protocol (port 1514/tcp), and its SSH, file and network activity in this report is real.</div><h2>3. Monitoring Implementation</h2>
+<h3>3.1 Monitoring architecture and data flows</h3>
+<div class="fig"><img src="../diagrams/sm1_architecture.png"><div class="cap">Source: diagrams/sm1_architecture.mmd</div></div>
+<h3>3.2 Data sources integrated, with evidence of collection</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:24%>Data source</th><th style=width:36%>Integration</th><th>Evidence</th></tr><tr><td>Linux server (live agent)</td><td>Agent enrollment to wazuh.manager:1515, events on 1514/tcp</td><td>Agent 001 Active; alerts 5760, 5763, 40112, 553, 554, 100630</td></tr><tr><td>Windows Security (imported samples)</td><td>JSON file + localfile log_format json</td><td>637 baseline events + scenario; rules 100600-100651 fire</td></tr><tr><td>Keycloak sign-in events</td><td>JSON file (capstone export)</td><td>data.src keycloak_login alerts</td></tr><tr><td>EHR access audit</td><td>JSON file (capstone export)</td><td>data.src ehr_access alerts, 100521 / 100650</td></tr><tr><td>Keycloak admin events</td><td>JSON file (capstone export)</td><td>data.src keycloak_admin alerts (SOC 1)</td></tr></table>
+<h3 class="pb">3.3 Integration steps</h3>
+<ol>
+<li>Start the Wazuh single-node stack (official wazuh-docker v4.9.2): generate TLS certificates, <code>docker compose up -d</code>.</li>
+<li>Add rule files by mounting them under <code>/wazuh-config-mount/etc/rules/</code> (soc1_rules.xml, zz_sm1_rules.xml) and log sources as <code>&lt;localfile&gt;</code> entries in ossec.conf.</li>
+<li>Configure email: <code>email_notification yes</code>, <code>smtp_server mailhog</code>, <code>email_alert_level 10</code>, plus an <code>email_alerts</code> block for level 12 to the SOC lead.</li>
+<li>Build the Linux agent image (<code>lab/Dockerfile.linux-agent</code>): Wazuh apt repository, <code>WAZUH_MANAGER=wazuh.manager apt-get install wazuh-agent=4.9.2-1</code>, extra config for auth.log, FIM and outbound TCP.</li>
+<li>Run it on the same Docker network; it enrolls automatically (authd, no password in the lab) and appears as agent 001.</li>
+<li>Import Windows samples with <code>scenario/windows_events.py history</code>; test each rule with <code>wazuh-logtest</code> before relying on it.</li>
+<li>Import the dashboard (<code>lab/build_dashboard.py</code>, saved-objects API) and schedule <code>lab/health_check.py</code>.</li></ol>
+<h3>3.4 Configuration files</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:45%>File</th><th>Purpose</th></tr><tr><td><code>wazuh_config/zz_sm1_rules.xml</code> (repo: sm1_rules.xml)</td><td>15 Security Monitoring rules</td></tr><tr><td><code>lab/agent_ossec_extra.conf</code></td><td>Agent: auth.log, FIM, outbound_tcp command, no auto-restart</td></tr><tr><td><code>lab/Dockerfile.linux-agent</code>, <code>lab/entrypoint.sh</code></td><td>Linux server image with the agent</td></tr><tr><td><code>wazuh_config/hrmc_security_dashboard.ndjson</code></td><td>Dashboard saved objects</td></tr><tr><td>SOC 1: <code>wazuh_config/ossec_soc1_excerpt.conf</code>, <code>soc1_rules.xml</code></td><td>Email settings, log sources, application rules</td></tr></table>
+<h3 class="pb">3.5 Performance baselines and alert thresholds</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:24%>Metric</th><th style=width:18%>Basis</th><th style=width:8%>Mean</th><th style=width:8%>Std dev</th><th style=width:10%>P95</th><th style=width:7%>Max</th><th>Alert threshold</th></tr><tr><td>Windows logons per working hour</td><td>7-day sample, 60 working hours</td><td>0.5</td><td>0.87</td><td>2</td><td>2</td><td>3.1</td></tr><tr><td>Windows failed logons per working hour</td><td>7-day sample, 60 working hours</td><td>0.28</td><td>0.66</td><td>2</td><td>3</td><td>4</td></tr><tr><td>File reads per working hour</td><td>7-day sample, 60 working hours</td><td>4.43</td><td>4.95</td><td>12</td><td>18</td><td>19.3</td></tr><tr><td>Outbound connections per working hour</td><td>7-day sample, 60 working hours</td><td>2.82</td><td>3.78</td><td>10</td><td>14</td><td>15</td></tr><tr><td>Failed logons per user per day</td><td>7 days x 6 users</td><td>0.43</td><td>0.66</td><td>2</td><td>2</td><td>6</td></tr><tr><td>File reads per user per active minute</td><td>7 days, 336 user-minutes with reads</td><td>1</td><td>0.0</td><td>1</td><td>1</td><td>20 in 60 s (rule 100612)</td></tr><tr><td>Keycloak failed sign-ins per active day</td><td>capstone log, 3 active days</td><td>21</td><td>28.3</td><td>n/a (too few days)</td><td>61</td><td>5 per user in 2 min (rule 100502)</td></tr></table>
+<p>Thresholds are set above normal: at least mean + 3 standard deviations and above the highest value seen in the normal week, rounded to a number the rule can use.
+The scenario was far beyond them (7 failures in 18 s, 30 reads in 30 s), while the normal week stayed below every threshold (0 high alerts).
+<b>Processing baseline:</b> 0 events dropped, analysisd queues at 0%, median 1.5 s (max 2.8 s) from event to alert.</p>
+<div class="fig"><img src="../outputs/trend_week.png" style=max-height:280px><div class="cap">Left: the normal week used for the baseline. Right: alerts by level on the scenario day.</div></div>
+<h3 class="pb">3.6 Health monitoring</h3>
+<p><code>lab/health_check.py</code> runs every 15 minutes (cron / launchd) and checks <b>collection status</b> (agents, services, log files, last alert per source),
+<b>processing performance</b> (events decoded and dropped, queue usage, remoted discards) and <b>storage utilization</b> (index health and size, indexer disk, host disk, manager queue folder).
+Exit code 0 = OK, 1 = warning, 2 = critical; results go to <code>outputs/health_check_*.json</code>.</p>
+<table><tr><th style=width:11%>Area</th><th style=width:30%>Check</th><th style=width:24%>Value</th><th style=width:9%>Status</th><th>Threshold</th></tr><tr><td>Collection</td><td>Agent wazuh.manager (server)</td><td>Active/Local</td><td>OK</td><td>Active</td></tr><tr><td>Collection</td><td>Agent hrmc-linux-srv01</td><td>Active</td><td>OK</td><td>Active</td></tr><tr><td>Collection</td><td>Service wazuh-analysisd</td><td>running</td><td>OK</td><td>running</td></tr><tr><td>Collection</td><td>Service wazuh-remoted</td><td>running</td><td>OK</td><td>running</td></tr><tr><td>Collection</td><td>Service wazuh-logcollector</td><td>running</td><td>OK</td><td>running</td></tr><tr><td>Collection</td><td>Service wazuh-syscheckd</td><td>running</td><td>OK</td><td>running</td></tr><tr><td>Collection</td><td>Service wazuh-maild</td><td>running</td><td>OK</td><td>running</td></tr><tr><td>Collection</td><td>Service wazuh-db</td><td>running</td><td>OK</td><td>running</td></tr><tr><td>Collection</td><td>Service wazuh-modulesd</td><td>running</td><td>OK</td><td>running</td></tr><tr><td>Collection</td><td>Log file ehr_access.json</td><td>6 events since start</td><td>OK</td><td>file monitored</td></tr><tr><td>Collection</td><td>Log file windows_security.json</td><td>39 events since start</td><td>OK</td><td>file monitored</td></tr><tr><td>Collection</td><td>Log file auth.log</td><td>0 events since start</td><td>OK</td><td>file monitored</td></tr><tr><td>Collection</td><td>Log file keycloak_login.json</td><td>1 events since start</td><td>OK</td><td>file monitored</td></tr><tr><td>Collection</td><td>Log file keycloak_admin.json</td><td>0 events since start</td><td>OK</td><td>file monitored</td></tr><tr><td>Collection</td><td>Last alert from source windows_security</td><td>2 min ago (715 alerts)</td><td>OK</td><td>&lt;= 60 min (imported sources replay on demand)</td></tr><tr><td>Collection</td><td>Last alert from source keycloak_admin</td><td>1318 min ago (231 alerts)</td><td>WARNING</td><td>&lt;= 60 min (imported sources replay on demand)</td></tr><tr><td>Collection</td><td>Last alert from source keycloak_login</td><td>2 min ago (201 alerts)</td><td>OK</td><td>&lt;= 60 min (imported sources replay on demand)</td></tr><tr><td>Collection</td><td>Last alert from source ehr_access</td><td>2 min ago (120 alerts)</td><td>OK</td><td>&lt;= 60 min (imported sources replay on demand)</td></tr><tr><td>Collection</td><td>Last alert from agent wazuh.manager</td><td>2 min ago (1713 alerts)</td><td>OK</td><td>&lt;= 60 min (imported sources replay on demand)</td></tr><tr><td>Collection</td><td>Last alert from agent hrmc-linux-srv01</td><td>6 min ago (212 alerts)</td><td>OK</td><td>&lt;= 60 min (imported sources replay on demand)</td></tr><tr><td>Processing</td><td>Events decoded (total since start)</td><td>247</td><td>OK</td><td>&gt; 0</td></tr><tr><td>Processing</td><td>Events per second (last interval)</td><td>0.0</td><td>OK</td><td>baseline in section 3.3</td></tr><tr><td>Processing</td><td>Events dropped</td><td>0</td><td>OK</td><td>0</td></tr><tr><td>Processing</td><td>Highest analysisd queue usage</td><td>0.0%</td><td>OK</td><td>&lt; 70%</td></tr><tr><td>Processing</td><td>Alerts written</td><td>48</td><td>OK</td><td>&gt; 0</td></tr><tr><td>Processing</td><td>Agent messages discarded (remoted)</td><td>0</td><td>OK</td><td>0</td></tr><tr><td>Storage</td><td>Indexer cluster health</td><td>green</td><td>OK</td><td>green/yellow (single node)</td></tr><tr><td>Storage</td><td>Alert indices size</td><td>3.6 MB, 1925 alerts in 2 daily indices</td><td>OK</td><td>trend tracked</td></tr><tr><td>Storage</td><td>Indexer data disk free</td><td>82% (197.9 GB)</td><td>OK</td><td>&gt; 15%</td></tr><tr><td>Storage</td><td>Host (Mac) disk free</td><td>22.8 GB (9%)</td><td>WARNING</td><td>&gt; 3 GB (vulnerability detector disabled after it filled the disk on 2026-11-18)</td></tr><tr><td>Storage</td><td>Manager queue folder</td><td>13 MB</td><td>OK</td><td>&lt; 1,000 MB</td></tr></table>
+<p><b>Health-check procedure:</b> OK &rarr; nothing; WARNING &rarr; Tier 1 checks within the shift (the two warnings above are explained: the Keycloak admin source only replays on demand; the Mac has 9% disk free);
+CRITICAL &rarr; SOC lead paged, monitoring gap recorded as an incident.</p>
+<div class="ok"><b>Real health findings during this project.</b>
+(1) The first health-check run returned <b>CRITICAL: agent hrmc-linux-srv01 Disconnected</b> (2026-11-18T19:13:12+00:00). Cause: the manager restart pushed shared configuration,
+the agent restarted itself, and nothing in the container started it again. Fix: agent restarted and <code>auto_restart</code> disabled; next run OK.
+(2) Earlier the host disk fell below 1 GB: Wazuh's vulnerability detector had downloaded 18.6 GB of feeds. It was disabled, the cache removed and the space returned;
+the host-disk and manager-queue checks were added so this is caught early next time.</div>
+</body></html>

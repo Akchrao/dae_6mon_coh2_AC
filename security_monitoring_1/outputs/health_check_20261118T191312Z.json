@@ -1,0 +1,234 @@
+{
+ "run_utc": "2026-11-18T19:13:12+00:00",
+ "overall": "CRITICAL",
+ "thresholds": {
+  "queue_usage_pct_warn": 70,
+  "events_dropped_warn": 0,
+  "source_silence_minutes_warn": 60,
+  "disk_free_pct_warn": 15,
+  "disk_free_gb_crit": 3,
+  "index_status_ok": [
+   "green",
+   "yellow"
+  ]
+ },
+ "checks": [
+  {
+   "area": "Collection",
+   "check": "Agent wazuh.manager (server)",
+   "value": "Active/Local",
+   "status": "OK",
+   "threshold": "Active"
+  },
+  {
+   "area": "Collection",
+   "check": "Agent hrmc-linux-srv01",
+   "value": "Disconnected",
+   "status": "CRITICAL",
+   "threshold": "Active"
+  },
+  {
+   "area": "Collection",
+   "check": "Service wazuh-analysisd",
+   "value": "running",
+   "status": "OK",
+   "threshold": "running"
+  },
+  {
+   "area": "Collection",
+   "check": "Service wazuh-remoted",
+   "value": "running",
+   "status": "OK",
+   "threshold": "running"
+  },
+  {
+   "area": "Collection",
+   "check": "Service wazuh-logcollector",
+   "value": "running",
+   "status": "OK",
+   "threshold": "running"
+  },
+  {
+   "area": "Collection",
+   "check": "Service wazuh-syscheckd",
+   "value": "running",
+   "status": "OK",
+   "threshold": "running"
+  },
+  {
+   "area": "Collection",
+   "check": "Service wazuh-maild",
+   "value": "running",
+   "status": "OK",
+   "threshold": "running"
+  },
+  {
+   "area": "Collection",
+   "check": "Service wazuh-db",
+   "value": "running",
+   "status": "OK",
+   "threshold": "running"
+  },
+  {
+   "area": "Collection",
+   "check": "Service wazuh-modulesd",
+   "value": "running",
+   "status": "OK",
+   "threshold": "running"
+  },
+  {
+   "area": "Collection",
+   "check": "Log file ehr_access.json",
+   "value": "0 events since start",
+   "status": "OK",
+   "threshold": "file monitored"
+  },
+  {
+   "area": "Collection",
+   "check": "Log file windows_security.json",
+   "value": "90 events since start",
+   "status": "OK",
+   "threshold": "file monitored"
+  },
+  {
+   "area": "Collection",
+   "check": "Log file auth.log",
+   "value": "0 events since start",
+   "status": "OK",
+   "threshold": "file monitored"
+  },
+  {
+   "area": "Collection",
+   "check": "Log file keycloak_login.json",
+   "value": "0 events since start",
+   "status": "OK",
+   "threshold": "file monitored"
+  },
+  {
+   "area": "Collection",
+   "check": "Log file keycloak_admin.json",
+   "value": "0 events since start",
+   "status": "OK",
+   "threshold": "file monitored"
+  },
+  {
+   "area": "Collection",
+   "check": "Last alert from source keycloak_admin",
+   "value": "1307 min ago (231 alerts)",
+   "status": "WARNING",
+   "threshold": "<= 60 min (imported sources replay on demand)"
+  },
+  {
+   "area": "Collection",
+   "check": "Last alert from source windows_security",
+   "value": "0 min ago (223 alerts)",
+   "status": "OK",
+   "threshold": "<= 60 min (imported sources replay on demand)"
+  },
+  {
+   "area": "Collection",
+   "check": "Last alert from source keycloak_login",
+   "value": "1306 min ago (199 alerts)",
+   "status": "WARNING",
+   "threshold": "<= 60 min (imported sources replay on demand)"
+  },
+  {
+   "area": "Collection",
+   "check": "Last alert from source ehr_access",
+   "value": "1306 min ago (108 alerts)",
+   "status": "WARNING",
+   "threshold": "<= 60 min (imported sources replay on demand)"
+  },
+  {
+   "area": "Collection",
+   "check": "Last alert from agent wazuh.manager",
+   "value": "0 min ago (1205 alerts)",
+   "status": "OK",
+   "threshold": "<= 60 min (imported sources replay on demand)"
+  },
+  {
+   "area": "Collection",
+   "check": "Last alert from agent hrmc-linux-srv01",
+   "value": "0 min ago (4 alerts)",
+   "status": "OK",
+   "threshold": "<= 60 min (imported sources replay on demand)"
+  },
+  {
+   "area": "Processing",
+   "check": "Events decoded (total since start)",
+   "value": 517,
+   "status": "OK",
+   "threshold": "> 0"
+  },
+  {
+   "area": "Processing",
+   "check": "Events per second (last interval)",
+   "value": 0.0,
+   "status": "OK",
+   "threshold": "baseline in section 3.3"
+  },
+  {
+   "area": "Processing",
+   "check": "Events dropped",
+   "value": 0,
+   "status": "OK",
+   "threshold": "0"
+  },
+  {
+   "area": "Processing",
+   "check": "Highest analysisd queue usage",
+   "value": "0.0%",
+   "status": "OK",
+   "threshold": "< 70%"
+  },
+  {
+   "area": "Processing",
+   "check": "Alerts written",
+   "value": 223,
+   "status": "OK",
+   "threshold": "> 0"
+  },
+  {
+   "area": "Processing",
+   "check": "Agent messages discarded (remoted)",
+   "value": 0,
+   "status": "OK",
+   "threshold": "0"
+  },
+  {
+   "area": "Storage",
+   "check": "Indexer cluster health",
+   "value": "green",
+   "status": "OK",
+   "threshold": "green/yellow (single node)"
+  },
+  {
+   "area": "Storage",
+   "check": "Alert indices size",
+   "value": "2.5 MB, 1209 alerts in 2 daily indices",
+   "status": "OK",
+   "threshold": "trend tracked"
+  },
+  {
+   "area": "Storage",
+   "check": "Indexer data disk free",
+   "value": "82% (197.9 GB)",
+   "status": "OK",
+   "threshold": "> 15%"
+  },
+  {
+   "area": "Storage",
+   "check": "Host (Mac) disk free",
+   "value": "23.1 GB (9%)",
+   "status": "WARNING",
+   "threshold": "> 3 GB (vulnerability detector disabled after it filled the disk on 2026-11-18)"
+  },
+  {
+   "area": "Storage",
+   "check": "Manager queue folder",
+   "value": "12 MB",
+   "status": "OK",
+   "threshold": "< 1,000 MB"
+  }
+ ]
+}

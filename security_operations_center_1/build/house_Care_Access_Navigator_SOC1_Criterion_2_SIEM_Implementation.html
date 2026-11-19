@@ -1,0 +1,136 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Security Operations Center 1 — Criterion 2: SIEM Implementation</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Security Operations Center 1 — Criterion 2: SIEM Implementation</div><div class='subsub'>SOC operations, SIEM implementation, threat detection and incident response on a Wazuh SIEM fed with Care Access Navigator logs</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Security Operations Center 1 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Rubric criterion:</td><td>Criterion 2: SIEM Implementation</td></tr><tr><td class='k'>Environment:</td><td>Wazuh 4.9.2 single-node SIEM (manager, indexer, dashboard) in Docker; MailHog test mailbox; capstone Keycloak and EHR logs</td></tr><tr><td class='k'>Date:</td><td>November 18, 2026</td></tr></table><h2>2. SIEM Implementation</h2>
+
+<h3>2.1 SIEM architecture</h3>
+<div class="fig"><img src="../diagrams/siem_architecture.png"><div class="cap">Source: <code>diagrams/siem_architecture.mmd</code></div></div>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:22%">Component</th><th>Function and relationship</th></tr>
+<tr><td>Log sources</td><td>Systems that produce events. Here: Keycloak sign-ins, Keycloak admin changes, EHR access audit (JSON files) and a Linux auth.log (syslog).</td></tr>
+<tr><td>logcollector</td><td>Part of the Wazuh manager (or agent). Tails each configured file (<code>&lt;localfile&gt;</code>) and passes every new line on.</td></tr>
+<tr><td>analysisd: decoders</td><td>Turn a raw line into named fields. The built-in JSON decoder gives <code>username</code>, <code>ip</code>, <code>role</code>, <code>patient_id</code>; the syslog decoders give <code>srcip</code>, <code>dstuser</code>.</td></tr>
+<tr><td>analysisd: rules</td><td>A tree of rules evaluated on the decoded fields. A match produces an alert with a level (0&ndash;15), description, groups and MITRE ATT&amp;CK IDs. Correlation rules remember earlier alerts.</td></tr>
+<tr><td>alerts.json / alerts.log</td><td>The manager's alert output, the hand-off point to storage and to email.</td></tr>
+<tr><td>maild</td><td>Sends email for alerts at or above the configured level, with extra routing per level.</td></tr>
+<tr><td>Filebeat</td><td>Ships alerts from the manager to the indexer over TLS.</td></tr>
+<tr><td>Wazuh indexer (OpenSearch)</td><td>Stores and indexes alerts so they can be searched in seconds.</td></tr>
+<tr><td>Wazuh dashboard</td><td>The analyst's web interface: Threat Hunting, rule management, configuration, MITRE view.</td></tr>
+<tr><td>Agents</td><td>Installed on endpoints (as on parrot-vm in IR1) to collect logs, file integrity and inventory and send them to the manager on port 1514.</td></tr>
+</table>
+
+<h3 class="pb">2.2 Sample correlation rule</h3>
+<p>Template: <i>name, purpose, data source, logic, threshold, output, false positives, response</i>.</p>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:22%">Field</th><th>Rule 100502: CAN-ID-001 password guessing</th></tr>
+<tr><td>Purpose</td><td>Detect someone guessing a user's password before they get in</td></tr>
+<tr><td>Data source</td><td>Keycloak sign-in events (<code>src = keycloak_login</code>)</td></tr>
+<tr><td>Logic</td><td>Child rule 100501 marks each <code>LOGIN_ERROR</code>. Rule 100502 fires when 100501 has matched <b>5 times for the same <code>username</code> within 120 seconds</b> (<code>frequency="5" timeframe="120"</code>, <code>if_matched_sid 100501</code>, <code>same_field username</code>).</td></tr>
+<tr><td>Output</td><td>Level 10 alert, MITRE T1110.001, group <code>correlation</code>; emailed to Tier 1</td></tr>
+<tr><td>Known false positives</td><td>A user who forgot a new password; the lockout test account <code>test.vendor1</code></td></tr>
+<tr><td>Response</td><td>Check source IP and whether a success followed (rule 100507); if yes, treat as account compromise</td></tr>
+</table>
+<pre>&lt;rule id="100502" level="10" frequency="5" timeframe="120"&gt;
+  &lt;if_matched_sid&gt;100501&lt;/if_matched_sid&gt;
+  &lt;same_field&gt;username&lt;/same_field&gt;
+  &lt;description&gt;CAN-ID-001 Password guessing: 5+ failed Keycloak sign-ins for $(username) within 2 minutes&lt;/description&gt;
+  &lt;mitre&gt;&lt;id&gt;T1110.001&lt;/id&gt;&lt;/mitre&gt;
+  &lt;group&gt;authentication_failures,correlation,&lt;/group&gt;
+&lt;/rule&gt;
+
+&lt;!-- second-stage correlation: success after the burst --&gt;
+&lt;rule id="100507" level="13" timeframe="300"&gt;
+  &lt;if_sid&gt;100506&lt;/if_sid&gt;                 &lt;!-- a successful sign-in --&gt;
+  &lt;if_matched_sid&gt;100502&lt;/if_matched_sid&gt;  &lt;!-- that follows a password-guessing alert --&gt;
+  &lt;same_field&gt;username&lt;/same_field&gt;         &lt;!-- for the same user, within 5 minutes --&gt;
+  &lt;description&gt;Possible account compromise: $(username) signed in from $(ip) after a password-guessing burst&lt;/description&gt;
+&lt;/rule&gt;</pre>
+<p>A third correlation rule, <b>100522</b>, raises a level 12 alert when one user opens 15 or more patient records within 60 seconds (CAN-ID-007).
+All three fired in the investigation scenario (section 3.5). Full rule file: <code>wazuh_config/soc1_rules.xml</code>.</p>
+<div class="fig"><img src="../screenshots/SS-03.png"><div class="cap">Screenshot 3: the correlation rule in the Wazuh dashboard (Server management &rarr; Rules).</div></div>
+
+<h3 class="pb">2.3 Log sources and their significance</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:20%">Source</th><th style="width:15%">Format / volume</th><th>Why it matters for security monitoring</th><th style="width:16%">Detections</th></tr>
+<tr><td>Keycloak sign-in events</td><td>JSON, 192 events</td><td>Every success, failure, lockout and refusal at the identity provider. It is the first place password guessing, leaver sign-ins and unapproved app access show up.</td><td>100501&ndash;100507</td></tr>
+<tr><td>Keycloak admin events</td><td>JSON, 231 events</td><td>Who changed roles, groups, users and authentication flows. Privilege changes are how attackers and insiders give themselves more access.</td><td>100511 (53 alerts)</td></tr>
+<tr><td>EHR access audit</td><td>JSON, 90 events</td><td>Which user opened which patient record. HIPAA requires this audit trail; it is the only source that shows ePHI actually being read.</td><td>100521, 100522</td></tr>
+<tr><td>Linux auth.log (IR1 parrot-vm)</td><td>syslog, 615 lines</td><td>SSH logins, sudo, new users and groups on a server. Shows host-level misuse that the identity provider never sees.</td><td>Built-in 5402, 5715, 5718, 5901, 5902</td></tr>
+</table>
+<pre>&lt;localfile&gt;  &lt;log_format&gt;json&lt;/log_format&gt;    &lt;location&gt;/var/log/soc1/keycloak_login.json&lt;/location&gt; &lt;/localfile&gt;
+&lt;localfile&gt;  &lt;log_format&gt;json&lt;/log_format&gt;    &lt;location&gt;/var/log/soc1/keycloak_admin.json&lt;/location&gt; &lt;/localfile&gt;
+&lt;localfile&gt;  &lt;log_format&gt;json&lt;/log_format&gt;    &lt;location&gt;/var/log/soc1/ehr_access.json&lt;/location&gt;     &lt;/localfile&gt;
+&lt;localfile&gt;  &lt;log_format&gt;syslog&lt;/log_format&gt;  &lt;location&gt;/var/log/soc1/auth.log&lt;/location&gt;            &lt;/localfile&gt;</pre>
+
+<h3>2.4 Notification settings</h3>
+<p>Configured in the manager's <code>ossec.conf</code> (excerpt in <code>wazuh_config/ossec_soc1_excerpt.conf</code>):</p>
+<pre>&lt;global&gt;
+  &lt;email_notification&gt;yes&lt;/email_notification&gt;
+  &lt;smtp_server&gt;mailhog&lt;/smtp_server&gt;              &lt;!-- local test mail server --&gt;
+  &lt;email_from&gt;wazuh-soc@hrmc.lab&lt;/email_from&gt;
+  &lt;email_to&gt;soc-tier1@hrmc.lab&lt;/email_to&gt;
+  &lt;email_maxperhour&gt;100&lt;/email_maxperhour&gt;
+&lt;/global&gt;
+&lt;alerts&gt;
+  &lt;log_alert_level&gt;3&lt;/log_alert_level&gt;            &lt;!-- store level 3+ --&gt;
+  &lt;email_alert_level&gt;10&lt;/email_alert_level&gt;       &lt;!-- email level 10+ to Tier 1 --&gt;
+&lt;/alerts&gt;
+&lt;email_alerts&gt;                                     &lt;!-- escalation routing --&gt;
+  &lt;email_to&gt;soc-lead@hrmc.lab&lt;/email_to&gt;
+  &lt;level&gt;12&lt;/level&gt;
+  &lt;do_not_delay /&gt;
+&lt;/email_alerts&gt;</pre>
+<div class="ok"><b>Result:</b> 33 emails received. Level 10 alerts (password guessing, disabled-account sign-in) went to Tier 1 only;
+level 12 and 13 alerts (unapproved ePHI access, bulk access, account compromise) went to Tier 1 and the SOC lead at the same time.
+Wazuh groups several alerts into one email when they arrive together, so there are fewer emails than alerts.</div>
+<div class="fig"><img src="../screenshots/SS-04.png"><div class="cap">Screenshot 4: the SOC mailbox (MailHog) with Wazuh notifications to soc-tier1 and soc-lead.</div></div>
+<div class="fig"><img src="../screenshots/SS-05.png"><div class="cap">Screenshot 5: the level 13 notification sent to soc-lead. Wazuh groups alerts that arrive together, so the email body starts with the related password-guessing alert (rule 100502) and its source events.</div></div>
+
+<!-- ===================================================================== -->
+</body></html>

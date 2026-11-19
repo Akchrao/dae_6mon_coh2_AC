@@ -1,0 +1,123 @@
+<!--
+  SOC 1 - Care Access Navigator (HRMC) custom Wazuh rules.
+  Log sources: Keycloak sign-in events, Keycloak admin events, EHR access audit (JSON, field "src"),
+  plus the Linux auth.log (built-in sshd/PAM rules).
+  Rule IDs 100500-100599. Mapped to the capstone identity detections CAN-ID-001..007.
+-->
+
+<group name="soc1,keycloak,authentication,">
+
+  <!-- Base: every Keycloak sign-in event -->
+  <rule id="100500" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="src">^keycloak_login$</field>
+    <description>Keycloak sign-in event: $(type) for user $(username)</description>
+  </rule>
+
+  <!-- Single failed sign-in -->
+  <rule id="100501" level="5">
+    <if_sid>100500</if_sid>
+    <field name="type">^LOGIN_ERROR$</field>
+    <description>Keycloak failed sign-in for $(username): $(error)</description>
+    <mitre><id>T1110</id></mitre>
+    <group>authentication_failed,</group>
+  </rule>
+
+  <!-- CORRELATION RULE (CAN-ID-001): 5 failed sign-ins for the same user within 2 minutes -->
+  <rule id="100502" level="10" frequency="5" timeframe="120">
+    <if_matched_sid>100501</if_matched_sid>
+    <same_field>username</same_field>
+    <description>CAN-ID-001 Password guessing: 5+ failed Keycloak sign-ins for $(username) within 2 minutes</description>
+    <mitre><id>T1110.001</id></mitre>
+    <group>authentication_failures,correlation,</group>
+  </rule>
+
+  <!-- CAN-ID-002 / 003: a disabled or locked account tried to sign in -->
+  <rule id="100503" level="10">
+    <if_sid>100500</if_sid>
+    <field name="error">^user_disabled$|^user_temporarily_disabled$</field>
+    <description>CAN-ID-002/003 Sign-in attempt by a disabled or locked account: $(username)</description>
+    <mitre><id>T1078</id></mitre>
+    <group>leaver,</group>
+  </rule>
+
+  <!-- Lockout triggered (control working) -->
+  <rule id="100504" level="7">
+    <if_sid>100500</if_sid>
+    <field name="type">^USER_DISABLED_BY_TEMPORARY_LOCKOUT$</field>
+    <description>Keycloak locked account $(username) after repeated failures (lockout control)</description>
+  </rule>
+
+  <!-- CAN-ID-004: sign-in refused because the role is not approved for the app -->
+  <rule id="100505" level="8">
+    <if_sid>100500</if_sid>
+    <field name="error">^access_denied$</field>
+    <description>CAN-ID-004 Unapproved application access refused for $(username) on $(client)</description>
+    <mitre><id>T1078</id></mitre>
+  </rule>
+
+  <!-- Successful sign-in (used by the correlation rule below) -->
+  <rule id="100506" level="3">
+    <if_sid>100500</if_sid>
+    <field name="type">^LOGIN$</field>
+    <description>Keycloak successful sign-in for $(username) from $(ip)</description>
+    <group>authentication_success,</group>
+  </rule>
+
+  <!-- CORRELATION RULE: success right after a password-guessing burst = likely compromised account -->
+  <rule id="100507" level="13" timeframe="300">
+    <if_sid>100506</if_sid>
+    <if_matched_sid>100502</if_matched_sid>
+    <same_field>username</same_field>
+    <description>Possible account compromise: $(username) signed in from $(ip) after a password-guessing burst</description>
+    <mitre><id>T1110</id><id>T1078</id></mitre>
+    <group>correlation,account_compromise,</group>
+  </rule>
+</group>
+
+<group name="soc1,keycloak,admin_activity,">
+
+  <!-- Base: every Keycloak admin change -->
+  <rule id="100510" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="src">^keycloak_admin$</field>
+    <description>Keycloak admin event: $(operation) $(resource_type)</description>
+  </rule>
+
+  <!-- CAN-ID-005: privilege change (role mapping or group membership) -->
+  <rule id="100511" level="8">
+    <if_sid>100510</if_sid>
+    <field name="resource_type">^REALM_ROLE_MAPPING$|^GROUP_MEMBERSHIP$</field>
+    <description>CAN-ID-005 Privilege change: $(operation) $(resource_type) by $(admin_user)</description>
+    <mitre><id>T1098</id></mitre>
+    <group>privilege_change,</group>
+  </rule>
+</group>
+
+<group name="soc1,ehr,ephi_access,">
+
+  <!-- Base: every EHR record access -->
+  <rule id="100520" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="src">^ehr_access$</field>
+    <description>EHR access: $(username) ($(role)) $(action) $(patient_id)</description>
+  </rule>
+
+  <!-- Billing role must not open clinical data (least privilege) -->
+  <rule id="100521" level="12">
+    <if_sid>100520</if_sid>
+    <field name="role">^billing$</field>
+    <description>Unapproved ePHI access: billing user $(username) opened $(action) for $(patient_id)</description>
+    <mitre><id>T1078</id></mitre>
+    <group>hipaa_violation,</group>
+  </rule>
+
+  <!-- CORRELATION RULE (CAN-ID-007): bulk record access, 15+ records by one user in 60 seconds -->
+  <rule id="100522" level="12" frequency="15" timeframe="60">
+    <if_matched_sid>100520</if_matched_sid>
+    <same_field>username</same_field>
+    <description>CAN-ID-007 Bulk patient-record access: $(username) opened 15+ records within 60 seconds</description>
+    <mitre><id>T1213</id></mitre>
+    <group>correlation,data_exfiltration_risk,</group>
+  </rule>
+</group>

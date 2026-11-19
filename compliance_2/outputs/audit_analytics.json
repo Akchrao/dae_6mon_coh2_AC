@@ -1,0 +1,220 @@
+{
+ "sampling": [
+  {
+   "confidence": 0.95,
+   "tolerable_deviation": 0.05,
+   "deviations_allowed": 0,
+   "sample_size": 59
+  },
+  {
+   "confidence": 0.95,
+   "tolerable_deviation": 0.05,
+   "deviations_allowed": 1,
+   "sample_size": 93
+  },
+  {
+   "confidence": 0.95,
+   "tolerable_deviation": 0.05,
+   "deviations_allowed": 2,
+   "sample_size": 124
+  },
+  {
+   "confidence": 0.9,
+   "tolerable_deviation": 0.05,
+   "deviations_allowed": 1,
+   "sample_size": 77
+  },
+  {
+   "confidence": 0.95,
+   "tolerable_deviation": 0.1,
+   "deviations_allowed": 1,
+   "sample_size": 46
+  }
+ ],
+ "ehr_access": {
+  "events": 90,
+  "by_role": {
+   "nurse": 42,
+   "billing": 18,
+   "clinician": 30
+  },
+  "billing_role_clinical_views": 18,
+  "billing_share_pct": 20.0,
+  "billing_share_ci95": [
+   13.0,
+   29.4
+  ],
+  "finding": "Billing role should have zero clinical views (least privilege); every one is an exception to test",
+  "per_user": {
+   "test.nurse2": {
+    "views": 18,
+    "z": -0.9
+   },
+   "test.billing1": {
+    "views": 18,
+    "z": -0.9
+   },
+   "test.clinician1": {
+    "views": 30,
+    "z": 1.51
+   },
+   "test.nurse1": {
+    "views": 24,
+    "z": 0.3
+   }
+  }
+ },
+ "signin_failures": [
+  {
+   "user": "test.vendor1",
+   "failures": 44,
+   "z": 2.22
+  },
+  {
+   "user": "test.billing2",
+   "failures": 7,
+   "z": -0.23
+  },
+  {
+   "user": "test.clinician3",
+   "failures": 4,
+   "z": -0.43
+  },
+  {
+   "user": "test.nurse2",
+   "failures": 4,
+   "z": -0.43
+  },
+  {
+   "user": "test.clinician2",
+   "failures": 3,
+   "z": -0.5
+  },
+  {
+   "user": "admin",
+   "failures": 1,
+   "z": -0.63
+  }
+ ],
+ "signin_outliers_z_gt_2": [
+  {
+   "user": "test.vendor1",
+   "failures": 44,
+   "z": 2.22
+  }
+ ],
+ "control_tests": [
+  {
+   "date": "2026-10-13",
+   "pass": 8,
+   "total": 14,
+   "rate_pct": 57.1,
+   "ci95": [
+    32.6,
+    78.6
+   ]
+  },
+  {
+   "date": "2026-11-03",
+   "pass": 12,
+   "total": 14,
+   "rate_pct": 85.7,
+   "ci95": [
+    60.1,
+    96.0
+   ]
+  }
+ ],
+ "findings_forecast": {
+  "capstone_rate_per_control": 0.462,
+  "sites": [
+   {
+    "site": "US - HRMC flagship (Albany, NY)",
+    "controls_in_scope": 48,
+    "maturity_factor": 0.6,
+    "expected_findings": 13.3,
+    "pi90": "8-20"
+   },
+   {
+    "site": "US - community campuses (2)",
+    "controls_in_scope": 48,
+    "maturity_factor": 0.8,
+    "expected_findings": 17.7,
+    "pi90": "11-25"
+   },
+   {
+    "site": "EU - Dublin + Cork clinics",
+    "controls_in_scope": 48,
+    "maturity_factor": 1.3,
+    "expected_findings": 28.8,
+    "pi90": "20-38"
+   },
+   {
+    "site": "EU - Munich diagnostics",
+    "controls_in_scope": 48,
+    "maturity_factor": 1.3,
+    "expected_findings": 28.8,
+    "pi90": "20-38"
+   },
+   {
+    "site": "India - Hyderabad shared services",
+    "controls_in_scope": 48,
+    "maturity_factor": 1.2,
+    "expected_findings": 26.6,
+    "pi90": "18-35"
+   }
+  ]
+ },
+ "ca_closure": {
+  "total": 18,
+  "closed": 9,
+  "closed_pct": 50.0,
+  "closure_rate_per_week": 1.75,
+  "needed_for_90pct": 8,
+  "forecast_90pct_date": "2026-12-20",
+  "open_by_due_date": [
+   [
+    "2026-12-01",
+    "CA-08"
+   ],
+   [
+    "2026-12-01",
+    "CA-12"
+   ],
+   [
+    "2026-12-01",
+    "CA-13"
+   ],
+   [
+    "2026-12-01",
+    "CA-17"
+   ],
+   [
+    "2026-12-15",
+    "CA-15"
+   ],
+   [
+    "2026-12-15",
+    "CA-18"
+   ],
+   [
+    "2027-01-31",
+    "CA-03"
+   ],
+   [
+    "2027-01-31",
+    "CA-06"
+   ],
+   [
+    "2027-01-31",
+    "CA-16"
+   ]
+  ],
+  "at_risk_next_14_days": [
+   "CA-08",
+   "CA-12",
+   "CA-13",
+   "CA-17"
+  ]
+ }
+}

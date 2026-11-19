@@ -1,0 +1,135 @@
+<!--
+  Security Monitoring 1 - HRMC custom Wazuh rules (IDs 100600-100699).
+  Sources: imported Windows Security event samples (JSON, src=windows_security) and the live Linux agent
+  hrmc-linux-srv01 (auth.log, FIM, outbound_tcp command). Builds on the SOC 1 rules (100500-100522).
+  Scenarios covered: authentication, file access, network activity, plus cross-source correlation.
+-->
+
+<!-- ============ Windows: authentication ============ -->
+<group name="sm1,windows,authentication,">
+  <rule id="100600" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="src">^windows_security$</field>
+    <description>Windows Security event $(event_id) on $(computer) for $(target_user)</description>
+  </rule>
+
+  <rule id="100601" level="5">
+    <if_sid>100600</if_sid>
+    <field name="event_id">^4625$</field>
+    <description>Windows failed logon for $(target_user) on $(computer) (type $(logon_type)) from $(ip)</description>
+    <mitre><id>T1110</id></mitre>
+    <group>authentication_failed,</group>
+  </rule>
+
+  <rule id="100602" level="10" frequency="6" timeframe="120">
+    <if_matched_sid>100601</if_matched_sid>
+    <same_field>username</same_field>
+    <description>Windows password guessing: 6+ failed logons for $(target_user) within 2 minutes</description>
+    <mitre><id>T1110.001</id></mitre>
+    <group>authentication_failures,correlation,</group>
+  </rule>
+
+  <rule id="100603" level="3">
+    <if_sid>100600</if_sid>
+    <field name="event_id">^4624$</field>
+    <description>Windows logon: $(target_user) on $(computer) (type $(logon_type))</description>
+    <group>authentication_success,</group>
+  </rule>
+
+  <rule id="100604" level="10">
+    <if_sid>100603</if_sid>
+    <field name="logon_type">^10$</field>
+    <field name="ip" negate="yes">^10\.|^127\.|^-$</field>
+    <description>Remote desktop (RDP) logon from outside the hospital network: $(target_user) from $(ip)</description>
+    <mitre><id>T1021.001</id><id>T1078</id></mitre>
+    <group>remote_access,</group>
+  </rule>
+
+  <rule id="100605" level="8">
+    <if_sid>100600</if_sid>
+    <field name="event_id">^4740$</field>
+    <description>Windows account locked out: $(target_user)</description>
+  </rule>
+
+  <rule id="100606" level="8">
+    <if_sid>100600</if_sid>
+    <field name="event_id">^4732$</field>
+    <description>Member $(member) added to local group $(group) on $(computer)</description>
+    <mitre><id>T1098</id></mitre>
+    <group>privilege_change,</group>
+  </rule>
+</group>
+
+<!-- ============ Windows: file access ============ -->
+<group name="sm1,windows,file_access,">
+  <rule id="100610" level="3">
+    <if_sid>100600</if_sid>
+    <field name="event_id">^4663$</field>
+    <description>File access: $(target_user) $(access) $(object_name)</description>
+  </rule>
+
+  <rule id="100611" level="8">
+    <if_sid>100610</if_sid>
+    <field name="object_name">EHR_Exports</field>
+    <description>Access to the EHR export share (ePHI): $(target_user) read $(object_name)</description>
+    <group>ephi_access,</group>
+  </rule>
+
+  <rule id="100612" level="12" frequency="20" timeframe="60">
+    <if_matched_sid>100611</if_matched_sid>
+    <same_field>username</same_field>
+    <description>Mass file access: $(target_user) read 20+ EHR export files within 60 seconds</description>
+    <mitre><id>T1005</id><id>T1039</id></mitre>
+    <group>correlation,data_exfiltration_risk,</group>
+  </rule>
+</group>
+
+<!-- ============ Windows: network activity ============ -->
+<group name="sm1,windows,network,">
+  <rule id="100620" level="3">
+    <if_sid>100600</if_sid>
+    <field name="event_id">^5156$</field>
+    <description>Network connection allowed: $(application) to $(dest_ip):$(dest_port)</description>
+  </rule>
+
+  <rule id="100621" level="12">
+    <if_sid>100620</if_sid>
+    <field name="dest_ip">^203\.0\.113\.</field>
+    <description>Outbound connection to a known-bad address: $(application) on $(computer) to $(dest_ip):$(dest_port)</description>
+    <mitre><id>T1041</id></mitre>
+    <group>c2_or_exfil,</group>
+  </rule>
+</group>
+
+<!-- ============ Linux agent (hrmc-linux-srv01): network activity ============ -->
+<group name="sm1,linux,network,">
+  <rule id="100630" level="12">
+    <if_sid>530</if_sid>
+    <match>ossec: output: 'outbound_tcp'</match>
+    <regex>203.0.113.\d+:\d+</regex>
+    <description>Linux server hrmc-linux-srv01 has a TCP connection to a known-bad address (203.0.113.0/24)</description>
+    <mitre><id>T1041</id></mitre>
+    <group>c2_or_exfil,</group>
+  </rule>
+</group>
+
+<!-- ============ Cross-source correlation ============ -->
+<group name="sm1,correlation,cross_source,">
+  <!-- Windows (RDP logon from outside) + EHR application (unapproved patient-record access, SOC 1 rule 100521), same user -->
+  <rule id="100650" level="14" timeframe="900">
+    <if_sid>100521</if_sid>
+    <if_matched_sid>100604</if_matched_sid>
+    <same_field>username</same_field>
+    <description>CROSS-SOURCE: $(username) opened patient record $(patient_id) in the EHR within 15 minutes of an RDP logon from outside the network</description>
+    <mitre><id>T1078</id><id>T1213</id></mitre>
+  </rule>
+
+  <!-- Windows file access (mass EHR export reads) + Windows network (connection to a known-bad address), same user -->
+  <rule id="100651" level="15" timeframe="900">
+    <if_sid>100621</if_sid>
+    <if_matched_sid>100612</if_matched_sid>
+    <same_field>username</same_field>
+    <description>LIKELY DATA EXFILTRATION: $(username) read EHR exports in bulk, then $(application) connected to $(dest_ip)</description>
+    <mitre><id>T1041</id><id>T1039</id></mitre>
+  </rule>
+</group>

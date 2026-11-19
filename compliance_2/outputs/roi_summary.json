@@ -1,0 +1,58 @@
+{
+ "assumptions": {
+  "staff": 10800,
+  "annual_turnover": 0.18,
+  "internal_moves": 0.1,
+  "iam_rate": 55,
+  "grc_rate": 65,
+  "manager_rate": 70,
+  "audit_rate": 75,
+  "unified_controls": 48,
+  "regions": 3,
+  "manual_hours_per_control_test": 2.5,
+  "test_automation_share": 0.7,
+  "review_managers": 120,
+  "manual_review_prep_hours": 1.5,
+  "audit_prep_hours_per_framework": 400,
+  "frameworks": 3,
+  "audit_prep_reduction": 0.4,
+  "risk_benefit_share_credited": 0.25,
+  "discount_rate": 0.08
+ },
+ "jml_events_per_year": 4968,
+ "minutes_per_jml_event": {
+  "manual": 72.3,
+  "automated": 2.6
+ },
+ "annual_hard_savings_full_adoption": {
+  "JML touch time": 317717,
+  "Control testing and evidence collection": 65520,
+  "Access review preparation": 50400,
+  "External audit preparation": 36000
+ },
+ "annual_hard_savings_total": 469637,
+ "annual_risk_benefit_credited": 138076,
+ "one_time_costs": {
+  "Workflow engine + AI triage build (320 h)": 27200,
+  "CISO Assistant deployment + data sync (160 h)": 13600,
+  "SIEM (Wazuh) integration (120 h)": 10200,
+  "JML automation hardening for 3 regions (200 h)": 17000,
+  "Training: 200 staff x 1 h": 12000,
+  "Program + change management (300 h)": 28500,
+  "Privacy review of the AI step: GDPR Art. 22 / DPIA (60 h)": 9000,
+  "Validation testing of the automation (120 h)": 10200,
+  "Open-source licences (CISO Assistant CE, Wazuh, Keycloak)": 0
+ },
+ "one_time_total": 127700,
+ "annual_costs": {
+  "Hosting: 3 VMs / containers": 9000,
+  "Platform administration (0.5 FTE)": 55000,
+  "Model retraining and rule tuning (80 h)": 6800
+ },
+ "annual_cost_total": 70800,
+ "payback_months_hard_savings": 7.3,
+ "three_year_npv_hard": 726202,
+ "three_year_npv_with_risk": 1030898,
+ "three_year_roi_pct_hard": 259,
+ "operational_savings_hours_per_year": 7985
+}

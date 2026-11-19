@@ -1,0 +1,401 @@
+{
+ "exported_utc": "2026-11-18T17:49:33+00:00",
+ "source": "CISO Assistant (live)",
+ "applied_controls": [
+  {
+   "ref_id": "AC-01",
+   "name": "Users receive only the access their job requires (RBAC, least privilege)",
+   "status": "active",
+   "category": "technical",
+   "eta": null
+  },
+  {
+   "ref_id": "AC-02",
+   "name": "Terminated users are disabled and all access removed promptly",
+   "status": "active",
+   "category": "technical",
+   "eta": null
+  },
+  {
+   "ref_id": "AC-03",
+   "name": "Role changes remove old access before new access is granted",
+   "status": "active",
+   "category": "technical",
+   "eta": null
+  },
+  {
+   "ref_id": "AC-04",
+   "name": "Each application admits only approved job roles",
+   "status": "active",
+   "category": "technical",
+   "eta": null
+  },
+  {
+   "ref_id": "AC-05",
+   "name": "Privileged access is approved, limited and monitored",
+   "status": "in_progress",
+   "category": "technical",
+   "eta": null
+  },
+  {
+   "ref_id": "AR-01",
+   "name": "Access is reviewed periodically and findings are remediated",
+   "status": "active",
+   "category": "process",
+   "eta": null
+  },
+  {
+   "ref_id": "AU-01",
+   "name": "Security-relevant identity events are logged",
+   "status": "active",
+   "category": "technical",
+   "eta": null
+  },
+  {
+   "ref_id": "AU-02",
+   "name": "Alerts are raised and investigated",
+   "status": "active",
+   "category": "technical",
+   "eta": null
+  },
+  {
+   "ref_id": "AU-03",
+   "name": "Security logs are kept 12 months",
+   "status": "to_do",
+   "category": "technical",
+   "eta": null
+  },
+  {
+   "ref_id": "CA-01",
+   "name": "Control gaps are tracked to verified remediation",
+   "status": "active",
+   "category": "process",
+   "eta": null
+  },
+  {
+   "ref_id": "CAN-CTRL-JML-001",
+   "name": "Workforce Termination and Access Revocation",
+   "status": "active",
+   "category": "process",
+   "eta": null
+  },
+  {
+   "ref_id": "CAN-CTRL-JML-002",
+   "name": "Automated Keycloak Leaver Deprovisioning",
+   "status": "in_progress",
+   "category": "technical",
+   "eta": null
+  },
+  {
+   "ref_id": "IA-01",
+   "name": "Privileged and cardholder-data users pass MFA",
+   "status": "in_progress",
+   "category": "technical",
+   "eta": null
+  },
+  {
+   "ref_id": "IA-02",
+   "name": "Lockout after repeated failures; strong password standard",
+   "status": "active",
+   "category": "technical",
+   "eta": null
+  },
+  {
+   "ref_id": "IR-01",
+   "name": "Incidents are handled with a tested playbook",
+   "status": "active",
+   "category": "process",
+   "eta": null
+  },
+  {
+   "ref_id": "RA-01",
+   "name": "Security risks are identified, scored and treated",
+   "status": "active",
+   "category": "process",
+   "eta": null
+  },
+  {
+   "ref_id": "SC-01",
+   "name": "ePHI and credentials are encrypted in transit (TLS 1.2+)",
+   "status": "in_progress",
+   "category": "technical",
+   "eta": null
+  },
+  {
+   "ref_id": "VM-01",
+   "name": "Vendor access is sponsored, time-boxed and removed at expiry",
+   "status": "in_progress",
+   "category": "process",
+   "eta": null
+  }
+ ],
+ "exceptions": [
+  {
+   "ref_id": "EX-01",
+   "name": "EX-01 Entra-federated users' MFA is enforced in Entra, and that setting is not yet evi",
+   "status": "resolved",
+   "expiration_date": "2026-12-15",
+   "severity": "2"
+  },
+  {
+   "ref_id": "EX-02",
+   "name": "EX-02 Security logs kept 90 days, not 12 months (F-03)",
+   "status": "approved",
+   "expiration_date": "2027-01-31",
+   "severity": "3"
+  },
+  {
+   "ref_id": "EX-03",
+   "name": "EX-03 Lab administrator (master realm) has no MFA and the master realm has no lockout",
+   "status": "approved",
+   "expiration_date": "2026-12-31",
+   "severity": "2"
+  },
+  {
+   "ref_id": "EX-04",
+   "name": "EX-04 Break-glass account designed but not provisioned",
+   "status": "approved",
+   "expiration_date": "2027-01-31",
+   "severity": "1"
+  },
+  {
+   "ref_id": "EX-05",
+   "name": "EX-05 Keycloak serves sign-in over HTTP (start-dev) (F-06)",
+   "status": "approved",
+   "expiration_date": "2027-01-31",
+   "severity": "1"
+  },
+  {
+   "ref_id": "EX-06",
+   "name": "EX-06 IR 1 lab used Debian 12 under QEMU instead of Parrot OS on VirtualBox; no Wazuh ",
+   "status": "in_review",
+   "expiration_date": "2026-11-05",
+   "severity": "0"
+  },
+  {
+   "ref_id": "EX-07",
+   "name": "EX-07 Lab passwords were committed to the public repository before 2026-11-03",
+   "status": "approved",
+   "expiration_date": "2026-12-01",
+   "severity": "3"
+  },
+  {
+   "ref_id": "EX-08",
+   "name": "EX-08 W11 Thu deliverable: the integrated GRC dashboard is delivered in CISO Assistant",
+   "status": "in_review",
+   "expiration_date": "2026-11-05",
+   "severity": "0"
+  }
+ ],
+ "findings": [
+  {
+   "ref_id": "CA-01",
+   "name": "CA-01 MFA not enforced",
+   "status": "resolved",
+   "severity": "3",
+   "eta": null,
+   "due_date": "2026-11-06"
+  },
+  {
+   "ref_id": "CA-02",
+   "name": "CA-02 Lockout disabled",
+   "status": "resolved",
+   "severity": "3",
+   "eta": null,
+   "due_date": "2026-10-23"
+  },
+  {
+   "ref_id": "CA-03",
+   "name": "CA-03 No 12-month log retention",
+   "status": "assigned",
+   "severity": "3",
+   "eta": null,
+   "due_date": "2027-01-31"
+  },
+  {
+   "ref_id": "CA-04",
+   "name": "CA-04 Password standard below PCI",
+   "status": "resolved",
+   "severity": "2",
+   "eta": null,
+   "due_date": "2026-10-23"
+  },
+  {
+   "ref_id": "CA-05",
+   "name": "CA-05 No completed access review",
+   "status": "resolved",
+   "severity": "2",
+   "eta": null,
+   "due_date": "2026-12-15"
+  },
+  {
+   "ref_id": "CA-06",
+   "name": "CA-06 IdP over HTTP",
+   "status": "assigned",
+   "severity": "1",
+   "eta": null,
+   "due_date": "2027-01-31"
+  },
+  {
+   "ref_id": "CA-07",
+   "name": "CA-07 Vendor added to Billing without a ticket",
+   "status": "resolved",
+   "severity": "-1",
+   "eta": null,
+   "due_date": "2026-11-03"
+  },
+  {
+   "ref_id": "CA-08",
+   "name": "CA-08 test.vendor1 has no sponsor or end date",
+   "status": "assigned",
+   "severity": "-1",
+   "eta": null,
+   "due_date": "2026-12-01"
+  },
+  {
+   "ref_id": "CA-09",
+   "name": "CA-09 Leaver (Jeevan Smith) kept the billing role on the disabled Keycloak copy",
+   "status": "resolved",
+   "severity": "-1",
+   "eta": null,
+   "due_date": "2026-11-03"
+  },
+  {
+   "ref_id": "CA-10",
+   "name": "CA-10 Brute-force rule CAN-ID-001 alerted only once per user, ever",
+   "status": "resolved",
+   "severity": "-1",
+   "eta": null,
+   "due_date": "2026-11-03"
+  },
+  {
+   "ref_id": "CA-11",
+   "name": "CA-11 Keycloak port 8080 published on all interfaces",
+   "status": "resolved",
+   "severity": "-1",
+   "eta": null,
+   "due_date": "2026-11-10"
+  },
+  {
+   "ref_id": "CA-12",
+   "name": "CA-12 Lab passwords exposed in public git history",
+   "status": "assigned",
+   "severity": "-1",
+   "eta": null,
+   "due_date": "2026-12-01"
+  },
+  {
+   "ref_id": "CA-13",
+   "name": "CA-13 Privileged users not yet enrolled in OTP",
+   "status": "in_progress",
+   "severity": "-1",
+   "eta": null,
+   "due_date": "2026-12-01"
+  },
+  {
+   "ref_id": "CA-14",
+   "name": "CA-14 Status deck and design doc overstate progress (MVP deck slides 3 and 10; design doc section 14)",
+   "status": "resolved",
+   "severity": "-1",
+   "eta": null,
+   "due_date": "2026-11-04"
+  },
+  {
+   "ref_id": "CA-15",
+   "name": "CA-15 PKCE not enforced on public clients",
+   "status": "assigned",
+   "severity": "-1",
+   "eta": null,
+   "due_date": "2026-12-15"
+  },
+  {
+   "ref_id": "CA-16",
+   "name": "CA-16 Automation signs in as the human admin",
+   "status": "assigned",
+   "severity": "-1",
+   "eta": null,
+   "due_date": "2027-01-31"
+  },
+  {
+   "ref_id": "CA-17",
+   "name": "CA-17 Entra broker client secret expiry unknown",
+   "status": "assigned",
+   "severity": "-1",
+   "eta": null,
+   "due_date": "2026-12-01"
+  },
+  {
+   "ref_id": "CA-18",
+   "name": "CA-18 IT-Support can sign in to hr-app although its role description excludes HR data",
+   "status": "assigned",
+   "severity": "-1",
+   "eta": null,
+   "due_date": "2026-12-15"
+  },
+  {
+   "ref_id": "CAN-FIND-001",
+   "name": "Keycloak Account Deprovisioning Gap",
+   "status": "in_progress",
+   "severity": "3",
+   "eta": null,
+   "due_date": null
+  }
+ ],
+ "risks": [
+  {
+   "ref_id": "R01",
+   "name": "Excessive RBAC privileges",
+   "current_level": "2",
+   "residual_level": "2",
+   "treatment": "mitigate"
+  },
+  {
+   "ref_id": "R02",
+   "name": "Incomplete Leaver Deprovisioning Across Entra ID and Keycloak",
+   "current_level": "3",
+   "residual_level": "1",
+   "treatment": "mitigate"
+  },
+  {
+   "ref_id": "R03",
+   "name": "Credential compromise",
+   "current_level": "2",
+   "residual_level": "2",
+   "treatment": "mitigate"
+  },
+  {
+   "ref_id": "R04",
+   "name": "Privileged account misuse",
+   "current_level": "2",
+   "residual_level": "2",
+   "treatment": "mitigate"
+  },
+  {
+   "ref_id": "R05",
+   "name": "Expired vendor access",
+   "current_level": "1",
+   "residual_level": "1",
+   "treatment": "mitigate"
+  }
+ ],
+ "compliance_assessments": [
+  {
+   "ref_id": "CAN-AUD-HIPAA-001",
+   "name": "Healthcare IAM - HIPAA Security Rule Access Controls Audit",
+   "results": {
+    "compliant": 17,
+    "partially_compliant": 7,
+    "non_compliant": 1
+   }
+  },
+  {
+   "ref_id": "CAN-AUD-CSF-001",
+   "name": "Healthcare IAM - NIST CSF 2.0 Control Mapping",
+   "results": {
+    "compliant": 10,
+    "partially_compliant": 4,
+    "non_compliant": 1
+   }
+  }
+ ]
+}

@@ -1,0 +1,109 @@
+{
+ "operational": {
+  "events_decoded_since_manager_start": 246,
+  "events_dropped": 0,
+  "scenario_alerts_total": 117,
+  "scenario_alerts_level10plus": 27,
+  "mttd_seconds_median": 1.5,
+  "mttd_seconds_max": 2.8,
+  "notification_emails_sent": 23,
+  "notification_recipients": {
+   "soc-tier1@hrmc.lab,soc-lead@hrmc.lab": 20,
+   "soc-tier1@hrmc.lab": 3
+  }
+ },
+ "coverage": {
+  "log_sources_reporting": "5 configured; 4 active in the scenario window (Windows samples, Linux agent, Keycloak sign-in, EHR access); Keycloak admin idle (no admin activity, replays on demand)",
+  "scenario_types_covered": "3/3 (authentication, file access, network activity)",
+  "linux_servers_with_agent": "1/1 (hrmc-linux-srv01)",
+  "attack_techniques_with_rules": [
+   "T1005",
+   "T1021.001",
+   "T1021.004",
+   "T1039",
+   "T1041",
+   "T1070.004",
+   "T1078",
+   "T1110",
+   "T1110.001",
+   "T1213",
+   "T1485"
+  ]
+ },
+ "effectiveness": {
+  "scenario_steps": 9,
+  "steps_detected": 9,
+  "detection_rate_pct": 100,
+  "normal_week_high_alerts": 0,
+  "false_positive_rate_high_alerts_pct": 0.0,
+  "rule_defect_found": "100650 ignored on first run (rule load order); fixed and re-validated"
+ },
+ "steps": [
+  {
+   "step": "Linux SSH password guessing",
+   "detected": true,
+   "rules": [
+    "5763",
+    "5551"
+   ]
+  },
+  {
+   "step": "Linux success after failures",
+   "detected": true,
+   "rules": [
+    "40112"
+   ]
+  },
+  {
+   "step": "Linux file staging in EHR export share (FIM)",
+   "detected": true,
+   "rules": [
+    "553",
+    "554"
+   ]
+  },
+  {
+   "step": "Linux outbound to known-bad IP",
+   "detected": true,
+   "rules": [
+    "100630"
+   ]
+  },
+  {
+   "step": "Windows RDP password guessing",
+   "detected": true,
+   "rules": [
+    "100602"
+   ]
+  },
+  {
+   "step": "Windows RDP logon from outside",
+   "detected": true,
+   "rules": [
+    "100604"
+   ]
+  },
+  {
+   "step": "Windows mass EHR export reads",
+   "detected": true,
+   "rules": [
+    "100612"
+   ]
+  },
+  {
+   "step": "Windows exfiltration connection (correlated)",
+   "detected": true,
+   "rules": [
+    "100651"
+   ]
+  },
+  {
+   "step": "EHR access by same user after RDP (cross-source)",
+   "detected": true,
+   "rules": [
+    "100650",
+    "100521"
+   ]
+  }
+ ]
+}

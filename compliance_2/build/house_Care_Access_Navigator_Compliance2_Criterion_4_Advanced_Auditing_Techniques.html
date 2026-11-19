@@ -1,0 +1,76 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Compliance 2 — Criterion 4: Advanced Auditing Techniques</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Compliance 2 — Criterion 4: Advanced Auditing Techniques</div><div class='subsub'>Enterprise compliance program for HRMC's multinational expansion: strategy, automation, process optimization, auditing, quantitative risk and performance</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Compliance 2 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Rubric criterion:</td><td>Criterion 4: Advanced Auditing Techniques</td></tr><tr><td class='k'>Environment:</td><td>CISO Assistant (live, read-only sync), Python workflow with AI triage, Monte Carlo risk model, capstone evidence</td></tr><tr><td class='k'>Date:</td><td>November 18, 2026</td></tr></table><div class="note"><b>Scenario.</b> HRMC is the fictional hospital used throughout my capstone (Care Access Navigator). For Compliance 2 it
+expands into a multinational group: the US hospital network, clinics in Ireland and Germany, and a shared-services centre in
+Hyderabad, India (10,800 staff). Everything measured (controls, audits, timings, logs, risks) comes from my capstone evidence
+and live systems; the expansion figures (sites, volumes, budgets, loss ranges) are planning assumptions and are labelled as such.</div><h2>4. Advanced Auditing Techniques</h2>
+<h3>4.1 Multi-site audit plan (Q4 2027, 6 weeks)</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:24%>Site</th><th style=width:16%>Mode</th><th style=width:8%>When</th><th style=width:32%>Focus</th><th>Sample</th></tr><tr><td>US - HRMC flagship (Albany)</td><td>On-site</td><td>Week 1-2</td><td>IAM / JML, EHR access, PCI cardholder flows</td><td>93 access events; 59 JML tickets</td></tr><tr><td>US - community campuses</td><td>Virtual</td><td>Week 2</td><td>Access reviews, workstation controls (photo evidence)</td><td>59 accounts</td></tr><tr><td>EU - Dublin + Cork</td><td>Virtual + 1 day on-site</td><td>Week 3</td><td>GDPR RoPA, DPIAs, SCC transfers, DSAR log</td><td>All transfers; 59 DSARs</td></tr><tr><td>EU - Munich diagnostics</td><td>On-site</td><td>Week 4</td><td>German retention (10 y), works-council monitoring scope</td><td>59 records</td></tr><tr><td>India - Hyderabad shared services</td><td>Virtual (VDI walkthrough)</td><td>Week 5</td><td>PCI DSS for billing, DPDP staff data, pseudonymisation</td><td>93 billing transactions</td></tr><tr><td>Group - consolidated</td><td>Virtual</td><td>Week 6</td><td>Report, findings to CISO Assistant, board summary</td><td>-</td></tr></table>
+<p><b>Virtual techniques:</b> screen-share walkthroughs, evidence requests through CISO Assistant, VDI observation in Hyderabad, live queries on Wazuh.
+<b>On-site techniques:</b> workstation and badge checks, observation of clinical access, interviews, re-performance of a leaver.
+<b>Common basis:</b> one audit program, the unified controls (1.4), one evidence standard (hashed files linked to the control).</p>
+<h3>4.2 Cross-functional audit team</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:28%>Role</th><th style=width:30%>Who</th><th>Responsibility</th></tr><tr><td>Lead auditor (GRC)</td><td>Akhila Chennamaneni</td><td>Plan, sampling, analytics, report</td></tr><tr><td>IT / IAM auditor</td><td>Internal Audit</td><td>Keycloak, Entra, Wazuh, change logs</td></tr><tr><td>Operational compliance (clinical)</td><td>Nursing quality lead</td><td>Workflows, minimum-necessary use of records</td></tr><tr><td>Financial compliance</td><td>Revenue-cycle controller</td><td>PCI DSS, billing reconciliations</td></tr><tr><td>Privacy</td><td>EU DPO + US Privacy Officer</td><td>GDPR / HIPAA privacy, DSARs, transfers</td></tr><tr><td>Regional SMEs</td><td>Site IT leads (US, IE, DE, IN)</td><td>Evidence access, interviews, walkthroughs</td></tr></table>
+<p>IT, operational and financial compliance are each covered by a team member who owns that part of the report; the lead auditor consolidates.</p>
+<h3 class="pb">4.3 Statistical sampling</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:25%>Confidence</th><th style=width:25%>Tolerable deviation</th><th style=width:25%>Deviations allowed</th><th>Sample size</th></tr><tr><td>95%</td><td>5%</td><td>0</td><td><b>59</b></td></tr><tr><td>95%</td><td>5%</td><td>1</td><td><b>93</b></td></tr><tr><td>95%</td><td>5%</td><td>2</td><td><b>124</b></td></tr><tr><td>90%</td><td>5%</td><td>1</td><td><b>77</b></td></tr><tr><td>95%</td><td>10%</td><td>1</td><td><b>46</b></td></tr></table>
+<p>Exact binomial attribute sampling: the smallest n where the chance of seeing no more than the allowed deviations, if the true rate were the tolerable rate, is below 5%.
+Example: 59 items with zero deviations give 95% confidence the deviation rate is under 5%.</p>
+<h3>4.4 Evidence analysis with data analytics</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:30%>Analysis (real capstone data)</th><th>Result</th></tr><tr><td>EHR access by role (90 events)</td><td>Billing role: 18 clinical views = 20.0% (95% CI 13.0-29.4%). Expected 0: each is a least-privilege exception to test.</td></tr><tr><td>Sign-in failures per user (z-score)</td><td>Outliers z &gt; 2: test.vendor1 (44 failures, z = 2.22). Explained: the lockout test account.</td></tr><tr><td>Control test pass rate with confidence intervals</td><td>2026-10-13: 8/14 = 57.1% (95% CI 32.6-78.6%); 2026-11-03: 12/14 = 85.7% (95% CI 60.1-96.0%). The intervals overlap because the sample is small: retest with more items before claiming the improvement statistically.</td></tr></table>
+<div class="fig"><img src="../outputs/audit_analytics.png" style="max-height:300px"><div class="cap">audit_analytics.py: control-test pass rate with 95% CI, and predicted findings per site</div></div>
+<h3 class="pb">4.5 Predictive analytics and automated reporting</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:36%>Site</th><th style=width:12%>Controls</th><th style=width:14%>Maturity factor</th><th style=width:16%>Expected findings</th><th>90% interval</th></tr><tr><td>US - HRMC flagship (Albany, NY)</td><td>48</td><td>0.6</td><td>13.3</td><td>8-20</td></tr><tr><td>US - community campuses (2)</td><td>48</td><td>0.8</td><td>17.7</td><td>11-25</td></tr><tr><td>EU - Dublin + Cork clinics</td><td>48</td><td>1.3</td><td>28.8</td><td>20-38</td></tr><tr><td>EU - Munich diagnostics</td><td>48</td><td>1.3</td><td>28.8</td><td>20-38</td></tr><tr><td>India - Hyderabad shared services</td><td>48</td><td>1.2</td><td>26.6</td><td>18-35</td></tr></table>
+<p>Findings are modelled as Poisson: the capstone audit found 0.462 findings per control tested, scaled by site maturity
+(EU and India sites are newer to HRMC controls). The forecast sets audit staffing: the EU weeks get two auditors.</p>
+<p><b>Corrective-action forecast (live CISO Assistant data):</b> 9 of 18 closed (50.0%), 1.75 per week since the 2026-10-13 audit;
+at that rate 90% closure is reached around <b>2026-12-20</b>. Predicted at risk in the next 14 days: CA-08, CA-12, CA-13, CA-17.</p>
+<p><b>Automated reporting:</b> <code>audit_analytics.py</code> writes <code>outputs/audit_analytics_report.md</code> on every run (sampling plan, analytics, predictions), so the audit pack is regenerated from data, not retyped.</p>
+</body></html>

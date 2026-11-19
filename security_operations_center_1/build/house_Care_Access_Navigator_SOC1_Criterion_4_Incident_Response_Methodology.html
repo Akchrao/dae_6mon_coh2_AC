@@ -1,0 +1,125 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Security Operations Center 1 — Criterion 4: Incident Response Methodology</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Security Operations Center 1 — Criterion 4: Incident Response Methodology</div><div class='subsub'>SOC operations, SIEM implementation, threat detection and incident response on a Wazuh SIEM fed with Care Access Navigator logs</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Security Operations Center 1 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Rubric criterion:</td><td>Criterion 4: Incident Response Methodology</td></tr><tr><td class='k'>Environment:</td><td>Wazuh 4.9.2 single-node SIEM (manager, indexer, dashboard) in Docker; MailHog test mailbox; capstone Keycloak and EHR logs</td></tr><tr><td class='k'>Date:</td><td>November 18, 2026</td></tr></table><h2>4. Incident Response Methodology</h2>
+
+<h3>4.1 Initial response protocol: compromised user account</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:18%">Time from alert</th><th>Step</th></tr>
+<tr><td>0&ndash;5 min</td><td>Acknowledge the alert; open a case in the tracker (status New); note alert IDs and times</td></tr>
+<tr><td>5&ndash;10 min</td><td>Validate: raw events, source IP history, user's role and JML status; decide true/false positive</td></tr>
+<tr><td>10&ndash;15 min</td><td>Set severity (matrix in 4.3); if SEV-1/2, page IC (and Privacy Officer if ePHI); move case to Triage</td></tr>
+<tr><td>15&ndash;30 min</td><td>Short-term containment: disable the account in Keycloak/Entra, revoke sessions and tokens, block the source IP. Preserve logs before any change</td></tr>
+<tr><td>30&ndash;60 min</td><td>Scope: other accounts from the same IP; records accessed; any privilege changes by this user</td></tr>
+<tr><td>Ongoing</td><td>Update the case at every step; status report to IC every 30 minutes for SEV-1</td></tr>
+</table>
+<p>Do not: re-enable the account before the password is reset and MFA is enforced; delete or edit logs; contact the user through a channel the attacker may control.</p>
+
+<h3>4.2 Case management system components</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:22%">Component</th><th>Operational purpose</th><th style="width:26%">In <code>irtrack.py</code></th></tr>
+<tr><td>Case record</td><td>One ID per incident so everyone refers to the same thing</td><td><code>incident</code> table, ID SOC1-2026-001</td></tr>
+<tr><td>Severity and priority</td><td>Decides response speed and who is involved</td><td>SEV-1..4 with start-response targets 15 / 60 / 480 min / 5 days</td></tr>
+<tr><td>Status workflow</td><td>Shows where the case is; forward-only so history cannot be rewritten</td><td>New &rarr; Triage &rarr; Contained &rarr; Eradicated &rarr; Recovered &rarr; Closed</td></tr>
+<tr><td>Owner / assignment</td><td>Someone is always accountable, including across shifts</td><td><code>handler</code> field</td></tr>
+<tr><td>Timeline of events</td><td>What happened, in order, from the evidence</td><td><code>event</code> table</td></tr>
+<tr><td>Response actions</td><td>What the SOC did, when and with what result</td><td><code>action</code> table</td></tr>
+<tr><td>Evidence</td><td>Links to evidence with hashes for chain of custody</td><td><code>evidence</code> table with SHA-256</td></tr>
+<tr><td>Metrics / SLA</td><td>Measures time to respond and contain</td><td><code>list</code>: SOC1-2026-001 responded in 4.2 min (target 15, MET), contained in 9.2 min (tabletop)</td></tr>
+<tr><td>Reporting</td><td>Produces the record for management and auditors</td><td><code>report</code> &rarr; <code>case_management/SOC1-2026-001_record.md</code></td></tr>
+</table>
+<pre>$ irtrack.py list
+ID               SEV    STATUS      DETECTED              RESPOND(min) SLA     CONTAIN(min)  TITLE
+SOC1-2026-001    SEV-1  Contained   2026-11-17T21:26:49Z           4.2 MET              9.2  Compromised nurse account: ...</pre>
+
+<h3 class="pb">4.3 Escalation criteria and communication</h3>
+<p>Severity = <b>Impact &times; Urgency</b> (each 1&ndash;3), as in the IR1 playbook CAN-IR-PB-02.</p>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th>Score</th><th>Severity</th><th>Start response</th><th>Escalate to</th><th>Communication</th></tr>
+<tr><td>9</td><td><b>SEV-1 Critical</b></td><td>15 min</td><td>Incident Commander; Privacy Officer if ePHI</td><td>Phone/page now; bridge call; updates every 30 min; executive summary within 4 h</td></tr>
+<tr><td>6</td><td><b>SEV-2 High</b></td><td>60 min</td><td>Tier 2 analyst; IC informed</td><td>Email + chat; updates every 2 h</td></tr>
+<tr><td>3&ndash;4</td><td><b>SEV-3 Medium</b></td><td>8 h</td><td>Tier 1 owns</td><td>Case notes; daily summary</td></tr>
+<tr><td>1&ndash;2</td><td><b>SEV-4 Low</b></td><td>5 days</td><td>Tier 1 owns</td><td>Case notes; weekly report</td></tr>
+</table>
+<p><b>Decision points:</b></p>
+<ol>
+<li>Is the alert a true positive? No &rarr; close, tune rule, note in handover.</li>
+<li>Was ePHI read, changed or sent out? Yes &rarr; SEV-1 and Privacy Officer (HIPAA four-factor breach risk assessment; 60-day notification clock).</li>
+<li>Did an attacker get a working session or privileges? Yes &rarr; at least SEV-2; page IC.</li>
+<li>Is it still happening? Yes &rarr; raise urgency by one.</li>
+<li>Can Tier 1 contain it within the SLA with their permissions? No &rarr; escalate to Tier 2 / IT administrators.</li>
+</ol>
+<p><b>Communication rules:</b> one IC speaks for the incident; facts only, with times in UTC; no patient data in email or chat
+(use case and record IDs); legal, privacy and communications teams decide on any external notice; every message is logged in the case.</p>
+
+<h3>4.4 Incident response documentation template (completed for SOC1-SCN-01)</h3>
+<table>
+<tr><th style="width:26%">Field</th><th>Entry</th></tr>
+<tr><td>Incident ID / title</td><td>SOC1-2026-001: Compromised nurse account, password guessing, outside sign-in, bulk chart access</td></tr>
+<tr><td>Reported by / handler</td><td>Wazuh (rules 100502, 100507, 100522) / Akhila Chennamaneni, Tier 1</td></tr>
+<tr><td>Date and time detected</td><td>2026-11-17 21:26:49 UTC (first correlation alert)</td></tr>
+<tr><td>Incident type</td><td>Account compromise; unauthorized access to ePHI</td></tr>
+<tr><td>Severity</td><td>SEV-1 (Impact 3: ePHI read &times; Urgency 3: active session)</td></tr>
+<tr><td>Affected assets</td><td>Keycloak realm care-access-navigator; EHR simulator; account test.nurse2; 18 synthetic patient records</td></tr>
+<tr><td>Indicators</td><td>IP 203.0.113.45; workstation REMOTE-VPN; 6 failures in 10 s then success; 18 charts in 26 s</td></tr>
+<tr><td>Description</td><td>Automated password guessing against test.nurse2 succeeded within 12 seconds; the session was used to open 18 patient charts</td></tr>
+<tr><td>Detection and analysis</td><td>Email alert &rarr; dashboard validation &rarr; pivot on user and IP &rarr; timeline (section 3.5) &rarr; true positive</td></tr>
+<tr><td>Escalation</td><td>21:31 UTC IC and Privacy Officer paged (SEV-1, ePHI)</td></tr>
+<tr><td>Containment</td><td>Disable test.nurse2, revoke sessions, block 203.0.113.45 (tabletop; the live capstone realm was not changed)</td></tr>
+<tr><td>Eradication</td><td>Reset the password; enforce MFA for the Nurse role; check other accounts for sign-ins from the IP</td></tr>
+<tr><td>Recovery</td><td>Re-enable with new credentials and MFA; 30-day heightened monitoring of the account</td></tr>
+<tr><td>Notification</td><td>Privacy Officer: HIPAA four-factor breach risk assessment for 18 records</td></tr>
+<tr><td>Evidence</td><td>E01 <code>evidence/scenario_SOC1-SCN-01_alerts.json</code> (SHA-256 in the case record)</td></tr>
+<tr><td>Response metrics</td><td>First response 4.2 min (target 15, met); containment 9.2 min</td></tr>
+<tr><td>Root cause</td><td>Password-only sign-in for an ePHI role; no lockout reached before success (6 attempts)</td></tr>
+<tr><td>Lessons learned</td><td>MFA for every ePHI role; alert on never-seen IPs; keep the correlation chain 100502 &rarr; 100507 &rarr; 100522; tune 100522 for replays</td></tr>
+<tr><td>Status</td><td>Contained (tabletop)</td></tr>
+</table>
+
+</body></html>

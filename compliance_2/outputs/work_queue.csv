@@ -1,0 +1,24 @@
+id,kind,control,risk,status,due,ai_score,decision_path,route,reason,needs_human_approval,sla_due,title
+EX-06,exception,IR-01,-,in_review,2026-11-05,0.61,S2>S3>D3>D4,ESCALATE-COMMITTEE,exception expired 13 days ago: renew with new evidence or close,True,2026-11-25,EX-06 IR 1 lab used Debian 12 under QEMU instead of Parrot OS on VirtualBox; no Wazuh 
+EX-08,exception,CA-01,-,in_review,2026-11-05,0.61,S2>S3>D3>D4,ESCALATE-COMMITTEE,exception expired 13 days ago: renew with new evidence or close,True,2026-11-25,EX-08 W11 Thu deliverable: the integrated GRC dashboard is delivered in CISO Assistant
+CA-15,finding,IA-01,R03,assigned,2026-12-15,0.88,S2>S3>D2>D4,ESCALATE-CCO,AI score 0.88 >= 0.85,True,2026-11-20,CA-15 PKCE not enforced on public clients
+EX-07,exception,IA-02,R03,approved,2026-12-01,0.71,S2>S3>D3,REMIND,exception expires in 13 days,False,2026-11-25,EX-07 Lab passwords were committed to the public repository before 2026-11-03
+CAN-FIND-001,finding,AC-02,R02,in_progress,,0.8,S2>S3>D2,ASSIGN-OWNER,AI score 0.80 in 0.50-0.85,False,2026-12-18,Keycloak Account Deprovisioning Gap
+CA-08,finding,VM-01,R05,assigned,2026-12-01,0.76,S2>S3>D2,ASSIGN-OWNER,AI score 0.76 in 0.50-0.85,False,2026-12-18,CA-08 test.vendor1 has no sponsor or end date
+IA-01,control,IA-01,R03,Partially implemented,,0.71,S2>S3>D2,ASSIGN-OWNER,AI score 0.71 in 0.50-0.85,False,2026-12-18,Privileged and cardholder-data users pass MFA
+AR-01,control,AR-01,"R01,R02",Partially implemented,,0.71,S2>S3>D2,ASSIGN-OWNER,AI score 0.71 in 0.50-0.85,False,2026-12-18,Access is reviewed periodically and findings are remediated
+CA-13,finding,IA-01,R03,in_progress,2026-12-01,0.71,S2>S3>D2,ASSIGN-OWNER,AI score 0.71 in 0.50-0.85,False,2026-12-18,CA-13 Privileged users not yet enrolled in OTP
+CA-17,finding,AC-04,R03,assigned,2026-12-01,0.68,S2>S3>D2,ASSIGN-OWNER,AI score 0.68 in 0.50-0.85,False,2026-12-18,CA-17 Entra broker client secret expiry unknown
+CA-18,finding,AC-01,R01,assigned,2026-12-15,0.68,S2>S3>D2,ASSIGN-OWNER,AI score 0.68 in 0.50-0.85,False,2026-12-18,CA-18 IT-Support can sign in to hr-app although its role description excludes HR data
+VM-01,control,VM-01,R05,Partially implemented,,0.5,S2>S3>D2,ASSIGN-OWNER,AI score 0.50 in 0.50-0.85,False,2026-12-18,"Vendor access is sponsored, time-boxed and removed at expiry"
+AU-03,control,AU-03,R03,Not implemented,,0.97,S2>S3>D5,MONITOR,covered by approved exception EX-02 until 2027-01-31; compensating controls in place,False,2027-02-16,Security logs are kept 12 months
+CA-03,finding,AU-03,R03,assigned,2027-01-31,0.88,S2>S3>D5,MONITOR,covered by approved exception EX-02 until 2027-01-31; compensating controls in place,False,2027-02-16,CA-03 No 12-month log retention
+CA-06,finding,SC-01,R03,assigned,2027-01-31,0.88,S2>S3>D5,MONITOR,covered by approved exception EX-05 until 2027-01-31; compensating controls in place,False,2027-02-16,CA-06 IdP over HTTP
+CA-12,finding,IA-02,R03,assigned,2026-12-01,0.88,S2>S3>D5,MONITOR,covered by approved exception EX-07 until 2026-12-01; compensating controls in place,False,2027-02-16,CA-12 Lab passwords exposed in public git history
+SC-01,control,SC-01,R03,Partially implemented,,0.71,S2>S3>D5,MONITOR,covered by approved exception EX-05 until 2027-01-31; compensating controls in place,False,2027-02-16,ePHI and credentials are encrypted in transit (TLS 1.2+)
+EX-02,exception,AU-03,R03,approved,2027-01-31,0.71,S2>S3>D3,MONITOR,"approved exception, valid until 2027-01-31; re-check at expiry",False,2027-02-16,"EX-02 Security logs kept 90 days, not 12 months (F-03)"
+EX-05,exception,SC-01,R03,approved,2027-01-31,0.71,S2>S3>D3,MONITOR,"approved exception, valid until 2027-01-31; re-check at expiry",False,2027-02-16,EX-05 Keycloak serves sign-in over HTTP (start-dev) (F-06)
+AC-05,control,AC-05,R04,Partially implemented,,0.58,S2>S3>D5,MONITOR,covered by approved exception EX-03 until 2026-12-31; compensating controls in place,False,2027-02-16,"Privileged access is approved, limited and monitored"
+EX-03,exception,AC-05,R04,approved,2026-12-31,0.58,S2>S3>D3,MONITOR,"approved exception, valid until 2026-12-31; re-check at expiry",False,2027-02-16,EX-03 Lab administrator (master realm) has no MFA and the master realm has no lockout
+EX-04,exception,AC-05,R04,approved,2027-01-31,0.58,S2>S3>D3,MONITOR,"approved exception, valid until 2027-01-31; re-check at expiry",False,2027-02-16,EX-04 Break-glass account designed but not provisioned
+CA-16,finding,AC-05,R04,assigned,2027-01-31,0.56,S2>S3>D5,MONITOR,covered by approved exception EX-03 until 2026-12-31; compensating controls in place,False,2027-02-16,CA-16 Automation signs in as the human admin

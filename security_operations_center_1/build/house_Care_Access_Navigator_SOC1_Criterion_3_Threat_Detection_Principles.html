@@ -1,0 +1,136 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Security Operations Center 1 — Criterion 3: Threat Detection Principles</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Security Operations Center 1 — Criterion 3: Threat Detection Principles</div><div class='subsub'>SOC operations, SIEM implementation, threat detection and incident response on a Wazuh SIEM fed with Care Access Navigator logs</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Security Operations Center 1 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Rubric criterion:</td><td>Criterion 3: Threat Detection Principles</td></tr><tr><td class='k'>Environment:</td><td>Wazuh 4.9.2 single-node SIEM (manager, indexer, dashboard) in Docker; MailHog test mailbox; capstone Keycloak and EHR logs</td></tr><tr><td class='k'>Date:</td><td>November 18, 2026</td></tr></table><h2>3. Threat Detection Principles</h2>
+
+<h3>3.1 How detection rules work</h3>
+<ul>
+<li><b>Decode, then match.</b> A rule never reads raw text if it can help it; it tests decoded fields (<code>&lt;field name="role"&gt;^billing$&lt;/field&gt;</code>).</li>
+<li><b>Rule tree.</b> A base rule recognises the source (100500 = any Keycloak sign-in event); child rules (<code>if_sid</code>) narrow it down (100501 = failed sign-in). Only the deepest match becomes the alert.</li>
+<li><b>Levels.</b> 0&ndash;15. Level sets storage (3+), email (10+) and escalation (12+).</li>
+<li><b>Stateless vs stateful.</b> A stateless rule judges one event (billing user opened a chart). A stateful/correlation rule counts or sequences events (<code>frequency</code>, <code>timeframe</code>, <code>if_matched_sid</code>, <code>same_field</code>).</li>
+<li><b>Context.</b> Each rule carries MITRE ATT&amp;CK IDs and groups (for example <code>hipaa_violation</code>) so the analyst knows the technique and the compliance impact at once.</li>
+<li><b>Testing.</b> Every rule was checked with <code>wazuh-logtest</code> before use: the event, the decoded fields and the rule that fires.</li>
+</ul>
+<pre>**Phase 2: Completed decoding.  name: 'json'  role: 'billing'  username: 'test.billing1'  patient_id: 'SYN-PT-10303'
+**Phase 3: Completed filtering (rules).
+        id: '100521'   level: '12'
+        description: 'Unapproved ePHI access: billing user test.billing1 opened view_notes for SYN-PT-10303'
+        mail: 'True'   mitre.technique: '['Valid Accounts']'
+**Alert to be generated.</pre>
+
+<h3>3.2 Three detection scenarios</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:20%">Scenario</th><th style="width:28%">Example in the data</th><th>Rule and result</th></tr>
+<tr><td><b>A. Password guessing &rarr; compromise</b></td><td>6 failed sign-ins for <code>test.nurse2</code> from 203.0.113.45, then a success from the same IP</td><td>100502 (level 10) then 100507 (level 13). On the historical capstone data, 100502 also fired 16 times, mostly for the lockout test account <code>test.vendor1</code>.</td></tr>
+<tr><td><b>B. Leaver or locked account trying to sign in</b></td><td><code>user_disabled</code> / <code>user_temporarily_disabled</code> errors from the real capstone lockout and leaver tests</td><td>100503 (level 10), 5 alerts; lockout itself shows as 100504 (level 7), proving the control works</td></tr>
+<tr><td><b>C. Unapproved or bulk ePHI access</b></td><td><code>test.billing1</code> (billing role) opened 18 clinical notes/charts; <code>test.nurse2</code> opened 18 charts in 26 seconds</td><td>100521 (level 12), 18 alerts; 100522 (level 12) bulk-access correlation</td></tr>
+</table>
+
+<h3>3.3 Threat indicator categories</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:20%">Category</th><th style="width:38%">What it is</th><th>Example and use here</th></tr>
+<tr><td>Atomic indicators</td><td>Single values that point to a threat</td><td>IP 203.0.113.45, username <code>test.nurse2</code>; used to search for other activity from the same source</td></tr>
+<tr><td>Computed indicators</td><td>Values derived from data, such as file hashes</td><td>SHA-256 of evidence files; hashes of malware in IR1</td></tr>
+<tr><td>Behavioural indicators</td><td>Patterns of activity (TTPs)</td><td>Failures then success; 15+ records in 60 s; these are what correlation rules detect</td></tr>
+<tr><td>Host-based</td><td>Seen on an endpoint</td><td>New user/group (5901/5902), sudo to root (5402), unexpected cron job</td></tr>
+<tr><td>Network-based</td><td>Seen in traffic</td><td>Connection to an unknown outside IP; upload to the drop site in IR1</td></tr>
+<tr><td>Identity-based</td><td>Seen at the identity provider</td><td>Leaver sign-in, privilege change (100511), MFA fatigue</td></tr>
+<tr><td>IOC vs IOA</td><td>Indicator of <i>compromise</i> = evidence after the fact; indicator of <i>attack</i> = activity in progress</td><td>The bulk chart access is an IOA (still happening); the outside IP in the logs afterwards is an IOC</td></tr>
+</table>
+<p>Following the <b>Pyramid of Pain</b>, atomic indicators (IPs) are cheap for an attacker to change, while behaviour (TTPs) is
+expensive to change, which is why the SOC 1 rules detect behaviour rather than a fixed list of IPs.</p>
+
+<h3 class="pb">3.4 Structured threat analysis methodology</h3>
+<ol>
+<li><b>Receive and read the alert:</b> rule ID, level, description, MITRE technique, time.</li>
+<li><b>Validate:</b> open the raw event; confirm the decoded fields are correct and the rule logic matches what happened.</li>
+<li><b>Enrich:</b> who is the user (role, department, JML status), what is the asset, is the IP internal or outside?</li>
+<li><b>Scope:</b> pivot on each indicator (user, IP, workstation) over a time window before and after; find related alerts.</li>
+<li><b>Build the timeline:</b> order every related event; mark first seen, escalation points, last seen.</li>
+<li><b>Map to ATT&amp;CK:</b> identify tactics and techniques and what the attacker likely does next.</li>
+<li><b>Decide:</b> true positive, false positive or benign true positive; set severity with the Impact &times; Urgency matrix.</li>
+<li><b>Act and document:</b> open or update the case; escalate per section 4.3; record findings and evidence hashes.</li>
+</ol>
+
+<h3>3.5 Alert investigation exercise: scenario SOC1-SCN-01</h3>
+<div class="note"><b>Scenario (synthetic, labelled <code>SOC1-SCN-01</code> in every event):</b> an outside source guesses the password of
+nurse account <code>test.nurse2</code>, gets in, and opens many patient charts. Injected with <code>scenario/feed_logs.py scenario</code>
+on 2026-11-17. All patient IDs are synthetic; 203.0.113.45 is a documentation-only IP range.</div>
+
+<p><b>Process followed</b> (methodology steps in brackets):</p>
+<ol>
+<li>[1] The level 13 email &ldquo;Possible account compromise&rdquo; arrived in both the Tier 1 and the SOC lead mailboxes.</li>
+<li>[2] In Threat Hunting, the alert's raw event showed <code>type: LOGIN</code>, <code>username: test.nurse2</code>, <code>ip: 203.0.113.45</code>, <code>client: ehr-simulator</code>.</li>
+<li>[3] Enrichment: <code>test.nurse2</code> is a Nurse in the capstone RBAC model; all 6 earlier Keycloak events for this user came from 172.18.0.1 (the internal lab network). 203.0.113.45 had never been seen.</li>
+<li>[4] Pivot on <code>data.username: test.nurse2</code> and <code>data.ip: 203.0.113.45</code> &rarr; 25 related events.</li>
+<li>[5] Timeline built (below).</li>
+<li>[6] ATT&amp;CK: T1110.001 Password Guessing &rarr; T1078 Valid Accounts &rarr; T1213 Data from Information Repositories.</li>
+<li>[7] Decision: <b>true positive, SEV-1</b> (ePHI was read through a compromised account: Impact 3 &times; Urgency 3).</li>
+<li>[8] Case SOC1-2026-001 opened; IC and Privacy Officer paged (section 4).</li>
+</ol>
+
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:16%">UTC (2026-11-17)</th><th style="width:16%">Rule (level)</th><th>Finding</th></tr>
+<tr><td>21:26:41&ndash;21:26:51</td><td>100501 (5) &times;6</td><td>6 failed sign-ins for test.nurse2 from 203.0.113.45, 2 seconds apart (automated)</td></tr>
+<tr><td>21:26:49</td><td>100502 (10)</td><td>Correlation: password guessing; email to Tier 1</td></tr>
+<tr><td>21:26:53</td><td>100507 (13)</td><td>Correlation: successful sign-in from the same IP 12 s after the first failure; email to Tier 1 + SOC lead</td></tr>
+<tr><td>21:26:55&ndash;21:27:21</td><td>100520 (3) &times;18</td><td>18 different patient charts (SYN-PT-20100 to 20117) opened from workstation REMOTE-VPN</td></tr>
+<tr><td>21:27:17</td><td>100522 (12)</td><td>Correlation: bulk access, 15+ records in 60 s; email to Tier 1 + SOC lead</td></tr>
+</table>
+<p><b>Findings:</b> the account was compromised by automated password guessing from an outside IP; 18 patient records were read within 26 seconds of the
+sign-in; no MFA challenge appears in the events (Nurse is not an MFA-required role in the capstone model, which is a contributing factor).
+<b>Recommendations:</b> extend MFA to all ePHI roles, add geo/IP reputation enrichment, and alert on any sign-in from a never-seen IP for clinical roles.</p>
+<p><b>False positives found during the exercise:</b> rule 100522 also fired 9 times on the historical replay (for example <code>test.clinician1</code>), because the replay
+squeezed hours of normal chart access into a few minutes. Real-time data would not trigger it; for the replay, the tuning is to exclude events
+older than 1 hour or raise the threshold for clinicians on rounds. This was recorded in the shift handover.</p>
+<div class="fig"><img src="../screenshots/SS-02.png"><div class="cap">Screenshot 2: the account-compromise alert (rule 100507) expanded in the Wazuh dashboard: user, source IP, client, scenario tag, raw log and the file it came from.</div></div>
+
+<!-- ===================================================================== -->
+</body></html>

@@ -1,0 +1,84 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Compliance 2 — Criterion 5: Quantitative Risk Assessment</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Compliance 2 — Criterion 5: Quantitative Risk Assessment</div><div class='subsub'>Enterprise compliance program for HRMC's multinational expansion: strategy, automation, process optimization, auditing, quantitative risk and performance</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Compliance 2 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Rubric criterion:</td><td>Criterion 5: Quantitative Risk Assessment</td></tr><tr><td class='k'>Environment:</td><td>CISO Assistant (live, read-only sync), Python workflow with AI triage, Monte Carlo risk model, capstone evidence</td></tr><tr><td class='k'>Date:</td><td>November 18, 2026</td></tr></table><div class="note"><b>Scenario.</b> HRMC is the fictional hospital used throughout my capstone (Care Access Navigator). For Compliance 2 it
+expands into a multinational group: the US hospital network, clinics in Ireland and Germany, and a shared-services centre in
+Hyderabad, India (10,800 staff). Everything measured (controls, audits, timings, logs, risks) comes from my capstone evidence
+and live systems; the expansion figures (sites, volumes, budgets, loss ranges) are planning assumptions and are labelled as such.</div><h2>5. Quantitative Risk Assessment</h2>
+<h3>5.1 Method</h3>
+<p>FAIR-style Monte Carlo simulation (<code>analysis/risk_monte_carlo.py</code>, 100,000 simulated years, seed 42). For each capstone risk:
+<b>annual loss = sum of N loss events</b>, where N is Poisson with a rate drawn from a triangular distribution, and each event's loss is drawn from a PERT distribution.
+This builds on Risk Management 1, which used single-point ALE (e.g. asset $100,000 &times; EF 0.30 = SLE $30,000; ARO 0.5 &rarr; ALE $15,000) and a business impact analysis
+(Keycloak IAM outage $25,000 for the flagship). Simulation replaces single points with ranges and gives percentiles, not just an average.</p>
+<h3>5.2 Inputs (from the capstone register + planning assumptions)</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:30%>Risk</th><th style=width:16%>Register inherent &amp;rarr; residual</th><th style=width:12%>Events/yr (mode)</th><th style=width:26%>Loss per event: min / likely / max</th><th>Annual treatment cost</th></tr><tr><td>R01 Excessive RBAC privileges</td><td>20 &rarr; 10</td><td>0.8</td><td>$50k / $400k / $4.00M</td><td>$180k</td></tr><tr><td>R02 Terminated account remains active</td><td>15 &rarr; 5</td><td>0.4</td><td>$30k / $250k / $3.00M</td><td>$120k</td></tr><tr><td>R03 Credential compromise</td><td>20 &rarr; 10</td><td>0.8</td><td>$150k / $1,200k / $12.00M</td><td>$260k</td></tr><tr><td>R04 Privileged account misuse</td><td>15 &rarr; 10</td><td>0.4</td><td>$100k / $900k / $9.00M</td><td>$220k</td></tr><tr><td>R05 Expired vendor access</td><td>12 &rarr; 4</td><td>0.4</td><td>$40k / $300k / $3.50M</td><td>$60k</td></tr></table>
+<p>Frequency mode comes from the register likelihood (3 &rarr; 0.4/yr, 4 &rarr; 0.8/yr), with the range 0.25&times; to 3&times; the mode. Residual frequency = inherent &times; (residual score &divide; inherent score),
+taken straight from the CISO Assistant register; detective controls (R03, R04) also cut loss size by 20%. Loss ranges include response, notification, regulatory penalties
+(HIPAA civil penalty tiers; GDPR fines up to &euro;20M or 4% of worldwide turnover) and litigation. They are calibrated estimates for planning, not actuarial data.</p>
+<h3 class="pb">5.3 Results by risk</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:24%>Risk</th><th style=width:11%>Inherent ALE (mean)</th><th style=width:10%>Inherent P90</th><th style=width:11%>Residual ALE (mean)</th><th style=width:10%>Residual P90</th><th style=width:11%>Reduction</th><th style=width:9%>Cost</th><th>ROSI</th></tr><tr><td>R01 Excessive RBAC privileges</td><td>$1,064k</td><td>$2,839k</td><td>$534k</td><td>$1,797k</td><td>$530k</td><td>$180k</td><td>195%</td></tr><tr><td>R02 Terminated account remains active</td><td>$381k</td><td>$1,289k</td><td>$128k</td><td>$524k</td><td>$253k</td><td>$120k</td><td>111%</td></tr><tr><td>R03 Credential compromise</td><td>$3,211k</td><td>$8,527k</td><td>$1,278k</td><td>$4,318k</td><td>$1,933k</td><td>$260k</td><td>643%</td></tr><tr><td>R04 Privileged account misuse</td><td>$1,203k</td><td>$4,043k</td><td>$645k</td><td>$2,474k</td><td>$558k</td><td>$220k</td><td>153%</td></tr><tr><td>R05 Expired vendor access</td><td>$448k</td><td>$1,518k</td><td>$149k</td><td>$606k</td><td>$299k</td><td>$60k</td><td>399%</td></tr></table>
+<div class="fig"><img src="../outputs/ale_by_risk.png" style="max-height:280px"><div class="cap">Mean annualized loss by risk, inherent vs residual</div></div>
+<p>ROSI = (risk reduction &minus; treatment cost) &divide; treatment cost. Every treatment pays for itself; credential compromise (R03) is both the largest risk and the best investment.
+The 95% confidence interval on each mean is narrow (e.g. R03 residual 1,264,990 - 1,291,107), so 100,000 iterations are enough.</p>
+<h3 class="pb">5.4 Portfolio view and risk appetite</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:30%>Position</th><th style=width:14%>Mean</th><th style=width:14%>P50</th><th style=width:14%>P90</th><th style=width:14%>P95</th><th>P99</th></tr><tr><td>Inherent</td><td>$6.31M</td><td>$5.42M</td><td>$12.58M</td><td>$15.15M</td><td>$20.53M</td></tr><tr><td>Residual (controls as tested)</td><td>$2.73M</td><td>$2.04M</td><td>$6.42M</td><td>$7.99M</td><td>$11.37M</td></tr></table>
+<div class="fig"><img src="../outputs/loss_exceedance_curve.png" style="max-height:320px"><div class="cap">Loss exceedance curve: chance that the annual IAM-related loss exceeds a given amount</div></div>
+<p><b>Risk appetite (proposed to the board):</b> Annual IAM-related loss above $5M should be no more than 5% likely (P95 &lt;= $5M). Inherent and residual positions are both outside appetite.</p>
+<h3>5.5 Scenario analysis</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:30%>Scenario</th><th style=width:28%>Assumption</th><th style=width:10%>Mean</th><th style=width:10%>P90</th><th style=width:10%>P95</th><th>P99</th></tr><tr><td>S0 Baseline (residual, controls as tested)</td><td>Register residual scores</td><td>$2.73M</td><td>$6.38M</td><td>$7.95M</td><td>$11.25M</td></tr><tr><td>S1 Expansion year 1 (EU + India sites not yet at HRMC control level)</td><td>Frequency x1.5 for privilege, credential and vendor risks</td><td>$3.70M</td><td>$8.06M</td><td>$9.89M</td><td>$13.67M</td></tr><tr><td>S2 Major breach stress (GDPR + HIPAA penalties, class action)</td><td>Loss per event x2 for credential compromise and privileged misuse</td><td>$4.67M</td><td>$11.68M</td><td>$14.73M</td><td>$21.48M</td></tr><tr><td>S3 Controls fail (MFA / JML automation outage for a year)</td><td>Residual reduction lost for R02, R03</td><td>$4.27M</td><td>$9.08M</td><td>$11.06M</td><td>$15.24M</td></tr></table>
+<p>The expansion itself (S1) raises expected loss by about $0.97M a year until the new sites reach HRMC's control level: the reason the roadmap
+extends JML automation to the EU and India in Q3 2027, before anything else.</p>
+<h3 class="pb">5.6 Risk treatment strategy, transfer and residual risk plan</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:38%>Option</th><th style=width:18%>Added annual cost</th><th style=width:15%>Expected annual loss + added cost</th><th style=width:15%>P95 annual loss + added cost</th><th>Within appetite?</th></tr><tr><td>A. Accept residual (current controls)</td><td>none (existing controls $840k already in place for all options)</td><td>$2.73M</td><td>$7.99M</td><td>No</td></tr><tr><td>B. Transfer: cyber insurance ($1M retention, $10M limit per event)</td><td>premium $1.70M</td><td>$3.17M</td><td>$5.43M</td><td>No (just above)</td></tr><tr><td><b>C. Mitigate + transfer: FIDO2 MFA for ePHI roles, then insure (recommended)</b></td><td>+$150k control, premium $1.18M</td><td><b>$2.55M</b></td><td><b>$4.49M</b></td><td><b>Yes</b></td></tr></table>
+<p>Insurance premiums are priced at expected covered loss &times; 1.35 (insurer expenses and profit), so insurance alone costs more than it saves on average; its value is cutting the tail.
+Option C lowers both the average and the tail, because the extra control shrinks what the insurer has to cover.</p>
+<p><b>Residual risk management plan:</b> (1) Board accepts option C and the appetite statement; (2) FIDO2 rollout in the 2028 roadmap, insurance bound for 2027;
+(3) R02 stays residual Moderate through JML automation (CAN-FIND-001 automatic deprovisioning closes the last gap); (4) triggers for re-assessment: scenario S1 or S3 conditions,
+a SEV-1 incident, or the model's P95 moving above $5M; (5) the model is re-run each quarter with updated register scores from CISO Assistant.</p>
+</body></html>

@@ -1,0 +1,13 @@
+category,kpi,formula,current,target,benchmark_or_reference
+Compliance,HIPAA requirements fully compliant,compliant / assessed (CISO Assistant CAN-AUD-HIPAA-001),68.0% (17/25),>= 90% by Q4 2027,HHS OCR audit protocol: every addressable spec documented
+Compliance,NIST CSF 2.0 subcategories met,compliant / assessed (CAN-AUD-CSF-001),66.7% (10/15),Tier 3 'Repeatable' by 2028,NIST CSF implementation tiers 1-4
+Control,Control test pass rate,PASS / tests run,"85.7% (12/14, 2026-11-03)",>= 95%,Internal target; first audit was 57.1%
+Remediation,Corrective actions closed,resolved / total,50.0% (9/18),>= 90%,Forecast to reach 90% on 2026-12-20
+Remediation,Corrective actions overdue,open CAs past due date,0,0,Zero tolerance for overdue Highs
+Governance,Exceptions past expiry,open exceptions with expiry < today,"2 (EX-06, EX-08)",0,Every exception renewed or closed before expiry
+Operational,Leaver exposure window,minutes between HR leave date action and last access removed,0 min automated (manual was 12 min),0 min; <= 24 h at worst,PCI DSS 8.2.5: revoke immediately; HIPAA 164.308(a)(3)(ii)(C)
+Operational,JML provisioning time,minutes from approved request to verified access,4 s automated,< 5 min,Manual baseline 27.3 min
+Operational,Compliance workflow run time,end-to-end run of S1-S6,351 ms for 23 issues,< 60 s,Replaces a weekly manual register review (about 4 h)
+Risk,"Residual annual IAM loss, P95",Monte Carlo 95th percentile,$8.0M (with FIDO2 + insurance $4.5M),<= $5M (appetite),IBM Cost of a Data Breach 2025: healthcare average US$7.42M per breach
+Risk,AI triage model quality,AUC on held-out history,0.931 (accuracy 0.808),>= 0.85,Retrain quarterly; human approval on every escalation
+Incident,First response to SEV-1,minutes from alert to triage,4.2 min (SOC1-2026-001),<= 15 min,IR playbook CAN-IR-PB-02; GDPR 72 h / HIPAA 60-day notice clocks

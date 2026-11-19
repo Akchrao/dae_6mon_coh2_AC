@@ -1,0 +1,19 @@
+flowchart LR
+    U[User request<br/>e.g. billing clerk] --> L1
+    subgraph L1["Layer 1: Identity (Microsoft Entra ID)"]
+        A1[App assignment required] --> A2[MFA: Security defaults]
+    end
+    L1 --> L2
+    subgraph L2["Layer 2: Identity broker (Keycloak)"]
+        B1[Role from Entra, sync FORCE] --> B2[MFA for privileged roles<br/>lockout after 10 failures]
+    end
+    L2 --> L3
+    subgraph L3["Layer 3: Application gate"]
+        C1{Role approved<br/>for this app?}
+    end
+    C1 -- yes --> OK[Access to that app only]
+    C1 -- no --> DN[DENIED<br/>role not approved]
+    L3 --> L4
+    subgraph L4["Layer 4: Continuous verification (Wazuh)"]
+        D1[Every sign-in, record access and<br/>connection logged and correlated]
+    end

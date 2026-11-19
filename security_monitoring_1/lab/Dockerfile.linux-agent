@@ -1,0 +1,18 @@
+# HRMC Linux server with the Wazuh agent (Security Monitoring 1 lab)
+FROM debian:12-slim
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      ca-certificates curl gnupg openssh-server rsyslog procps iproute2 netcat-openbsd lsb-release \
+ && curl -s https://packages.wazuh.com/key/GPG-KEY-WAZUH | gpg --dearmor -o /usr/share/keyrings/wazuh.gpg \
+ && echo "deb [signed-by=/usr/share/keyrings/wazuh.gpg] https://packages.wazuh.com/4.x/apt/ stable main" > /etc/apt/sources.list.d/wazuh.list \
+ && apt-get update && WAZUH_MANAGER=wazuh.manager WAZUH_AGENT_NAME=hrmc-linux-srv01 DEBIAN_FRONTEND=noninteractive \
+      apt-get install -y wazuh-agent=4.9.2-1 \
+ && rm -rf /var/lib/apt/lists/*
+# synthetic staff accounts (lab only) and the EHR export share watched by file integrity monitoring
+RUN useradd -m -s /bin/bash tjones && useradd -m -s /bin/bash sathya && useradd -m -s /bin/bash svc_backup \
+ && echo 'tjones:Lab-Only-Pass-1!' | chpasswd && echo 'sathya:Lab-Only-Pass-2!' | chpasswd \
+ && mkdir -p /srv/ehr_exports /run/sshd && for i in 1 2 3; do echo "SYN-PT-1000$i,synthetic" > /srv/ehr_exports/export_$i.csv; done
+COPY agent_ossec_extra.conf /tmp/agent_ossec_extra.conf
+RUN cat /tmp/agent_ossec_extra.conf >> /var/ossec/etc/ossec.conf
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+ENTRYPOINT ["/entrypoint.sh"]

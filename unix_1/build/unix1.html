@@ -1,0 +1,21 @@
+<!doctype html><html><head><meta charset="utf-8"><style>body{font-family:"DejaVu Sans",Arial;color:#1F2D33;font-size:11pt;line-height:1.45}h1{color:#1D4E5A;font-size:22pt;margin:0 0 4px}h2{color:#1D4E5A;font-size:14pt;border-bottom:2px solid #E8735A;padding-bottom:3px;margin:18px 0 8px}.meta{color:#5B6B70;font-size:10pt}table{border-collapse:collapse;width:100%;margin:8px 0}th,td{border:1px solid #D5E3DF;padding:6px 8px;text-align:left;vertical-align:top}th{background:#E3F2EE;color:#1D4E5A}img{max-width:100%;border:1px solid #ccc;margin:6px 0}.pb{page-break-before:always}code{background:#F1F1F1;padding:1px 4px}.cap{color:#5B6B70;font-size:10pt}</style></head><body>
+<h1>Unix 1 Project Submission</h1>
+<div class="meta">Akhila Chennamaneni &middot; DAE 6-Month Cybersecurity Cohort 2 &middot; macOS Terminal &middot; November 17, 2026</div>
+<h2>Rubric checklist</h2>
+<table><tr><th>Criterion</th><th>Evidence</th><th>Screenshot</th></tr>
+<tr><td>Commands: ls, pwd, cat, touch</td><td><code>pwd</code>, <code>touch test1.txt</code>, <code>ls</code>, <code>cat notes.txt</code></td><td>1, 2</td></tr>
+<tr><td>Options: add an option to a command</td><td><code>ls -l</code> (the <code>-l</code> long-listing option)</td><td>2</td></tr>
+<tr><td>Arguments: add an argument to a command</td><td><code>touch test1.txt</code>, <code>cat notes.txt</code>, <code>ls -l notes.txt</code></td><td>1, 2</td></tr>
+<tr><td>Text editors: create and edit a file</td><td><code>nano notes.txt</code>, typed and saved &ldquo;Hello from Akhila - Unix 1&rdquo;; <code>cat</code> shows the saved text</td><td>3, 2</td></tr>
+<tr><td>Permissions: read, write, execute and view</td><td><code>chmod 755 notes.txt</code> gives <code>-rwxr-xr-x</code> (read, write, execute); <code>chmod 644</code> sets it back to <code>-rw-r--r--</code>; viewed with <code>ls -l</code></td><td>2</td></tr>
+</table>
+<h2>Screenshot 1: pwd, touch and ls</h2>
+<img src="1_ls_pwd_touch.png">
+<div class="cap"><code>pwd</code> prints the current folder, <code>touch test1.txt</code> creates an empty file, and <code>ls</code> lists it.</div>
+<h2 class="pb">Screenshot 2: cat, option, argument and permissions</h2>
+<img src="2_cat_option_argument_permissions.png">
+<div class="cap"><code>cat notes.txt</code> prints the file. <code>ls -l notes.txt</code> (option <code>-l</code>, argument <code>notes.txt</code>) shows the permissions changing from <code>rwxr-xr-x</code> after <code>chmod 755</code> to <code>rw-r--r--</code> after <code>chmod 644</code>.</div>
+<h2 class="pb">Screenshot 3: text editor (nano)</h2>
+<img src="3_nano_text_editor.png" style="max-height:780px">
+<div class="cap"><code>nano notes.txt</code>: the file was created and edited, then saved with Ctrl+O and closed with Ctrl+X.</div>
+</body></html>

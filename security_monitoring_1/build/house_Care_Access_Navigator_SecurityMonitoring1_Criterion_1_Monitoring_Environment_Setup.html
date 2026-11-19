@@ -1,0 +1,96 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Security Monitoring 1 — Criterion 1: Monitoring Environment Setup</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Security Monitoring 1 — Criterion 1: Monitoring Environment Setup</div><div class='subsub'>Monitoring environment, security event analysis, monitoring implementation and reporting with Wazuh, a live Linux agent and imported Windows samples</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Security Monitoring 1 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Rubric criterion:</td><td>Criterion 1: Monitoring Environment Setup</td></tr><tr><td class='k'>Environment:</td><td>Wazuh 4.9.2; live Linux agent hrmc-linux-srv01; Windows Security samples (option B, instructor-approved); capstone Keycloak and EHR logs</td></tr><tr><td class='k'>Date:</td><td>November 18, 2026</td></tr></table><div class="note"><b>Windows source (option B, agreed with the instructor):</b> no live Windows host was available, so Windows Security events were
+<b>imported as samples</b> in the Microsoft Security log schema (event IDs 4624, 4625, 4634, 4663, 4732, 5156). Every imported event is tagged
+<code>"sample": "imported-synthetic"</code>. The <b>Linux source is live</b>: a Debian 12 server (<code>hrmc-linux-srv01</code>) runs the official Wazuh agent 4.9.2,
+connected to the manager over the agent protocol (port 1514/tcp), and its SSH, file and network activity in this report is real.</div><h2>1. Monitoring Environment Setup</h2>
+<h3>1.1 Installation and basic configuration</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:18%>Component</th><th style=width:30%>Version / image</th><th>Configuration</th></tr><tr><td>Wazuh manager</td><td>wazuh/wazuh-manager:4.9.2</td><td>Custom rules <code>soc1_rules.xml</code> + <code>zz_sm1_rules.xml</code>; email notification; 5 log files under /var/log/soc1; vulnerability detection disabled (section 3.6)</td></tr><tr><td>Wazuh indexer</td><td>wazuh/wazuh-indexer:4.9.2 (OpenSearch)</td><td>Single node, TLS certificates from the official generator, 1 GB heap</td></tr><tr><td>Wazuh dashboard</td><td>wazuh/wazuh-dashboard:4.9.2</td><td>https://localhost:5601; custom dashboard imported as saved objects</td></tr><tr><td>Linux agent</td><td>hrmc-linux-agent:1.0 (Debian 12 + wazuh-agent 4.9.2)</td><td>auth.log collection, real-time file integrity monitoring of /srv/ehr_exports, outbound TCP command every 30 s</td></tr><tr><td>MailHog</td><td>mailhog/mailhog:v1.0.1</td><td>Test SMTP server for alert email (port 8025 web inbox)</td></tr></table>
+<h3>1.2 Network configuration</h3>
+<pre># Network configuration (docker network inspect single-node_default), 2026-11-18T19:22:19Z
+
+hrmc-jumpbox  172.21.0.7/16
+hrmc-linux-srv01  172.21.0.6/16
+single-node-mailhog-1  172.21.0.2/16
+single-node-wazuh.dashboard-1  172.21.0.5/16
+single-node-wazuh.indexer-1  172.21.0.3/16
+single-node-wazuh.manager-1  172.21.0.4/16
+
+# Published ports
+single-node-wazuh.manager-1  0.0.0.0:1514-1515-&gt;1514-1515/tcp, [::]:1514-1515-&gt;1514-1515/tcp, 0.0.0.0:514-&gt;514/udp, [::]:514-&gt;514/udp, 0.0.0.0:55000-&gt;55000/tcp, [::]:55000-&gt;55000/tcp
+hrmc-jumpbox  
+hrmc-linux-srv01  
+single-node-wazuh.dashboard-1  0.0.0.0:5601-&gt;5601/tcp, [::]:5601-&gt;5601/tcp
+single-node-wazuh.indexer-1  0.0.0.0:9200-&gt;9200/tcp, [::]:9200-&gt;9200/tcp
+single-node-mailhog-1  0.0.0.0:8025-&gt;8025/tcp, [::]:8025-&gt;8025/tcp
+
+# Agent connection
+   Agent ID:   001
+   Agent Name: hrmc-linux-srv01
+   IP address: any
+   Status:     Active
+   Client version:      Wazuh v4.9.2
+   Last keep alive:     1795029737
+2026/11/18 19:19:57 wazuh-agentd: INFO: (4102): Connected to the server ([wazuh.manager]:1514/tcp).
+</pre>
+<p>All components share the Docker bridge network <code>single-node_default</code> (172.21.0.0/16). Only the ports analysts and agents need are published:
+1514-1515/tcp (agent events and enrollment), 514/udp (syslog), 55000 (API), 9200 (indexer), 5601 (dashboard), 8025 (mail).</p>
+<h3 class="pb">1.3 Log collection from Windows and Linux, with verified connectivity</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:20%>Source type</th><th style=width:38%>How it is collected</th><th>Verification</th></tr><tr><td><b>Linux</b> (hrmc-linux-srv01)</td><td>Wazuh agent 001: /var/log/auth.log, file integrity monitoring, command output</td><td>Agent <b>Active</b> in agent_control and the dashboard (Screenshot 2); agent log: <i>Connected to the server ([wazuh.manager]:1514/tcp)</i>; alerts from agent hrmc-linux-srv01 in the index</td></tr><tr><td><b>Windows</b> (HRMC-WS-PFS-02, HRMC-FS01 and 4 other workstations)</td><td>Imported Security log samples (JSON) read by the manager's logcollector from /var/log/soc1/windows_security.json</td><td>logcollector counted the events; 637 baseline events + scenario indexed as data.src = windows_security; rule tester (wazuh-logtest) decodes them into fields</td></tr><tr><td>Keycloak sign-in / admin, EHR access</td><td>Capstone logs (JSON) via logcollector</td><td>Alerts with data.src keycloak_login, keycloak_admin, ehr_access</td></tr></table>
+<div class="fig"><img src="../screenshots/SS-02.png" style=max-height:470px><div class="cap">Screenshot 2: Wazuh endpoints view: agent 001 hrmc-linux-srv01, Debian 12, v4.9.2, status active</div></div>
+<h3 class="pb">1.4 Alert rules for three security scenarios</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:14%>Scenario</th><th style=width:34%>Windows rules</th><th style=width:30%>Linux rules (live agent)</th><th>Application rules</th></tr><tr><td><b>Authentication</b></td><td>100601 failed logon; 100602 6 failures / 2 min (password guessing); 100604 RDP logon from outside the network; 100605 lockout; 100606 privileged group change</td><td>Built-in 5760 failed SSH password, 5763 SSH brute force, 5551 PAM failures, 40112 failures followed by success</td><td>100501-100507 Keycloak (SOC 1)</td></tr><tr><td><b>File access</b></td><td>100610 file read; 100611 read on the EHR export share (ePHI); 100612 20+ reads in 60 s</td><td>Built-in 554 / 550 / 553 file added / changed / deleted in /srv/ehr_exports (real-time FIM)</td><td>100521 / 100522 EHR record access (SOC 1)</td></tr><tr><td><b>Network activity</b></td><td>100620 connection allowed; 100621 connection to a known-bad address (203.0.113.0/24)</td><td>100630 TCP connection to a known-bad address (outbound_tcp command)</td><td>-</td></tr><tr><td><b>Cross-source</b></td><td>100651 mass EHR export reads + outbound to bad address (same user)</td><td></td><td>100650 Windows RDP from outside + EHR record access (same user)</td></tr></table>
+<div class="fig"><img src="../screenshots/SS-05.png" style=max-height:560px><div class="cap">Screenshot 5: the rule file zz_sm1_rules.xml in Server management &rarr; Rules</div></div>
+<h3 class="pb">1.5 Monitoring workflow: alert routing and notification</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:14%>Alert level</th><th style=width:40%>Routing</th><th>Notification</th></tr><tr><td>3-7</td><td>Stored in the indexer; dashboard; daily review</td><td>None</td></tr><tr><td>8-9</td><td>Tier 1 queue in the dashboard</td><td>None (seen within the shift)</td></tr><tr><td>10-11</td><td>Tier 1 triage</td><td>Email to soc-tier1@hrmc.lab (email_alert_level 10)</td></tr><tr><td>12-15</td><td>Tier 1 triage, SOC lead informed immediately</td><td>Email to soc-tier1 <b>and</b> soc-lead@hrmc.lab, no delay (email_alerts, level 12)</td></tr></table>
+<p>During the scenario Wazuh sent <b>23 emails</b>: 20 to soc-tier1@hrmc.lab,soc-lead@hrmc.lab, 3 to soc-tier1@hrmc.lab (Screenshot 6).
+Full escalation workflow (Tier 1 &rarr; Tier 2 &rarr; Incident Commander) is in the SOC 1 submission, Mermaid diagram <code>soc_alert_workflow.mmd</code>.</p>
+<div class="fig"><img src="../screenshots/SS-06.png" style=max-height:470px><div class="cap">Screenshot 6: MailHog inbox, level 14 and 15 notifications to soc-lead@hrmc.lab</div></div>
+</body></html>

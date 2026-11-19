@@ -1,0 +1,6 @@
+step,baseline_hours,optimized_hours,basis
+Request intake (email / form),4.0,0.5,assumption: email triage vs. structured form
+Manager approval,16.0,8.0,assumption: approval inside the workflow with reminder
+Provisioning in Entra + Keycloak (avg of J/M/L),0.456,0.0011,MEASURED
+Verification of access,0.25,0.0,baseline: manual check (measured part of JML evidence); optimized: automatic in can_iam
+Evidence filing for audit,0.5,0.0,assumption: screenshots + register vs. automatic JSONL audit log

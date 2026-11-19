@@ -1,0 +1,126 @@
+{
+ "kpis": [
+  {
+   "category": "Compliance",
+   "kpi": "HIPAA requirements fully compliant",
+   "formula": "compliant / assessed (CISO Assistant CAN-AUD-HIPAA-001)",
+   "current": "68.0% (17/25)",
+   "target": ">= 90% by Q4 2027",
+   "reference": "HHS OCR audit protocol: every addressable spec documented"
+  },
+  {
+   "category": "Compliance",
+   "kpi": "NIST CSF 2.0 subcategories met",
+   "formula": "compliant / assessed (CAN-AUD-CSF-001)",
+   "current": "66.7% (10/15)",
+   "target": "Tier 3 'Repeatable' by 2028",
+   "reference": "NIST CSF implementation tiers 1-4"
+  },
+  {
+   "category": "Control",
+   "kpi": "Control test pass rate",
+   "formula": "PASS / tests run",
+   "current": "85.7% (12/14, 2026-11-03)",
+   "target": ">= 95%",
+   "reference": "Internal target; first audit was 57.1%"
+  },
+  {
+   "category": "Remediation",
+   "kpi": "Corrective actions closed",
+   "formula": "resolved / total",
+   "current": "50.0% (9/18)",
+   "target": ">= 90%",
+   "reference": "Forecast to reach 90% on 2026-12-20"
+  },
+  {
+   "category": "Remediation",
+   "kpi": "Corrective actions overdue",
+   "formula": "open CAs past due date",
+   "current": "0",
+   "target": "0",
+   "reference": "Zero tolerance for overdue Highs"
+  },
+  {
+   "category": "Governance",
+   "kpi": "Exceptions past expiry",
+   "formula": "open exceptions with expiry < today",
+   "current": "2 (EX-06, EX-08)",
+   "target": "0",
+   "reference": "Every exception renewed or closed before expiry"
+  },
+  {
+   "category": "Operational",
+   "kpi": "Leaver exposure window",
+   "formula": "minutes between HR leave date action and last access removed",
+   "current": "0 min automated (manual was 12 min)",
+   "target": "0 min; <= 24 h at worst",
+   "reference": "PCI DSS 8.2.5: revoke immediately; HIPAA 164.308(a)(3)(ii)(C)"
+  },
+  {
+   "category": "Operational",
+   "kpi": "JML provisioning time",
+   "formula": "minutes from approved request to verified access",
+   "current": "4 s automated",
+   "target": "< 5 min",
+   "reference": "Manual baseline 27.3 min"
+  },
+  {
+   "category": "Operational",
+   "kpi": "Compliance workflow run time",
+   "formula": "end-to-end run of S1-S6",
+   "current": "351 ms for 23 issues",
+   "target": "< 60 s",
+   "reference": "Replaces a weekly manual register review (about 4 h)"
+  },
+  {
+   "category": "Risk",
+   "kpi": "Residual annual IAM loss, P95",
+   "formula": "Monte Carlo 95th percentile",
+   "current": "$8.0M (with FIDO2 + insurance $4.5M)",
+   "target": "<= $5M (appetite)",
+   "reference": "IBM Cost of a Data Breach 2025: healthcare average US$7.42M per breach"
+  },
+  {
+   "category": "Risk",
+   "kpi": "AI triage model quality",
+   "formula": "AUC on held-out history",
+   "current": "0.931 (accuracy 0.808)",
+   "target": ">= 0.85",
+   "reference": "Retrain quarterly; human approval on every escalation"
+  },
+  {
+   "category": "Incident",
+   "kpi": "First response to SEV-1",
+   "formula": "minutes from alert to triage",
+   "current": "4.2 min (SOC1-2026-001)",
+   "target": "<= 15 min",
+   "reference": "IR playbook CAN-IR-PB-02; GDPR 72 h / HIPAA 60-day notice clocks"
+  }
+ ],
+ "predictive": {
+  "at_risk_next_14_days": [
+   "CA-08",
+   "CA-12",
+   "CA-13",
+   "CA-17"
+  ],
+  "expired_exceptions": [
+   "EX-06",
+   "EX-08"
+  ],
+  "workflow_escalations": {
+   "ESCALATE-COMMITTEE": 2,
+   "ESCALATE-CCO": 1,
+   "REMIND": 1,
+   "ASSIGN-OWNER": 8,
+   "MONITOR": 11
+  }
+ },
+ "pdca_cycle_1": {
+  "plan": "Compliance 1 internal audit CAN-IA-2026-01 (2026-10-13): 6 findings (F-01..F-06), 3 High",
+  "do": "Week 5 hardening: MFA for privileged roles, lockout, 12-char passwords, app gates (EV-13)",
+  "check": "Re-test 2026-11-03 and access review signed 2026-11-09: control pass rate 57.1% -> 85.7%; High findings 3 -> 1; 4 of 6 findings closed with evidence; E2E 9/10 then 10/10 after CA-10",
+  "act": "Remaining gaps governed as exceptions (EX-02, EX-05) with expiry dates; corrective actions tracked in CISO Assistant",
+  "measured_improvement_points": 28.6
+ }
+}

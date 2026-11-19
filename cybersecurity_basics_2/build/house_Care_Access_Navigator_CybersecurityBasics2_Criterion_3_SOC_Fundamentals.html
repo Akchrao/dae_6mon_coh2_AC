@@ -1,0 +1,81 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Cybersecurity Basics 2 — Criterion 3: SOC Fundamentals</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Cybersecurity Basics 2 — Criterion 3: SOC Fundamentals</div><div class='subsub'>Defense strategies, incident response, SOC fundamentals, security policy and governance, and security documentation for HRMC</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Cybersecurity Basics 2 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Rubric criterion:</td><td>Criterion 3: SOC Fundamentals</td></tr><tr><td class='k'>Environment:</td><td>Entra ID + Keycloak (capstone), Wazuh with live Linux agent, IR1 forensic lab, CISO Assistant</td></tr><tr><td class='k'>Date:</td><td>November 19, 2026</td></tr></table><div class="note"><b>How this course fits the capstone.</b> Every criterion is shown on the same hospital, accounts, roles, risks and tools as the Care Access Navigator
+project, reusing evidence from earlier courses where it already exists and adding new, real work where the rubric asks for it: two incidents on the live Linux
+server were investigated and <b>resolved on 2026-11-19</b> (cases CB2-2026-001 and CB2-2026-002), and a security policy, procedure, guide, two playbooks and a knowledge base were written.</div><h2>3. SOC Fundamentals</h2>
+<h3>3.1 SOC functions and roles</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:22%>Role</th><th style=width:40%>Responsibilities</th><th>In the HRMC labs</th></tr><tr><td>Tier 1 SOC analyst</td><td>Watch the dashboard and alert email, triage, open cases, escalate by severity</td><td>Triaged SOC1-2026-001 in 4.2 min; CB2 cases in under 6 min</td></tr><tr><td>Tier 2 incident responder</td><td>Investigate, contain, eradicate, recover; collect evidence</td><td>Contained and resolved CB2-2026-001/002; IR1 containment and forensics</td></tr><tr><td>Tier 3 threat hunter / detection engineer</td><td>Write and tune rules, hunt for undetected threats, test detections</td><td>Wrote SOC 1 and SM1 rules (100500-100651), found and fixed the rule-load-order defect</td></tr><tr><td>SOC manager / lead</td><td>Escalation point, metrics, reporting, shift handover, staffing</td><td>Receives level 12+ email; shift handover form (SOC 1); metrics (SM1)</td></tr></table>
+<p>Main SOC functions: continuous monitoring, alert triage, incident response, threat intelligence and hunting, detection engineering, reporting and compliance support.
+In the lab one person (the author) performed all four roles.</p>
+<h3>3.2 Monitoring tool configured and two types of network activity monitored</h3>
+<p><b>Tool:</b> Wazuh 4.9.2 with the live agent <code>hrmc-linux-srv01</code> (configured in Security Monitoring 1). Network activity monitored on it:</p>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:24%>Network activity</th><th style=width:38%>How Wazuh sees it</th><th>Real example</th></tr><tr><td><b>Inbound remote logins (SSH, TCP 22)</b></td><td>auth.log via the agent: every failed and accepted login with source IP and port</td><td>8 failed logins from 172.21.0.7 then 'Accepted password for tjones' (40112); after hardening 'Accepted publickey for sathya' (5715)</td></tr><tr><td><b>Outbound TCP connections</b></td><td>Agent command every 30 s lists established and pending connections; rule 100630 flags known-bad addresses</td><td>172.21.0.6:53766 -&gt; 203.0.113.77:443 (100630, level 12)</td></tr><tr><td>Windows network connections (imported samples)</td><td>Event 5156 with application and destination; rule 100621</td><td>rclone.exe -&gt; 203.0.113.77:443 (SM1)</td></tr></table>
+<div class="fig"><img src="../screenshots/CB2-04_wazuh_agent_active.png" style=max-height:300px><div class="cap">CB2-04: the monitored server: agent 001 hrmc-linux-srv01 active (Wazuh endpoints)</div></div>
+<h3 class="pb">3.3 Alert management: two alerts generated, investigated and resolved</h3>
+<div class="fig"><img src="../screenshots/CB2-01_linux_alert_to_resolution.png" style=max-height:640px><div class="cap">CB2-01: Wazuh Threat Hunting for hrmc-linux-srv01: the attack on 18 Nov (5760 &rarr; 5763 &rarr; 40112, FIM 554 / 553, 100630) and the resolution on 19 Nov (5715 key login, FIM 553 / 554). Times are US Eastern.</div></div>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:12%></th><th style=width:44%>Alert 1: SSH brute force &rarr; compromise (CB2-2026-001)</th><th>Alert 2: EHR export staging (CB2-2026-002)</th></tr><tr><td>Generated</td><td>5763 (L10) 2026-11-18 19:16:26 UTC; 40112 (L12) 19:16:30 UTC; email to Tier 1</td><td>554 (L5) staged file added 19:16:29; 553 (L7) export deleted 19:16:31; 100630 (L12) outbound 19:16:56</td></tr><tr><td>Investigated</td><td>Same source failed 8 times then succeeded: true positive; SEV-2; triage 19:22:19 (5.9 min)</td><td>Same host and minute as alert 1; staged file = all exports combined; linked case</td></tr><tr><td>Contained</td><td>2026-11-19 16:32:30: <code>passwd -l tjones</code>, shell nologin</td><td>16:33:10: staged file preserved in /root/ir_evidence, hashed</td></tr><tr><td>Resolved</td><td>16:32:31: SSH keys only, MaxAuthTries 3, banner; re-test refused the password</td><td>16:33:16: staged file removed, export_1.csv restored; hash = known-good</td></tr><tr><td>Closed</td><td>16:40 UTC, lessons recorded</td><td>16:40 UTC, lessons recorded</td></tr></table>
+<pre>: password guessing is now refused (attacker retries tjones with the old guessed password)
+***************************************************************************
+ HealthLine Regional Medical Center - AUTHORIZED USE ONLY
+ This system holds protected health information (ePHI). Use is limited to
+ approved HRMC work under the HRMC Information Security Policy (POL-SEC-01),
+ section 4 &quot;System Use&quot;. All activity is logged and monitored. Misuse may
+ lead to disciplinary action and legal penalties (HIPAA).
+***************************************************************************
+tjones@hrmc-linux-srv01: Permission denied (publickey).
+
+== VERIFY 2: legitimate key login for sathya shows the system-use banner
+***************************************************************************
+ HealthLine Regional Medical Center - AUTHORIZED USE ONLY
+ This system holds protected health information (ePH</pre>
+<div class="cap">Excerpt of evidence/remediation_transcript.txt: the attacker's password is refused after hardening; the policy banner is shown.</div>
+<h3 class="pb">3.4 Threat detection: analysis of one identified threat</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'><tr><th style=width:22%>Analysis step</th><th>Credential guessing against hrmc-linux-srv01</th></tr><tr><td>Threat</td><td>Online password guessing (MITRE ATT&amp;CK T1110.001) followed by valid-account use (T1078) and staging / exfiltration (T1074, T1041)</td></tr><tr><td>Indicators</td><td>Source 172.21.0.7; 8 'Failed password' lines in about 35 s; success from the same source; new file in /srv/ehr_exports; connection to 203.0.113.77:443</td></tr><tr><td>How it was detected</td><td>Wazuh built-in rules 5760 &rarr; 5763 (frequency) &rarr; 40112 (correlation: failures then success); FIM real-time 554 / 553; custom rule 100630 on the connection list</td></tr><tr><td>Why it worked</td><td>Password authentication enabled on SSH; weak, guessable password; no egress filtering</td></tr><tr><td>Impact</td><td>Server access as a normal user; synthetic export files staged; possible transfer (SEV-2)</td></tr><tr><td>Response</td><td>PB-01 and PB-02; cases closed with evidence (section 3.3)</td></tr><tr><td>Detection improvement</td><td>Add a rule for any new file in ePHI folders outside a change window (level 10), and raise 100630 to level 13 when it follows 40112 on the same host</td></tr></table>
+</body></html>

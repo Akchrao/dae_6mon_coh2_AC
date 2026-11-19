@@ -1,0 +1,25 @@
+flowchart TD
+    A[Log sources<br/>Keycloak sign-ins, Keycloak admin,<br/>EHR access, Linux auth.log] --> B[Wazuh manager<br/>decoders + rules]
+    B --> C{Alert level?}
+    C -- "3-7: informational" --> D[Stored in indexer<br/>reviewed in daily hunt]
+    C -- "8-9: medium" --> E[Tier 1 queue<br/>dashboard]
+    C -- "10-11: high" --> F[Email to soc-tier1<br/>+ dashboard]
+    C -- "12+: critical" --> G[Email to soc-tier1 AND soc-lead<br/>no delay]
+    E --> H[Tier 1 triage<br/>validate, enrich, check false positive]
+    F --> H
+    G --> H
+    H --> I{True positive?}
+    I -- No --> J[Close as false positive<br/>tune rule, note in handover]
+    I -- Yes --> K[Open case in tracker<br/>set severity SEV-1..4]
+    K --> L{Severity}
+    L -- "SEV-3 / SEV-4" --> M[Tier 1 contains and resolves<br/>within SLA]
+    L -- "SEV-2" --> N[Escalate to Tier 2 analyst<br/>start within 60 min]
+    L -- "SEV-1" --> O[Escalate to Incident Commander<br/>start within 15 min]
+    O --> P{ePHI involved?}
+    P -- Yes --> Q[Notify Privacy Officer<br/>HIPAA breach risk assessment]
+    P -- No --> R[Tier 2 or IC leads containment<br/>and eradication]
+    N --> R
+    Q --> R
+    M --> S[Document, close case,<br/>lessons learned]
+    R --> S
+    S --> T[Shift handover:<br/>open cases + pending actions]

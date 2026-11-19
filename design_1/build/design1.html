@@ -1,0 +1,139 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  body { font-family: "DejaVu Sans", Arial, sans-serif; color:#1F2D33; font-size:10.5pt; line-height:1.45; margin:0; }
+  h1 { font-family: "DejaVu Serif", Georgia, serif; color:#1D4E5A; font-size:24pt; margin:0 0 4px; }
+  h2 { font-family: "DejaVu Serif", Georgia, serif; color:#1D4E5A; font-size:15pt; margin:22px 0 8px; border-bottom:2px solid #E8735A; padding-bottom:3px; }
+  h3 { color:#2E7D7A; font-size:11pt; margin:12px 0 4px; }
+  .meta { color:#5B6B70; font-size:10pt; margin-bottom:14px; }
+  table { border-collapse:collapse; width:100%; margin:6px 0 10px; page-break-inside:avoid; }
+  th, td { border:1px solid #D5E3DF; padding:6px 8px; vertical-align:top; text-align:left; }
+  th { background:#E3F2EE; color:#1D4E5A; }
+  .quote { background:#1D4E5A; color:#fff; padding:12px 16px; font-family:"DejaVu Serif", Georgia, serif; font-size:11.5pt; border-radius:6px; }
+  .note { background:#F4E9DD; padding:8px 12px; border-radius:6px; font-size:10pt; }
+  .chat { width:100%; }
+  .bot { background:#E3F2EE; padding:6px 10px; border-radius:8px; margin:5px 70px 5px 0; }
+  .user { background:#E8735A; color:#fff; font-weight:bold; padding:6px 10px; border-radius:8px; margin:5px 0 5px 380px; text-align:center; }
+  .chosen { background:#E3F2EE; }
+  .pb { page-break-before:always; }
+  .fig { text-align:center; }
+  .fig img { height:600px; }
+  .cap { color:#5B6B70; font-size:9pt; text-align:center; }
+  ul { margin:4px 0 6px 18px; padding:0; }
+</style></head><body>
+
+<h1>MoodBuddy: Design 1 Project</h1>
+<div class="meta">Akhila Chennamaneni &middot; DAE 6-Month Cybersecurity Cohort 2 &middot; Semester 2 &middot; Design 1<br>
+Program: <code>python_1/MoodBuddy.py</code> &middot; Flowchart: <code>figma_1/MoodBuddy Algorithm Flowchart v3.png</code></div>
+
+<h2>Overview</h2>
+<p>MoodBuddy is a Python program I wrote that asks a user for their name and age, lets them pick one of six moods
+(Happy, Sad, Angry, Lazy, Anxious, Excited) and replies with a message and a suggested activity matched to their
+age group. It saves every check-in to a JSON file, so it remembers each user, and it shows a gentle warning when the
+same negative mood keeps coming back. This document records the design thinking behind it, following the five
+Design 1 rubric criteria.</p>
+
+<table>
+<tr><th style="width:32%">Rubric criterion</th><th>Section</th></tr>
+<tr><td>Create an Empathy Map</td><td>1. Empathy Map</td></tr>
+<tr><td>Document Research (3 sources)</td><td>2. Research</td></tr>
+<tr><td>Define a Purpose Statement</td><td>3. Purpose Statement</td></tr>
+<tr><td>Brainstorm Ideas (3)</td><td>4. Brainstorm</td></tr>
+<tr><td>Create a Conversational Prototype</td><td>5. Conversational Prototype</td></tr>
+</table>
+
+<h2>1. Empathy Map</h2>
+<p><b>User:</b> Sam, 21, a college student who also works part-time.</p>
+<table>
+<tr><th style="width:50%">Says</th><th>Thinks</th></tr>
+<tr><td><ul><li>&ldquo;I'm fine, just tired.&rdquo;</li><li>&ldquo;I don't have time to write a journal.&rdquo;</li><li>&ldquo;I can't remember how I felt last week.&rdquo;</li></ul></td>
+<td><ul><li>Is it normal to feel anxious this often?</li><li>Mood apps look complicated and want my data.</li><li>I wish someone just told me one thing to try.</li></ul></td></tr>
+<tr><th>Does</th><th>Feels</th></tr>
+<tr><td><ul><li>Skips breaks and self-care in busy weeks</li><li>Scrolls the phone when stressed or bored</li><li>Notices a bad mood only after several days</li></ul></td>
+<td><ul><li>Anxious before exams and shifts</li><li>Overwhelmed, sometimes lazy and unmotivated</li><li>Happy on good days, but forgets them quickly</li></ul></td></tr>
+<tr><th>Pains</th><th>Gains</th></tr>
+<tr><td>No time, forgets mood patterns, doesn't want to share feelings with people or big apps.</td>
+<td>A check-in under a minute, one small activity to try, and a heads-up when bad moods repeat.</td></tr>
+</table>
+
+<h2 class="pb">2. Research</h2>
+<p>I looked at two existing mood apps (market research) and one psychology study.</p>
+<table>
+<tr><th style="width:22%">Source</th><th style="width:40%">What I learned</th><th>How MoodBuddy uses it</th></tr>
+<tr><td><b>Daylio: Journal &amp; Mood Tracker</b><br><span style="font-size:9pt">Market &middot; daylio.net</span></td>
+<td>Users log a mood with one tap and pick activities, with no writing needed. Streaks and statistics show patterns over time.</td>
+<td>Six numbered mood choices; every check-in is saved with a timestamp and counted.</td></tr>
+<tr><td><b>How We Feel</b><br><span style="font-size:9pt">Market &middot; howwefeel.org, built with the Yale Center for Emotional Intelligence</span></td>
+<td>A free app that helps people name an emotion and then suggests a short strategy, such as a breathing exercise.</td>
+<td>Every mood gets a message plus one suggested activity (for example, box breathing for anxiety).</td></tr>
+<tr><td><b>&ldquo;Putting Feelings Into Words&rdquo;</b><br><span style="font-size:9pt">Research &middot; Lieberman et al., 2007</span></td>
+<td>A brain-imaging study found that naming a feeling (affect labeling) reduces the brain's emotional reaction to it.</td>
+<td>The check-in itself helps: the user names their mood before getting a response.</td></tr>
+</table>
+
+<h2>3. Purpose Statement</h2>
+<div class="quote">MoodBuddy is a simple Python mood tracker where a user names one of six moods and gets an age-appropriate
+message and activity in under a minute. It is being made so busy students, families and older adults (ages 4 to 100)
+can build a daily habit of naming their feelings and notice repeating negative moods early.</div>
+<table>
+<tr><th style="width:15%">What</th><td>A Python mood tracker: six moods, a message and an activity, and a saved history</td></tr>
+<tr><th>Why</th><td>Naming feelings helps, and repeated negative moods should be noticed early</td></tr>
+<tr><th>Who</th><td>Busy students, families and older adults, ages 4 to 100 (seven age groups, Child to Elder)</td></tr>
+</table>
+
+<h2>4. Brainstorm</h2>
+<table>
+<tr><th style="width:24%">Idea</th><th style="width:36%">Description</th><th>Strength</th><th>Weakness</th></tr>
+<tr><td><b>1. Daily mood journal</b></td><td>The user writes a few lines each day in answer to a prompt.</td><td>Rich detail</td><td>Slow; Sam has no time to write</td></tr>
+<tr class="chosen"><td><b>2. Mood check-in with tracking and warnings</b> (chosen)</td><td>Pick one of six moods and get a message and an activity; counts are saved, and a gentle warning appears if the same negative mood comes up three times.</td><td>Under a minute; remembers patterns</td><td>Less detail than a journal</td></tr>
+<tr><td><b>3. Daily reminder bot</b></td><td>Sends a scheduled quote or a reminder to take a break.</td><td>Nudges the habit</td><td>No tracking; needs a phone and notifications</td></tr>
+</table>
+<p class="note"><b>Why idea 2:</b> it fits Sam's &ldquo;no time&rdquo; pain, uses quick numbered choices (Daylio), pairs a mood
+with an action (How We Feel) and makes naming the feeling the first step (Lieberman 2007).</p>
+
+<h2 class="pb">5. Conversational Prototype</h2>
+<h3>Purpose</h3>
+<p>Name one of six moods and get an age-appropriate message and activity in under a minute; spot repeating negative moods early.</p>
+<h3>Research behind it</h3>
+<ul>
+<li>Daylio: quick numbered choices and a saved history</li>
+<li>How We Feel: an emotion paired with one strategy</li>
+<li>Lieberman 2007: naming the mood comes first</li>
+<li>Empathy map: Sam has no time, so a check-in takes under a minute</li>
+</ul>
+<h3>Sample conversation (text taken from the MoodBuddy program)</h3>
+<div class="chat">
+<div class="bot">Welcome to MoodBuddy! &nbsp;Enter your name:</div>
+<div class="user">Sam</div>
+<div class="bot">How old are you, Sam?</div>
+<div class="user">21</div>
+<div class="bot">Welcome, Sam! A new MoodBuddy record was created.<br>How is your mood today? &nbsp;1. Happy &middot; 2. Sad &middot; 3. Angry &middot; 4. Lazy &middot; 5. Anxious &middot; 6. Excited</div>
+<div class="user">5</div>
+<div class="bot">Anxiety at this stage of life is very common. You are not alone in feeling this way.<br>
+Suggested activity: Practice box breathing: breathe in for 4, hold for 4, breathe out for 4, hold for 4.</div>
+<div class="bot"><i>(After the third anxious check-in with no good mood in between)</i><br>Sam, anxiety has appeared in several check-ins.
+You do not have to manage it alone. Reach out for support.<br>MoodBuddy offers general encouragement and is not emergency care.</div>
+</div>
+
+<h3>How the prototype meets the purpose</h3>
+<table>
+<tr><th style="width:28%">Purpose</th><th>Design feature</th></tr>
+<tr><td>Under a minute</td><td>Name, age and one number for the mood. Invalid input simply asks again.</td></tr>
+<tr><td>Right message for the person</td><td>Age maps to seven groups (Child, Preteen, Teen, Young Adult, Adult, Senior, Elder), so a 9-year-old and a 70-year-old get different words.</td></tr>
+<tr><td>Name it, then act</td><td>Every mood gets a message and one activity to try.</td></tr>
+<tr><td>Notice patterns early</td><td>Sad, Angry and Anxious are counted; if one comes up three times with no good mood in between, a gentle warning appears. Everything is saved to a JSON file.</td></tr>
+</table>
+
+<h3 class="pb">Visual representation: program flowchart (Figma)</h3>
+<div class="fig"><img src="flow_doc.png"></div>
+<div class="cap">MoodBuddy flowchart: name and age intake, user record lookup, and the mood check-in loop with warning logic and save.</div>
+
+<h2>References</h2>
+<ol>
+<li>Daylio: Journal &amp; Mood Tracker. https://daylio.net</li>
+<li>How We Feel. https://howwefeel.org (built with the Yale Center for Emotional Intelligence)</li>
+<li>Lieberman, M. D., Eisenberger, N. I., Crockett, M. J., Tom, S. M., Pfeifer, J. H., &amp; Way, B. M. (2007).
+Putting feelings into words: Affect labeling disrupts amygdala activity in response to affective stimuli.
+<i>Psychological Science, 18</i>(5), 421&ndash;428.</li>
+</ol>
+</body></html>
