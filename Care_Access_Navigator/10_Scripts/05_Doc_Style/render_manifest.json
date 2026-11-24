@@ -115,17 +115,37 @@
   "footer": "Care Access Navigator \u2014 Cybersecurity Basics 2, Criterion 5: Effective Security Documentation"
  },
  {
-  "html": "/Users/Adult/Desktop/dae_6mon_coh2_AC/design_1/build/house_MoodBuddy_Design_1_Project_Document.html",
+  "html": "/Users/Adult/Desktop/dae_6mon_coh2_AC/Care_Access_Navigator/10_Scripts/05_Doc_Style/sources/design_1/house_MoodBuddy_Design_1_Project_Document.html",
   "pdf": "/Users/Adult/Desktop/dae_6mon_coh2_AC/design_1/MoodBuddy_Design_1_Project_Document.pdf",
   "footer": "Care Access Navigator \u2014 Design 1: Final Project Submission"
  },
  {
-  "html": "/Users/Adult/Desktop/dae_6mon_coh2_AC/unix_1/build/house_Unix_1_Submission.html",
+  "html": "/Users/Adult/Desktop/dae_6mon_coh2_AC/Care_Access_Navigator/10_Scripts/05_Doc_Style/sources/design_documentation_1/house_Care_Access_Navigator_Design_Documentation_1.html",
+  "pdf": "/Users/Adult/Desktop/dae_6mon_coh2_AC/design_documentation_1/Care_Access_Navigator_Design_Documentation_1.pdf",
+  "footer": "Care Access Navigator \u2014 Design Documentation 1: Final Project Submission"
+ },
+ {
+  "html": "/Users/Adult/Desktop/dae_6mon_coh2_AC/Care_Access_Navigator/10_Scripts/05_Doc_Style/sources/logic_1/house_MoodBuddy_Logic_1_Project.html",
+  "pdf": "/Users/Adult/Desktop/dae_6mon_coh2_AC/logic_1/MoodBuddy_Logic_1_Project.pdf",
+  "footer": "Care Access Navigator \u2014 Logic 1: Final Project Submission"
+ },
+ {
+  "html": "/Users/Adult/Desktop/dae_6mon_coh2_AC/Care_Access_Navigator/10_Scripts/05_Doc_Style/sources/prompt_engineering_1/house_Prompt_Engineering_1_Project.html",
+  "pdf": "/Users/Adult/Desktop/dae_6mon_coh2_AC/prompt_engineering_1/Prompt_Engineering_1_Project.pdf",
+  "footer": "Care Access Navigator \u2014 Prompt Engineering 1: Final Project Submission"
+ },
+ {
+  "html": "/Users/Adult/Desktop/dae_6mon_coh2_AC/Care_Access_Navigator/10_Scripts/05_Doc_Style/sources/figma_1/house_MoodBuddy_Figma_1_Project.html",
+  "pdf": "/Users/Adult/Desktop/dae_6mon_coh2_AC/figma_1/MoodBuddy_Figma_1_Project.pdf",
+  "footer": "Care Access Navigator \u2014 Figma 1: Final Project Submission"
+ },
+ {
+  "html": "/Users/Adult/Desktop/dae_6mon_coh2_AC/Care_Access_Navigator/10_Scripts/05_Doc_Style/sources/unix_1/house_Unix_1_Submission.html",
   "pdf": "/Users/Adult/Desktop/dae_6mon_coh2_AC/unix_1/Unix_1_Submission.pdf",
   "footer": "Care Access Navigator \u2014 Unix 1: Final Project Submission"
  },
  {
-  "html": "/Users/Adult/Desktop/dae_6mon_coh2_AC/unix_2/build/house_Unix_2_Submission.html",
+  "html": "/Users/Adult/Desktop/dae_6mon_coh2_AC/Care_Access_Navigator/10_Scripts/05_Doc_Style/sources/unix_2/house_Unix_2_Submission.html",
   "pdf": "/Users/Adult/Desktop/dae_6mon_coh2_AC/unix_2/Unix_2_Submission.pdf",
   "footer": "Care Access Navigator \u2014 Unix 2: Final Project Submission"
  }

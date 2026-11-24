@@ -1,0 +1,251 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Design Documentation 1: Final Project Submission</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Design Documentation 1: Final Project Submission</div><div class='subsub'>Single design document for Care Access Navigator: summary, problem, use case, goals, features, tech stack, algorithm, flowchart, timeline, risk, evaluation and future considerations</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Design Documentation 1 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Scope:</td><td>Final project</td></tr><tr><td class='k'>Environment:</td><td>Entra ID + Keycloak, 4 simulated HRMC apps, Wazuh SIEM, CISO Assistant (capstone evidence)</td></tr><tr><td class='k'>Date:</td><td>November 23, 2026</td></tr></table><div class="note"><b>One design document, every rubric criterion.</b> Built from the capstone design document (v1.3, Nov 4, 2026) plus the work finished since. All people and data are synthetic.</div>
+
+
+
+
+
+
+<table>
+<tr><th style="width:34%">Rubric criterion</th><th style="width:28%">Where it is</th><th>What the rubric asks for</th></tr>
+<tr><td>Create a Design Document</td><td>This whole document</td><td>One design document that meets every criterion</td></tr>
+<tr><td>Project Summary</td><td>1. Project Summary</td><td>At least 2 sentences: the product and why it matters</td></tr>
+<tr><td>Problem Statement</td><td>2. Problem Statement</td><td>At least 1 sentence on the real-world problem</td></tr>
+<tr><td>Use Case</td><td>3. Use Case</td><td>Who will use it, why and how</td></tr>
+<tr><td>Goals and Objectives</td><td>4. Goals and Objectives</td><td>At least 2 specific, clear goals (5 given)</td></tr>
+<tr><td>Key Features and Functions</td><td>5. Key Features and Functions</td><td>At least 3 features (8 given)</td></tr>
+<tr><td>Tech Stack and Tools</td><td>6. Tech Stack and Tools</td><td>All platforms, frameworks and tools needed to build it</td></tr>
+<tr><td>Algorithm</td><td>7. Algorithm</td><td>The high-level function of the product, step by step</td></tr>
+<tr><td>Flowchart</td><td>8. Flowchart</td><td>Standard flowchart shapes showing the high-level function</td></tr>
+<tr><td>Timeline</td><td>9. Timeline</td><td>At least one milestone per month of development</td></tr>
+<tr><td>Risk Mitigation</td><td>10. Risk Mitigation</td><td>One risk with a plan to mitigate it</td></tr>
+<tr><td>Evaluation Criteria</td><td>11. Evaluation Criteria</td><td>At least 3 measures of success (6 given, with results)</td></tr>
+<tr><td>Future Considerations</td><td>12. Future Considerations</td><td>One maintenance need and one future feature</td></tr>
+</table>
+
+<h2>1. Project Summary</h2>
+<p><b>Care Access Navigator</b> is a simulated hospital security system that controls who can reach patient data, keeps
+that access correct as staff join, change jobs and leave, catches misuse quickly, and proves all of it to auditors.
+It connects Microsoft Entra ID and Keycloak (identity and sign-in) to four hospital applications (Patient Portal,
+EHR, Billing and HR), sends their logs to a Wazuh security monitoring system, and records every risk, control and piece of
+evidence in CISO Assistant, a GRC platform.</p>
+<p>It matters because a hospital's biggest everyday data risk is often not an outside hacker but the wrong person keeping
+access they should not have: a nurse who moved to Billing and can still open patient charts, or a former employee
+whose account still works. Under HIPAA, the hospital must be able to show that access is limited, reviewed and removed
+on time. Care Access Navigator shows how to do that, and how to prove it.</p>
+
+<h2>2. Problem Statement</h2>
+<p>Hospitals must keep electronic protected health information (ePHI) away from everyone who does not need it, yet
+staff change roles and leave all the time. Access is often granted quickly and removed slowly, so people keep old
+access, leavers can still sign in, and when an auditor or an incident asks "who could see this record, and who approved
+it?", there is no reliable answer.</p>
+<div class="note"><b>Real example from this project:</b> when leaver Jeevan Smith was disabled in Microsoft Entra ID,
+his copy of the account in Keycloak was still active 12 minutes later. My own test caught the gap; it is recorded as risk
+R02 and finding CAN-FIND-001 (section 10).</div>
+
+<h2>3. Use Case</h2>
+<p><b>Who:</b> HRMC's IAM analyst and security analyst use it every day; the GRC analyst, department managers (who
+approve and review access), HR (who starts joiner, mover and leaver changes), auditors and the CISO use its reports.
+Clinicians, nurses, billing and HR staff use it indirectly every time they sign in.</p>
+<p><b>Why:</b> to give each person exactly the access their job needs, remove it the moment it is no longer needed,
+spot misuse of patient records quickly, and prove control to HIPAA auditors.</p>
+<p><b>How:</b></p>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:22%">User</th><th>How they use Care Access Navigator</th></tr>
+<tr><td>HR / manager</td><td>Records a joiner, mover or leaver change; approves access requests outside the person's role; signs the quarterly access review.</td></tr>
+<tr><td>IAM analyst</td><td>Runs the change with <code>can_iam.py</code> (joiner, mover, leaver); roles flow from Entra ID app roles into Keycloak groups; checks the person can reach only their applications.</td></tr>
+<tr><td>Staff member</td><td>Signs in once with Microsoft (single sign-on); the application's gate allows or refuses them by role; Billing, IT and Security roles must also pass MFA.</td></tr>
+<tr><td>Security analyst</td><td>Watches Wazuh alerts (for example, a mover opening a patient record they should no longer see), triages, contains and closes the incident case.</td></tr>
+<tr><td>GRC analyst / auditor</td><td>Follows the chain in CISO Assistant: risk → control → evidence → HIPAA requirement → finding → fix, with owners and due dates.</td></tr>
+</table>
+<p><b>Example:</b> nurse Tara Jones moves to Billing. Her nurse role is removed first, then the Billing role is added,
+and MFA is now required. When she later opened patient record PT-1003, Wazuh rule 100221 alerted in 1.3 seconds and
+she was contained 49 seconds later (incident IR1-2026-002).</p>
+
+<h2>4. Goals and Objectives</h2>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:5%">#</th><th style="width:47%">Goal</th><th>How it is measured</th></tr>
+<tr><td>1</td><td><b>Least privilege for every user:</b> each person reaches only the applications their job role allows.</td><td>Role-to-application matrix for 7 roles and 4 apps; a wrong-role sign-in is refused (test TC-02).</td></tr>
+<tr><td>2</td><td><b>Correct access through the whole lifecycle:</b> joiners, movers and leavers are handled the same day, with no leftover access.</td><td>Joiner, mover and leaver tests pass in Entra ID and Keycloak (TC-01, TC-03, TC-04); leaver sign-in refused in both.</td></tr>
+<tr><td>3</td><td><b>Detect misuse in seconds:</b> alert on risky identity activity such as brute force, a leaver signing in or a mover reading patient records.</td><td>Detection rules fire on real test events; alert within 5 seconds; containment within 15 minutes.</td></tr>
+<tr><td>4</td><td><b>Prove compliance:</b> every risk is scored, linked to its control, evidence and HIPAA requirement.</td><td>Risk register R01–R05 and HIPAA audit loaded in CISO Assistant; every gap has a finding with an owner.</td></tr>
+<tr><td>5</td><td><b>Review access every quarter</b> and remove anything not needed.</td><td>Access review AR-2026-Q4 covers every account, with a reviewer decision on each.</td></tr>
+</table>
+
+<h2>5. Key Features and Functions</h2>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:5%">#</th><th style="width:28%">Feature</th><th>What it does</th></tr>
+<tr><td>1</td><td>Single sign-on with federation</td><td>Staff sign in with Microsoft Entra ID; Keycloak brokers the sign-in (OpenID Connect) and maps Entra app roles to Keycloak roles, so the job role travels with the sign-in.</td></tr>
+<tr><td>2</td><td>Role-based access control (RBAC)</td><td>7 job roles (Clinician, Nurse, Billing, HR, IT Support, Security Analyst, Vendor) given through Keycloak groups; each of the 4 apps has a sign-in gate that admits only its roles.</td></tr>
+<tr><td>3</td><td>Joiner-mover-leaver automation</td><td><code>can_iam.py</code> uses the Keycloak Admin API to add, change and remove access; on a move the old role is removed before the new one is added; every action is written to a hashed audit log.</td></tr>
+<tr><td>4</td><td>Sign-in hardening</td><td>MFA (one-time code) for Billing, IT Support and Security Analysts; account lockout after 10 failures; 12-character passwords with history.</td></tr>
+<tr><td>5</td><td>Security monitoring and alerting</td><td>Keycloak, EHR and server logs go to Wazuh; custom rules catch brute force, leaver sign-ins, privilege changes and bulk patient-record access, and email the SOC.</td></tr>
+<tr><td>6</td><td>Incident response</td><td>Playbooks, an incident case tracker, severity matrix, containment, evidence with chain of custody, and root-cause analysis.</td></tr>
+<tr><td>7</td><td>Quarterly access review</td><td>Exports every account and its roles, flags stale, excessive or mismatched access, and records the reviewer's keep or remove decision.</td></tr>
+<tr><td>8</td><td>GRC system of record</td><td>CISO Assistant holds the risk register, controls mapped to HIPAA, NIST CSF 2.0, SP 800-53, ISO 27001 and PCI DSS, evidence, audits, findings and exceptions, with dashboards.</td></tr>
+</table>
+
+<h2>6. Tech Stack and Tools</h2>
+<table>
+<tr><th style="width:24%">Layer</th><th style="width:30%">Tool / platform</th><th>Used for</th></tr>
+<tr><td>Identity (cloud)</td><td>Microsoft Entra ID (free tier)</td><td>Workforce users, app roles, enterprise app for single sign-on</td></tr>
+<tr><td>Identity (lab IdP)</td><td>Keycloak with PostgreSQL</td><td>Realm, users, groups, roles, MFA, lockout, OIDC clients for the 4 apps, sign-in events</td></tr>
+<tr><td>Protocols / standards</td><td>OpenID Connect, OAuth 2.0, SAML 2.0</td><td>Federation between Entra ID and Keycloak; app sign-in</td></tr>
+<tr><td>Applications</td><td>Patient Portal, EHR simulator, Billing App, HR App</td><td>Lightweight simulated apps (OIDC clients) with synthetic data</td></tr>
+<tr><td>Automation</td><td>Python 3 (<code>can_iam.py</code>, scripts), Bash</td><td>JML, hardening, access review export, log generation, analysis</td></tr>
+<tr><td>Containers</td><td>Docker Desktop, Docker Compose</td><td>Runs Keycloak, PostgreSQL, Wazuh, CISO Assistant and the test servers on one laptop</td></tr>
+<tr><td>SIEM / monitoring</td><td>Wazuh 4.9.2 (manager, indexer, dashboard), MailHog</td><td>Log collection, custom detection rules, dashboards, alert email</td></tr>
+<tr><td>Incident response / forensics</td><td>Wireshark / tshark, Volatility 3, dd + SHA-256, iptables</td><td>Packet capture, memory and disk analysis, evidence hashing, containment</td></tr>
+<tr><td>Cloud</td><td>Microsoft Azure (VNet, NSGs, Azure Policy, Defender for Cloud, Monitor)</td><td>Cloud security design and controls (Cloud Security 1); billable parts removed after the course</td></tr>
+<tr><td>GRC</td><td>CISO Assistant (community edition)</td><td>Risk register, controls, evidence, HIPAA audit, findings, exceptions, dashboards</td></tr>
+<tr><td>Frameworks</td><td>HIPAA, NIST CSF 2.0, NIST SP 800-53 / RMF, ISO/IEC 27001:2022, PCI DSS v4.0.1, MITRE ATT&amp;CK</td><td>Requirements, control vocabulary, detection mapping</td></tr>
+<tr><td>Planning</td><td>Monday.com</td><td>12-week project board and status tracking</td></tr>
+<tr><td>Design and diagrams</td><td>Figma, Lucidchart, Mermaid</td><td>Flowcharts, architecture and workflow diagrams</td></tr>
+<tr><td>Documentation</td><td>Microsoft Word, Excel, PowerPoint, Markdown, PDF</td><td>Policies, procedures, registers, reports, presentations</td></tr>
+<tr><td>Version control / portfolio</td><td>Git, GitHub, GitHub Pages</td><td>Repository of all evidence and the public portfolio site</td></tr>
+<tr><td>AI assistant</td><td>Claude</td><td>Help with scripting, document drafting and checking; every output reviewed against the live systems</td></tr>
+</table>
+
+<h2>7. Algorithm</h2>
+<p>The high-level function of Care Access Navigator, from an identity change to proof for the auditor:</p>
+<ol>
+<li>Start.</li>
+<li>Receive an identity event from HR or a manager: a joiner, a mover, a leaver or an access request.</li>
+<li>Is the event a leaver?
+  <ul><li>Yes: disable the account in Entra ID and Keycloak and remove every role. Then check: is sign-in refused in both systems? If no, raise a finding and a risk (deprovisioning gap) and repeat this step. If yes, go to step 10.</li>
+  <li>No: continue to step 4.</li></ul></li>
+<li>Look up the person's job role in the RBAC matrix.</li>
+<li>Is the requested access within that role (least privilege)?
+  <ul><li>No: is there manager and IAM approval? If no, deny the request, record the reason and go to step 10. If yes, continue to step 6.</li>
+  <li>Yes: continue to step 6.</li></ul></li>
+<li>Is the person a mover? If yes, remove the old role first.</li>
+<li>Grant the role through the person's Keycloak group (federated from the Entra ID app role).</li>
+<li>Is the role privileged (Billing, IT Support or Security Analyst)? If yes, require MFA.</li>
+<li>The user signs in; the application gate allows the sign-in if the role matches, otherwise denies it.</li>
+<li>Write every sign-in, change and decision to the logs and evidence store (Keycloak, EHR, Wazuh).</li>
+<li>Did a detection rule fire? If yes, run incident response: triage, contain, investigate and close the case.</li>
+<li>Update the risk, control and evidence records in CISO Assistant.</li>
+<li>Is the quarterly access review due? If yes, the reviewer keeps or removes each access and remediation is tracked.</li>
+<li>Produce the dashboard and management report.</li>
+<li>Are there more events? If yes, go to step 2. If no, end.</li>
+</ol>
+
+<h2>8. Flowchart</h2>
+<p>The flowchart uses standard flowchart shapes and follows the algorithm in section 7. It is drawn in two parts joined by
+on-page connectors <b>A</b> and <b>B</b>. Source: <code>design_documentation_1/diagrams/</code>.</p>
+<div class="fig"><img src="../../../../../design_documentation_1/diagrams/can_flowchart_part1.png" style="height:7.3in"></div>
+<div class="cap">Figure 1. Part 1: access lifecycle (steps 1–9). Connector A continues in Part 2.</div>
+<table style="border:none;break-inside:avoid;page-break-inside:avoid">
+<tr><td style="border:none;background:none;width:38%;text-align:center"><img src="../../../../../design_documentation_1/diagrams/can_flowchart_part2.png" style="height:7.2in"></td>
+<td style="border:none;background:none;vertical-align:top">
+<h3>Shapes used</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th>Shape</th><th>Meaning</th></tr>
+<tr><td>Rounded oval (navy)</td><td>Start / End (terminator)</td></tr>
+<tr><td>Rectangle</td><td>Process step</td></tr>
+<tr><td>Diamond (amber)</td><td>Decision (Yes / No)</td></tr>
+<tr><td>Parallelogram (grey)</td><td>Input / output</td></tr>
+<tr><td>Cylinder</td><td>Stored data (logs and evidence)</td></tr>
+<tr><td>Rectangle with side bars</td><td>Predefined process (incident response playbook)</td></tr>
+<tr><td>Small circle (amber)</td><td>On-page connector (A, B)</td></tr>
+</table>
+<p class="cap">Figure 2. Part 2: monitor, respond and govern (steps 10–15). Connector B returns to "Receive identity event" in Part 1.</p>
+</td></tr></table>
+
+<h2 style="break-before:page;page-break-before:always">9. Timeline</h2>
+<p>Development ran over five months of the DAE program, with the 12-week capstone from August to early November and
+the security operations courses after it. At least one milestone was completed in every month.</p>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:15%">Month</th><th style="width:28%">Phase</th><th>Milestones</th><th style="width:11%">Status</th></tr>
+<tr><td>July 2026</td><td>Research and role choice</td><td>Cybersecurity track research; IAM and GRC analyst roles chosen; job descriptions and skills mapped; first Python program (MoodBuddy) built.</td><td>Done</td></tr>
+<tr><td>August 2026</td><td>Planning and design</td><td><b>Milestone:</b> project design document v1.0 (Aug 3) and v1.1 (Aug 11); 12-week Monday.com board approved; scope, stakeholders, roles and architecture defined; GitHub portfolio started.</td><td>Done</td></tr>
+<tr><td>September 2026</td><td>IAM lab and risk foundation</td><td><b>Milestone:</b> Keycloak realm with users, 7 roles and 4 application clients; threat analysis and network design; risk register R01–R05 with scoring and treatment (Risk Management 1).</td><td>Done</td></tr>
+<tr><td>October 2026</td><td>Federation, cloud and compliance</td><td><b>Milestone:</b> Entra ID ↔ Keycloak federation; Azure security controls (Cloud Security 1); full joiner-mover-leaver cycle in both systems (Oct 19); HIPAA + PCI DSS compliance program and internal audit (Compliance 1).</td><td>Done</td></tr>
+<tr><td>November 2026</td><td>Hardening, monitoring and proof</td><td><b>Milestone:</b> incident response lab and 3 incidents (Nov 3); live hardening and end-to-end tests 10/10 (Nov 3); CISO Assistant as GRC system of record (Nov 4); Wazuh SOC and monitoring (Nov 18–19); final demo and this design document.</td><td>Done</td></tr>
+</table>
+
+<h2>10. Risk Mitigation</h2>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:24%">Item</th><th>Detail</th></tr>
+<tr><td>Risk</td><td><b>R02: Leaver keeps access (incomplete deprovisioning).</b> When a person leaves, their account is disabled in Entra ID, but the federated copy in Keycloak can stay active, so a former employee could still reach hospital apps and ePHI.</td></tr>
+<tr><td>Evidence</td><td>Found by my own test on October 19, 2026: Jeevan Smith was disabled in Entra ID at 18:13, but his Keycloak copy still showed <code>enabled=True, roles=billing</code> at 18:25. Tracked as finding CAN-FIND-001.</td></tr>
+<tr><td>Rating</td><td>High (likelihood: likely without a control; impact: unauthorized ePHI access and a HIPAA termination-procedure violation, 45 CFR 164.308(a)(3)(ii)(C)).</td></tr>
+<tr><td>Mitigation plan</td><td>
+<ol>
+<li><b>Fix the process:</b> the leaver step in <code>can_iam.py</code> disables the account and removes every role in Keycloak as well as Entra ID, in one run.</li>
+<li><b>Verify, don't assume:</b> after every leaver, test that sign-in is refused in both systems and save the result as evidence.</li>
+<li><b>Detect:</b> Wazuh rule CAN-ID-002/003 alerts when a disabled or locked account tries to sign in.</li>
+<li><b>Review:</b> the quarterly access review flags any account whose owner has left.</li>
+<li><b>Govern:</b> risk R02 is linked in CISO Assistant to control CAN-CTRL-JML-002, its evidence and HIPAA "Establish Termination Procedures"; the finding stays open with an owner until automatic de-provisioning is in place.</li>
+</ol></td></tr>
+<tr><td>Owner</td><td>IAM analyst (process), security analyst (detection), GRC analyst (tracking)</td></tr>
+</table>
+
+<h2>11. Evaluation Criteria</h2>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:5%">#</th><th style="width:34%">Measure of success</th><th style="width:22%">Target</th><th>Result</th></tr>
+<tr><td>1</td><td>End-to-end security tests pass (joiner, mover, leaver, wrong-role access, MFA, lockout, detections)</td><td>10 of 10</td><td><b>10/10 pass</b> (TC-01 to TC-10)</td></tr>
+<tr><td>2</td><td>Accounts covered by the quarterly access review</td><td>100%</td><td><b>16/16 accounts</b> reviewed in AR-2026-Q4</td></tr>
+<tr><td>3</td><td>Controls passing their tests</td><td>At least 80%</td><td><b>57% → 86%</b> after the November hardening</td></tr>
+<tr><td>4</td><td>Time to detect and contain record misuse</td><td>Alert under 5 s; contain under 15 min</td><td>Alert in <b>1.3 s</b>; contained in <b>49 s</b> (IR1-2026-002)</td></tr>
+<tr><td>5</td><td>HIPAA audit requirements met</td><td>Every gap has a finding and owner</td><td><b>17 of 25</b> compliant, 7 partial, 1 not met; all gaps tracked as findings or approved exceptions</td></tr>
+<tr><td>6</td><td>Detection rules fire on real test events</td><td>At least 3 rules</td><td>Custom Wazuh rules CAN-ID-001 to CAN-ID-007 (password guessing, disabled-account sign-in, unapproved app access, privilege change, bulk ePHI access) fire on test events</td></tr>
+</table>
+
+<h2>12. Future Considerations</h2>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:24%">Type</th><th>Detail</th></tr>
+<tr><td>Maintenance need</td><td><b>Keep access reviews and the platform current.</b> Run the access review every quarter and have managers sign it; patch Keycloak, Wazuh, PostgreSQL and CISO Assistant to supported versions; tune detection rules to cut false alarms; renew certificates; and export the Keycloak realm before every change so it can be restored.</td></tr>
+<tr><td>Future functionality</td><td><b>Automatic provisioning with SCIM.</b> Connect Entra ID to Keycloak with SCIM so a leaver disabled in Entra ID is disabled in Keycloak within seconds, closing risk R02 for good. A self-service access-request portal, where staff request access and managers approve it in one place, would follow.</td></tr>
+<tr><td>Also considered</td><td>A continuously running SIEM feed for every app, 12-month log retention (exception EX-02 today), Entra ID group-based assignment (needs Entra ID P1) and more incident simulations.</td></tr>
+</table>
+
+</body></html>

@@ -1,0 +1,202 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Prompt Engineering 1: Final Project Submission</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Prompt Engineering 1: Final Project Submission</div><div class='subsub'>Documented ChatGPT interactions: tokenization, hallucination management, multiple domains, prompt iteration, text and image generation</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Prompt Engineering 1 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Scope:</td><td>Final project</td></tr><tr><td class='k'>Environment:</td><td>ChatGPT (free account), six chats on November 23, 2026; tiktoken o200k_base for token counts; doi.org and Crossref for checks</td></tr><tr><td class='k'>Date:</td><td>November 23, 2026</td></tr></table><div class="note"><b>What this is:</b> my documented AI interactions for Prompt Engineering 1. I used ChatGPT (free account)
+in six chats on November 23, 2026, across text writing, programming, maths and data analysis, research and image generation.
+The topics come from my Semester 2 work (the MoodBuddy mood tracker and my IAM career research), plus the two status-update
+prompts I wrote in Semester 2. Every chat is exported in full in <code>prompt_engineering_1/exports/</code>.</div>
+
+
+
+
+
+
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:30%">Rubric criterion</th><th style="width:26%">Where it is</th><th>How it is met</th></tr>
+<tr><td>Tokenization and Data Utilization</td><td>1. Tokenization</td><td><b>7,656 tokens</b> in the six exported chats (3,000 required), plus 1,807 in my original Semester 2 prompts</td></tr>
+<tr><td>AI Hallucination Management</td><td>2. Hallucination Management</td><td>One hallucination identified and corrected ("five roles" → seven), two word-limit errors noticed, five more traps tested and verified</td></tr>
+<tr><td>Multimodal AI Task Execution</td><td>3. Multimodal Tasks</td><td>Five domains: text composition, programming, maths and data analysis, research, creative ideation (images)</td></tr>
+<tr><td>Prompt Design and Iteration</td><td>4. Prompt Design and Iteration</td><td>15 prompts, unguided and guided, with responses and the adjustment made each time</td></tr>
+<tr><td>Text and Image Generation Workflow</td><td>5. Text and Image Generation</td><td>Text: chats 1 and 2. Images: 3 generated images (5A, 5B, 5C)</td></tr>
+<tr><td>Exported Interaction Documentation</td><td>6. Exported Interactions</td><td>Six full chat PDFs, three images and a DOI check screenshot</td></tr>
+</table>
+
+<h2>1. Tokenization and Data Utilization</h2>
+<p>A <b>token</b> is the unit a language model reads and writes: a word, part of a word or a punctuation mark. In English, one
+token is about three-quarters of a word. Models have limits on how many tokens they can read (the context window) and write,
+and longer prompts and answers use more of that budget. I counted the tokens in each exported chat with
+<code>tiktoken</code>, using the <code>o200k_base</code> encoding (the tokenizer used by GPT-4o):</p>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th>Chat</th><th>Topic</th><th style="width:14%">Tokens</th></tr>
+<tr><td>1. Text</td><td>Explaining IAM: unguided, guided, shortened, corrected</td><td>2,778</td></tr>
+<tr><td>2. Python</td><td>CSV role checker, then a better version</td><td>1,227</td></tr>
+<tr><td>3. Maths</td><td>Access-review percentages and recommendations</td><td>462</td></tr>
+<tr><td>4. Hallucination (MoodBuddy)</td><td>Research DOIs, a made-up study, my program's messages</td><td>1,581</td></tr>
+<tr><td>4a. Hallucination (hospital papers)</td><td>Research DOIs and a HIPAA trick question</td><td>1,423</td></tr>
+<tr><td>5. Images</td><td>Three image prompts (images saved separately)</td><td>185</td></tr>
+<tr><td colspan="2"><b>Total in the six exported chats</b></td><td><b>7,656</b></td></tr>
+<tr><td colspan="2">My original Semester 2 status-update prompts (written before this course project)</td><td>1,807</td></tr>
+</table>
+<h3>What I learned about tokens and data</h3>
+<ul>
+<li><b>Unguided prompts spend tokens freely.</b> Prompt 1A ("Explain identity and access management.") is 5 words but produced
+a seven-section answer of about 1,500 tokens (including page headers in the export). Adding a word limit in 1B cut the answer to about 155 words.</li>
+<li><b>Word limits are approximate.</b> The model counts in tokens, not words, which helps explain why "under 150 words" gave about
+155 and "trim to 100 words" gave 89 (section 2).</li>
+<li><b>Giving the data in the prompt gives exact answers.</b> In Chat 3 I put all the numbers (16, 10, 4, 6) in the prompt, so the
+model only had to calculate. Its answers (62.5% and 40%) were correct.</li>
+<li><b>Memory is also data.</b> ChatGPT used details saved from my earlier chats: it mentioned Care Access Navigator in 1A, named
+the unguided logo "MoodBuddy" in 5A, and quoted my MoodBuddy program's messages word for word in Chat 4. This was useful, but
+it is also where the one hallucination came from: an old fact from memory (section 2).</li>
+</ul>
+
+<h2>2. AI Hallucination Management</h2>
+<h3>Hallucination identified and corrected</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:20%">Step</th><th>Detail</th></tr>
+<tr><td>Where</td><td>Chat 1, the answer to prompt 1A, in a table about my project</td></tr>
+<tr><td>What the AI said</td><td>"RBAC: <b>Five healthcare roles</b> with defined permissions" for Care Access Navigator</td></tr>
+<tr><td>Why it is wrong</td><td>Care Access Navigator has <b>seven</b> roles: Clinician, Nurse, Billing, HR, IT Support, Security Analyst and Vendor (project design document v1.3)</td></tr>
+<tr><td>How I caught it</td><td>I checked every project fact in the answer against my own design document</td></tr>
+<tr><td>My correction prompt</td><td>"In your first answer you said my Care Access Navigator project has five healthcare roles. That is not correct. It has seven roles: Clinician, Nurse, Billing, HR, IT Support, Security Analyst and Vendor. Please correct that table and tell me how you got the number wrong."</td></tr>
+<tr><td>AI response</td><td>"You're correct, and I apologize for the mistake. Your Care Access Navigator project has seven healthcare roles, not five." It rebuilt the table with all seven roles and explained the cause: it "relied on the earlier five-role project scope" from memory and did not check whether it had changed. It also said the permissions would still need to be checked against my access-control matrix.</td></tr>
+<tr><td>Lesson</td><td>An answer can be mostly right and still contain one wrong fact stated confidently. Facts about my own work must be checked against my own documents, and old memory can be out of date.</td></tr>
+</table>
+<h3>Smaller errors noticed</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:28%">Prompt</th><th style="width:30%">What I asked</th><th>What happened</th></tr>
+<tr><td>1B</td><td>"under 150 words"</td><td>About 155 words: slightly over the limit</td></tr>
+<tr><td>1C and follow-up</td><td>"shorten it to 100 words", then "Trim the explanation to 100 words"</td><td>The first reply came back incomplete, so I asked again; the trimmed version was 89 words, under the target</td></tr>
+</table>
+<h3>Traps tested where the AI was correct</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:28%">Test</th><th style="width:38%">What I checked</th><th>Result</th></tr>
+<tr><td>Hospital RBAC papers with DOIs (Chat 4a)</td><td>Opened all three DOIs at doi.org and compared authors, year, journal and title (screenshot <code>Chat4_DOI_check_IEEE.png</code>)</td><td>All three real and correct</td></tr>
+<tr><td>Emotion-labeling studies with DOIs (Chat 4)</td><td>Checked all three DOIs in the Crossref registry: Lieberman et al. 2007 (<i>Psychological Science</i>), Lieberman et al. 2011 (<i>Emotion</i>), Kircanski et al. 2012 (<i>Psychological Science</i>)</td><td>All three real and correct</td></tr>
+<tr><td>A study I made up: "2019 Harvard study by Dr. Emily Carter"</td><td>Whether the AI would describe a study that does not exist</td><td>Correct: "I couldn't find any credible evidence…"; it called the claim unsupported</td></tr>
+<tr><td>"Exact HIPAA section requiring quarterly access reviews"</td><td>HIPAA has no quarterly-review rule</td><td>Correct: "There is no HIPAA regulation that specifically requires hospitals to perform access reviews every quarter."</td></tr>
+<tr><td>My MoodBuddy program's four "Lazy" messages for ages 4–8</td><td>Compared word for word with <code>MoodBuddy.py</code></td><td>Correct, because its memory held my code from earlier chats</td></tr>
+</table>
+
+<h2>3. Multimodal AI Task Execution</h2>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:24%">Domain</th><th style="width:16%">Chat</th><th>Task the AI completed</th><th style="width:24%">How I checked it</th></tr>
+<tr><td><b>Text composition</b></td><td>1</td><td>Explained IAM, then rewrote it for new nurses (under 150 words, one example, three rules), then made it friendlier and shorter with a checklist</td><td>Word counts; facts checked against my design document</td></tr>
+<tr><td><b>Programming and scripting</b></td><td>2</td><td>Wrote a Python function that finds users with more than one role in a CSV file, then improved it to skip blank rows and ignore capital letters</td><td>I ran the final code on its own example CSV: it printed <code>alice</code>, as expected</td></tr>
+<tr><td><b>Mathematical reasoning and data analysis</b></td><td>3</td><td>Calculated 10 ÷ 16 = 62.5% of accounts flagged and 4 ÷ 10 = 40% of flagged accounts removed, and gave two recommendations</td><td>Calculated both by hand: correct</td></tr>
+<tr><td><b>Research</b></td><td>4, 4a</td><td>Found peer-reviewed papers with authors, years, journals and DOIs</td><td>doi.org and Crossref</td></tr>
+<tr><td><b>Creative ideation (images)</b></td><td>5</td><td>Created a mood-tracker logo, a MoodBuddy app icon and an illustration of a teenager choosing a mood</td><td>Compared each image with the prompt (section 5)</td></tr>
+</table>
+
+<h2>4. Prompt Design and Iteration</h2>
+<p><b>Unguided</b> prompts give the AI only the topic. <b>Guided</b> prompts add a role, an audience, a length, a format and
+limits. Each row shows the prompt, what came back and the change I made next.</p>
+<table>
+<tr><th style="width:6%">#</th><th style="width:9%">Type</th><th style="width:33%">Prompt</th><th style="width:27%">Response</th><th>Adjustment and why</th></tr>
+<tr><td>1A</td><td>Unguided</td><td>"Explain identity and access management."</td><td>Long answer (about 1,500 tokens): seven sections, tables, a project table from memory</td><td>Too long for new staff → add audience, word limit and format</td></tr>
+<tr><td>1B</td><td>Guided</td><td>"You are a security trainer at a hospital. Explain IAM to new nurses in under 150 words. Use one example about a nurse who moves to the Billing department. End with three bullet-point rules… no acronyms except IAM."</td><td>About 155 words; example "Sarah" moves from nursing to Billing and loses her old access; three rules; wrote "information technology" instead of "IT"</td><td>Followed the role, example and acronym rule; slightly over the limit → ask for friendlier and shorter</td></tr>
+<tr><td>1C</td><td>Guided</td><td>"Make it friendlier, shorten it to 100 words, and turn the three rules into a short checklist."</td><td>Started "Think of IAM as a digital security guard…" but came back incomplete</td><td>Asked again: "Trim the explanation to 100 words"</td></tr>
+<tr><td>1D</td><td>Guided</td><td>"Trim the explanation to 100 words"</td><td>89 words: "Meet Sarah!" example and a three-item "IAM Safety Checklist"</td><td>Friendly tone and checklist achieved</td></tr>
+<tr><td>1E</td><td>Correction</td><td>"…you said my Care Access Navigator project has five healthcare roles. That is not correct. It has seven roles…"</td><td>Apologized, rebuilt the table with seven roles, explained the cause</td><td>Hallucination corrected (section 2)</td></tr>
+<tr><td>2A</td><td>Guided</td><td>"Write a Python function that reads a CSV file with columns username,role and prints any username that has more than one role. Keep it short and explain each line."</td><td>12-line function using a dictionary of sets, a line-by-line explanation and a sample CSV</td><td>Real data is messy → handle blank rows and capitals</td></tr>
+<tr><td>2B</td><td>Guided</td><td>"Update it so it ignores blank rows and capital-letter differences (Nurse vs nurse), and add one example CSV with five rows that shows it working."</td><td>Added <code>.strip().lower()</code> and blank-row checks; example CSV and a table explaining why "alice" appears</td><td>Tested: output <code>alice</code>, correct</td></tr>
+<tr><td>3</td><td>Guided (with data)</td><td>"Here is an access-review summary… Total accounts: 16. Flagged: 10. Removed after review: 4. Kept with justification: 6."</td><td>62.5% flagged, 40% removed, shown with the working; two recommendations</td><td>Correct, so no change needed</td></tr>
+<tr><td>4A / 4aA</td><td>Guided</td><td>"List three peer-reviewed research studies… give the authors, year, journal and DOI."</td><td>Three real papers in each chat</td><td>All verified; moved on to trick questions</td></tr>
+<tr><td>4B</td><td>Trick (false premise)</td><td>"What did the 2019 Harvard study by Dr. Emily Carter find about mood-tracking apps reducing anxiety in teenagers by 40 percent?"</td><td>Said there was no credible evidence; pointed to real sources instead</td><td>Passed</td></tr>
+<tr><td>4aB</td><td>Trick (false premise)</td><td>"What is the exact HIPAA regulation section number that requires hospitals to perform quarterly access reviews?"</td><td>Said no HIPAA rule requires quarterly reviews</td><td>Passed</td></tr>
+<tr><td>4C</td><td>Trick (private data)</td><td>"In my MoodBuddy Python program, what are the exact four messages it shows when a child aged 4 to 8 picks the mood 'Lazy'?"</td><td>All four messages, word for word</td><td>Correct from memory of my code</td></tr>
+<tr><td>5A</td><td>Unguided</td><td>"Make a logo for a mood-tracking app."</td><td>Logo with a smiling calendar, heart and chart; it added the name "MoodBuddy" from memory</td><td>Too busy for an icon → add style, colors and limits</td></tr>
+<tr><td>5B</td><td>Guided</td><td>"Make a friendly, flat-style app icon for 'MoodBuddy'… A smiling cloud character, soft teal and coral colors, white background, no text…"</td><td>A mint-teal smiling cloud with coral cheeks and sun rays, no text</td><td>Matched every instruction</td></tr>
+<tr><td>5C</td><td>Guided</td><td>"Make a simple flat illustration of a teenager at a laptop choosing their mood from six emoji faces…"</td><td>Teen in a coral hoodie choosing the happy face from six emoji on the laptop</td><td>All six moods shown; matched the prompt</td></tr>
+</table>
+<div class="note"><b>Biggest lesson:</b> the more specific the prompt (role, audience, length, format, limits), the closer the
+answer was to what I needed, in both text (1A → 1B) and images (5A → 5B). Specific prompts still need checking: limits
+were missed slightly, and one confident fact was wrong.</div>
+<h3>My original Semester 2 prompts (my own prompt design)</h3>
+<p>Before this project I wrote two long, guided prompts for my status-update presentations (in
+<code>prompt_engineering_1/original_semester2_prompts/</code>). Each gives the AI the full context (day-by-day or week-by-week
+work), the audience (students, educators and staff), the output format (a table plus slides) and visual direction (for example,
+"a girl… in the middle is confused but eager to learn" with four task bubbles).</p>
+
+<h2>5. Text and Image Generation Workflow</h2>
+<h3>Text generation</h3>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:22%">Instance</th><th>How the AI interpreted the prompt</th></tr>
+<tr><td>Text 1: Chat 1 (IAM for new nurses)</td><td>It turned "security trainer… new nurses" into a short lesson with a named character (Sarah), turned "no acronyms except IAM" into writing "information technology team" in full, and turned "friendlier" into "Meet Sarah!" and a checklist.</td></tr>
+<tr><td>Text 2: Chat 2 (Python and explanation)</td><td>It turned "keep it short and explain each line" into a 12-line function with a numbered explanation, and "add one example CSV" into a test file with a blank row and a "nurse" vs "Nurse" row that exercise both new rules.</td></tr>
+</table>
+<h3>Image generation</h3>
+<table style="break-inside:avoid;page-break-inside:avoid">
+<tr><th style="width:33%">5A: unguided</th><th style="width:33%">5B: guided</th><th>5C: guided</th></tr>
+<tr><td style="text-align:center"><img src="../../../../../prompt_engineering_1/exports/Image_5A_mood_tracker_logo.png" style="width:1.9in"></td>
+<td style="text-align:center"><img src="../../../../../prompt_engineering_1/exports/Image_5B_MoodBuddy_cloud_icon.png" style="width:1.9in"></td>
+<td style="text-align:center"><img src="../../../../../prompt_engineering_1/exports/Image_5C_teen_choosing_mood.png" style="width:2.1in"></td></tr>
+<tr><td>"Make a logo for a mood-tracking app." With no direction, it chose a calendar character, a heart and a trend line, and added the name "MoodBuddy" from memory.</td>
+<td>Followed every instruction: smiling cloud, teal and coral, white background, no text, simple shapes that work at small size.</td>
+<td>Six emoji faces (happy, sad, angry, sleepy, worried, excited) on the laptop, teal and coral palette, no text; it added headphones and a plant on its own.</td></tr>
+</table>
+<p>The 5B MoodBuddy icon is also the image used in my Figma 1 design.</p>
+
+<h2 style="break-before:page;page-break-before:always">6. Exported Interaction Documentation</h2>
+<p>All files are in <code>prompt_engineering_1/exports/</code>. Each chat was exported in full from ChatGPT (Share → open the
+link → Print → Save as PDF).</p>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:36%">File</th><th>Contents</th></tr>
+<tr><td><code>Chat1_Text.pdf</code></td><td>Prompts 1A–1E: unguided, guided, shortened, trimmed, hallucination correction</td></tr>
+<tr><td><code>Chat2_Python.pdf</code></td><td>Prompts 2A and 2B with code, explanations and the example CSV</td></tr>
+<tr><td><code>Chat3_Maths.pdf</code></td><td>Access-review calculations and recommendations</td></tr>
+<tr><td><code>Chat4_Hallucination.pdf</code></td><td>Emotion-labeling studies, the made-up Harvard study, MoodBuddy messages</td></tr>
+<tr><td><code>Chat4a_Hospital_Papers.pdf</code></td><td>Hospital RBAC papers and the HIPAA quarterly-review trick question</td></tr>
+<tr><td><code>Chat4_DOI_check_IEEE.png</code></td><td>Screenshot of a DOI check (Zhang et al., IEEE Journal of Biomedical and Health Informatics)</td></tr>
+<tr><td><code>Chat5_Images.pdf</code></td><td>The three image prompts (ChatGPT's print view leaves out images)</td></tr>
+<tr><td><code>Image_5A_mood_tracker_logo.png</code>, <code>Image_5B_MoodBuddy_cloud_icon.png</code>, <code>Image_5C_teen_choosing_mood.png</code></td><td>The three generated images, downloaded at full size</td></tr>
+<tr><td><code>original_semester2_prompts/</code></td><td>My two Semester 2 status-update prompts</td></tr>
+</table>
+
+</body></html>

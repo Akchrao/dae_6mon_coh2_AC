@@ -5,7 +5,7 @@ flowchart, then implemented in Python.
 
 | File | What it is |
 |---|---|
-| [`MoodBuddy_Algorithm.md`](MoodBuddy_Algorithm.md) | Step-by-step algorithm (22 steps, with the negative / non-negative branches) |
+| [`MoodBuddy_Logic_1_Project.pdf`](MoodBuddy_Logic_1_Project.pdf) | **Submission document:** algorithm, flowchart, Boolean logic and conditional logic, mapped to the rubric |
 | [`MoodBuddy_Algorithm_Flowchart.png`](MoodBuddy_Algorithm_Flowchart.png) | The algorithm and flowchart, made in Figma |
 | [`MoodBuddy.py`](MoodBuddy.py) | The Python program that implements it (copy of [`../python_1/MoodBuddy.py`](../python_1/MoodBuddy.py)) |
 

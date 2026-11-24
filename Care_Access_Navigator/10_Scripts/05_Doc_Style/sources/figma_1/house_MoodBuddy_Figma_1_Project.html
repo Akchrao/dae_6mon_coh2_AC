@@ -1,0 +1,116 @@
+<!doctype html><html><head><meta charset='utf-8'><title>Figma 1: Final Project Submission</title><style>/* Care Access Navigator house style for HTML-rendered course documents.
+   Matches the reportlab pdfstyle.py used by Compliance 1, Cloud Security 1, Risk Management 1 and Incident Response 1:
+   Letter, Helvetica, navy headings, navy table headers with zebra rows, cream notes with an amber edge. */
+@page { size: Letter; margin: 0.85in 1in 0.95in 1in; }
+html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; line-height: 14pt; color: #444444; margin: 0; }
+h1.brand { font-size: 22pt; line-height: 27pt; font-weight: bold; color: #1B2A4A; margin: 0 0 4px; }
+.subtitle { font-size: 12.5pt; line-height: 16pt; font-weight: bold; color: #1B2A4A; margin: 0; }
+.subsub { font-size: 10.5pt; line-height: 14pt; color: #555555; margin: 0 0 12px; }
+table.kv { border-collapse: collapse; width: 100%; margin: 0 0 14px; }
+table.kv td { border: none; border-bottom: 0.5pt solid #CCCCCC; padding: 4px 0; background: none !important; font-size: 9pt; line-height: 11.5pt; }
+table.kv td.k { width: 1.55in; font-weight: bold; color: #1B2A4A; }
+h2 { font-size: 15pt; line-height: 19pt; font-weight: bold; color: #1B2A4A; margin: 14px 0 6px; border: none; padding: 0; }
+h3 { font-size: 11.5pt; line-height: 15pt; font-weight: bold; color: #1B2A4A; margin: 10px 0 4px; }
+h4, h4.doc { font-size: 11pt; font-weight: bold; color: #1B2A4A; margin: 6px 0 4px; }
+h5 { font-size: 10pt; font-weight: bold; color: #1B2A4A; margin: 8px 0 3px; }
+p { margin: 0 0 6px; }
+ul, ol { margin: 2px 0 6px 18px; padding: 0; } li { margin: 0 0 2px; }
+b, strong { color: #333333; }
+table { border-collapse: collapse; width: 100%; margin: 4px 0 10px; }
+tr { page-break-inside: avoid; break-inside: avoid; }
+th { background: #1B2A4A; color: #FFFFFF; font-weight: bold; font-size: 9pt; line-height: 11.5pt; text-align: left;
+     padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; }
+td { font-size: 9pt; line-height: 11.5pt; color: #444444; padding: 4px 6px; border: 0.5pt solid #CCCCCC; vertical-align: top; text-align: left; }
+tr:nth-child(odd):not(:first-child) > td { background: #F3F4F6; }
+.note, .ok { background: #FFF4DE; border-left: 3pt solid #E8A33D; color: #5C4200; padding: 7px 10px; font-size: 9.3pt;
+             line-height: 13pt; margin: 6px 0 10px; }
+.note b, .ok b { color: #5C4200; }
+pre { background: #F3F4F6; border: 0.5pt solid #CCCCCC; font-family: Courier, "Courier New", monospace; font-size: 7.3pt;
+      line-height: 9pt; color: #1F2933; padding: 6px 8px; white-space: pre-wrap; word-break: break-word; margin: 4px 0 8px;
+      page-break-inside: avoid; }
+code { font-family: Courier, "Courier New", monospace; font-size: 8.6pt; color: #1F2933; }
+.ann { font-size: 9pt; color: #555555; margin: 0 0 8px; }
+.fig { text-align: center; margin: 6px 0 4px; page-break-inside: avoid; break-inside: avoid; }
+.fig img, img { max-width: 100%; }
+.fig img { border: 0.5pt solid #CCCCCC; }
+.cap { font-style: italic; font-size: 9pt; line-height: 12pt; color: #555555; text-align: left; margin: 3px 0 10px; }
+.pb { break-before: auto; page-break-before: auto; }
+body.combined h2 { break-before: page; page-break-before: always; }
+h2, h3, h4, h5 { break-after: avoid; page-break-after: avoid; }
+h3 + table, h3 + .fig, h3 + p { break-before: avoid; }
+.crit { display: none; } .meta { display: none; }
+.policy { border: 0.5pt solid #CCCCCC; border-left: 3pt solid #1B2A4A; padding: 6px 12px; margin: 8px 0; }
+.policy p, .policy li { font-size: 9.3pt; line-height: 13pt; }
+/* Design 1 prototype elements */
+.quote { background: #1B2A4A; color: #FFFFFF; padding: 12px 16px; font-size: 11pt; line-height: 15pt; }
+.bot { background: #F3F4F6; border: 0.5pt solid #CCCCCC; padding: 6px 10px; margin: 5px 70px 5px 0; }
+.user { background: #E8A33D; color: #FFFFFF; font-weight: bold; padding: 6px 10px; margin: 5px 0 5px 380px; text-align: center; }
+.chosen td { background: #FFF4DE !important; }
+</style></head><body><h1 class='brand'>Care Access Navigator</h1><div class='subtitle'>Figma 1: Final Project Submission</div><div class='subsub'>MoodBuddy algorithm flowchart in Figma: frames, image, styling and a grouped component</div><table class='kv'><tr><td class='k'>Prepared by:</td><td>Akhila Chennamaneni, IAM &amp; GRC Analyst (author)</td></tr><tr><td class='k'>Organization:</td><td>HealthLine Regional Medical Center (HRMC), Care Access Navigator (CAN) capstone</td></tr><tr><td class='k'>Course:</td><td>Figma 1 (DAE 6-Month Cybersecurity, Cohort 2)</td></tr><tr><td class='k'>Scope:</td><td>Final project</td></tr><tr><td class='k'>Environment:</td><td>Figma (FigJam board MoodBuddy Algorithm Flowchart v3), Unsplash plugin</td></tr><tr><td class='k'>Date:</td><td>November 24, 2026</td></tr></table><div class="note"><b>Design:</b> the <b>MoodBuddy Algorithm Flowchart</b>, made in Figma (FigJam board "MoodBuddy Algorithm
+Flowchart v3"). It shows the algorithm and flowchart of my Semester 2 Python mood tracker. Export:
+<code>figma_1/MoodBuddy_Algorithm_Flowchart_Figma.pdf</code>; screenshots of the live file in <code>figma_1/screenshots/</code>
+(updated November 24, 2026).</div>
+
+
+
+
+
+
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:22%">Rubric criterion</th><th style="width:22%">Where it is</th><th>How it is met</th></tr>
+<tr><td>Frames</td><td>1. Frames</td><td>Three named frame sections group the flowchart: "Name and age intake", "User record", "Mood check-in loop"</td></tr>
+<tr><td>Images</td><td>2. Images</td><td>An emoji photo placed on the board with Figma's Unsplash plugin</td></tr>
+<tr><td>Styling</td><td>3. Styling</td><td>Colors by shape type, red and green arrows, text styles, standard flowchart shapes</td></tr>
+<tr><td>Components</td><td>4. Components</td><td>The photo and the "MoodBuddy" text grouped into one "MoodBuddy logo" object</td></tr>
+</table>
+
+<div class="fig"><img src="../../../../../figma_1/MoodBuddy_Algorithm_Flowchart_Figma.png" style="height:6.4in"></div>
+<div class="cap">Figure 1. The whole design, exported from Figma: the MoodBuddy logo (image + text), the 22-step algorithm and the flowchart in three frame sections.</div>
+
+<h2 style="break-before:page;page-break-before:always">1. Frames</h2>
+<p>The flowchart is organized into three named frame sections, one for each part of the program, so each part can be moved,
+resized and read as a unit:</p>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:28%">Frame</th><th>What it contains</th></tr>
+<tr><td>Name and age intake</td><td>Start, welcome message, name prompt and check, age prompt and checks, age-range mapping</td></tr>
+<tr><td>User record</td><td>"Name and age found in saved file?" decision: load saved counters or create a new record</td></tr>
+<tr><td>Mood check-in loop</td><td>Mood question, negative / non-negative branches, counters and warning, save, continue or quit, end</td></tr>
+</table>
+<div class="fig"><img src="../../../../../figma_1/screenshots/2_image_and_text_grouped.png" style="width:100%"></div>
+<div class="cap">Figure 2. The live Figma file (November 24, 2026): the "User record" and "Mood check-in loop" frame labels are visible on the right.</div>
+
+<h2>2. Images</h2>
+<p>I added an image to the design using Figma's built-in <b>Unsplash</b> plugin (Resources → Plugins → Unsplash), which places
+free-to-use Unsplash photos straight onto the canvas. I chose a photo of emoji faces (happy, angry, surprised, laughing and heart
+emoji) because MoodBuddy is about naming moods, then resized it and placed it next to the algorithm as the MoodBuddy logo.</p>
+<div class="fig"><img src="../../../../../figma_1/screenshots/1_image_added.png" style="width:100%"></div>
+<div class="cap">Figure 3. The photo selected in Figma, with the image toolbar (crop, Edit, Alt text) showing that it is an image layer.</div>
+
+<h2>3. Styling</h2>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:24%">Styling element</th><th>How it is used</th></tr>
+<tr><td>Colors by shape type</td><td>Green parallelograms for input and output (prompts, messages); blue diamonds for decisions; beige rectangles for process steps; orange, red and light-green boxes for counters, warnings and resets; a purple diamond for the continue-or-quit choice</td></tr>
+<tr><td>Arrow colors</td><td><b>Green</b> arrows for "Yes" paths and <b>red</b> arrows for "No" paths, so each decision can be followed at a glance</td></tr>
+<tr><td>Shapes</td><td>Standard flowchart shapes: rounded terminators (Start / End program), parallelograms, rectangles and diamonds</td></tr>
+<tr><td>Text and fonts</td><td>Large title "MoodBuddy Algorithm" and "Flowchart" headings, a numbered list for the 22 algorithm steps with indented Yes/No bullets, small labels inside shapes and on arrows, and the "MoodBuddy" caption under the logo</td></tr>
+</table>
+
+<h2>4. Components</h2>
+<p>The rubric allows a component made from "a selection of layers or a grouping of objects". I selected the emoji photo and the
+"MoodBuddy" text (click, then Shift + click) and grouped them with <b>Cmd + G</b>. They now act as one reusable <b>MoodBuddy logo</b>
+object: a single selection box surrounds both, and they move, resize and copy together.</p>
+<table style='break-inside:avoid;page-break-inside:avoid'>
+<tr><th style="width:24%">Part</th><th>Element</th></tr>
+<tr><td>Layer 1</td><td>Emoji photo (image, from Unsplash)</td></tr>
+<tr><td>Layer 2</td><td>"MoodBuddy" text label</td></tr>
+<tr><td>Result</td><td>One grouped object, the MoodBuddy logo (Figure 2: one blue selection box around the photo and the text)</td></tr>
+</table>
+<div class="note"><b>Note:</b> this file is a FigJam board (figma.com/board). FigJam groups objects with Cmd + G; the separate
+"main component" feature (Option + Cmd + K) is part of Figma Design files, so grouping is the way to build this component here.</div>
+
+<h3>Also in this folder</h3>
+<p><code>Homedestinyguru.png</code>: an earlier Figma flowchart practice exercise (Home Destiny Guru: log in, check location and
+weather, then suggest staying home or going to work).</p>
+
+</body></html>

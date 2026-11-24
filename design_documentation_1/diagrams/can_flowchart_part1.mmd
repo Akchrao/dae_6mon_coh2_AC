@@ -1,0 +1,26 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, Helvetica, sans-serif","fontSize":"16px","primaryColor":"#FFFFFF","primaryBorderColor":"#1B2A4A","primaryTextColor":"#1B2A4A","lineColor":"#1B2A4A"}, "themeCSS":".nodeLabel,.edgeLabel,.label,text,span,p{font-family:Helvetica,Arial,sans-serif !important}", "flowchart":{"curve":"linear","htmlLabels":true,"nodeSpacing":28,"rankSpacing":30,"padding":8}}}%%
+flowchart TD
+  S([Start]) --> A[/"Receive identity event:<br>joiner, mover, leaver<br>or access request"/]
+  A --> L{"Leaver?"}
+  B(("&nbsp;B&nbsp;")) -.-> A
+  L -- Yes --> LD["Disable account in Entra ID<br>and Keycloak; remove all roles"]
+  LD --> LV{"Sign-in refused<br>in both?"}
+  LV -- No --> GAP["Raise finding + risk<br>(deprovisioning gap)"] --> LD
+  LV -- Yes --> C1
+  L -- No --> R["Look up job role<br>in the RBAC matrix"]
+  R --> W{"Within role?<br>(least privilege)"}
+  W -- No --> AP{"Manager + IAM<br>approved?"}
+  AP -- No --> DN[/"Deny and<br>record reason"/] --> C1
+  AP -- Yes --> MV
+  W -- Yes --> MV{"Mover?"}
+  MV -- Yes --> RM["Remove old role first"] --> PR
+  MV -- No --> PR["Grant role through<br>Keycloak group"]
+  PR --> PV{"Privileged role?"}
+  PV -- Yes --> MFA["Require MFA"] --> SI
+  PV -- No --> SI[/"User signs in;<br>app gate allows or denies"/]
+  SI --> C1(("&nbsp;A&nbsp;"))
+  classDef term fill:#1B2A4A,color:#FFFFFF,stroke:#1B2A4A;
+  classDef dec fill:#FFF4DE,stroke:#E8A33D,color:#1B2A4A;
+  classDef io fill:#F3F4F6,stroke:#1B2A4A,color:#1B2A4A;
+  classDef con fill:#E8A33D,stroke:#E8A33D,color:#FFFFFF,font-size:20px,font-weight:bold;
+  class S term; class L,LV,W,AP,MV,PV dec; class A,DN,SI io; class C1,B con;

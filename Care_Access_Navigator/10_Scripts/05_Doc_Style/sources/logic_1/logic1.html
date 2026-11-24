@@ -1,0 +1,111 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Logic 1</title></head><body>
+
+<h1>MoodBuddy: Logic 1 Project</h1>
+<div class="meta">Akhila Chennamaneni · Logic 1</div>
+
+<div class="note"><b>Project:</b> MoodBuddy, my Semester 2 mood tracker. I designed the algorithm first, drew it as a
+flowchart in Figma, then built it in Python (<code>logic_1/MoodBuddy.py</code>). The same thinking (input → check →
+decide → act → record) is what I later used for access decisions in Care Access Navigator.</div>
+
+<table>
+<tr><th style="width:30%">Rubric criterion</th><th style="width:26%">Where it is</th><th>How it is met</th></tr>
+<tr><td>Craft Algorithms</td><td>1. Algorithm</td><td>22 numbered steps (6+ required) with Yes/No and If decisions built in</td></tr>
+<tr><td>Visualize with Flowcharts</td><td>2. Flowchart</td><td>Figma flowchart that follows the algorithm, using 5 symbols: Start, Stop, input/output, process, decision (plus arrows)</td></tr>
+<tr><td>Incorporate Boolean Logic</td><td>3. Boolean Logic</td><td>9 True/False decision points, each matched to an algorithm step and a flowchart diamond</td></tr>
+<tr><td>Apply Conditional Logic</td><td>4. Conditional Logic</td><td>"If" conditions in the flowchart, matched to the algorithm and the Python code</td></tr>
+</table>
+
+<h2>1. Algorithm</h2>
+<ol>
+<li>Start program.</li>
+<li>Display welcome message.</li>
+<li>Prompt user for Name.</li>
+<li><b>Is Name valid</b> (not blank AND 20 letters or fewer AND letters only)?
+  <ul><li>No → show the reason and go to step 3.</li><li>Yes → continue.</li></ul></li>
+<li>Prompt user for Age.</li>
+<li><b>Is Age a number AND between 4 and 100?</b>
+  <ul><li>No → go to step 5.</li><li>Yes → continue.</li></ul></li>
+<li><b>Is Age between 66 and 100?</b>
+  <ul><li>Yes → display the standard (adult) message.</li></ul></li>
+<li>Determine the age range for the entered age (4–8, 9–13, 14–19, 20–30, 31–50, 51–65).</li>
+<li><b>Does (Name + Age) exist in the saved data file?</b>
+  <ul><li>Yes → load the saved emotion counters.</li><li>No → create a new record with all counters = 0.</li></ul></li>
+<li>Ask "How is your mood today?"</li>
+<li>Match the input to an emotion (Happy, Sad, Angry, Lazy, Anxious, Excited).</li>
+<li><b>Is the emotion negative</b> (Sad OR Angry OR Anxious)?
+  <ul><li><b>If non-negative:</b>
+    <ol type="a" style="list-style:none;margin-left:6px">
+    <li>13a. Reset all three negative counters (Sad, Angry, Anxious) to 0.</li>
+    <li>14a. Randomly pick one of the 4 messages for (emotion + age range).</li>
+    <li>15a. Get one activity for that emotion.</li>
+    <li>16a. Display message + activity → go to step 19.</li></ol></li>
+  <li><b>If negative:</b>
+    <ol type="a" style="list-style:none;margin-left:6px">
+    <li>13b. Increase that emotion's counter by 1.</li>
+    <li>14b. Is counter = 1? → select message 1.</li>
+    <li>15b. Is counter = 2? → select message 2.</li>
+    <li>16b. Is counter ≥ 3? → select message 3 (message 4 if counter ≥ 4) together with the warning message for that emotion.</li>
+    <li>17b. Get one activity for that emotion.</li>
+    <li>18b. Display the selected message(s) + activity → go to step 19.</li></ol></li></ul></li>
+</ol>
+<ol start="19">
+<li>Save the updated data (counters, name, age) back to the file.</li>
+<li>Ask "Do you want to check in again or quit?"
+  <ul><li>Continue → go to step 10.</li><li>Quit → go to step 21.</li></ul></li>
+<li>Display goodbye message ("See you soon!").</li>
+<li>End program.</li>
+</ol>
+
+<h2>2. Flowchart</h2>
+<p>Made in Figma (<code>logic_1/MoodBuddy_Algorithm_Flowchart.png</code>). It follows the algorithm in three sections:
+name and age intake, user record, and mood check-in loop. Red arrows are "No" paths and green arrows are "Yes" paths.</p>
+<table>
+<tr><th style="width:30%">Symbol</th><th style="width:34%">Meaning</th><th>Used for (algorithm step)</th></tr>
+<tr><td>Rounded rectangle</td><td><b>Start</b> / <b>Stop</b> (terminator)</td><td>Start program (1), End program (22)</td></tr>
+<tr><td>Parallelogram (green)</td><td>Input / output</td><td>Welcome message (2), prompt for Name (3) and Age (5), ask mood (10), display message (16a/18b), goodbye (21)</td></tr>
+<tr><td>Rectangle</td><td>Process</td><td>Map age to range (8), load or create record (9), reset or increase counters (13a/13b), pick activity, save data (19)</td></tr>
+<tr><td>Diamond</td><td>Decision (Boolean True / False)</td><td>Name valid? (4), Age valid? (6), Age 66–100? (7), record found? (9), negative mood? (12), counter ≥ 3? (16b), continue or quit? (20)</td></tr>
+<tr><td>Arrow (flow line)</td><td>Direction of flow and loops</td><td>Loops back to step 3, step 5 and step 10</td></tr>
+</table>
+<div class="fig"><img src="flow_a.png" style="height:8.1in"></div>
+<div class="cap">Figure 1. Flowchart part 1: name and age intake, and user record (steps 1–9).</div>
+<div class="fig"><img src="flow_b.png" style="height:7.9in"></div>
+<div class="cap">Figure 2. Flowchart part 2: mood check-in loop (steps 10–22).</div>
+
+<h2 style="break-before:page;page-break-before:always">3. Boolean Logic</h2>
+<p>Every diamond in the flowchart is a Boolean question: the answer is only True (Yes) or False (No), and each answer
+has its own arrow. Several combine conditions with AND, OR and NOT.</p>
+<table>
+<tr><th style="width:5%">#</th><th style="width:27%">Decision (flowchart diamond)</th><th style="width:31%">Boolean expression</th><th style="width:9%">Step</th><th>True → / False →</th></tr>
+<tr><td>1</td><td>Is the name valid?</td><td><code>name != "" AND len(name) &lt;= 20 AND name.isalpha()</code></td><td>4</td><td>continue / ask for name again</td></tr>
+<tr><td>2</td><td>Is the age valid?</td><td><code>age.isdigit() AND NOT (age &lt; 4 OR age &gt; 100)</code></td><td>6</td><td>continue / ask for age again</td></tr>
+<tr><td>3</td><td>Is the age between 66 and 100?</td><td><code>66 &lt;= age &lt;= 100</code></td><td>7</td><td>standard message / age-range message</td></tr>
+<tr><td>4</td><td>Is (name + age) in the saved file?</td><td><code>user_key in users</code></td><td>9</td><td>load counters / new record</td></tr>
+<tr><td>5</td><td>Is the emotion negative?</td><td><code>mood == "Sad" OR mood == "Angry" OR mood == "Anxious"</code></td><td>12</td><td>negative path (13b) / non-negative path (13a)</td></tr>
+<tr><td>6</td><td>Is the counter 1?</td><td><code>count == 1</code></td><td>14b</td><td>message 1 / next check</td></tr>
+<tr><td>7</td><td>Is the counter 2?</td><td><code>count == 2</code></td><td>15b</td><td>message 2 / next check</td></tr>
+<tr><td>8</td><td>Is the counter 3 or higher?</td><td><code>count &gt;= 3</code></td><td>16b</td><td>message + warning / normal message</td></tr>
+<tr><td>9</td><td>Continue or quit?</td><td><code>choice == "2"</code> (quit)</td><td>20</td><td>goodbye (21) / back to step 10</td></tr>
+</table>
+
+<h2 style="break-before:page;page-break-before:always">4. Conditional Logic</h2>
+<p>The "If" conditions in the flowchart match the algorithm and the Python program line for line:</p>
+<table>
+<tr><th style="width:30%">If condition (flowchart)</th><th style="width:12%">Algorithm</th><th style="width:30%">Python (<code>MoodBuddy.py</code>)</th><th>Then</th></tr>
+<tr><td>If name is blank, too long or not letters</td><td>Step 4</td><td><code>if name == "": … elif len(name) &gt; 20: … elif not name.isalpha():</code></td><td>Show the reason, loop back to the name prompt</td></tr>
+<tr><td>If age is not a number, or below 4 or above 100</td><td>Step 6</td><td><code>if not age_input.isdigit(): …</code><br><code>if age &lt; 4 or age &gt; 100:</code></td><td>Loop back to the age prompt</td></tr>
+<tr><td>If age is 66–100</td><td>Step 7</td><td><code>if 66 &lt;= age &lt;= 100:</code></td><td>Display the standard message</td></tr>
+<tr><td>If age is 4–8 / 9–13 / 14–19 / 20–30 / 31–50 / 51–65</td><td>Step 8</td><td><code>if 4 &lt;= age &lt;= 8: … elif 9 &lt;= age &lt;= 13: …</code></td><td>Set the age range for messages and activities</td></tr>
+<tr><td>If the user is already saved</td><td>Step 9</td><td><code>if user_key in users:</code></td><td>Load counters, otherwise create a new record</td></tr>
+<tr><td>If the mood is negative, else non-negative</td><td>Step 12</td><td><code>if mood in NEGATIVE_MOODS:</code></td><td>Negative: count up and pick by count. Else: reset counters, random message</td></tr>
+<tr><td>If the counter is 3 or more</td><td>Step 16b</td><td><code>if current_count &gt;= 3:</code></td><td>Add the warning message for that emotion</td></tr>
+<tr><td>If the user chooses Quit</td><td>Step 20</td><td><code>if get_continue_choice() == "2":</code></td><td>Say goodbye and end; otherwise loop to step 10</td></tr>
+</table>
+<div class="note" style="break-inside:avoid;page-break-inside:avoid"><b>Test run (November 23, 2026, on a copy of the program):</b> inputs <code>Maya1</code> (rejected:
+"Use letters only"), <code>Maya</code> (accepted), age <code>abc</code> (rejected: "enter age as a number"), <code>120</code>
+(rejected: "between 4 and 100"), <code>16</code> (accepted, new record created), then Sad three times. Check-ins 1 and 2
+showed messages 1 and 2; check-in 3 added the warning "you have checked in as sad several times", exactly as steps 4, 6
+and 13b–16b say.</div>
+
+</body></html>

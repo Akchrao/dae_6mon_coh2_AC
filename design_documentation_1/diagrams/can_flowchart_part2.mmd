@@ -1,0 +1,17 @@
+%%{init: {"theme":"base","themeVariables":{"fontFamily":"Arial, Helvetica, sans-serif","fontSize":"16px","primaryColor":"#FFFFFF","primaryBorderColor":"#1B2A4A","primaryTextColor":"#1B2A4A","lineColor":"#1B2A4A"}, "themeCSS":".nodeLabel,.edgeLabel,.label,text,span,p{font-family:Helvetica,Arial,sans-serif !important}", "flowchart":{"curve":"linear","htmlLabels":true,"nodeSpacing":28,"rankSpacing":30,"padding":8}}}%%
+flowchart TD
+  C1(("&nbsp;A&nbsp;")) --> LOG[("Logs and evidence:<br>Keycloak, EHR, Wazuh")]
+  LOG --> AL{"Detection<br>rule fired?"}
+  AL -- Yes --> IR[["Incident response:<br>triage, contain,<br>investigate, close"]] --> GRC
+  AL -- No --> GRC["Update risk, control<br>and evidence in<br>CISO Assistant"]
+  GRC --> QR{"Quarterly review<br>due?"}
+  QR -- Yes --> REV["Reviewer keeps or<br>removes each access;<br>remediate"] --> RPT
+  QR -- No --> RPT[/"Dashboard and<br>management report"/]
+  RPT --> MORE{"More events?"}
+  MORE -- "Yes (back to Part 1)" --> B(("&nbsp;B&nbsp;"))
+  MORE -- No --> E([End])
+  classDef term fill:#1B2A4A,color:#FFFFFF,stroke:#1B2A4A;
+  classDef dec fill:#FFF4DE,stroke:#E8A33D,color:#1B2A4A;
+  classDef io fill:#F3F4F6,stroke:#1B2A4A,color:#1B2A4A;
+  classDef con fill:#E8A33D,stroke:#E8A33D,color:#FFFFFF,font-size:20px,font-weight:bold;
+  class E term; class AL,QR,MORE dec; class RPT io; class C1,B con;
